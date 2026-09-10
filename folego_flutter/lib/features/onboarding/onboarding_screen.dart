@@ -462,7 +462,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _accountDropdown(String label) {
     return DropdownButtonFormField<String>(
-      value: _accounts.any((item) => item.id == _selectedAccountId) ? _selectedAccountId : null,
+      key: ValueKey(_selectedAccountId),
+      initialValue: _accounts.any((item) => item.id == _selectedAccountId) ? _selectedAccountId : null,
       decoration: InputDecoration(labelText: label),
       items: _accounts.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
       onChanged: (value) => setState(() => _selectedAccountId = value),
@@ -474,7 +475,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final list = recurring ? _categories : (discretionary.isEmpty ? _categories : discretionary);
     final current = recurring ? _recurringCategoryId : _budgetCategoryId;
     return DropdownButtonFormField<String>(
-      value: list.any((item) => item.id == current) ? current : null,
+      key: ValueKey(current),
+      initialValue: list.any((item) => item.id == current) ? current : null,
       decoration: InputDecoration(labelText: recurring ? 'Categoria' : 'Categoria do orçamento'),
       items: list.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
       onChanged: (value) => setState(() {

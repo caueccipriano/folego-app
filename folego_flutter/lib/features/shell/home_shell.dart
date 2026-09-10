@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../shared/widgets/liquid_glass_navigation_bar.dart';
 import '../home/home_screen.dart';
 import '../plan/plan_screen.dart';
 import '../profile/profile_screen.dart';
@@ -33,21 +34,18 @@ class _HomeShellState extends State<HomeShell> {
       const TransactionsScreen(),
       const PlanScreen(),
       const WalletScreen(),
-      ProfileScreen(client: Supabase.instance.client, repository: widget.repository),
+      ProfileScreen(
+        client: Supabase.instance.client,
+        repository: widget.repository,
+      ),
     ];
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: LiquidGlassNavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Início'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded), label: 'Transações'),
-          NavigationDestination(icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month_rounded), label: 'Plano'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet_rounded), label: 'Carteira'),
-          NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Perfil'),
-        ],
       ),
     );
   }

@@ -63,10 +63,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         _loading = false;
       });
     } catch (error) {
-      if (mounted) setState(() {
-        _loading = false;
-        _error = error.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = error.toString();
+        });
+      }
     }
   }
 
@@ -97,11 +99,17 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           description: _description.text.trim(),
         );
       }
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        setState(() => _error = error.toString().replaceFirst('Exception: ', ''));
+      }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -164,7 +172,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _accountId,
+                    initialValue: _accountId,
                     decoration: const InputDecoration(labelText: 'Conta'),
                     items: _accounts.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
                     onChanged: (value) => setState(() => _accountId = value),
@@ -172,7 +180,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                   if (_type == 'expense') ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _categoryId,
+                      initialValue: _categoryId,
                       decoration: const InputDecoration(labelText: 'Categoria'),
                       items: _categories.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
                       onChanged: (value) => setState(() => _categoryId = value),

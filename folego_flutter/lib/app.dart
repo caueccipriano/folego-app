@@ -17,11 +17,18 @@ class FolegoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fôlego',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      home: AuthGate(client: client, repository: repository),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.mode,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: 'Fôlego',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: mode,
+          home: AuthGate(client: client, repository: repository),
+        );
+      },
     );
   }
 }

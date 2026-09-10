@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -34,10 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
-    if (mounted) setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final values = await Future.wait([
         widget.repository.getProfileName(),
@@ -108,26 +111,78 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Fôlego', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+                      Text(
+                        'fôlego',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: AppPalette.primary,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1,
+                            ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Olá, $_name',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -.4,
+                            ),
+                      ),
                       const SizedBox(height: 2),
-                      Text('Olá, $_name 👋', style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Que bom ter você por aqui!',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: .66),
+                            ),
+                      ),
                     ],
                   ),
                 ),
-                IconButton(onPressed: _load, tooltip: 'Atualizar', icon: const Icon(Icons.refresh_rounded)),
+                const SizedBox(width: 10),
+                IconButton(
+                  onPressed: () => AppThemeController.toggle(context),
+                  tooltip: Theme.of(context).brightness == Brightness.dark
+                      ? 'Usar tema claro'
+                      : 'Usar tema escuro',
+                  icon: Icon(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  onPressed: _load,
+                  tooltip: 'Atualizar',
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
               ],
             ),
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppPalette.primary, Color(0xFF4265D6)],
+                ),
                 borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppPalette.primary.withValues(alpha: .18),
+                    blurRadius: 28,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,21 +218,25 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            FilledButton.icon(onPressed: _register, icon: const Icon(Icons.add_rounded), label: const Text('Registrar agora')),
+            FilledButton.icon(
+              onPressed: _register,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Novo lançamento'),
+            ),
             const SizedBox(height: 18),
             Row(
               children: [
-                Expanded(child: _MetricCard(label: 'Disponível', value: Formatters.money(snapshot.liquidBalance), icon: Icons.account_balance_wallet_outlined)),
+                Expanded(child: _MetricCard(label: 'Disponível', value: Formatters.money(snapshot.liquidBalance), icon: Icons.account_balance_wallet_outlined, accent: AppPalette.primary)),
                 const SizedBox(width: 12),
-                Expanded(child: _MetricCard(label: 'Protegido', value: Formatters.money(snapshot.protectedBalance), icon: Icons.shield_outlined)),
+                Expanded(child: _MetricCard(label: 'Protegido', value: Formatters.money(snapshot.protectedBalance), icon: Icons.shield_outlined, accent: AppPalette.purple)),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _MetricCard(label: 'Comprometido', value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome), icon: Icons.event_busy_outlined)),
+                Expanded(child: _MetricCard(label: 'Comprometido', value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome), icon: Icons.event_busy_outlined, accent: AppPalette.pink)),
                 const SizedBox(width: 12),
-                Expanded(child: _MetricCard(label: 'Caixa livre', value: Formatters.money(snapshot.cashHeadroom), icon: Icons.savings_outlined)),
+                Expanded(child: _MetricCard(label: 'Caixa livre', value: Formatters.money(snapshot.cashHeadroom), icon: Icons.savings_outlined, accent: AppPalette.green)),
               ],
             ),
             const SizedBox(height: 18),
@@ -285,24 +344,50 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.label, required this.value, required this.icon});
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.accent,
+  });
 
   final String label;
   final String value;
   final IconData icon;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SectionCard(
       padding: const EdgeInsets.all(15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 9),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: isDark ? .22 : .12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 19, color: accent),
+          ),
+          const SizedBox(height: 10),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 3),
-          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
+          ),
         ],
       ),
     );
