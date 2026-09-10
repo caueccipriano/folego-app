@@ -38,11 +38,11 @@ class LiquidGlassNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final glassColor = isDark
-        ? AppPalette.darkSurface.withValues(alpha: .76)
-        : Colors.white.withValues(alpha: .78);
+        ? Colors.white.withValues(alpha: .07)
+        : Colors.white.withValues(alpha: .22);
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: .10)
-        : Colors.white.withValues(alpha: .88);
+        ? Colors.white.withValues(alpha: .16)
+        : Colors.white.withValues(alpha: .42);
 
     return SafeArea(
       top: false,
@@ -53,17 +53,18 @@ class LiquidGlassNavigationBar extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? .28 : .10),
-              blurRadius: 28,
-              offset: const Offset(0, 10),
+              blurRadius: 32,
+              spreadRadius: 2,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+            filter: ImageFilter.blur(sigmaX: 42, sigmaY: 42),
             child: Container(
-              height: 72,
+              height: 76,
               decoration: BoxDecoration(
                 color: glassColor,
                 borderRadius: BorderRadius.circular(30),
