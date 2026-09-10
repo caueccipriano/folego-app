@@ -2,51 +2,91 @@ import 'package:flutter/material.dart';
 
 /// Design system do Fôlego.
 ///
-/// Direção visual: "pop criativo sofisticado" — cores alegres, porém menos
-/// saturadas/neon, com boa leitura nos modos claro e escuro.
+/// Direção:
+/// - dark grafite como identidade principal
+/// - claro em creme
+/// - roxo como cor estrutural
+/// - verde-lima para destaques financeiros
+/// - rosa, verde, laranja e teal para categorias
 abstract final class AppPalette {
-  static const primary = Color(0xFF3157D5);
-  static const primaryDeep = Color(0xFF2847B5);
-  static const purple = Color(0xFF7659C5);
-  static const pink = Color(0xFFD56C9F);
-  static const lime = Color(0xFFA6BF5B);
-  static const green = Color(0xFF5DAA72);
-  static const orange = Color(0xFFD89B67);
-  static const teal = Color(0xFF5F9FA0);
-  static const indigo = Color(0xFF6877C7);
+  // ─────────────────────────────────────────────
+  // Brand
+  // ─────────────────────────────────────────────
 
-  static const lightBackground = Color(0xFFF6F7FB);
+  static const purple = Color(0xFF6C3BF0);
+  static const purpleLight = Color(0xFF8B68F6);
+
+  /// Compatibilidade com o código atual.
+  static const primary = purple;
+
+  static const lime = Color(0xFFC6F135);
+  static const pink = Color(0xFFE15B8F);
+  static const green = Color(0xFF75A83B);
+
+  // Cores auxiliares
+  static const orange = Color(0xFFE99A52);
+  static const teal = Color(0xFF58A8A0);
+  static const indigo = Color(0xFF5969C9);
+
+  // ─────────────────────────────────────────────
+  // Light
+  // ─────────────────────────────────────────────
+
+  static const lightBackground = Color(0xFFF5F1E7);
   static const lightSurface = Color(0xFFFFFFFF);
-  static const lightSurfaceMuted = Color(0xFFF0F2F8);
-  static const lightBorder = Color(0xFFE3E6EF);
-  static const lightText = Color(0xFF14182A);
-  static const lightTextMuted = Color(0xFF687086);
+  static const lightSurfaceMuted = Color(0xFFF0ECE2);
 
-  static const darkBackground = Color(0xFF101424);
-  static const darkSurface = Color(0xFF171B2E);
-  static const darkSurfaceMuted = Color(0xFF20253D);
-  static const darkBorder = Color(0xFF2A304D);
-  static const darkText = Color(0xFFF7F8FC);
-  static const darkTextMuted = Color(0xFFB8C0D4);
+  static const lightText = Color(0xFF111114);
+  static const lightTextSecondary = Color(0xFF77747C);
 
-  /// Ordem sugerida para gráficos por categoria.
-  /// Alimentação, Moradia, Saúde, Transporte e categorias adicionais.
+  static const lightBorder = Color(0xFFE1DDD4);
+
+  // ─────────────────────────────────────────────
+  // Dark
+  // ─────────────────────────────────────────────
+
+  static const darkBackground = Color(0xFF0E0E11);
+  static const darkSurface = Color(0xFF1D1C22);
+  static const darkSurfaceMuted = Color(0xFF25242B);
+
+  static const darkText = Color(0xFFF9F9FA);
+  static const darkTextSecondary = Color(0xFFA7A4AE);
+
+  static const darkBorder = Color(0xFF34323C);
+
+  // ─────────────────────────────────────────────
+  // Semantic
+  // ─────────────────────────────────────────────
+
+  static const income = lime;
+  static const expense = pink;
+  static const transfer = purpleLight;
+  static const warning = Color(0xFFFFC857);
+
+  // ─────────────────────────────────────────────
+  // Charts
+  // ─────────────────────────────────────────────
+
+  /// Ordem padrão para gráficos de categorias.
   static const chartColors = <Color>[
-    primary,
     purple,
     pink,
     lime,
+    green,
     orange,
     teal,
     indigo,
-    green,
+    purpleLight,
   ];
 }
 
-/// Controle de tema simples para o MVP.
-/// Depois podemos persistir a escolha do usuário no perfil/local storage.
+/// Controle simples de tema para o MVP.
+///
+/// Depois vamos persistir esta escolha no perfil do usuário.
 abstract final class AppThemeController {
-  static final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.system);
+  static final ValueNotifier<ThemeMode> mode = ValueNotifier(
+    ThemeMode.system,
+  );
 
   static void toggle(BuildContext context) {
     mode.value = Theme.of(context).brightness == Brightness.dark
@@ -56,16 +96,23 @@ abstract final class AppThemeController {
 }
 
 abstract final class AppTheme {
+  // ─────────────────────────────────────────────
+  // Light
+  // ─────────────────────────────────────────────
+
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppPalette.primary,
+      seedColor: AppPalette.purple,
       brightness: Brightness.light,
     ).copyWith(
-      primary: AppPalette.primary,
-      secondary: AppPalette.purple,
+      primary: AppPalette.purple,
+      onPrimary: Colors.white,
+      secondary: AppPalette.lime,
+      onSecondary: AppPalette.lightText,
       tertiary: AppPalette.pink,
       surface: AppPalette.lightSurface,
       onSurface: AppPalette.lightText,
+      error: AppPalette.pink,
     );
 
     return _baseTheme(
@@ -78,16 +125,23 @@ abstract final class AppTheme {
     );
   }
 
+  // ─────────────────────────────────────────────
+  // Dark
+  // ─────────────────────────────────────────────
+
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppPalette.primary,
+      seedColor: AppPalette.purple,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: const Color(0xFF7892E9),
-      secondary: const Color(0xFFA992E1),
-      tertiary: const Color(0xFFE09ABC),
+      primary: AppPalette.purpleLight,
+      onPrimary: Colors.white,
+      secondary: AppPalette.lime,
+      onSecondary: AppPalette.darkBackground,
+      tertiary: AppPalette.pink,
       surface: AppPalette.darkSurface,
       onSurface: AppPalette.darkText,
+      error: AppPalette.pink,
     );
 
     return _baseTheme(
@@ -100,6 +154,10 @@ abstract final class AppTheme {
     );
   }
 
+  // ─────────────────────────────────────────────
+  // Shared
+  // ─────────────────────────────────────────────
+
   static ThemeData _baseTheme({
     required ColorScheme scheme,
     required Color scaffoldBackground,
@@ -110,6 +168,13 @@ abstract final class AppTheme {
   }) {
     final isDark = brightness == Brightness.dark;
 
+    final primaryTextColor =
+        isDark ? AppPalette.darkText : AppPalette.lightText;
+
+    final secondaryTextColor = isDark
+        ? AppPalette.darkTextSecondary
+        : AppPalette.lightTextSecondary;
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -117,66 +182,135 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: scaffoldBackground,
       cardColor: cardColor,
       dividerColor: border,
+
+      // Enquanto não adicionarmos legalmente o arquivo da Cooper BT,
+      // mantemos a fonte nativa. Depois configuraremos Cooper BT
+      // apenas em títulos/branding e uma sans limpa no restante.
+      textTheme: TextTheme(
+        displayLarge: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -1.4,
+        ),
+        displayMedium: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -1.1,
+        ),
+        headlineLarge: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.8,
+        ),
+        headlineMedium: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
+        titleLarge: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w700,
+        ),
+        bodyLarge: TextStyle(
+          color: primaryTextColor,
+        ),
+        bodyMedium: TextStyle(
+          color: primaryTextColor,
+        ),
+        bodySmall: TextStyle(
+          color: secondaryTextColor,
+        ),
+        labelLarge: TextStyle(
+          color: primaryTextColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+
       cardTheme: CardThemeData(
         margin: EdgeInsets.zero,
         elevation: 0,
         color: cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: border),
+          side: BorderSide(
+            color: border,
+          ),
         ),
       ),
+
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
+        centerTitle: false,
       ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputFill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 15,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: border),
+          borderSide: BorderSide(
+            color: border,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+          borderSide: BorderSide(
+            color: scheme.primary,
+            width: 1.5,
+          ),
         ),
       ),
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(54),
-          backgroundColor: AppPalette.primary,
+          backgroundColor: AppPalette.purple,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
         ),
       ),
+
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: scheme.onSurface,
           backgroundColor: isDark
-              ? AppPalette.darkSurfaceMuted.withValues(alpha: .78)
-              : AppPalette.lightSurfaceMuted.withValues(alpha: .88),
+              ? AppPalette.darkSurfaceMuted
+              : AppPalette.lightSurfaceMuted,
         ),
       ),
+
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: AppPalette.primary,
+        color: AppPalette.purple,
         linearTrackColor: isDark
             ? AppPalette.darkSurfaceMuted
             : AppPalette.lightSurfaceMuted,
       ),
+
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        indicatorColor: scheme.primary.withValues(alpha: isDark ? .24 : .12),
+        indicatorColor: scheme.primary.withValues(
+          alpha: isDark ? .20 : .12,
+        ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             fontSize: 12,
@@ -185,6 +319,12 @@ abstract final class AppTheme {
                 : FontWeight.w500,
           ),
         ),
+      ),
+
+      dividerTheme: DividerThemeData(
+        color: border,
+        thickness: 1,
+        space: 1,
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
 import '../models/onboarding_state.dart';
+import '../models/transaction_item.dart';
 
 class FolegoRepository {
   FolegoRepository(this._client);
@@ -37,6 +38,26 @@ class FolegoRepository {
     if (fullName == null || fullName.trim().isEmpty) return 'Você';
     return fullName.trim().split(RegExp(r'\s+')).first;
   }
+
+Future<List<TransactionItem>> getTransactions(String spaceId) async {
+  final response = await _client
+      .from('financial_events')
+      .select(
+        'id,event_type,description,amount,occurred_at,competence_date,'
+        'status,source,category:categories(name,color_hex)',
+      )
+      .eq('space_id', spaceId)
+      .neq('status', 'ignored')
+      .neq('status', 'cancelled')
+      .order('occurred_at', ascending: false)
+      .limit(100);
+
+  final rows = List<Map<String, dynamic>>.from(response);
+
+  return rows
+      .map(TransactionItem.fromJson)
+      .toList();
+}
 
   Future<OnboardingState> getOnboardingState(String spaceId) async {
     final data = await _client.rpc(
