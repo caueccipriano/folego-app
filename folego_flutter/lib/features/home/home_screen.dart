@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _register() async {
+  Future<void> _openRegister(String type) async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -79,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
         repository: widget.repository,
+        initialType: type,
       ),
     );
 
@@ -172,8 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(
                   20,
                   28,
@@ -181,7 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   120,
                 ),
                 children: [
-                  // CABEÇALHO
                   Row(
                     children: [
                       Expanded(
@@ -194,8 +193,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-
-                      // Claro / escuro
                       IconButton(
                         onPressed: () =>
                             AppThemeController.toggle(context),
@@ -217,14 +214,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 19,
                         ),
                       ),
-
                       const SizedBox(width: 8),
-
                       if (snapshot.daysUntilIncome != null)
                         Container(
                           height: 42,
-                          padding:
-                              const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                           ),
                           decoration: BoxDecoration(
@@ -235,12 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 BorderRadius.circular(99),
                           ),
                           child: Row(
-                            mainAxisSize:
-                                MainAxisSize.min,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons
-                                    .local_fire_department_rounded,
+                                Icons.local_fire_department_rounded,
                                 size: 17,
                                 color: AppPalette.lime,
                               ),
@@ -251,8 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
-                                  fontWeight:
-                                      FontWeight.w700,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
@@ -263,7 +254,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 26),
 
-                  // HERO
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(
@@ -280,8 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           BorderRadius.circular(28),
                       border: isDark
                           ? Border.all(
-                              color:
-                                  const Color(0xFF312F38),
+                              color: const Color(0xFF312F38),
                             )
                           : null,
                     ),
@@ -294,43 +283,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             color: isDark
                                 ? const Color(0xFFAAA6B0)
-                                : Colors.white
-                                    .withValues(alpha: .76),
+                                : Colors.white.withValues(
+                                    alpha: .76,
+                                  ),
                             fontSize: 17,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
                         FittedBox(
                           fit: BoxFit.scaleDown,
-                          alignment:
-                              Alignment.centerLeft,
+                          alignment: Alignment.centerLeft,
                           child: Text(
                             Formatters.money(
                               snapshot.spendablePool,
                             ),
-                            style:
-                                AppTypography.money(
+                            style: AppTypography.money(
                               context,
                               fontSize: 58,
                               color: isDark
                                   ? AppPalette.lime
-                                  : const Color(0xFFF3EFE6)
+                                  : Colors.white,
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 15),
-
                         Text(
                           'depois dos compromissos até o próximo recebimento',
                           style: TextStyle(
                             color: isDark
                                 ? const Color(0xFFAAA6B0)
-                                : Colors.white
-                                    .withValues(alpha: .76),
+                                : Colors.white.withValues(
+                                    alpha: .76,
+                                  ),
                             fontSize: 16,
                           ),
                         ),
@@ -340,21 +325,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 28),
 
-                  // AÇÕES RÁPIDAS
                   Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: _QuickAction(
                           label: 'gasto',
-                          icon: Icons
-                              .receipt_long_rounded,
-                          background:
-                              AppPalette.lime,
+                          icon: Icons.receipt_long_rounded,
+                          background: AppPalette.lime,
                           foreground:
                               const Color(0xFF111111),
-                          onTap: _register,
+                          onTap: () =>
+                              _openRegister('expense'),
                         ),
                       ),
                       const SizedBox(width: 13),
@@ -368,17 +350,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           foreground: isDark
                               ? const Color(0xFF111111)
                               : AppPalette.lime,
-                          onTap: _register,
+                          onTap: () =>
+                              _openRegister('income'),
                         ),
                       ),
                       const SizedBox(width: 13),
                       Expanded(
                         child: _QuickAction(
                           label: 'metas',
-                          icon:
-                              Icons.track_changes_rounded,
-                          background:
-                              AppPalette.purple,
+                          icon: Icons.track_changes_rounded,
+                          background: AppPalette.purple,
                           foreground: Colors.white,
                           onTap: () =>
                               _comingSoon('Metas'),
@@ -388,8 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _QuickAction(
                           label: 'diário',
-                          icon:
-                              Icons.menu_book_rounded,
+                          icon: Icons.menu_book_rounded,
                           background: surface,
                           foreground: primaryText,
                           borderColor: border,
@@ -402,7 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 30),
 
-                  // SEUS GASTOS
                   Text(
                     'seus gastos',
                     style: AppTypography.section(
@@ -422,8 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           surface: surface,
                           border: border,
                           primaryText: primaryText,
-                          secondaryText:
-                              secondaryText,
+                          secondaryText: secondaryText,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -433,8 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           surface: surface,
                           border: border,
                           primaryText: primaryText,
-                          secondaryText:
-                              secondaryText,
+                          secondaryText: secondaryText,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -444,8 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           surface: surface,
                           border: border,
                           primaryText: primaryText,
-                          secondaryText:
-                              secondaryText,
+                          secondaryText: secondaryText,
                         ),
                       ),
                     ],
@@ -453,12 +429,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 28),
 
-                  // ÚLTIMO MOVIMENTO
                   if (latest != null)
                     Container(
                       width: double.infinity,
-                      padding:
-                          const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: surface,
                         borderRadius:
@@ -492,19 +466,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Formatters.money(
                                   latest.amount.abs(),
                                 ),
-style: TextStyle(
-  color: isDark
-      ? AppPalette.lime
-      : AppPalette.green,
-  fontSize: 20,
-  fontWeight: FontWeight.w900,
-),
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppPalette.lime
+                                      : AppPalette.green,
+                                  fontSize: 20,
+                                  fontWeight:
+                                      FontWeight.w900,
+                                ),
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 14),
-
                           Container(
                             padding:
                                 const EdgeInsets.symmetric(
@@ -515,8 +488,7 @@ style: TextStyle(
                               color: AppPalette.pink
                                   .withValues(alpha: .14),
                               borderRadius:
-                                  BorderRadius.circular(
-                                      99),
+                                  BorderRadius.circular(99),
                             ),
                             child: Text(
                               latest.categoryName ??
@@ -525,39 +497,14 @@ style: TextStyle(
                                   ),
                               style: TextStyle(
                                 color: isDark
-                                    ? const Color(
-                                        0xFFF19ABA,
-                                      )
-                                    : const Color(
-                                        0xFFB84071,
-                                      ),
+                                    ? const Color(0xFFF19ABA)
+                                    : const Color(0xFFB84071),
                                 fontWeight:
                                     FontWeight.w600,
                               ),
                             ),
                           ),
                         ],
-                      ),
-                    )
-                  else
-                    Container(
-                      width: double.infinity,
-                      padding:
-                          const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: surface,
-                        borderRadius:
-                            BorderRadius.circular(22),
-                        border: Border.all(
-                          color: border,
-                        ),
-                      ),
-                      child: Text(
-                        'seus próximos movimentos vão aparecer aqui',
-                        style: TextStyle(
-                          color: secondaryText,
-                          fontSize: 16,
-                        ),
                       ),
                     ),
                 ],
@@ -650,8 +597,7 @@ style: TextStyle(
           _CategorySummary(
             label: 'outros',
             amount: 0,
-            icon:
-                Icons.category_outlined,
+            icon: Icons.category_outlined,
             color: _categoryColor(
               'outros',
               result.length,
@@ -672,8 +618,7 @@ style: TextStyle(
   }
 
   TransactionItem? _latestTransaction() {
-    for (final transaction
-        in _transactions) {
+    for (final transaction in _transactions) {
       if (transaction.eventType !=
           'opening_balance') {
         return transaction;
@@ -864,8 +809,7 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-class _CategoryCard
-    extends StatelessWidget {
+class _CategoryCard extends StatelessWidget {
   const _CategoryCard({
     required this.summary,
     required this.surface,
@@ -884,8 +828,7 @@ class _CategoryCard
   Widget build(BuildContext context) {
     return Container(
       height: 150,
-      padding:
-          const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 18,
       ),
