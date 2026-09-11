@@ -29,7 +29,9 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.length < 6) {
-      _message('Informe um e-mail válido e uma senha com pelo menos 6 caracteres.');
+      _message(
+        'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.',
+      );
       return;
     }
 
@@ -43,7 +45,9 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         if (!mounted) return;
         if (response.session == null) {
-          _message('Conta criada. Confirme seu e-mail e depois entre no Fôlego.');
+          _message(
+            'Conta criada. Confirme seu e-mail e depois entre no Fôlego.',
+          );
         }
       } else {
         await widget.client.auth.signInWithPassword(
@@ -83,8 +87,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     'Fôlego',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -121,8 +125,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       _loading
                           ? 'Carregando...'
                           : _isSignUp
-                              ? 'Criar minha conta'
-                              : 'Entrar',
+                          ? 'Criar minha conta'
+                          : 'Entrar',
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -131,9 +135,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ? null
                         : () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
-                      _isSignUp
-                          ? 'Já tenho conta'
-                          : 'Ainda não tenho conta',
+                      _isSignUp ? 'Já tenho conta' : 'Ainda não tenho conta',
                     ),
                   ),
                 ],

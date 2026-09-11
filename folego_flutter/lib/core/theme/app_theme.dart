@@ -84,9 +84,7 @@ abstract final class AppPalette {
 ///
 /// Depois vamos persistir esta escolha no perfil do usuário.
 abstract final class AppThemeController {
-  static final ValueNotifier<ThemeMode> mode = ValueNotifier(
-    ThemeMode.system,
-  );
+  static final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.system);
 
   static void toggle(BuildContext context) {
     mode.value = Theme.of(context).brightness == Brightness.dark
@@ -101,19 +99,20 @@ abstract final class AppTheme {
   // ─────────────────────────────────────────────
 
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppPalette.purple,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: AppPalette.purple,
-      onPrimary: Colors.white,
-      secondary: AppPalette.lime,
-      onSecondary: AppPalette.lightText,
-      tertiary: AppPalette.pink,
-      surface: AppPalette.lightSurface,
-      onSurface: AppPalette.lightText,
-      error: AppPalette.pink,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: AppPalette.purple,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: AppPalette.purple,
+          onPrimary: Colors.white,
+          secondary: AppPalette.lime,
+          onSecondary: AppPalette.lightText,
+          tertiary: AppPalette.pink,
+          surface: AppPalette.lightSurface,
+          onSurface: AppPalette.lightText,
+          error: AppPalette.pink,
+        );
 
     return _baseTheme(
       scheme: scheme,
@@ -130,19 +129,20 @@ abstract final class AppTheme {
   // ─────────────────────────────────────────────
 
   static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppPalette.purple,
-      brightness: Brightness.dark,
-    ).copyWith(
-      primary: AppPalette.purpleLight,
-      onPrimary: Colors.white,
-      secondary: AppPalette.lime,
-      onSecondary: AppPalette.darkBackground,
-      tertiary: AppPalette.pink,
-      surface: AppPalette.darkSurface,
-      onSurface: AppPalette.darkText,
-      error: AppPalette.pink,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: AppPalette.purple,
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: AppPalette.purpleLight,
+          onPrimary: Colors.white,
+          secondary: AppPalette.lime,
+          onSecondary: AppPalette.darkBackground,
+          tertiary: AppPalette.pink,
+          surface: AppPalette.darkSurface,
+          onSurface: AppPalette.darkText,
+          error: AppPalette.pink,
+        );
 
     return _baseTheme(
       scheme: scheme,
@@ -168,8 +168,9 @@ abstract final class AppTheme {
   }) {
     final isDark = brightness == Brightness.dark;
 
-    final primaryTextColor =
-        isDark ? AppPalette.darkText : AppPalette.lightText;
+    final primaryTextColor = isDark
+        ? AppPalette.darkText
+        : AppPalette.lightText;
 
     final secondaryTextColor = isDark
         ? AppPalette.darkTextSecondary
@@ -215,15 +216,9 @@ abstract final class AppTheme {
           color: primaryTextColor,
           fontWeight: FontWeight.w700,
         ),
-        bodyLarge: TextStyle(
-          color: primaryTextColor,
-        ),
-        bodyMedium: TextStyle(
-          color: primaryTextColor,
-        ),
-        bodySmall: TextStyle(
-          color: secondaryTextColor,
-        ),
+        bodyLarge: TextStyle(color: primaryTextColor),
+        bodyMedium: TextStyle(color: primaryTextColor),
+        bodySmall: TextStyle(color: secondaryTextColor),
         labelLarge: TextStyle(
           color: primaryTextColor,
           fontWeight: FontWeight.w700,
@@ -236,9 +231,7 @@ abstract final class AppTheme {
         color: cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: BorderSide(
-            color: border,
-          ),
+          side: BorderSide(color: border),
         ),
       ),
 
@@ -263,16 +256,11 @@ abstract final class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: border,
-          ),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: scheme.primary,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: scheme.primary, width: 1.5),
         ),
       ),
 
@@ -281,9 +269,7 @@ abstract final class AppTheme {
           minimumSize: const Size.fromHeight(54),
           backgroundColor: AppPalette.purple,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w800,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -308,9 +294,7 @@ abstract final class AppTheme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        indicatorColor: scheme.primary.withValues(
-          alpha: isDark ? .20 : .12,
-        ),
+        indicatorColor: scheme.primary.withValues(alpha: isDark ? .20 : .12),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             fontSize: 12,
@@ -321,11 +305,7 @@ abstract final class AppTheme {
         ),
       ),
 
-      dividerTheme: DividerThemeData(
-        color: border,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
     );
   }
 }

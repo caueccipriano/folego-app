@@ -5,9 +5,6 @@ class AccountItem {
   final String name;
 
   factory AccountItem.fromJson(Map<String, dynamic> json) {
-    return AccountItem(
-      id: json['id'] as String,
-      name: json['name'] as String,
-    );
+    return AccountItem(id: json['id'] as String, name: json['name'] as String);
   }
 }

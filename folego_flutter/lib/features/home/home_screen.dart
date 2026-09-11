@@ -8,13 +8,10 @@ import '../../data/models/folego_snapshot.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'quick_register_sheet.dart';
+import 'upcoming_events_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-    required this.space,
-    required this.repository,
-  });
+  const HomeScreen({super.key, required this.space, required this.repository});
 
   final FinancialSpace space;
   final FolegoRepository repository;
@@ -88,22 +85,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _openUpcomingEvents() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UpcomingEventsScreen(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+        ),
+      ),
+    );
+  }
+
   void _comingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature entra na próxima etapa do Fôlego.'),
-      ),
+      SnackBar(content: Text('$feature entra na próxima etapa do Fôlego.')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading && _snapshot == null) {
-      return const SafeArea(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const SafeArea(child: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null && _snapshot == null) {
@@ -114,15 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.cloud_off_rounded,
-                  size: 44,
-                ),
+                const Icon(Icons.cloud_off_rounded, size: 44),
                 const SizedBox(height: 12),
-                Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                ),
+                Text(_error!, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: _load,
@@ -136,8 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final snapshot = _snapshot!;
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final categories = _topCategories();
     final latest = _latestTransaction();
@@ -146,13 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ? const Color(0xFF0D0D0F)
         : const Color(0xFFF5F1E7);
 
-    final surface = isDark
-        ? const Color(0xFF1D1B22)
-        : Colors.white;
+    final surface = isDark ? const Color(0xFF1D1B22) : Colors.white;
 
-    final border = isDark
-        ? const Color(0xFF302E37)
-        : const Color(0xFFE0DCD2);
+    final border = isDark ? const Color(0xFF302E37) : const Color(0xFFE0DCD2);
 
     final primaryText = isDark
         ? const Color(0xFFF9F9FA)
@@ -167,19 +158,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 430,
-            ),
+            constraints: const BoxConstraints(maxWidth: 430),
             child: RefreshIndicator(
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  28,
-                  20,
-                  120,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 120),
                 children: [
                   Row(
                     children: [
@@ -194,18 +178,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () =>
-                            AppThemeController.toggle(context),
-                        tooltip: isDark
-                            ? 'Tema claro'
-                            : 'Tema escuro',
+                        onPressed: () => AppThemeController.toggle(context),
+                        tooltip: isDark ? 'Tema claro' : 'Tema escuro',
                         style: IconButton.styleFrom(
                           minimumSize: const Size(42, 42),
                           backgroundColor: surface,
                           foregroundColor: primaryText,
-                          side: BorderSide(
-                            color: border,
-                          ),
+                          side: BorderSide(color: border),
                         ),
                         icon: Icon(
                           isDark
@@ -218,15 +197,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (snapshot.daysUntilIncome != null)
                         Container(
                           height: 42,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             color: isDark
                                 ? const Color(0xFF1D1B22)
                                 : const Color(0xFF111111),
-                            borderRadius:
-                                BorderRadius.circular(99),
+                            borderRadius: BorderRadius.circular(99),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -256,36 +232,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(
-                      24,
-                      28,
-                      24,
-                      30,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
                     decoration: BoxDecoration(
                       color: isDark
                           ? const Color(0xFF1D1B22)
                           : const Color(0xFF6C3BF0),
-                      borderRadius:
-                          BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(28),
                       border: isDark
-                          ? Border.all(
-                              color: const Color(0xFF312F38),
-                            )
+                          ? Border.all(color: const Color(0xFF312F38))
                           : null,
                     ),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'te sobra pra gastar',
                           style: TextStyle(
                             color: isDark
                                 ? const Color(0xFFAAA6B0)
-                                : Colors.white.withValues(
-                                    alpha: .76,
-                                  ),
+                                : Colors.white.withValues(alpha: .76),
                             fontSize: 17,
                             fontWeight: FontWeight.w400,
                           ),
@@ -295,15 +260,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            Formatters.money(
-                              snapshot.spendablePool,
-                            ),
+                            Formatters.money(snapshot.spendablePool),
                             style: AppTypography.money(
                               context,
                               fontSize: 58,
-                              color: isDark
-                                  ? AppPalette.lime
-                                  : Colors.white,
+                              color: isDark ? AppPalette.lime : Colors.white,
                             ),
                           ),
                         ),
@@ -313,9 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             color: isDark
                                 ? const Color(0xFFAAA6B0)
-                                : Colors.white.withValues(
-                                    alpha: .76,
-                                  ),
+                                : Colors.white.withValues(alpha: .76),
                             fontSize: 16,
                           ),
                         ),
@@ -333,10 +292,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           label: 'gasto',
                           icon: Icons.receipt_long_rounded,
                           background: AppPalette.lime,
-                          foreground:
-                              const Color(0xFF111111),
-                          onTap: () =>
-                              _openRegister('expense'),
+                          foreground: const Color(0xFF111111),
+                          onTap: () => _openRegister('expense'),
                         ),
                       ),
                       const SizedBox(width: 13),
@@ -350,8 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           foreground: isDark
                               ? const Color(0xFF111111)
                               : AppPalette.lime,
-                          onTap: () =>
-                              _openRegister('income'),
+                          onTap: () => _openRegister('income'),
                         ),
                       ),
                       const SizedBox(width: 13),
@@ -361,8 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: Icons.track_changes_rounded,
                           background: AppPalette.purple,
                           foreground: Colors.white,
-                          onTap: () =>
-                              _comingSoon('Metas'),
+                          onTap: () => _comingSoon('Metas'),
                         ),
                       ),
                       const SizedBox(width: 13),
@@ -373,11 +328,79 @@ class _HomeScreenState extends State<HomeScreen> {
                           background: surface,
                           foreground: primaryText,
                           borderColor: border,
-                          onTap: () =>
-                              _comingSoon('Diário'),
+                          onTap: () => _comingSoon('Diário'),
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _openUpcomingEvents,
+                      borderRadius: BorderRadius.circular(22),
+                      child: Ink(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: Theme.of(
+                              context,
+                            ).dividerColor.withValues(alpha: .35),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(
+                                Icons.calendar_month_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Próximos dias',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Veja o que entra e sai nos próximos 30 dias',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            const Icon(Icons.chevron_right_rounded),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 30),
@@ -435,15 +458,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius:
-                            BorderRadius.circular(22),
-                        border: Border.all(
-                          color: border,
-                        ),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: border),
                       ),
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
@@ -451,56 +470,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Text(
                                   '${latest.description} · ${_relativeDate(latest.occurredAt)}',
                                   maxLines: 1,
-                                  overflow:
-                                      TextOverflow.ellipsis,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: primaryText,
                                     fontSize: 19,
-                                    fontWeight:
-                                        FontWeight.w700,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                Formatters.money(
-                                  latest.amount.abs(),
-                                ),
+                                Formatters.money(latest.amount.abs()),
                                 style: TextStyle(
                                   color: isDark
                                       ? AppPalette.lime
                                       : AppPalette.green,
                                   fontSize: 20,
-                                  fontWeight:
-                                      FontWeight.w900,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 14),
                           Container(
-                            padding:
-                                const EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: AppPalette.pink
-                                  .withValues(alpha: .14),
-                              borderRadius:
-                                  BorderRadius.circular(99),
+                              color: AppPalette.pink.withValues(alpha: .14),
+                              borderRadius: BorderRadius.circular(99),
                             ),
                             child: Text(
                               latest.categoryName ??
-                                  _typeLabel(
-                                    latest.eventType,
-                                  ),
+                                  _typeLabel(latest.eventType),
                               style: TextStyle(
                                 color: isDark
                                     ? const Color(0xFFF19ABA)
                                     : const Color(0xFFB84071),
-                                fontWeight:
-                                    FontWeight.w600,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -524,29 +532,19 @@ class _HomeScreenState extends State<HomeScreen> {
         continue;
       }
 
-      final category =
-          transaction.categoryName?.trim();
+      final category = transaction.categoryName?.trim();
 
-      final name =
-          category == null || category.isEmpty
-              ? 'outros'
-              : category;
+      final name = category == null || category.isEmpty ? 'outros' : category;
 
-      totals[name] =
-          (totals[name] ?? 0) +
-              transaction.amount.abs();
+      totals[name] = (totals[name] ?? 0) + transaction.amount.abs();
     }
 
     final sorted = totals.entries.toList()
-      ..sort(
-        (a, b) => b.value.compareTo(a.value),
-      );
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     final result = <_CategorySummary>[];
 
-    for (var i = 0;
-        i < sorted.length && i < 3;
-        i++) {
+    for (var i = 0; i < sorted.length && i < 3; i++) {
       final entry = sorted[i];
 
       result.add(
@@ -554,10 +552,7 @@ class _HomeScreenState extends State<HomeScreen> {
           label: entry.key.toLowerCase(),
           amount: entry.value,
           icon: _categoryIcon(entry.key),
-          color: _categoryColor(
-            entry.key,
-            i,
-          ),
+          color: _categoryColor(entry.key, i),
         ),
       );
     }
@@ -584,13 +579,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     while (result.length < 3) {
-      final fallback =
-          fallbacks[result.length];
+      final fallback = fallbacks[result.length];
 
-      if (!result.any(
-        (item) =>
-            item.label == fallback.label,
-      )) {
+      if (!result.any((item) => item.label == fallback.label)) {
         result.add(fallback);
       } else {
         result.add(
@@ -598,10 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'outros',
             amount: 0,
             icon: Icons.category_outlined,
-            color: _categoryColor(
-              'outros',
-              result.length,
-            ),
+            color: _categoryColor('outros', result.length),
           ),
         );
       }
@@ -619,8 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   TransactionItem? _latestTransaction() {
     for (final transaction in _transactions) {
-      if (transaction.eventType !=
-          'opening_balance') {
+      if (transaction.eventType != 'opening_balance') {
         return transaction;
       }
     }
@@ -653,18 +640,14 @@ class _HomeScreenState extends State<HomeScreen> {
       return Icons.directions_bus_rounded;
     }
 
-    if (value.contains('saúde') ||
-        value.contains('saude')) {
+    if (value.contains('saúde') || value.contains('saude')) {
       return Icons.favorite_border_rounded;
     }
 
     return Icons.category_outlined;
   }
 
-  Color _categoryColor(
-    String category,
-    int index,
-  ) {
+  Color _categoryColor(String category, int index) {
     final value = category.toLowerCase();
 
     if (value.contains('alimenta') ||
@@ -685,11 +668,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return AppPalette.green;
     }
 
-    const colors = [
-      AppPalette.purpleLight,
-      AppPalette.pink,
-      AppPalette.green,
-    ];
+    const colors = [AppPalette.purpleLight, AppPalette.pink, AppPalette.green];
 
     return colors[index % colors.length];
   }
@@ -697,20 +676,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String _relativeDate(DateTime date) {
     final now = DateTime.now();
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final today = DateTime(now.year, now.month, now.day);
 
-    final transactionDay = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+    final transactionDay = DateTime(date.year, date.month, date.day);
 
-    final difference =
-        today.difference(transactionDay).inDays;
+    final difference = today.difference(transactionDay).inDays;
 
     if (difference == 0) {
       return 'hoje';
@@ -768,25 +738,15 @@ class _QuickAction extends StatelessWidget {
           child: Material(
             color: background,
             shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20),
               side: borderColor == null
                   ? BorderSide.none
-                  : BorderSide(
-                      color: borderColor!,
-                      width: 1.4,
-                    ),
+                  : BorderSide(color: borderColor!, width: 1.4),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: foreground,
-                  size: 31,
-                ),
-              ),
+              child: Center(child: Icon(icon, color: foreground, size: 31)),
             ),
           ),
         ),
@@ -795,13 +755,9 @@ class _QuickAction extends StatelessWidget {
           fit: BoxFit.scaleDown,
           child: Text(
             label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge
-                ?.copyWith(
-                  fontWeight:
-                      FontWeight.w500,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -828,50 +784,32 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 150,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 18,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius:
-            BorderRadius.circular(20),
-        border: Border.all(
-          color: border,
-        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
       ),
       child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            summary.icon,
-            color: summary.color,
-            size: 27,
-          ),
+          Icon(summary.icon, color: summary.color, size: 27),
           const SizedBox(height: 15),
           Text(
             summary.label,
             maxLines: 1,
-            overflow:
-                TextOverflow.ellipsis,
-            style: TextStyle(
-              color: secondaryText,
-              fontSize: 14,
-            ),
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: secondaryText, fontSize: 14),
           ),
           const SizedBox(height: 5),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              Formatters.money(
-                summary.amount,
-              ),
+              Formatters.money(summary.amount),
               style: TextStyle(
                 color: primaryText,
                 fontSize: 18,
-                fontWeight:
-                    FontWeight.w600,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

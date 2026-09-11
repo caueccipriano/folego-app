@@ -122,8 +122,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _accounts = accounts;
         _categories = categories;
         _selectedAccountId ??= accounts.isEmpty ? null : accounts.first.id;
-        _recurringCategoryId ??= categories.isEmpty ? null : categories.first.id;
-        final discretionary = categories.where((item) => !item.essential).toList();
+        _recurringCategoryId ??= categories.isEmpty
+            ? null
+            : categories.first.id;
+        final discretionary = categories
+            .where((item) => !item.essential)
+            .toList();
         _budgetCategoryId ??= discretionary.isNotEmpty
             ? discretionary.first.id
             : (categories.isEmpty ? null : categories.first.id);
@@ -170,125 +174,137 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _saveAccount() => _run(() async {
-        if (_accountName.text.trim().isEmpty) {
-          throw const FormatException('Dê um nome para sua conta.');
-        }
-        final balance = Formatters.parseMoney(_openingBalance.text);
-        await widget.repository.createOnboardingAccount(
-          spaceId: widget.space.id,
-          name: _accountName.text.trim(),
-          institution: _institution.text.trim().isEmpty ? null : _institution.text.trim(),
-          openingBalance: balance,
-          balanceDate: DateTime.now(),
-        );
-        await _refreshState();
-        _next();
-      });
+    if (_accountName.text.trim().isEmpty) {
+      throw const FormatException('Dê um nome para sua conta.');
+    }
+    final balance = Formatters.parseMoney(_openingBalance.text);
+    await widget.repository.createOnboardingAccount(
+      spaceId: widget.space.id,
+      name: _accountName.text.trim(),
+      institution: _institution.text.trim().isEmpty
+          ? null
+          : _institution.text.trim(),
+      openingBalance: balance,
+      balanceDate: DateTime.now(),
+    );
+    await _refreshState();
+    _next();
+  });
 
   Future<void> _saveIncome() => _run(() async {
-        if (_selectedAccountId == null) {
-          throw const FormatException('Selecione a conta em que você recebe.');
-        }
-        final amount = Formatters.parseMoney(_incomeAmount.text);
-        final day = int.tryParse(_incomeDay.text.trim()) ?? 0;
-        if (amount <= 0) throw const FormatException('Informe quanto você recebe.');
-        if (day < 1 || day > 31) throw const FormatException('Informe um dia entre 1 e 31.');
-        await widget.repository.configureIncome(
-          spaceId: widget.space.id,
-          name: _incomeName.text.trim().isEmpty ? 'Recebimento' : _incomeName.text.trim(),
-          amount: amount,
-          dayOfMonth: day,
-          accountId: _selectedAccountId!,
-          startsOn: DateTime.now(),
-        );
-        await _refreshState();
-        _next();
-      });
+    if (_selectedAccountId == null) {
+      throw const FormatException('Selecione a conta em que você recebe.');
+    }
+    final amount = Formatters.parseMoney(_incomeAmount.text);
+    final day = int.tryParse(_incomeDay.text.trim()) ?? 0;
+    if (amount <= 0) throw const FormatException('Informe quanto você recebe.');
+    if (day < 1 || day > 31) {
+      throw const FormatException('Informe um dia entre 1 e 31.');
+    }
+    await widget.repository.configureIncome(
+      spaceId: widget.space.id,
+      name: _incomeName.text.trim().isEmpty
+          ? 'Recebimento'
+          : _incomeName.text.trim(),
+      amount: amount,
+      dayOfMonth: day,
+      accountId: _selectedAccountId!,
+      startsOn: DateTime.now(),
+    );
+    await _refreshState();
+    _next();
+  });
 
   Future<void> _saveRecurring() => _run(() async {
-        final amount = Formatters.parseMoney(_recurringAmount.text);
-        if (amount <= 0) {
-          _next();
-          return;
-        }
-        if (_selectedAccountId == null || _recurringCategoryId == null) {
-          throw const FormatException('Selecione conta e categoria.');
-        }
-        final day = int.tryParse(_recurringDay.text.trim()) ?? 0;
-        if (day < 1 || day > 31) throw const FormatException('Informe um dia entre 1 e 31.');
-        await widget.repository.configureRecurringExpense(
-          spaceId: widget.space.id,
-          name: _recurringName.text.trim().isEmpty ? 'Conta fixa' : _recurringName.text.trim(),
-          amount: amount,
-          dayOfMonth: day,
-          categoryId: _recurringCategoryId!,
-          accountId: _selectedAccountId!,
-          startsOn: DateTime.now(),
-        );
-        await _refreshState();
-        _next();
-      });
+    final amount = Formatters.parseMoney(_recurringAmount.text);
+    if (amount <= 0) {
+      _next();
+      return;
+    }
+    if (_selectedAccountId == null || _recurringCategoryId == null) {
+      throw const FormatException('Selecione conta e categoria.');
+    }
+    final day = int.tryParse(_recurringDay.text.trim()) ?? 0;
+    if (day < 1 || day > 31) {
+      throw const FormatException('Informe um dia entre 1 e 31.');
+    }
+    await widget.repository.configureRecurringExpense(
+      spaceId: widget.space.id,
+      name: _recurringName.text.trim().isEmpty
+          ? 'Conta fixa'
+          : _recurringName.text.trim(),
+      amount: amount,
+      dayOfMonth: day,
+      categoryId: _recurringCategoryId!,
+      accountId: _selectedAccountId!,
+      startsOn: DateTime.now(),
+    );
+    await _refreshState();
+    _next();
+  });
 
   Future<void> _saveReserve() => _run(() async {
-        final amount = Formatters.parseMoney(_reserveBalance.text);
-        if (amount > 0 && !_state.reserveConfigured) {
-          await widget.repository.createOnboardingAccount(
-            spaceId: widget.space.id,
-            name: 'Reserva',
-            openingBalance: amount,
-            balanceDate: DateTime.now(),
-            type: 'reserve',
-            availableForSpending: false,
-          );
-          await _refreshState();
-        }
-        _next();
-      });
+    final amount = Formatters.parseMoney(_reserveBalance.text);
+    if (amount > 0 && !_state.reserveConfigured) {
+      await widget.repository.createOnboardingAccount(
+        spaceId: widget.space.id,
+        name: 'Reserva',
+        openingBalance: amount,
+        balanceDate: DateTime.now(),
+        type: 'reserve',
+        availableForSpending: false,
+      );
+      await _refreshState();
+    }
+    _next();
+  });
 
   Future<void> _saveCard() => _run(() async {
-        final invoice = Formatters.parseMoney(_cardInvoice.text);
-        if (_cardName.text.trim().isEmpty && invoice <= 0) {
-          _next();
-          return;
-        }
-        if (_selectedAccountId == null) {
-          throw const FormatException('Selecione a conta que paga a fatura.');
-        }
-        final closing = int.tryParse(_cardClosingDay.text.trim()) ?? 0;
-        final due = int.tryParse(_cardDueDay.text.trim()) ?? 0;
-        if (closing < 1 || closing > 31 || due < 1 || due > 31) {
-          throw const FormatException('Fechamento e vencimento devem estar entre 1 e 31.');
-        }
-        if (invoice > 0 && _invoiceDueDate == null) {
-          throw const FormatException('Informe o vencimento da fatura atual.');
-        }
-        await widget.repository.createCard(
-          spaceId: widget.space.id,
-          name: _cardName.text.trim().isEmpty ? 'Cartão' : _cardName.text.trim(),
-          closingDay: closing,
-          dueDay: due,
-          paymentAccountId: _selectedAccountId!,
-          issuer: _cardIssuer.text.trim().isEmpty ? null : _cardIssuer.text.trim(),
-          currentInvoiceBalance: invoice,
-          currentInvoiceDueDate: _invoiceDueDate,
-        );
-        await _refreshState();
-        _next();
-      });
+    final invoice = Formatters.parseMoney(_cardInvoice.text);
+    if (_cardName.text.trim().isEmpty && invoice <= 0) {
+      _next();
+      return;
+    }
+    if (_selectedAccountId == null) {
+      throw const FormatException('Selecione a conta que paga a fatura.');
+    }
+    final closing = int.tryParse(_cardClosingDay.text.trim()) ?? 0;
+    final due = int.tryParse(_cardDueDay.text.trim()) ?? 0;
+    if (closing < 1 || closing > 31 || due < 1 || due > 31) {
+      throw const FormatException(
+        'Fechamento e vencimento devem estar entre 1 e 31.',
+      );
+    }
+    if (invoice > 0 && _invoiceDueDate == null) {
+      throw const FormatException('Informe o vencimento da fatura atual.');
+    }
+    await widget.repository.createCard(
+      spaceId: widget.space.id,
+      name: _cardName.text.trim().isEmpty ? 'Cartão' : _cardName.text.trim(),
+      closingDay: closing,
+      dueDay: due,
+      paymentAccountId: _selectedAccountId!,
+      issuer: _cardIssuer.text.trim().isEmpty ? null : _cardIssuer.text.trim(),
+      currentInvoiceBalance: invoice,
+      currentInvoiceDueDate: _invoiceDueDate,
+    );
+    await _refreshState();
+    _next();
+  });
 
   Future<void> _finish() => _run(() async {
-        final amount = Formatters.parseMoney(_budgetAmount.text);
-        if (amount > 0 && _budgetCategoryId != null) {
-          await widget.repository.setBudgetItem(
-            spaceId: widget.space.id,
-            periodMonth: DateTime.now(),
-            categoryId: _budgetCategoryId!,
-            plannedAmount: amount,
-          );
-        }
-        await widget.repository.completeOnboarding(widget.space.id);
-        await widget.onCompleted();
-      });
+    final amount = Formatters.parseMoney(_budgetAmount.text);
+    if (amount > 0 && _budgetCategoryId != null) {
+      await widget.repository.setBudgetItem(
+        spaceId: widget.space.id,
+        periodMonth: DateTime.now(),
+        categoryId: _budgetCategoryId!,
+        plannedAmount: amount,
+      );
+    }
+    await widget.repository.completeOnboarding(widget.space.id);
+    await widget.onCompleted();
+  });
 
   Future<void> _pickInvoiceDate() async {
     final now = DateTime.now();
@@ -323,24 +339,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
                 children: [
-                  Text('Passo ${_step + 1} de ${_titles.length}', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                  Text(
+                    'Passo ${_step + 1} de ${_titles.length}',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(_titles[_step], style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+                  Text(
+                    _titles[_step],
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text(_subtitleForStep(), style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.45)),
+                  Text(
+                    _subtitleForStep(),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(height: 1.45),
+                  ),
                   const SizedBox(height: 22),
                   SectionCard(child: _stepContent()),
                   if (_error != null) ...[
                     const SizedBox(height: 14),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.w600)),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   _primaryButton(),
                   if (_isOptionalStep()) ...[
                     const SizedBox(height: 8),
-                    TextButton(onPressed: _busy ? null : _next, child: const Text('Pular por enquanto')),
+                    TextButton(
+                      onPressed: _busy ? null : _next,
+                      child: const Text('Pular por enquanto'),
+                    ),
                   ],
-                  if (_step > 0) TextButton(onPressed: _busy ? null : _previous, child: const Text('Voltar')),
+                  if (_step > 0)
+                    TextButton(
+                      onPressed: _busy ? null : _previous,
+                      child: const Text('Voltar'),
+                    ),
                 ],
               ),
             ),
@@ -372,73 +416,104 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _stepContent() {
     switch (_step) {
       case 0:
-        return Column(children: [
-          _field(_accountName, 'Nome da conta', hint: 'Ex.: Santander'),
-          const SizedBox(height: 12),
-          _field(_institution, 'Banco / instituição', hint: 'Opcional'),
-          const SizedBox(height: 12),
-          _moneyField(_openingBalance, 'Saldo disponível hoje'),
-          const SizedBox(height: 10),
-          const _Hint(text: 'Saldo inicial não será tratado como receita. Ele apenas ancora o caixa atual.'),
-        ]);
+        return Column(
+          children: [
+            _field(_accountName, 'Nome da conta', hint: 'Ex.: Santander'),
+            const SizedBox(height: 12),
+            _field(_institution, 'Banco / instituição', hint: 'Opcional'),
+            const SizedBox(height: 12),
+            _moneyField(_openingBalance, 'Saldo disponível hoje'),
+            const SizedBox(height: 10),
+            const _Hint(
+              text:
+                  'Saldo inicial não será tratado como receita. Ele apenas ancora o caixa atual.',
+            ),
+          ],
+        );
       case 1:
-        return Column(children: [
-          _field(_incomeName, 'Nome do recebimento', hint: 'Ex.: Salário'),
-          const SizedBox(height: 12),
-          _moneyField(_incomeAmount, 'Quanto você recebe?'),
-          const SizedBox(height: 12),
-          _numberField(_incomeDay, 'Dia do mês'),
-          const SizedBox(height: 12),
-          _accountDropdown('Conta em que recebe'),
-        ]);
+        return Column(
+          children: [
+            _field(_incomeName, 'Nome do recebimento', hint: 'Ex.: Salário'),
+            const SizedBox(height: 12),
+            _moneyField(_incomeAmount, 'Quanto você recebe?'),
+            const SizedBox(height: 12),
+            _numberField(_incomeDay, 'Dia do mês'),
+            const SizedBox(height: 12),
+            _accountDropdown('Conta em que recebe'),
+          ],
+        );
       case 2:
-        return Column(children: [
-          _field(_recurringName, 'Descrição', hint: 'Ex.: Aluguel'),
-          const SizedBox(height: 12),
-          _moneyField(_recurringAmount, 'Valor'),
-          const SizedBox(height: 12),
-          _numberField(_recurringDay, 'Dia do vencimento'),
-          const SizedBox(height: 12),
-          _categoryDropdown(recurring: true),
-          const SizedBox(height: 12),
-          _accountDropdown('Conta de pagamento'),
-        ]);
+        return Column(
+          children: [
+            _field(_recurringName, 'Descrição', hint: 'Ex.: Aluguel'),
+            const SizedBox(height: 12),
+            _moneyField(_recurringAmount, 'Valor'),
+            const SizedBox(height: 12),
+            _numberField(_recurringDay, 'Dia do vencimento'),
+            const SizedBox(height: 12),
+            _categoryDropdown(recurring: true),
+            const SizedBox(height: 12),
+            _accountDropdown('Conta de pagamento'),
+          ],
+        );
       case 3:
-        return Column(children: [
-          _moneyField(_reserveBalance, 'Valor já separado em reserva'),
-          const SizedBox(height: 10),
-          const _Hint(text: 'Informe somente dinheiro que já está separado do saldo da conta principal. Se ainda não tem reserva, pode pular.'),
-        ]);
+        return Column(
+          children: [
+            _moneyField(_reserveBalance, 'Valor já separado em reserva'),
+            const SizedBox(height: 10),
+            const _Hint(
+              text:
+                  'Informe somente dinheiro que já está separado do saldo da conta principal. Se ainda não tem reserva, pode pular.',
+            ),
+          ],
+        );
       case 4:
-        return Column(children: [
-          _field(_cardName, 'Nome do cartão', hint: 'Ex.: AMEX Gold'),
-          const SizedBox(height: 12),
-          _field(_cardIssuer, 'Banco / emissor', hint: 'Opcional'),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: _numberField(_cardClosingDay, 'Fecha dia')),
-            const SizedBox(width: 10),
-            Expanded(child: _numberField(_cardDueDay, 'Vence dia')),
-          ]),
-          const SizedBox(height: 12),
-          _moneyField(_cardInvoice, 'Fatura atual', hint: '0,00 se não houver'),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _pickInvoiceDate,
-            icon: const Icon(Icons.calendar_month_rounded),
-            label: Text(_invoiceDueDate == null ? 'Vencimento da fatura atual' : Formatters.fullDate.format(_invoiceDueDate!)),
-          ),
-          const SizedBox(height: 12),
-          _accountDropdown('Conta que paga a fatura'),
-        ]);
+        return Column(
+          children: [
+            _field(_cardName, 'Nome do cartão', hint: 'Ex.: AMEX Gold'),
+            const SizedBox(height: 12),
+            _field(_cardIssuer, 'Banco / emissor', hint: 'Opcional'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _numberField(_cardClosingDay, 'Fecha dia')),
+                const SizedBox(width: 10),
+                Expanded(child: _numberField(_cardDueDay, 'Vence dia')),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _moneyField(
+              _cardInvoice,
+              'Fatura atual',
+              hint: '0,00 se não houver',
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _pickInvoiceDate,
+              icon: const Icon(Icons.calendar_month_rounded),
+              label: Text(
+                _invoiceDueDate == null
+                    ? 'Vencimento da fatura atual'
+                    : Formatters.fullDate.format(_invoiceDueDate!),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _accountDropdown('Conta que paga a fatura'),
+          ],
+        );
       default:
-        return Column(children: [
-          _categoryDropdown(recurring: false),
-          const SizedBox(height: 12),
-          _moneyField(_budgetAmount, 'Limite mensal da categoria'),
-          const SizedBox(height: 10),
-          const _Hint(text: 'Você poderá criar todos os outros limites depois. Um já é suficiente para demonstrar o cálculo econômico do Fôlego.'),
-        ]);
+        return Column(
+          children: [
+            _categoryDropdown(recurring: false),
+            const SizedBox(height: 12),
+            _moneyField(_budgetAmount, 'Limite mensal da categoria'),
+            const SizedBox(height: 10),
+            const _Hint(
+              text:
+                  'Você poderá criar todos os outros limites depois. Um já é suficiente para demonstrar o cálculo econômico do Fôlego.',
+            ),
+          ],
+        );
     }
   }
 
@@ -451,11 +526,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _saveCard,
       _finish,
     ];
-    final labels = ['Salvar conta', 'Salvar recebimento', 'Salvar e continuar', 'Salvar reserva', 'Salvar cartão', 'Ver meu Fôlego'];
+    final labels = [
+      'Salvar conta',
+      'Salvar recebimento',
+      'Salvar e continuar',
+      'Salvar reserva',
+      'Salvar cartão',
+      'Ver meu Fôlego',
+    ];
     return FilledButton(
       onPressed: _busy ? null : actions[_step],
       child: _busy
-          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
           : Text(labels[_step]),
     );
   }
@@ -463,22 +549,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _accountDropdown(String label) {
     return DropdownButtonFormField<String>(
       key: ValueKey(_selectedAccountId),
-      initialValue: _accounts.any((item) => item.id == _selectedAccountId) ? _selectedAccountId : null,
+      initialValue: _accounts.any((item) => item.id == _selectedAccountId)
+          ? _selectedAccountId
+          : null,
       decoration: InputDecoration(labelText: label),
-      items: _accounts.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
+      items: _accounts
+          .map(
+            (item) => DropdownMenuItem(value: item.id, child: Text(item.name)),
+          )
+          .toList(),
       onChanged: (value) => setState(() => _selectedAccountId = value),
     );
   }
 
   Widget _categoryDropdown({required bool recurring}) {
     final discretionary = _categories.where((item) => !item.essential).toList();
-    final list = recurring ? _categories : (discretionary.isEmpty ? _categories : discretionary);
+    final list = recurring
+        ? _categories
+        : (discretionary.isEmpty ? _categories : discretionary);
     final current = recurring ? _recurringCategoryId : _budgetCategoryId;
     return DropdownButtonFormField<String>(
       key: ValueKey(current),
       initialValue: list.any((item) => item.id == current) ? current : null,
-      decoration: InputDecoration(labelText: recurring ? 'Categoria' : 'Categoria do orçamento'),
-      items: list.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
+      decoration: InputDecoration(
+        labelText: recurring ? 'Categoria' : 'Categoria do orçamento',
+      ),
+      items: list
+          .map(
+            (item) => DropdownMenuItem(value: item.id, child: Text(item.name)),
+          )
+          .toList(),
       onChanged: (value) => setState(() {
         if (recurring) {
           _recurringCategoryId = value;
@@ -489,20 +589,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _field(TextEditingController controller, String label, {String? hint}) {
-    return TextField(controller: controller, decoration: InputDecoration(labelText: label, hintText: hint));
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    String? hint,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label, hintText: hint),
+    );
   }
 
-  Widget _moneyField(TextEditingController controller, String label, {String? hint}) {
+  Widget _moneyField(
+    TextEditingController controller,
+    String label, {
+    String? hint,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: InputDecoration(labelText: label, hintText: hint ?? '0,00', prefixText: 'R\$ '),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint ?? '0,00',
+        prefixText: 'R\$ ',
+      ),
     );
   }
 
   Widget _numberField(TextEditingController controller, String label) {
-    return TextField(controller: controller, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: label));
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(labelText: label),
+    );
   }
 
   String _message(Object error) {
@@ -521,9 +640,18 @@ class _Hint extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.info_outline_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+        Icon(
+          Icons.info_outline_rounded,
+          size: 18,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(width: 8),
-        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.4))),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.4),
+          ),
+        ),
       ],
     );
   }

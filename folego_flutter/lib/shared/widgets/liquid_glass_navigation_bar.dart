@@ -15,11 +15,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
 
   static const _items = <_GlassNavItem>[
-    _GlassNavItem(
-      Icons.home_outlined,
-      Icons.home_rounded,
-      'Início',
-    ),
+    _GlassNavItem(Icons.home_outlined, Icons.home_rounded, 'Início'),
     _GlassNavItem(
       Icons.receipt_long_outlined,
       Icons.receipt_long_rounded,
@@ -35,17 +31,12 @@ class LiquidGlassNavigationBar extends StatelessWidget {
       Icons.account_balance_wallet_rounded,
       'Carteira',
     ),
-    _GlassNavItem(
-      Icons.person_outline_rounded,
-      Icons.person_rounded,
-      'Perfil',
-    ),
+    _GlassNavItem(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final borderColor = isDark
         ? Colors.white.withValues(alpha: .18)
@@ -53,28 +44,19 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(
-        14,
-        0,
-        14,
-        10,
-      ),
+      minimum: const EdgeInsets.fromLTRB(14, 0, 14, 10),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: isDark ? .38 : .10,
-              ),
+              color: Colors.black.withValues(alpha: isDark ? .38 : .10),
               blurRadius: 34,
               spreadRadius: -4,
               offset: const Offset(0, 14),
             ),
             BoxShadow(
-              color: Colors.white.withValues(
-                alpha: isDark ? .04 : .45,
-              ),
+              color: Colors.white.withValues(alpha: isDark ? .04 : .45),
               blurRadius: 12,
               spreadRadius: -5,
               offset: const Offset(0, -2),
@@ -84,37 +66,23 @@ class LiquidGlassNavigationBar extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
           child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: 34,
-              sigmaY: 34,
-            ),
+            filter: ImageFilter.blur(sigmaX: 34, sigmaY: 34),
             child: Container(
               height: 76,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(
-                  color: borderColor,
-                  width: 1.1,
-                ),
+                border: Border.all(color: borderColor, width: 1.1),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: isDark
                       ? [
-                          Colors.white.withValues(
-                            alpha: .105,
-                          ),
-                          Colors.white.withValues(
-                            alpha: .035,
-                          ),
+                          Colors.white.withValues(alpha: .105),
+                          Colors.white.withValues(alpha: .035),
                         ]
                       : [
-                          Colors.white.withValues(
-                            alpha: .30,
-                          ),
-                          Colors.white.withValues(
-                            alpha: .10,
-                          ),
+                          Colors.white.withValues(alpha: .30),
+                          Colors.white.withValues(alpha: .10),
                         ],
                 ),
               ),
@@ -130,15 +98,9 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white
-                                .withValues(alpha: 0),
-                            Colors.white.withValues(
-                              alpha: isDark
-                                  ? .24
-                                  : .85,
-                            ),
-                            Colors.white
-                                .withValues(alpha: 0),
+                            Colors.white.withValues(alpha: 0),
+                            Colors.white.withValues(alpha: isDark ? .24 : .85),
+                            Colors.white.withValues(alpha: 0),
                           ],
                         ),
                       ),
@@ -146,25 +108,18 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                   ),
 
                   Row(
-                    children: List.generate(
-                      _items.length,
-                      (index) {
-                        final item = _items[index];
-                        final selected =
-                            selectedIndex == index;
+                    children: List.generate(_items.length, (index) {
+                      final item = _items[index];
+                      final selected = selectedIndex == index;
 
-                        return Expanded(
-                          child: _Destination(
-                            item: item,
-                            selected: selected,
-                            onTap: () =>
-                                onDestinationSelected(
-                              index,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                      return Expanded(
+                        child: _Destination(
+                          item: item,
+                          selected: selected,
+                          onTap: () => onDestinationSelected(index),
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -189,15 +144,13 @@ class _Destination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final foreground = selected
         ? Colors.white
         : isDark
-            ? Colors.white.withValues(alpha: .76)
-            : const Color(0xFF35333A)
-                .withValues(alpha: .78);
+        ? Colors.white.withValues(alpha: .76)
+        : const Color(0xFF35333A).withValues(alpha: .78);
 
     return Semantics(
       selected: selected,
@@ -209,10 +162,7 @@ class _Destination extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(
-            horizontal: 3,
-            vertical: 7,
-          ),
+          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: selected
@@ -220,34 +170,27 @@ class _Destination extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppPalette.purpleLight
-                          .withValues(alpha: .96),
-                      AppPalette.purple
-                          .withValues(alpha: .84),
+                      AppPalette.purpleLight.withValues(alpha: .96),
+                      AppPalette.purple.withValues(alpha: .84),
                     ],
                   )
                 : null,
             border: selected
                 ? Border.all(
-                    color: Colors.white.withValues(
-                      alpha: isDark ? .20 : .52,
-                    ),
+                    color: Colors.white.withValues(alpha: isDark ? .20 : .52),
                     width: 1,
                   )
                 : null,
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: AppPalette.purple
-                          .withValues(alpha: .30),
+                      color: AppPalette.purple.withValues(alpha: .30),
                       blurRadius: 18,
                       spreadRadius: -4,
                       offset: const Offset(0, 6),
                     ),
                     BoxShadow(
-                      color: Colors.white.withValues(
-                        alpha: .16,
-                      ),
+                      color: Colors.white.withValues(alpha: .16),
                       blurRadius: 7,
                       spreadRadius: -4,
                       offset: const Offset(0, -2),
@@ -256,13 +199,10 @@ class _Destination extends StatelessWidget {
                 : null,
           ),
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                selected
-                    ? item.selectedIcon
-                    : item.icon,
+                selected ? item.selectedIcon : item.icon,
                 color: foreground,
                 size: 24,
               ),
@@ -275,9 +215,7 @@ class _Destination extends StatelessWidget {
                     color: foreground,
                     fontSize: 10.5,
                     height: 1,
-                    fontWeight: selected
-                        ? FontWeight.w800
-                        : FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
               ),
@@ -290,11 +228,7 @@ class _Destination extends StatelessWidget {
 }
 
 class _GlassNavItem {
-  const _GlassNavItem(
-    this.icon,
-    this.selectedIcon,
-    this.label,
-  );
+  const _GlassNavItem(this.icon, this.selectedIcon, this.label);
 
   final IconData icon;
   final IconData selectedIcon;

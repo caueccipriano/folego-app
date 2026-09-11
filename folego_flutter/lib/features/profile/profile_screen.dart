@@ -41,23 +41,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text('Perfil', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+          Text(
+            'Perfil',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 18),
           SectionCard(
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                  child: Text(_name.isEmpty ? '?' : _name[0].toUpperCase(), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
+                  child: Text(
+                    _name.isEmpty ? '?' : _name[0].toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-                      if (email.isNotEmpty) Text(email, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(
+                        _name,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (email.isNotEmpty)
+                        Text(
+                          email,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                     ],
                   ),
                 ),

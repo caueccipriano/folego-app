@@ -1,10 +1,7 @@
 import 'package:intl/intl.dart';
 
 abstract final class Formatters {
-  static final currency = NumberFormat.currency(
-    locale: 'pt_BR',
-    symbol: 'R\$',
-  );
+  static final currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
   static final shortDate = DateFormat('dd MMM', 'pt_BR');
   static final fullDate = DateFormat('dd/MM/yyyy', 'pt_BR');

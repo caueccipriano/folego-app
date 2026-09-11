@@ -15,10 +15,5 @@ Future<void> main() async {
   );
 
   final client = Supabase.instance.client;
-  runApp(
-    FolegoApp(
-      client: client,
-      repository: FolegoRepository(client),
-    ),
-  );
+  runApp(FolegoApp(client: client, repository: FolegoRepository(client)));
 }

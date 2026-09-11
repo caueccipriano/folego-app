@@ -12,13 +12,13 @@ abstract final class AppTypography {
     Color? color,
   }) {
     return Theme.of(context).textTheme.headlineLarge!.copyWith(
-          fontFamily: displayFont,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w700,
-          height: 1.05,
-          letterSpacing: -0.8,
-          color: color,
-        );
+      fontFamily: displayFont,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      height: 1.05,
+      letterSpacing: -0.8,
+      color: color,
+    );
   }
 
   static TextStyle section(
@@ -27,13 +27,13 @@ abstract final class AppTypography {
     Color? color,
   }) {
     return Theme.of(context).textTheme.titleLarge!.copyWith(
-          fontFamily: displayFont,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w700,
-          height: 1.1,
-          letterSpacing: -0.4,
-          color: color,
-        );
+      fontFamily: displayFont,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      height: 1.1,
+      letterSpacing: -0.4,
+      color: color,
+    );
   }
 
   static TextStyle money(
@@ -42,11 +42,11 @@ abstract final class AppTypography {
     Color? color,
   }) {
     return Theme.of(context).textTheme.displayLarge!.copyWith(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w800,
-          height: .95,
-          letterSpacing: -2,
-          color: color,
-        );
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      height: .95,
+      letterSpacing: -2,
+      color: color,
+    );
   }
 }

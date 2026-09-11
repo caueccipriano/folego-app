@@ -62,7 +62,10 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
                 const SizedBox(height: 12),
                 const Text('Não conseguimos abrir suas finanças.'),
                 const SizedBox(height: 12),
-                FilledButton(onPressed: _load, child: const Text('Tentar de novo')),
+                FilledButton(
+                  onPressed: _load,
+                  child: const Text('Tentar de novo'),
+                ),
                 TextButton(
                   onPressed: widget.client.auth.signOut,
                   child: const Text('Sair'),

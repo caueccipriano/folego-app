@@ -8,11 +8,7 @@ import '../bootstrap/bootstrap_screen.dart';
 import 'auth_screen.dart';
 
 class AuthGate extends StatefulWidget {
-  const AuthGate({
-    super.key,
-    required this.client,
-    required this.repository,
-  });
+  const AuthGate({super.key, required this.client, required this.repository});
 
   final SupabaseClient client;
   final FolegoRepository repository;

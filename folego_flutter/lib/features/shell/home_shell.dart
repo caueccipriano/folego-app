@@ -11,11 +11,7 @@ import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({
-    super.key,
-    required this.space,
-    required this.repository,
-  });
+  const HomeShell({super.key, required this.space, required this.repository});
 
   final FinancialSpace space;
   final FolegoRepository repository;
@@ -31,38 +27,32 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(space: widget.space, repository: widget.repository),
-      TransactionsScreen(
-        repository: widget.repository,
-      ),
-      const PlanScreen(),
-      const WalletScreen(),
+      TransactionsScreen(repository: widget.repository),
+      PlanScreen(repository: widget.repository, spaceId: widget.space.id),
+      WalletScreen(repository: widget.repository, spaceId: widget.space.id),
       ProfileScreen(
         client: Supabase.instance.client,
         repository: widget.repository,
       ),
     ];
 
-return ColoredBox(
-  color: Theme.of(context).scaffoldBackgroundColor,
-  child: Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 520),
-      child: Scaffold(
-        extendBody: true,
-        body: IndexedStack(
-          index: _index,
-          children: pages,
-        ),
-        bottomNavigationBar: LiquidGlassNavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (value) {
-            setState(() => _index = value);
-          },
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Scaffold(
+            extendBody: true,
+            body: IndexedStack(index: _index, children: pages),
+            bottomNavigationBar: LiquidGlassNavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (value) {
+                setState(() => _index = value);
+              },
+            ),
+          ),
         ),
       ),
-    ),
-  ),
-);
-
+    );
   }
 }
