@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 class LiquidGlassNavigationBar extends StatelessWidget {
   const LiquidGlassNavigationBar({
@@ -14,53 +15,27 @@ class LiquidGlassNavigationBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
-  static const _items = <_NavItem>[
-    _NavItem(
-      icon: AppIcons.home,
-      label: 'Início',
-    ),
-    _NavItem(
-      icon: AppIcons.transactions,
-      label: 'Lançamentos',
-    ),
-    _NavItem(
-      icon: AppIcons.plan,
-      label: 'Plano',
-    ),
-    _NavItem(
-      icon: AppIcons.wallet,
-      label: 'Carteira',
-    ),
-    _NavItem(
-      icon: AppIcons.profile,
-      label: 'Perfil',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
-    final background = isDark
-        ? AppColors.darkSurface
-        : AppColors.lightSurface;
+    final items = <_NavItem>[
+      _NavItem(icon: AppIcons.home, label: l10n.home),
+      _NavItem(icon: AppIcons.transactions, label: l10n.transactions),
+      _NavItem(icon: AppIcons.plan, label: l10n.plan),
+      _NavItem(icon: AppIcons.wallet, label: l10n.wallet),
+      _NavItem(icon: AppIcons.profile, label: l10n.profile),
+    ];
 
-    final border = isDark
-        ? AppColors.darkBorder
-        : AppColors.lightBorder;
+    final background = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(
-        12,
-        0,
-        12,
-        10,
-      ),
-
-      // IMPORTANTE:
-      // altura fixa para a barra NÃO ocupar a tela inteira.
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       child: SizedBox(
         height: 74,
         child: Row(
@@ -68,20 +43,15 @@ class LiquidGlassNavigationBar extends StatelessWidget {
           children: [
             Flexible(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 520,
-                ),
+                constraints: const BoxConstraints(maxWidth: 520),
                 child: Container(
                   width: double.infinity,
                   height: 74,
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: background,
-                    borderRadius:
-                        BorderRadius.circular(26),
-                    border: Border.all(
-                      color: border,
-                    ),
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: border),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(
@@ -94,23 +64,17 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                     ],
                   ),
                   child: Row(
-                    children: List.generate(
-                      _items.length,
-                      (index) {
-                        return Expanded(
-                          child: _Destination(
-                            item: _items[index],
-                            selected:
-                                selectedIndex == index,
-                            onTap: () {
-                              onDestinationSelected(
-                                index,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
+                    children: List.generate(items.length, (index) {
+                      return Expanded(
+                        child: _Destination(
+                          item: items[index],
+                          selected: selectedIndex == index,
+                          onTap: () {
+                            onDestinationSelected(index);
+                          },
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ),
@@ -136,20 +100,16 @@ class _Destination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark =
-        theme.brightness == Brightness.dark;
 
-    final activePurple = isDark
-        ? AppColors.purpleDark
-        : AppColors.purpleLight;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final activePurple = isDark ? AppColors.purpleDark : AppColors.purpleLight;
 
     final inactiveColor = isDark
         ? AppColors.darkSecondaryText
         : AppColors.lightSecondaryText;
 
-    final activeForeground = isDark
-        ? AppColors.darkPrimaryText
-        : Colors.white;
+    final activeForeground = isDark ? AppColors.darkPrimaryText : Colors.white;
 
     return Semantics(
       selected: selected,
@@ -157,39 +117,28 @@ class _Destination extends StatelessWidget {
       label: item.label,
       child: Tooltip(
         message: item.label,
-        waitDuration:
-            const Duration(milliseconds: 600),
+        waitDuration: const Duration(milliseconds: 600),
         child: InkWell(
           onTap: onTap,
-          borderRadius:
-              BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
-            duration:
-                const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.symmetric(
-              horizontal: 2,
-            ),
+            margin: const EdgeInsets.symmetric(horizontal: 2),
             decoration: BoxDecoration(
-              color: selected
-                  ? activePurple
-                  : Colors.transparent,
-              borderRadius:
-                  BorderRadius.circular(20),
+              color: selected ? activePurple : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       item.icon,
                       size: 23,
-                      color: selected
-                          ? activeForeground
-                          : inactiveColor,
+                      color: selected ? activeForeground : inactiveColor,
                     ),
                     const SizedBox(height: 4),
                     FittedBox(
@@ -197,22 +146,18 @@ class _Destination extends StatelessWidget {
                       child: Text(
                         item.label,
                         maxLines: 1,
-                        style:
-                            AppTypography.label(
+                        style: AppTypography.label(
                           context,
                           fontSize: 10,
                           fontWeight: selected
                               ? FontWeight.w600
                               : FontWeight.w500,
-                          color: selected
-                              ? activeForeground
-                              : inactiveColor,
+                          color: selected ? activeForeground : inactiveColor,
                         ),
                       ),
                     ),
                   ],
                 ),
-
                 if (selected)
                   Positioned(
                     bottom: 4,
@@ -221,8 +166,7 @@ class _Destination extends StatelessWidget {
                       height: 3,
                       decoration: BoxDecoration(
                         color: AppColors.lime,
-                        borderRadius:
-                            BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(99),
                       ),
                     ),
                   ),
@@ -236,10 +180,7 @@ class _Destination extends StatelessWidget {
 }
 
 class _NavItem {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-  });
+  const _NavItem({required this.icon, required this.label});
 
   final IconData icon;
   final String label;

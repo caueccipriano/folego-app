@@ -9,8 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
   cupertino_icons: ^1.0.8
-  intl: ^0.20.3
+  intl: any
   supabase_flutter: ^2.17.2
   google_fonts: ^8.2.1
   tabler_icons_plus: ^3.46.0
@@ -18,7 +22,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+  generate: true
