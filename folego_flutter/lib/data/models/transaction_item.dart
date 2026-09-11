@@ -23,6 +23,17 @@ class TransactionItem {
   final String? categoryName;
   final String? categoryColorHex;
 
+  bool get isIncome {
+    return eventType == 'income';
+  }
+
+  bool get isExpense {
+    return eventType == 'expense' ||
+        eventType == 'card_purchase' ||
+        eventType == 'benefit_expense' ||
+        eventType == 'debt_payment';
+  }
+
   factory TransactionItem.fromJson(Map<String, dynamic> json) {
     final category =
         (json['category'] ?? json['categories']) as Map<String, dynamic>?;

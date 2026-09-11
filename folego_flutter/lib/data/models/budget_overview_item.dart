@@ -11,10 +11,20 @@ class BudgetOverviewItem {
     required this.usageRatio,
     required this.status,
     this.colorHex,
+    this.parentId,
+    this.parentName,
   });
 
   final String categoryId;
   final String categoryName;
+
+  /// Null = categoria principal.
+  /// Preenchido = subcategoria.
+  final String? parentId;
+
+  /// Nome da categoria principal quando este item for subcategoria.
+  final String? parentName;
+
   final String? colorHex;
   final bool essential;
 
@@ -28,37 +38,79 @@ class BudgetOverviewItem {
 
   final String status;
 
+  bool get isParent => parentId == null;
+
+  bool get isSubcategory => parentId != null;
+
   bool get hasBudget => plannedAmount > 0;
 
   bool get hasActivity => actualAmount > 0;
 
-  bool get isOverBudget => plannedAmount > 0 && actualAmount > plannedAmount;
+  bool get isOverBudget =>
+      plannedAmount > 0 &&
+      actualAmount > plannedAmount;
 
   double get progress {
     if (plannedAmount <= 0) {
       return 0;
     }
 
-    return usageRatio.clamp(0.0, 1.0);
-  }
-
-  factory BudgetOverviewItem.fromJson(Map<String, dynamic> json) {
-    return BudgetOverviewItem(
-      categoryId: json['category_id'] as String,
-      categoryName: json['category_name'] as String,
-      colorHex: json['color_hex'] as String?,
-      essential: json['essential'] as bool? ?? false,
-      plannedAmount: _asDouble(json['planned_amount']),
-      actualAmount: _asDouble(json['actual_amount']),
-      remainingAmount: _asDouble(json['remaining_amount']),
-      warningThreshold: _asDouble(json['warning_threshold']),
-      criticalThreshold: _asDouble(json['critical_threshold']),
-      usageRatio: _asDouble(json['usage_ratio']),
-      status: json['status'] as String? ?? 'none',
+    return usageRatio.clamp(
+      0.0,
+      1.0,
     );
   }
 
-  static double _asDouble(dynamic value) {
+  factory BudgetOverviewItem.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return BudgetOverviewItem(
+      categoryId:
+          json['category_id'] as String,
+      categoryName:
+          json['category_name'] as String,
+      parentId:
+          json['parent_id'] as String?,
+      parentName:
+          json['parent_name'] as String?,
+      colorHex:
+          json['color_hex'] as String?,
+      essential:
+          json['essential'] as bool? ??
+              false,
+      plannedAmount:
+          _asDouble(
+        json['planned_amount'],
+      ),
+      actualAmount:
+          _asDouble(
+        json['actual_amount'],
+      ),
+      remainingAmount:
+          _asDouble(
+        json['remaining_amount'],
+      ),
+      warningThreshold:
+          _asDouble(
+        json['warning_threshold'],
+      ),
+      criticalThreshold:
+          _asDouble(
+        json['critical_threshold'],
+      ),
+      usageRatio:
+          _asDouble(
+        json['usage_ratio'],
+      ),
+      status:
+          json['status'] as String? ??
+              'none',
+    );
+  }
+
+  static double _asDouble(
+    dynamic value,
+  ) {
     if (value == null) {
       return 0;
     }
@@ -67,6 +119,9 @@ class BudgetOverviewItem {
       return value.toDouble();
     }
 
-    return double.tryParse(value.toString()) ?? 0;
+    return double.tryParse(
+          value.toString(),
+        ) ??
+        0;
   }
 }

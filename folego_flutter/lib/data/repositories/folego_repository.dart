@@ -1,19 +1,24 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/upcoming_events.dart';
+
 import '../models/account_item.dart';
+import '../models/budget_overview_item.dart';
 import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
 import '../models/onboarding_state.dart';
 import '../models/recurring_item.dart';
 import '../models/transaction_item.dart';
-import '../models/budget_overview_item.dart';
+import '../models/upcoming_events.dart';
 import '../models/wallet_overview.dart';
 
 class FolegoRepository {
   FolegoRepository(this._client);
 
   final SupabaseClient _client;
+
+  // ---------------------------------------------------------------------------
+  // ESPAÇO / PERFIL
+  // ---------------------------------------------------------------------------
 
   Future<FinancialSpace> getPrimarySpace() async {
     final response = await _client
@@ -54,6 +59,10 @@ class FolegoRepository {
 
     return fullName.trim().split(RegExp(r'\s+')).first;
   }
+
+  // ---------------------------------------------------------------------------
+  // AGENDA FINANCEIRA
+  // ---------------------------------------------------------------------------
 
   Future<List<UpcomingEvent>> getUpcomingEvents(
     String spaceId, {
@@ -105,7 +114,8 @@ class FolegoRepository {
         category:categories(
           id,
           name,
-          color_hex
+          color_hex,
+          parent_id
         ),
         financial_impacts(
           dimension,
@@ -136,16 +146,6 @@ class FolegoRepository {
     required String? categoryId,
     required DateTime occurredAt,
   }) async {
-    String dateOnly(DateTime date) {
-      final year = date.year.toString().padLeft(4, '0');
-
-      final month = date.month.toString().padLeft(2, '0');
-
-      final day = date.day.toString().padLeft(2, '0');
-
-      return '$year-$month-$day';
-    }
-
     await _client.rpc(
       'update_simple_transaction',
       params: {
@@ -156,7 +156,7 @@ class FolegoRepository {
         'p_description': description.trim(),
         'p_category_id': categoryId,
         'p_occurred_at': occurredAt.toIso8601String(),
-        'p_competence_date': dateOnly(occurredAt),
+        'p_competence_date': _date(occurredAt),
       },
     );
   }
@@ -168,13 +168,35 @@ class FolegoRepository {
   Future<List<RecurringItem>> listRecurringItems(String spaceId) async {
     final response = await _client
         .from('recurring_items')
-        .select(
-          'id,space_id,name,item_type,amount,frequency,'
-          'day_of_month,weekday,month_of_year,category_id,'
-          'account_id,card_id,starts_on,ends_on,certainty,active,'
-          'category:categories(name),'
-          'account:accounts(name)',
-        )
+        .select('''
+          id,
+          space_id,
+          name,
+          item_type,
+          amount,
+          frequency,
+          day_of_month,
+          weekday,
+          month_of_year,
+          category_id,
+          account_id,
+          card_id,
+          starts_on,
+          ends_on,
+          certainty,
+          active,
+          monthly_days,
+          monthly_last_day,
+          category:categories(
+            id,
+            name,
+            parent_id
+          ),
+          account:accounts(
+            id,
+            name
+          )
+          ''')
         .eq('space_id', spaceId)
         .order('active', ascending: false)
         .order('name', ascending: true);
@@ -249,8 +271,11 @@ class FolegoRepository {
 
           'weekday': weekday,
           'month_of_year': monthOfYear,
+
           'starts_on': _date(startsOn),
+
           'ends_on': endsOn == null ? null : _date(endsOn),
+
           'certainty': certainty,
           'active': true,
         })
@@ -326,8 +351,11 @@ class FolegoRepository {
 
           'weekday': weekday,
           'month_of_year': monthOfYear,
+
           'starts_on': _date(startsOn),
+
           'ends_on': endsOn == null ? null : _date(endsOn),
+
           'certainty': certainty,
           'active': active,
         })
@@ -487,7 +515,7 @@ class FolegoRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // CONTAS E CATEGORIAS
+  // CONTAS
   // ---------------------------------------------------------------------------
 
   Future<List<AccountItem>> listAccounts(String spaceId) async {
@@ -503,10 +531,26 @@ class FolegoRepository {
     ).map(AccountItem.fromJson).toList();
   }
 
+  // ---------------------------------------------------------------------------
+  // CATEGORIAS
+  // ---------------------------------------------------------------------------
+
+  /// Retorna categorias principais + subcategorias de despesa.
+  ///
+  /// parent_id == null:
+  /// categoria principal.
+  ///
+  /// parent_id preenchido:
+  /// subcategoria.
   Future<List<CategoryItem>> listExpenseCategories(String spaceId) async {
     final response = await _client
         .from('categories')
-        .select('id,name,essential')
+        .select('''
+          id,
+          name,
+          essential,
+          parent_id
+          ''')
         .eq('space_id', spaceId)
         .eq('kind', 'expense')
         .eq('active', true)
@@ -517,12 +561,35 @@ class FolegoRepository {
     ).map(CategoryItem.fromJson).toList();
   }
 
-  // Já deixamos preparado para quando criarmos
-  // as categorias próprias de receita.
+  /// Apenas categorias principais de despesa.
+  Future<List<CategoryItem>> listExpenseParentCategories(String spaceId) async {
+    final categories = await listExpenseCategories(spaceId);
+
+    return categories.where((category) => category.isParent).toList();
+  }
+
+  /// Retorna as subcategorias de uma categoria principal.
+  Future<List<CategoryItem>> listExpenseSubcategories({
+    required String spaceId,
+    required String parentId,
+  }) async {
+    final categories = await listExpenseCategories(spaceId);
+
+    return categories
+        .where((category) => category.parentId == parentId)
+        .toList();
+  }
+
+  /// Retorna categorias principais + subcategorias de receita.
   Future<List<CategoryItem>> listIncomeCategories(String spaceId) async {
     final response = await _client
         .from('categories')
-        .select('id,name,essential')
+        .select('''
+          id,
+          name,
+          essential,
+          parent_id
+          ''')
         .eq('space_id', spaceId)
         .eq('kind', 'income')
         .eq('active', true)
@@ -531,6 +598,25 @@ class FolegoRepository {
     return List<Map<String, dynamic>>.from(
       response,
     ).map(CategoryItem.fromJson).toList();
+  }
+
+  /// Apenas categorias principais de receita.
+  Future<List<CategoryItem>> listIncomeParentCategories(String spaceId) async {
+    final categories = await listIncomeCategories(spaceId);
+
+    return categories.where((category) => category.isParent).toList();
+  }
+
+  /// Retorna as subcategorias de uma categoria principal de receita.
+  Future<List<CategoryItem>> listIncomeSubcategories({
+    required String spaceId,
+    required String parentId,
+  }) async {
+    final categories = await listIncomeCategories(spaceId);
+
+    return categories
+        .where((category) => category.parentId == parentId)
+        .toList();
   }
 
   // ---------------------------------------------------------------------------
@@ -614,22 +700,18 @@ class FolegoRepository {
     return data as String;
   }
 
-Future<WalletOverview> getWalletOverview({
-  required String spaceId,
-}) async {
-  final data = await _client.rpc(
-    'get_wallet_overview',
-    params: {
-      'p_space_id': spaceId,
-    },
-  );
+  // ---------------------------------------------------------------------------
+  // CARTEIRA
+  // ---------------------------------------------------------------------------
 
-  return WalletOverview.fromJson(
-    Map<String, dynamic>.from(
-      data as Map,
-    ),
-  );
-}
+  Future<WalletOverview> getWalletOverview({required String spaceId}) async {
+    final data = await _client.rpc(
+      'get_wallet_overview',
+      params: {'p_space_id': spaceId},
+    );
+
+    return WalletOverview.fromJson(Map<String, dynamic>.from(data as Map));
+  }
 
   Future<String> createCard({
     required String spaceId,
@@ -667,6 +749,10 @@ Future<WalletOverview> getWalletOverview({
 
     return data as String;
   }
+
+  // ---------------------------------------------------------------------------
+  // PLANEJAMENTO / ORÇAMENTO
+  // ---------------------------------------------------------------------------
 
   Future<List<BudgetOverviewItem>> getBudgetOverview({
     required String spaceId,
@@ -809,12 +895,12 @@ Future<WalletOverview> getWalletOverview({
   }
 
   String _date(DateTime date) {
-    final y = date.year.toString().padLeft(4, '0');
+    final year = date.year.toString().padLeft(4, '0');
 
-    final m = date.month.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
-    final d = date.day.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
 
-    return '$y-$m-$d';
+    return '$year-$month-$day';
   }
 }
