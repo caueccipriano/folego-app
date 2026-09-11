@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/recurring_item.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'recurring_form_sheet.dart';
+import 'transaction_edit_sheet.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({
@@ -96,6 +98,56 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         _loading = false;
         _error = _friendlyError(error);
       });
+    }
+  }
+
+  Future<void> _editTransaction(
+    TransactionItem item,
+  ) async {
+    final space = _space;
+
+    if (space == null) {
+      return;
+    }
+
+    if (!item.canEditAsSimple) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Esse tipo de lançamento ainda possui um fluxo próprio de edição.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      builder: (_) => TransactionEditSheet(
+        space: space,
+        repository: widget.repository,
+        transaction: item,
+      ),
+    );
+
+    if (saved == true) {
+      await _load();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Lançamento atualizado.',
+          ),
+        ),
+      );
     }
   }
 
@@ -430,6 +482,8 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                       transactions:
                           _transactions,
                       onRefresh: _load,
+                      onEdit:
+                          _editTransaction,
                     ),
                     _RecurringTab(
                       items:
@@ -592,12 +646,17 @@ class _TransactionsTab
   const _TransactionsTab({
     required this.transactions,
     required this.onRefresh,
+    required this.onEdit,
   });
 
   final List<TransactionItem> transactions;
 
   final Future<void> Function()
       onRefresh;
+
+  final Future<void> Function(
+    TransactionItem,
+  ) onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -669,17 +728,57 @@ class _TransactionsTab
                           .onSurface;
 
           return ListTile(
+            onTap: transaction.canEditAsSimple
+                ? () => onEdit(transaction)
+                : null,
             contentPadding:
                 const EdgeInsets.symmetric(
               horizontal: 4,
               vertical: 8,
             ),
-            leading: CircleAvatar(
-              child: Icon(
-                _iconForType(
-                  transaction.eventType,
-                ),
-              ),
+            leading: Builder(
+              builder: (context) {
+                final brightness =
+                    Theme.of(context)
+                        .brightness;
+
+                final category =
+                    transaction.categoryName;
+
+                final icon =
+                    category != null
+                        ? CategoryVisuals
+                            .iconFor(
+                            category:
+                                category,
+                          )
+                        : _iconForType(
+                            transaction
+                                .eventType,
+                          );
+
+                final color =
+                    category != null
+                        ? CategoryVisuals
+                            .colorFor(
+                            category:
+                                category,
+                            brightness:
+                                brightness,
+                          )
+                        : AppPalette.purple;
+
+                return CircleAvatar(
+                  backgroundColor:
+                      color.withValues(
+                    alpha: .14,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                  ),
+                );
+              },
             ),
             title: Text(
               transaction.description,
@@ -696,6 +795,11 @@ class _TransactionsTab
                     null)
                   transaction
                       .categoryName!,
+                if (transaction
+                        .accountName !=
+                    null)
+                  transaction
+                      .accountName!,
                 _formatDate(
                   transaction.occurredAt,
                 ),
@@ -938,6 +1042,29 @@ class _RecurringCard
 
   @override
   Widget build(BuildContext context) {
+    final brightness =
+        Theme.of(context).brightness;
+
+    final category =
+        item.categoryName;
+
+    final categoryColor =
+        category != null
+            ? CategoryVisuals.colorFor(
+                category: category,
+                brightness: brightness,
+              )
+            : AppPalette.purple;
+
+    final categoryIcon =
+        category != null
+            ? CategoryVisuals.iconFor(
+                category: category,
+              )
+            : item.isIncome
+                ? Icons.payments_outlined
+                : Icons.receipt_long_outlined;
+
     final amountColor =
         item.isIncome
             ? isDark
@@ -980,28 +1107,21 @@ class _RecurringCard
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: item.isIncome
-                  ? AppPalette.purple
+              color:
+                  categoryColor
                       .withValues(
-                        alpha: .13,
-                      )
-                  : AppPalette.lime,
+                alpha: .14,
+              ),
               borderRadius:
                   BorderRadius.circular(
                 15,
               ),
             ),
             child: Icon(
-              item.isIncome
-                  ? Icons
-                      .payments_rounded
-                  : Icons
-                      .receipt_long_rounded,
-              color: item.isIncome
-                  ? AppPalette.purple
-                  : const Color(
-                      0xFF111111,
-                    ),
+              categoryIcon,
+              color:
+                  categoryColor,
+              size: 23,
             ),
           ),
           const SizedBox(width: 13),
