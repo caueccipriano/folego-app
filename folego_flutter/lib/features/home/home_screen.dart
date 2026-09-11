@@ -6,19 +6,17 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
+import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../shared/widgets/category_icon_badge.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-    required this.space,
-    required this.repository,
-  });
+  const HomeScreen({super.key, required this.space, required this.repository});
 
   final FinancialSpace space;
   final FolegoRepository repository;
@@ -29,15 +27,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   FolegoSnapshot? _snapshot;
-  List<TransactionItem> _transactions = [];
+
+  List<TransactionItem> _transactions = const [];
+  List<CategoryItem> _categories = const [];
 
   String _name = 'você';
+
   bool _loading = true;
   String? _error;
+
+  Map<String, CategoryItem> get _categoryById {
+    return {for (final category in _categories) category.id: category};
+  }
 
   @override
   void initState() {
     super.initState();
+
     _load();
   }
 
@@ -52,22 +58,35 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final values = await Future.wait([
         widget.repository.getProfileName(),
-        widget.repository.getSnapshot(
-          widget.space.id,
-        ),
-        widget.repository.getTransactions(
-          widget.space.id,
-        ),
+        widget.repository.getSnapshot(widget.space.id),
+        widget.repository.getTransactions(widget.space.id),
+        widget.repository.listExpenseCategories(widget.space.id),
+        widget.repository.listIncomeCategories(widget.space.id),
       ]);
 
       if (!mounted) {
         return;
       }
 
+      final expenseCategories = values[3] as List<CategoryItem>;
+
+      final incomeCategories = values[4] as List<CategoryItem>;
+
+      final categoriesById = <String, CategoryItem>{};
+
+      for (final category in [...expenseCategories, ...incomeCategories]) {
+        categoriesById[category.id] = category;
+      }
+
       setState(() {
         _name = values[0] as String;
+
         _snapshot = values[1] as FolegoSnapshot;
+
         _transactions = values[2] as List<TransactionItem>;
+
+        _categories = categoriesById.values.toList();
+
         _loading = false;
       });
     } catch (error) {
@@ -77,17 +96,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst(
-              'Exception: ',
-              '',
-            );
+
+        _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  Future<void> _openRegister(
-    String type,
-  ) async {
+  Future<void> _openRegister(String type) async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -122,22 +137,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _comingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$feature entra na próxima etapa do Fôlego.',
-        ),
-      ),
+      SnackBar(content: Text('$feature entra na próxima etapa do Fôlego.')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading && _snapshot == null) {
-      return const SafeArea(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const SafeArea(child: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null && _snapshot == null) {
@@ -147,17 +154,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final snapshot = _snapshot!;
 
     final theme = Theme.of(context);
+
     final brightness = theme.brightness;
+
     final isDark = brightness == Brightness.dark;
 
     final background = AppColors.background(brightness);
+
     final surface = AppColors.surface(brightness);
+
     final border = AppColors.border(brightness);
+
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
+
     final primaryPurple = AppColors.primaryPurple(brightness);
 
     final categories = _topCategories(brightness);
+
     final latest = _latestTransaction();
 
     return ColoredBox(
@@ -165,19 +180,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 760,
-            ),
+            constraints: const BoxConstraints(maxWidth: 760),
             child: RefreshIndicator(
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  26,
-                  20,
-                  120,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 26, 20, 120),
                 children: [
                   _buildHeader(
                     snapshot: snapshot,
@@ -188,10 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     secondaryText: secondaryText,
                   ),
                   const SizedBox(height: 26),
-                  _buildHero(
-                    snapshot: snapshot,
-                    primaryPurple: primaryPurple,
-                  ),
+                  _buildHero(snapshot: snapshot, primaryPurple: primaryPurple),
                   const SizedBox(height: 26),
                   _buildQuickActions(
                     surface: surface,
@@ -283,21 +288,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                AppIcons.warning,
-                size: 42,
-              ),
+              const Icon(AppIcons.warning, size: 42),
               const SizedBox(height: 12),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-              ),
+              Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 18),
               FilledButton(
                 onPressed: _load,
-                child: const Text(
-                  'Tentar novamente',
-                ),
+                child: const Text('Tentar novamente'),
               ),
             ],
           ),
@@ -315,46 +312,31 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color secondaryText,
   }) {
     final themeButton = IconButton(
-      onPressed: () => AppThemeController.toggle(
-        context,
-      ),
+      onPressed: () => AppThemeController.toggle(context),
       tooltip: isDark ? 'Tema claro' : 'Tema escuro',
       style: IconButton.styleFrom(
         minimumSize: const Size(42, 42),
         backgroundColor: surface,
         foregroundColor: secondaryText,
-        side: BorderSide(
-          color: border,
-        ),
+        side: BorderSide(color: border),
       ),
-      icon: Icon(
-        isDark ? AppIcons.lightTheme : AppIcons.darkTheme,
-        size: 19,
-      ),
+      icon: Icon(isDark ? AppIcons.lightTheme : AppIcons.darkTheme, size: 19),
     );
 
     final daysChip = snapshot.daysUntilIncome == null
         ? null
         : Container(
             height: 42,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13),
             decoration: BoxDecoration(
               color: surface,
               borderRadius: BorderRadius.circular(99),
-              border: Border.all(
-                color: border,
-              ),
+              border: Border.all(color: border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  AppIcons.flame,
-                  size: 18,
-                  color: AppColors.lime,
-                ),
+                const Icon(AppIcons.flame, size: 18, color: AppColors.lime),
                 const SizedBox(width: 6),
                 Text(
                   '${snapshot.daysUntilIncome} '
@@ -371,10 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
 
     return LayoutBuilder(
-      builder: (
-        context,
-        constraints,
-      ) {
+      builder: (context, constraints) {
         final compact = constraints.maxWidth < 390;
 
         if (compact) {
@@ -399,10 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   themeButton,
                 ],
               ),
-              if (daysChip != null) ...[
-                const SizedBox(height: 12),
-                daysChip,
-              ],
+              if (daysChip != null) ...[const SizedBox(height: 12), daysChip],
             ],
           );
         }
@@ -423,10 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 12),
             themeButton,
-            if (daysChip != null) ...[
-              const SizedBox(width: 8),
-              daysChip,
-            ],
+            if (daysChip != null) ...[const SizedBox(width: 8), daysChip],
           ],
         );
       },
@@ -439,12 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        22,
-        24,
-        22,
-        24,
-      ),
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
       decoration: BoxDecoration(
         color: primaryPurple,
         borderRadius: BorderRadius.circular(28),
@@ -458,9 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(
-                alpha: .78,
-              ),
+              color: Colors.white.withValues(alpha: .78),
             ),
           ),
           const SizedBox(height: 10),
@@ -468,9 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
-              Formatters.money(
-                snapshot.spendablePool,
-              ),
+              Formatters.money(snapshot.spendablePool),
               style: AppTypography.money(
                 context,
                 fontSize: 52,
@@ -480,14 +444,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(
-                alpha: .12,
-              ),
+              color: Colors.black.withValues(alpha: .12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -496,9 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icon(
                   AppIcons.calendar,
                   size: 17,
-                  color: Colors.white.withValues(
-                    alpha: .85,
-                  ),
+                  color: Colors.white.withValues(alpha: .85),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
@@ -509,9 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       context,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(
-                        alpha: .82,
-                      ),
+                      color: Colors.white.withValues(alpha: .82),
                     ),
                   ),
                 ),
@@ -529,9 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Brightness brightness,
   }) {
-    final positive = AppColors.positiveText(
-      brightness,
-    );
+    final positive = AppColors.positiveText(brightness);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,9 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: AppIcons.expense,
             background: AppColors.lime,
             foreground: AppColors.iconOnLime,
-            onTap: () => _openRegister(
-              'expense',
-            ),
+            onTap: () => _openRegister('expense'),
           ),
         ),
         const SizedBox(width: 10),
@@ -555,9 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
             background: surface,
             foreground: positive,
             borderColor: border,
-            onTap: () => _openRegister(
-              'income',
-            ),
+            onTap: () => _openRegister('income'),
           ),
         ),
         const SizedBox(width: 10),
@@ -565,13 +514,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: _QuickAction(
             label: 'metas',
             icon: AppIcons.goals,
-            background: AppColors.primaryPurple(
-              brightness,
-            ),
+            background: AppColors.primaryPurple(brightness),
             foreground: Colors.white,
-            onTap: () => _comingSoon(
-              'Metas',
-            ),
+            onTap: () => _comingSoon('Metas'),
           ),
         ),
         const SizedBox(width: 10),
@@ -582,9 +527,7 @@ class _HomeScreenState extends State<HomeScreen> {
             background: surface,
             foreground: primaryText,
             borderColor: border,
-            onTap: () => _comingSoon(
-              'Diário',
-            ),
+            onTap: () => _comingSoon('Diário'),
           ),
         ),
       ],
@@ -608,27 +551,16 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: border,
-            ),
+            border: Border.all(color: border),
           ),
           child: Row(
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: primaryPurple.withValues(
-                    alpha: .12,
-                  ),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(
-                  AppIcons.calendar,
-                  color: primaryPurple,
-                  size: 22,
-                ),
+              CategoryIconBadge(
+                icon: AppIcons.calendar,
+                color: primaryPurple,
+                size: 46,
+                iconSize: 22,
+                radius: 15,
               ),
               const SizedBox(width: 13),
               Expanded(
@@ -658,11 +590,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                AppIcons.chevronRight,
-                size: 20,
-                color: secondaryText,
-              ),
+              Icon(AppIcons.chevronRight, size: 20, color: secondaryText),
             ],
           ),
         ),
@@ -709,45 +637,42 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color secondaryText,
   }) {
     final amountColor = latest.isIncome
-        ? AppColors.positiveText(
-            brightness,
-          )
+        ? AppColors.positiveText(brightness)
         : latest.isExpense
-            ? AppColors.expenseText(
-                brightness,
-              )
-            : AppColors.primaryPurple(
-                brightness,
-              );
+        ? AppColors.expenseText(brightness)
+        : AppColors.primaryPurple(brightness);
 
-    final rawCategory = latest.categoryName?.trim();
+    final categoryPath = _categoryPathFor(latest);
 
-    final visualCategory = rawCategory == null || rawCategory.isEmpty
-        ? _typeLabel(latest.eventType)
-        : rawCategory;
+    final isTransfer = latest.eventType == 'transfer';
 
     final categoryColor = latest.isIncome
-        ? AppColors.positiveText(
-            brightness,
-          )
+        ? AppColors.positiveText(brightness)
+        : isTransfer
+        ? AppColors.primaryPurple(brightness)
         : CategoryVisuals.colorFor(
-            category: visualCategory,
+            category: categoryPath.category,
             brightness: brightness,
           );
 
     final categoryIcon = latest.isIncome
         ? AppIcons.income
-        : latest.eventType == 'transfer'
-            ? AppIcons.transfer
-            : CategoryVisuals.iconFor(
-                category: visualCategory,
-              );
+        : isTransfer
+        ? AppIcons.transfer
+        : CategoryVisuals.iconFor(
+            category: categoryPath.category,
+            subcategory: categoryPath.subcategory,
+          );
+
+    final categoryLabel = latest.categoryName?.trim().isNotEmpty == true
+        ? latest.categoryName!.trim()
+        : _typeLabel(latest.eventType);
 
     final sign = latest.isIncome
         ? '+'
         : latest.isExpense
-            ? '-'
-            : '';
+        ? '-'
+        : '';
 
     return Container(
       width: double.infinity,
@@ -755,27 +680,16 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: border,
-        ),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: categoryColor.withValues(
-                alpha: .12,
-              ),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(
-              categoryIcon,
-              color: categoryColor,
-              size: 22,
-            ),
+          CategoryIconBadge(
+            icon: categoryIcon,
+            color: categoryColor,
+            size: 46,
+            iconSize: 22,
+            radius: 15,
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -798,11 +712,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        rawCategory == null || rawCategory.isEmpty
-                            ? _typeLabel(
-                                latest.eventType,
-                              )
-                            : rawCategory,
+                        categoryLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.label(
@@ -842,38 +752,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<_CategorySummary> _topCategories(
-    Brightness brightness,
-  ) {
+  List<_CategorySummary> _topCategories(Brightness brightness) {
     final totals = <String, double>{};
 
     for (final transaction in _transactions) {
-      if (!_isExpense(
-        transaction.eventType,
-      )) {
+      if (!_isExpense(transaction.eventType)) {
         continue;
       }
 
-      final rawCategory = transaction.categoryName?.trim();
+      final path = _categoryPathFor(transaction);
 
-      final originalName = rawCategory == null || rawCategory.isEmpty
-          ? 'A classificar'
-          : rawCategory;
+      final canonicalParent = CategoryVisuals.canonicalCategory(path.category);
 
-      final canonicalName = CategoryVisuals.canonicalCategory(
-        originalName,
-      );
-
-      totals[canonicalName] = (totals[canonicalName] ?? 0) +
-          transaction.amount.abs();
+      totals[canonicalParent] =
+          (totals[canonicalParent] ?? 0) + transaction.amount.abs();
     }
 
     final sorted = totals.entries.toList()
-      ..sort(
-        (a, b) => b.value.compareTo(
-          a.value,
-        ),
-      );
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     final result = <_CategorySummary>[];
 
@@ -884,9 +780,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _CategorySummary(
           label: entry.key.toLowerCase(),
           amount: entry.value,
-          icon: CategoryVisuals.iconFor(
-            category: entry.key,
-          ),
+          icon: CategoryVisuals.iconFor(category: entry.key),
           color: CategoryVisuals.colorFor(
             category: entry.key,
             brightness: brightness,
@@ -895,11 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    const fallbackNames = [
-      'Alimentação',
-      'Moradia',
-      'Transporte',
-    ];
+    const fallbackNames = ['Alimentação', 'Moradia', 'Transporte'];
 
     for (final fallbackName in fallbackNames) {
       if (result.length >= 3) {
@@ -907,9 +797,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final alreadyExists = result.any(
-        (item) =>
-            item.label.toLowerCase() ==
-            fallbackName.toLowerCase(),
+        (item) => item.label.toLowerCase() == fallbackName.toLowerCase(),
       );
 
       if (alreadyExists) {
@@ -920,9 +808,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _CategorySummary(
           label: fallbackName.toLowerCase(),
           amount: 0,
-          icon: CategoryVisuals.iconFor(
-            category: fallbackName,
-          ),
+          icon: CategoryVisuals.iconFor(category: fallbackName),
           color: CategoryVisuals.colorFor(
             category: fallbackName,
             brightness: brightness,
@@ -936,9 +822,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _CategorySummary(
           label: 'a classificar',
           amount: 0,
-          icon: CategoryVisuals.iconFor(
-            category: 'A classificar',
-          ),
+          icon: CategoryVisuals.iconFor(category: 'A classificar'),
           color: CategoryVisuals.colorFor(
             category: 'A classificar',
             brightness: brightness,
@@ -948,6 +832,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return result.take(3).toList();
+  }
+
+  _CategoryPath _categoryPathFor(TransactionItem transaction) {
+    final rawCategory = transaction.categoryName?.trim();
+
+    if (rawCategory == null || rawCategory.isEmpty) {
+      return const _CategoryPath(category: 'A classificar');
+    }
+
+    final parentId = transaction.categoryParentId;
+
+    if (parentId != null) {
+      final parent = _categoryById[parentId];
+
+      if (parent != null) {
+        return _CategoryPath(category: parent.name, subcategory: rawCategory);
+      }
+    }
+
+    return _CategoryPath(category: rawCategory);
   }
 
   bool _isExpense(String type) {
@@ -971,22 +875,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  String _relativeDate(
-    DateTime date,
-  ) {
+  String _relativeDate(DateTime date) {
     final now = DateTime.now();
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final today = DateTime(now.year, now.month, now.day);
 
-    final transactionDay = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+    final transactionDay = DateTime(date.year, date.month, date.day);
 
     final difference = today.difference(transactionDay).inDays;
 
@@ -1054,20 +948,12 @@ class _QuickAction extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               side: borderColor == null
                   ? BorderSide.none
-                  : BorderSide(
-                      color: borderColor!,
-                    ),
+                  : BorderSide(color: borderColor!),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: foreground,
-                  size: 27,
-                ),
-              ),
+              child: Center(child: Icon(icon, color: foreground, size: 27)),
             ),
           ),
         ),
@@ -1098,6 +984,7 @@ class _CategoryCard extends StatelessWidget {
   });
 
   final _CategorySummary summary;
+
   final Color surface;
   final Color border;
   final Color primaryText;
@@ -1107,35 +994,21 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 142,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 16,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: border,
-        ),
+        border: Border.all(color: border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: summary.color.withValues(
-                alpha: .12,
-              ),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(
-              summary.icon,
-              color: summary.color,
-              size: 21,
-            ),
+          CategoryIconBadge(
+            icon: summary.icon,
+            color: summary.color,
+            size: 40,
+            iconSize: 21,
+            radius: 13,
           ),
           const SizedBox(height: 12),
           Text(
@@ -1152,9 +1025,7 @@ class _CategoryCard extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              Formatters.money(
-                summary.amount,
-              ),
+              Formatters.money(summary.amount),
               style: AppTypography.money(
                 context,
                 fontSize: 14,
@@ -1180,4 +1051,11 @@ class _CategorySummary {
   final double amount;
   final IconData icon;
   final Color color;
+}
+
+class _CategoryPath {
+  const _CategoryPath({required this.category, this.subcategory});
+
+  final String category;
+  final String? subcategory;
 }

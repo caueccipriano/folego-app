@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
+import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/recurring_item.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_transaction_actions.dart';
+import '../../shared/widgets/category_icon_badge.dart';
 import 'recurring_form_sheet.dart';
 import 'transaction_edit_sheet.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({
-    super.key,
-    required this.repository,
-  });
+  const TransactionsScreen({super.key, required this.repository});
 
   final FolegoRepository repository;
 
   @override
-  State<TransactionsScreen> createState() =>
-      _TransactionsScreenState();
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends State<TransactionsScreen>
@@ -31,18 +32,20 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
   List<TransactionItem> _transactions = const [];
   List<RecurringItem> _recurringItems = const [];
+  List<CategoryItem> _categories = const [];
 
   bool _loading = true;
   String? _error;
+
+  Map<String, CategoryItem> get _categoryById {
+    return {for (final category in _categories) category.id: category};
+  }
 
   @override
   void initState() {
     super.initState();
 
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-    );
+    _tabController = TabController(length: 2, vsync: this);
 
     _load();
   }
@@ -62,30 +65,37 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     }
 
     try {
-      final space =
-          await widget.repository.getPrimarySpace();
+      final space = await widget.repository.getPrimarySpace();
 
       final results = await Future.wait([
-        widget.repository.getTransactions(
-          space.id,
-        ),
-        widget.repository.listRecurringItems(
-          space.id,
-        ),
+        widget.repository.getTransactions(space.id),
+        widget.repository.listRecurringItems(space.id),
+        widget.repository.listExpenseCategories(space.id),
+        widget.repository.listIncomeCategories(space.id),
       ]);
 
       if (!mounted) {
         return;
       }
 
+      final expenseCategories = results[2] as List<CategoryItem>;
+
+      final incomeCategories = results[3] as List<CategoryItem>;
+
+      final categoriesById = <String, CategoryItem>{};
+
+      for (final category in [...expenseCategories, ...incomeCategories]) {
+        categoriesById[category.id] = category;
+      }
+
       setState(() {
         _space = space;
 
-        _transactions =
-            results[0] as List<TransactionItem>;
+        _transactions = results[0] as List<TransactionItem>;
 
-        _recurringItems =
-            results[1] as List<RecurringItem>;
+        _recurringItems = results[1] as List<RecurringItem>;
+
+        _categories = categoriesById.values.toList();
 
         _loading = false;
       });
@@ -101,9 +111,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     }
   }
 
-  Future<void> _editTransaction(
-    TransactionItem item,
-  ) async {
+  Future<void> _editTransaction(TransactionItem item) async {
     final space = _space;
 
     if (space == null) {
@@ -114,7 +122,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Esse tipo de lançamento ainda possui um fluxo próprio de edição.',
+            'Esse tipo de lançamento possui um fluxo próprio e ainda não pode ser editado por aqui.',
           ),
         ),
       );
@@ -141,27 +149,140 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Lançamento atualizado.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lançamento atualizado.')));
     }
   }
 
-  Future<void> _editRecurring(
-    RecurringItem item,
-  ) async {
+  Future<void> _deleteTransaction(TransactionItem item) async {
     final space = _space;
 
     if (space == null) {
       return;
     }
 
-    final saved =
-        await showModalBottomSheet<bool>(
+    if (!item.canEditAsSimple) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Esse tipo de lançamento possui um fluxo próprio e não pode ser excluído por aqui.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final brightness = Theme.of(dialogContext).brightness;
+
+        final secondaryText = AppColors.secondaryText(brightness);
+
+        return AlertDialog(
+          title: Text(
+            'Excluir lançamento?',
+            style: AppTypography.section(dialogContext, fontSize: 18),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.description,
+                style: AppTypography.body(
+                  dialogContext,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${Formatters.money(item.amount.abs())} • ${_formatDate(item.occurredAt)}',
+                style: AppTypography.body(
+                  dialogContext,
+                  fontSize: 12,
+                  color: secondaryText,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'O impacto deste lançamento será removido do saldo, do orçamento e do Fôlego.',
+                style: AppTypography.body(
+                  dialogContext,
+                  fontSize: 12,
+                  color: secondaryText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Se ele estiver ligado a uma recorrência, a previsão voltará a ficar pendente.',
+                style: AppTypography.body(
+                  dialogContext,
+                  fontSize: 12,
+                  color: secondaryText,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await widget.repository.cancelSimpleTransaction(
+        spaceId: space.id,
+        eventId: item.id,
+      );
+
+      await _load();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lançamento excluído.')));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+    }
+  }
+
+  Future<void> _editRecurring(RecurringItem item) async {
+    final space = _space;
+
+    if (space == null) {
+      return;
+    }
+
+    final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -178,9 +299,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     }
   }
 
-  Future<void> _toggleRecurring(
-    RecurringItem item,
-  ) async {
+  Future<void> _toggleRecurring(RecurringItem item) async {
     final space = _space;
 
     if (space == null) {
@@ -203,9 +322,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            item.active
-                ? 'Recorrência pausada.'
-                : 'Recorrência reativada.',
+            item.active ? 'Recorrência pausada.' : 'Recorrência reativada.',
           ),
         ),
       );
@@ -214,53 +331,44 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _friendlyError(error),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
-  Future<void> _deleteRecurring(
-    RecurringItem item,
-  ) async {
+  Future<void> _deleteRecurring(RecurringItem item) async {
     final space = _space;
 
     if (space == null) {
       return;
     }
 
-    final confirmed =
-        await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
+          title: Text(
             'Excluir recorrência?',
+            style: AppTypography.section(dialogContext, fontSize: 18),
           ),
           content: Text(
             '"${item.name}" deixará de ser considerado nos próximos períodos.\n\n'
             'Os lançamentos que já aconteceram continuarão no histórico.',
+            style: AppTypography.body(dialogContext, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Cancelar',
-              ),
+              child: const Text('Cancelar'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
-              child: const Text(
-                'Excluir',
-              ),
+              child: const Text('Excluir'),
             ),
           ],
         );
@@ -283,31 +391,21 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Recorrência excluída.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Recorrência excluída.')));
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _friendlyError(error),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
-  Future<void> _realizeRecurring(
-    RecurringItem item,
-  ) async {
+  Future<void> _realizeRecurring(RecurringItem item) async {
     final space = _space;
 
     if (space == null) {
@@ -317,35 +415,28 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     if (!item.active) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Reative essa recorrência antes de realizá-la.',
-          ),
+          content: Text('Reative essa recorrência antes de realizá-la.'),
         ),
       );
 
       return;
     }
 
-    var initialDate =
-        _suggestOccurrenceDate(item);
+    var initialDate = _suggestOccurrenceDate(item);
 
     if (initialDate.isBefore(item.startsOn)) {
       initialDate = item.startsOn;
     }
 
-    if (item.endsOn != null &&
-        initialDate.isAfter(item.endsOn!)) {
+    if (item.endsOn != null && initialDate.isAfter(item.endsOn!)) {
       initialDate = item.endsOn!;
     }
 
-    final dueDate =
-        await showDatePicker(
+    final dueDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: item.startsOn,
-      lastDate:
-          item.endsOn ??
-          DateTime(2100, 12, 31),
+      lastDate: item.endsOn ?? DateTime(2100, 12, 31),
       helpText: item.isIncome
           ? 'Qual recebimento aconteceu?'
           : 'Qual pagamento aconteceu?',
@@ -353,20 +444,16 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       confirmText: 'Continuar',
     );
 
-    if (dueDate == null ||
-        !mounted) {
+    if (dueDate == null || !mounted) {
       return;
     }
 
-    final confirmed =
-        await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            item.isIncome
-                ? 'Marcar como recebido?'
-                : 'Marcar como pago?',
+            item.isIncome ? 'Marcar como recebido?' : 'Marcar como pago?',
           ),
           content: Text(
             '${item.name}\n\n'
@@ -377,21 +464,15 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Cancelar',
-              ),
+              child: const Text('Cancelar'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
-              child: Text(
-                item.isIncome
-                    ? 'Recebido'
-                    : 'Pago',
-              ),
+              child: Text(item.isIncome ? 'Recebido' : 'Pago'),
             ),
           ],
         );
@@ -418,9 +499,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            item.isIncome
-                ? 'Receita registrada.'
-                : 'Gasto registrado.',
+            item.isIncome ? 'Receita registrada.' : 'Gasto registrado.',
           ),
         ),
       );
@@ -429,125 +508,79 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _friendlyError(error),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Lançamentos',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-          ),
+          style: AppTypography.section(context, fontSize: 21),
         ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(
-              text: 'Transações',
-            ),
-            Tab(
-              text: 'Recorrências',
-            ),
+            Tab(text: 'Transações'),
+            Tab(text: 'Recorrências'),
           ],
         ),
       ),
       body: _loading
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _ErrorState(
-                  message: _error!,
-                  onRetry: _load,
-                )
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _TransactionsTab(
-                      transactions:
-                          _transactions,
-                      onRefresh: _load,
-                      onEdit:
-                          _editTransaction,
-                    ),
-                    _RecurringTab(
-                      items:
-                          _recurringItems,
-                      isDark: isDark,
-                      onRefresh: _load,
-                      onEdit:
-                          _editRecurring,
-                      onRealize:
-                          _realizeRecurring,
-                      onToggle:
-                          _toggleRecurring,
-                      onDelete:
-                          _deleteRecurring,
-                    ),
-                  ],
+          ? _ErrorState(message: _error!, onRetry: _load)
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _TransactionsTab(
+                  transactions: _transactions,
+                  categoryById: _categoryById,
+                  onRefresh: _load,
+                  onEdit: _editTransaction,
+                  onDelete: _deleteTransaction,
                 ),
+                _RecurringTab(
+                  items: _recurringItems,
+                  categories: _categories,
+                  isDark: isDark,
+                  onRefresh: _load,
+                  onEdit: _editRecurring,
+                  onRealize: _realizeRecurring,
+                  onToggle: _toggleRecurring,
+                  onDelete: _deleteRecurring,
+                ),
+              ],
+            ),
     );
   }
 
-  DateTime _suggestOccurrenceDate(
-    RecurringItem item,
-  ) {
+  DateTime _suggestOccurrenceDate(RecurringItem item) {
     final now = DateTime.now();
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final today = DateTime(now.year, now.month, now.day);
 
     switch (item.frequency) {
       case 'monthly':
-        final day =
-            item.dayOfMonth ??
-                item.startsOn.day;
+        final day = item.dayOfMonth ?? item.startsOn.day;
 
-        final lastDay = DateTime(
-          today.year,
-          today.month + 1,
-          0,
-        ).day;
+        final lastDay = DateTime(today.year, today.month + 1, 0).day;
 
-        return DateTime(
-          today.year,
-          today.month,
-          day > lastDay
-              ? lastDay
-              : day,
-        );
+        return DateTime(today.year, today.month, day > lastDay ? lastDay : day);
 
       case 'weekly':
-        final target =
-            item.weekday ??
-                item.startsOn.weekday % 7;
+        final target = item.weekday ?? item.startsOn.weekday % 7;
 
         for (var i = 0; i < 7; i++) {
-          final candidate =
-              today.subtract(
-            Duration(days: i),
-          );
+          final candidate = today.subtract(Duration(days: i));
 
-          if (candidate.weekday % 7 ==
-              target) {
+          if (candidate.weekday % 7 == target) {
             return candidate;
           }
         }
@@ -561,314 +594,464 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           item.startsOn.day,
         );
 
-        final difference =
-            today.difference(start).inDays;
+        final difference = today.difference(start).inDays;
 
         if (difference <= 0) {
           return start;
         }
 
-        final periods =
-            difference ~/ 14;
+        final periods = difference ~/ 14;
 
-        return start.add(
-          Duration(
-            days: periods * 14,
-          ),
-        );
+        return start.add(Duration(days: periods * 14));
 
       case 'yearly':
-        final month =
-            item.monthOfYear ??
-                item.startsOn.month;
+        final month = item.monthOfYear ?? item.startsOn.month;
 
-        final day =
-            item.dayOfMonth ??
-                item.startsOn.day;
+        final day = item.dayOfMonth ?? item.startsOn.day;
 
-        final lastDay = DateTime(
-          today.year,
-          month + 1,
-          0,
-        ).day;
+        final lastDay = DateTime(today.year, month + 1, 0).day;
 
-        return DateTime(
-          today.year,
-          month,
-          day > lastDay
-              ? lastDay
-              : day,
-        );
+        return DateTime(today.year, month, day > lastDay ? lastDay : day);
 
       default:
         return today;
     }
   }
 
-  String _friendlyError(
-    Object error,
-  ) {
-    final text =
-        error.toString();
+  String _friendlyError(Object error) {
+    final text = error.toString();
 
-    if (text.contains(
-      'invalid_occurrence',
-    )) {
+    if (text.contains('invalid_occurrence')) {
       return 'Essa data não corresponde a uma ocorrência prevista.';
     }
 
-    if (text.contains(
-      'invalid_recurring_item',
-    )) {
+    if (text.contains('invalid_recurring_item')) {
       return 'Essa recorrência não está ativa.';
     }
 
-    if (text.contains(
-      'write_access_denied',
-    )) {
+    if (text.contains('write_access_denied')) {
       return 'Você não tem permissão para alterar esse espaço.';
     }
 
+    if (text.contains('transaction_type_not_deletable')) {
+      return 'Esse tipo de lançamento não pode ser excluído por aqui.';
+    }
+
+    if (text.contains('transaction_not_confirmed')) {
+      return 'Esse lançamento não está disponível para exclusão.';
+    }
+
+    if (text.contains('invalid_transaction')) {
+      return 'Não encontrei esse lançamento.';
+    }
+
     return text
-        .replaceFirst(
-          'Exception: ',
-          '',
-        )
-        .replaceFirst(
-          'Invalid argument(s): ',
-          '',
-        );
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('Invalid argument(s): ', '');
   }
 }
 
-class _TransactionsTab
-    extends StatelessWidget {
+class _TransactionsTab extends StatelessWidget {
   const _TransactionsTab({
     required this.transactions,
+    required this.categoryById,
     required this.onRefresh,
     required this.onEdit,
+    required this.onDelete,
   });
 
   final List<TransactionItem> transactions;
+  final Map<String, CategoryItem> categoryById;
 
-  final Future<void> Function()
-      onRefresh;
+  final Future<void> Function() onRefresh;
 
-  final Future<void> Function(
-    TransactionItem,
-  ) onEdit;
+  final Future<void> Function(TransactionItem) onEdit;
+
+  final Future<void> Function(TransactionItem) onDelete;
 
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: onRefresh,
-        child: ListView(
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-          padding:
-              const EdgeInsets.all(24),
-          children: const [
-            SizedBox(height: 120),
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 48,
+      return Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              children: [
+                const SizedBox(height: 110),
+                Icon(
+                  CategoryVisuals.iconFor(category: 'A classificar'),
+                  size: 46,
+                  color: CategoryVisuals.colorFor(
+                    category: 'A classificar',
+                    brightness: Theme.of(context).brightness,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Nenhum lançamento ainda.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 14),
-            Text(
-              'Nenhum lançamento ainda.',
-              textAlign:
-                  TextAlign.center,
-            ),
-          ],
+          ),
         ),
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView.separated(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
-        padding:
-            const EdgeInsets.fromLTRB(
-          16,
-          14,
-          16,
-          120,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            itemCount: transactions.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final transaction = transactions[index];
+
+              return _TransactionCard(
+                transaction: transaction,
+                categoryById: categoryById,
+                onEdit: () => onEdit(transaction),
+                onDelete: () => onDelete(transaction),
+              );
+            },
+          ),
         ),
-        itemCount:
-            transactions.length,
-        separatorBuilder:
-            (context, index) =>
-                const Divider(
-          height: 1,
-        ),
-        itemBuilder:
-            (context, index) {
-          final transaction =
-              transactions[index];
+      ),
+    );
+  }
+}
 
-          final income =
-              transaction.eventType ==
-                  'income';
+class _TransactionCard extends StatelessWidget {
+  const _TransactionCard({
+    required this.transaction,
+    required this.categoryById,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
-          final expense =
-              _isExpense(
-            transaction.eventType,
-          );
+  final TransactionItem transaction;
+  final Map<String, CategoryItem> categoryById;
 
-          final amountColor =
-              income
-                  ? AppPalette.green
-                  : expense
-                      ? AppPalette.pink
-                      : Theme.of(context)
-                          .colorScheme
-                          .onSurface;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-          return ListTile(
-            onTap: transaction.canEditAsSimple
-                ? () => onEdit(transaction)
-                : null,
-            contentPadding:
-                const EdgeInsets.symmetric(
-              horizontal: 4,
-              vertical: 8,
-            ),
-            leading: Builder(
-              builder: (context) {
-                final brightness =
-                    Theme.of(context)
-                        .brightness;
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
 
-                final category =
-                    transaction.categoryName;
+    final isDark = brightness == Brightness.dark;
 
-                final icon =
-                    category != null
-                        ? CategoryVisuals
-                            .iconFor(
-                            category:
-                                category,
-                          )
-                        : _iconForType(
-                            transaction
-                                .eventType,
-                          );
+    final primaryText = AppColors.primaryText(brightness);
 
-                final color =
-                    category != null
-                        ? CategoryVisuals
-                            .colorFor(
-                            category:
-                                category,
-                            brightness:
-                                brightness,
-                          )
-                        : AppPalette.purple;
+    final secondaryText = AppColors.secondaryText(brightness);
 
-                return CircleAvatar(
-                  backgroundColor:
-                      color.withValues(
-                    alpha: .14,
-                  ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                  ),
-                );
-              },
-            ),
-            title: Text(
-              transaction.description,
-              style:
-                  const TextStyle(
-                fontWeight:
-                    FontWeight.w700,
+    final border = AppColors.border(brightness);
+
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+
+    final visual = _visualForTransaction(context);
+
+    final amountColor = transaction.isIncome
+        ? isDark
+              ? AppPalette.lime
+              : AppPalette.green
+        : transaction.isExpense
+        ? AppPalette.pink
+        : primaryText;
+
+    final typeLabel = transaction.isIncome
+        ? 'Receita'
+        : transaction.isExpense
+        ? 'Gasto'
+        : _typeLabel(transaction.eventType);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: transaction.canEditAsSimple ? onEdit : null,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: border),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CategoryIconBadge(
+                icon: visual.icon,
+                color: visual.color,
+                size: 48,
+                iconSize: 24,
+                radius: 15,
               ),
-            ),
-            subtitle: Text(
-              [
-                if (transaction
-                        .categoryName !=
-                    null)
-                  transaction
-                      .categoryName!,
-                if (transaction
-                        .accountName !=
-                    null)
-                  transaction
-                      .accountName!,
-                _formatDate(
-                  transaction.occurredAt,
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      transaction.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _MetaPill(
+                          label: typeLabel,
+                          foreground: visual.color,
+                          background: visual.color.withValues(alpha: .11),
+                        ),
+                        if (transaction.categoryName != null)
+                          _MetaPill(
+                            label: transaction.categoryName!,
+                            foreground: secondaryText,
+                            background: secondaryText.withValues(alpha: .08),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 9),
+                    Text(
+                      [
+                        if (transaction.accountName != null)
+                          transaction.accountName!,
+                        _formatDate(transaction.occurredAt),
+                      ].join('  •  '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondaryText,
+                      ),
+                    ),
+                  ],
                 ),
-              ].join(' • '),
-            ),
-            trailing: Text(
-              Formatters.money(
-                transaction.amount.abs(),
               ),
-              style: TextStyle(
-                color: amountColor,
-                fontWeight:
-                    FontWeight.w800,
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    Formatters.money(transaction.amount.abs()),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 14,
+                      color: amountColor,
+                    ),
+                  ),
+                  if (transaction.canEditAsSimple) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        _showTransactionActions(context);
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: secondaryText.withValues(alpha: .07),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: border),
+                        ),
+                        child: Text(
+                          '⋮',
+                          style: TextStyle(
+                            color: secondaryText,
+                            fontSize: 22,
+                            height: 1,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  static bool _isExpense(
-    String type,
-  ) {
-    return type == 'expense' ||
-        type == 'card_purchase' ||
-        type == 'benefit_expense' ||
-        type == 'debt_payment';
+  Future<void> _showTransactionActions(BuildContext context) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return _FolegoActionSheet(
+          title: transaction.description,
+          actions: const [
+            _SheetAction(value: 'edit', label: 'Editar'),
+            _SheetAction(value: 'delete', label: 'Excluir', destructive: true),
+          ],
+        );
+      },
+    );
+
+    switch (action) {
+      case 'edit':
+        onEdit();
+        break;
+
+      case 'delete':
+        onDelete();
+        break;
+    }
   }
 
-  static IconData _iconForType(
-    String type,
-  ) {
+  _TransactionVisual _visualForTransaction(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    final categoryName = transaction.categoryName;
+
+    final parentId = transaction.categoryParentId;
+
+    String? category = categoryName;
+
+    String? subcategory;
+
+    if (parentId != null) {
+      final parent = categoryById[parentId];
+
+      if (parent != null) {
+        category = parent.name;
+        subcategory = categoryName;
+      }
+    }
+
+    if (transaction.isIncome && categoryName == null) {
+      return _TransactionVisual(
+        icon: CategoryVisuals.iconFor(category: 'Receitas'),
+        color: CategoryVisuals.colorFor(
+          category: 'Receitas',
+          brightness: brightness,
+        ),
+      );
+    }
+
+    if (category != null && category.trim().isNotEmpty) {
+      return _TransactionVisual(
+        icon: CategoryVisuals.iconFor(
+          category: category,
+          subcategory: subcategory,
+        ),
+        color: CategoryVisuals.colorFor(
+          category: category,
+          brightness: brightness,
+        ),
+      );
+    }
+
+    return _TransactionVisual(
+      icon: CategoryVisuals.iconFor(category: 'A classificar'),
+      color: CategoryVisuals.colorFor(
+        category: 'A classificar',
+        brightness: brightness,
+      ),
+    );
+  }
+
+  static String _typeLabel(String type) {
     switch (type) {
-      case 'income':
-        return Icons
-            .south_west_rounded;
-
-      case 'expense':
-        return Icons
-            .north_east_rounded;
-
       case 'transfer':
-        return Icons
-            .swap_horiz_rounded;
+        return 'Transferência';
 
       case 'card_purchase':
-        return Icons
-            .credit_card_rounded;
+        return 'Cartão';
 
       case 'card_payment':
-        return Icons
-            .receipt_long_rounded;
+        return 'Pagamento';
 
       case 'opening_balance':
-        return Icons
-            .account_balance_wallet_outlined;
+        return 'Saldo inicial';
+
+      case 'benefit_expense':
+        return 'Benefício';
+
+      case 'debt_payment':
+        return 'Dívida';
 
       default:
-        return Icons
-            .payments_outlined;
+        return 'Lançamento';
     }
   }
 }
 
-class _RecurringTab
-    extends StatelessWidget {
+class _TransactionVisual {
+  const _TransactionVisual({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+}
+
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({
+    required this.label,
+    required this.foreground,
+    required this.background,
+  });
+
+  final String label;
+  final Color foreground;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.label(
+          context,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}
+
+class _RecurringTab extends StatelessWidget {
   const _RecurringTab({
     required this.items,
+    required this.categories,
     required this.isDark,
     required this.onRefresh,
     required this.onEdit,
@@ -878,152 +1061,116 @@ class _RecurringTab
   });
 
   final List<RecurringItem> items;
+  final List<CategoryItem> categories;
 
   final bool isDark;
 
-  final Future<void> Function()
-      onRefresh;
+  final Future<void> Function() onRefresh;
 
-  final Future<void> Function(
-    RecurringItem,
-  ) onEdit;
+  final Future<void> Function(RecurringItem) onEdit;
 
-  final Future<void> Function(
-    RecurringItem,
-  ) onRealize;
+  final Future<void> Function(RecurringItem) onRealize;
 
-  final Future<void> Function(
-    RecurringItem,
-  ) onToggle;
+  final Future<void> Function(RecurringItem) onToggle;
 
-  final Future<void> Function(
-    RecurringItem,
-  ) onDelete;
+  final Future<void> Function(RecurringItem) onDelete;
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: onRefresh,
-        child: ListView(
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-          padding:
-              const EdgeInsets.fromLTRB(
-            22,
-            90,
-            22,
-            120,
+      return Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(22, 90, 22, 120),
+              children: [
+                CategoryIconBadge(
+                  icon: CategoryVisuals.iconFor(category: 'A classificar'),
+                  color: CategoryVisuals.colorFor(
+                    category: 'A classificar',
+                    brightness: Theme.of(context).brightness,
+                  ),
+                  size: 50,
+                  iconSize: 25,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Nenhuma recorrência',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.section(context, fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Para criar uma, volte para a Home e registre um Gasto ou Receita escolhendo uma repetição.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 12,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: .58),
+                  ),
+                ),
+              ],
+            ),
           ),
-          children: [
-            const Icon(
-              Icons.autorenew_rounded,
-              size: 50,
-              color:
-                  AppPalette.purple,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Nenhuma recorrência',
-              textAlign:
-                  TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                    fontWeight:
-                        FontWeight.w900,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Para criar uma, volte para a Home e registre um Gasto ou Receita escolhendo uma repetição.',
-              textAlign:
-                  TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(
-                    height: 1.4,
-                    color:
-                        Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(
-                              alpha: .58,
-                            ),
-                  ),
-            ),
-          ],
         ),
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
-        padding:
-            const EdgeInsets.fromLTRB(
-          16,
-          18,
-          16,
-          120,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 120),
+            children: [
+              Text(
+                'Suas recorrências',
+                style: AppTypography.section(context, fontSize: 18),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                'Edite ou pause o que se repete no seu mês.',
+                style: AppTypography.body(
+                  context,
+                  fontSize: 12,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: .58),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ...items.map(
+                (item) => _RecurringCard(
+                  item: item,
+                  categories: categories,
+                  isDark: isDark,
+                  onEdit: () => onEdit(item),
+                  onRealize: () => onRealize(item),
+                  onToggle: () => onToggle(item),
+                  onDelete: () => onDelete(item),
+                ),
+              ),
+            ],
+          ),
         ),
-        children: [
-          Text(
-            'suas recorrências',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(
-                  fontWeight:
-                      FontWeight.w900,
-                ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Edite ou pause o que se repete no seu mês.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(
-                  color:
-                      Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(
-                            alpha: .58,
-                          ),
-                ),
-          ),
-          const SizedBox(height: 20),
-          ...items.map(
-            (item) =>
-                _RecurringCard(
-              item: item,
-              isDark: isDark,
-              onEdit: () =>
-                  onEdit(item),
-              onRealize: () =>
-                  onRealize(item),
-              onToggle: () =>
-                  onToggle(item),
-              onDelete: () =>
-                  onDelete(item),
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-class _RecurringCard
-    extends StatelessWidget {
+class _RecurringCard extends StatelessWidget {
   const _RecurringCard({
     required this.item,
+    required this.categories,
     required this.isDark,
     required this.onEdit,
     required this.onRealize,
@@ -1032,6 +1179,7 @@ class _RecurringCard
   });
 
   final RecurringItem item;
+  final List<CategoryItem> categories;
 
   final bool isDark;
 
@@ -1042,120 +1190,66 @@ class _RecurringCard
 
   @override
   Widget build(BuildContext context) {
-    final brightness =
-        Theme.of(context).brightness;
+    final brightness = Theme.of(context).brightness;
 
-    final category =
-        item.categoryName;
+    final primaryText = AppColors.primaryText(brightness);
 
-    final categoryColor =
-        category != null
-            ? CategoryVisuals.colorFor(
-                category: category,
-                brightness: brightness,
-              )
-            : AppPalette.purple;
+    final secondaryText = AppColors.secondaryText(brightness);
 
-    final categoryIcon =
-        category != null
-            ? CategoryVisuals.iconFor(
-                category: category,
-              )
-            : item.isIncome
-                ? Icons.payments_outlined
-                : Icons.receipt_long_outlined;
+    final border = AppColors.border(brightness);
 
-    final amountColor =
-        item.isIncome
-            ? isDark
-                ? AppPalette.lime
-                : AppPalette.green
-            : Theme.of(context)
-                .colorScheme
-                .onSurface;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+
+    final visual = _visualForRecurring(context);
+
+    final amountColor = item.isIncome
+        ? isDark
+              ? AppPalette.lime
+              : AppPalette.green
+        : primaryText;
 
     return Container(
-      margin:
-          const EdgeInsets.only(
-        bottom: 12,
-      ),
-      padding:
-          const EdgeInsets.fromLTRB(
-        16,
-        15,
-        8,
-        15,
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(16, 15, 8, 15),
       decoration: BoxDecoration(
-        color:
-            Theme.of(context)
-                .colorScheme
-                .surface,
-        borderRadius:
-            BorderRadius.circular(
-          20,
-        ),
-        border: Border.all(
-          color:
-              Theme.of(context)
-                  .dividerColor,
-        ),
+        color: surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color:
-                  categoryColor
-                      .withValues(
-                alpha: .14,
-              ),
-              borderRadius:
-                  BorderRadius.circular(
-                15,
-              ),
-            ),
-            child: Icon(
-              categoryIcon,
-              color:
-                  categoryColor,
-              size: 23,
-            ),
+          CategoryIconBadge(
+            icon: visual.icon,
+            color: visual.color,
+            size: 46,
+            iconSize: 23,
+            radius: 15,
           ),
           const SizedBox(width: 13),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         item.name,
-                        style:
-                            const TextStyle(
-                          fontSize: 17,
-                          fontWeight:
-                              FontWeight.w800,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: primaryText,
                         ),
                       ),
                     ),
-                    const SizedBox(
-                      width: 8,
-                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      Formatters.money(
-                        item.amount,
-                      ),
-                      style: TextStyle(
-                        color:
-                            amountColor,
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w900,
+                      Formatters.money(item.amount),
+                      style: AppTypography.money(
+                        context,
+                        fontSize: 14,
+                        color: amountColor,
                       ),
                     ),
                   ],
@@ -1163,244 +1257,337 @@ class _RecurringCard
                 const SizedBox(height: 5),
                 Text(
                   item.scheduleLabel,
-                  style:
-                      Theme.of(context)
-                          .textTheme
-                          .bodyMedium,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 12,
+                    color: primaryText,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   [
                     item.typeLabel,
-                    if (item.categoryName !=
-                        null)
-                      item.categoryName!,
-                    if (item.accountName !=
-                        null)
-                      item.accountName!,
+                    if (item.categoryName != null) item.categoryName!,
+                    if (item.accountName != null) item.accountName!,
                   ].join(' • '),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                        color:
-                            Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(
-                                  alpha: .58,
-                                ),
-                      ),
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: secondaryText,
+                  ),
                 ),
                 const SizedBox(height: 9),
                 Container(
-                  padding:
-                      const EdgeInsets
-                          .symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 9,
                     vertical: 4,
                   ),
-                  decoration:
-                      BoxDecoration(
+                  decoration: BoxDecoration(
                     color: item.active
-                        ? AppPalette.green
-                            .withValues(
-                              alpha: .13,
-                            )
-                        : Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(
-                              alpha: .08,
-                            ),
-                    borderRadius:
-                        BorderRadius
-                            .circular(99),
+                        ? AppPalette.green.withValues(alpha: .13)
+                        : secondaryText.withValues(alpha: .08),
+                    borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
-                    item.active
-                        ? 'Ativa'
-                        : 'Pausada',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight:
-                          FontWeight.w700,
-                      color: item.active
-                          ? AppPalette.green
-                          : Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(
-                                alpha: .55,
-                              ),
+                    item.active ? 'Ativa' : 'Pausada',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: item.active ? AppPalette.green : secondaryText,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          PopupMenuButton<String>(
-            tooltip: 'Opções',
-            onSelected: (value) {
-              switch (value) {
-                case 'realize':
-                  onRealize();
-                  break;
-
-                case 'edit':
-                  onEdit();
-                  break;
-
-                case 'toggle':
-                  onToggle();
-                  break;
-
-                case 'delete':
-                  onDelete();
-                  break;
-              }
+          const SizedBox(width: 6),
+          InkWell(
+            onTap: () {
+              _showRecurringActions(context);
             },
-            itemBuilder:
-                (context) => [
-              if (item.active)
-                PopupMenuItem(
-                  value:
-                      'realize',
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons
-                            .check_circle_outline_rounded,
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        item.isIncome
-                            ? 'Marcar como recebido'
-                            : 'Marcar como pago',
-                      ),
-                    ],
-                  ),
-                ),
-              const PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons
-                          .edit_outlined,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      'Editar recorrência',
-                    ),
-                  ],
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: secondaryText.withValues(alpha: .07),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: border),
+              ),
+              child: Text(
+                '⋮',
+                style: TextStyle(
+                  color: secondaryText,
+                  fontSize: 22,
+                  height: 1,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              PopupMenuItem(
-                value: 'toggle',
-                child: Row(
-                  children: [
-                    Icon(
-                      item.active
-                          ? Icons
-                              .pause_circle_outline_rounded
-                          : Icons
-                              .play_circle_outline_rounded,
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      item.active
-                          ? 'Pausar'
-                          : 'Reativar',
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons
-                          .delete_outline_rounded,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      'Excluir recorrência',
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
+
+  _TransactionVisual _visualForRecurring(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    if (item.isIncome) {
+      return _TransactionVisual(
+        icon: CategoryVisuals.iconFor(category: 'Receitas'),
+        color: CategoryVisuals.colorFor(
+          category: 'Receitas',
+          brightness: brightness,
+        ),
+      );
+    }
+
+    final name = item.categoryName;
+
+    if (name == null || name.trim().isEmpty) {
+      return _TransactionVisual(
+        icon: CategoryVisuals.iconFor(category: 'A classificar'),
+        color: CategoryVisuals.colorFor(
+          category: 'A classificar',
+          brightness: brightness,
+        ),
+      );
+    }
+
+    CategoryItem? matched;
+
+    for (final category in categories) {
+      if (category.name == name) {
+        matched = category;
+        break;
+      }
+    }
+
+    String categoryName = name;
+
+    String? subcategory;
+
+    if (matched?.parentId != null) {
+      for (final parent in categories) {
+        if (parent.id == matched!.parentId) {
+          categoryName = parent.name;
+
+          subcategory = matched.name;
+
+          break;
+        }
+      }
+    }
+
+    return _TransactionVisual(
+      icon: CategoryVisuals.iconFor(
+        category: categoryName,
+        subcategory: subcategory,
+      ),
+      color: CategoryVisuals.colorFor(
+        category: categoryName,
+        brightness: brightness,
+      ),
+    );
+  }
+
+  Future<void> _showRecurringActions(BuildContext context) async {
+    final actions = <_SheetAction>[
+      if (item.active)
+        _SheetAction(
+          value: 'realize',
+          label: item.isIncome ? 'Marcar como recebido' : 'Marcar como pago',
+        ),
+      const _SheetAction(value: 'edit', label: 'Editar recorrência'),
+      _SheetAction(value: 'toggle', label: item.active ? 'Pausar' : 'Reativar'),
+      const _SheetAction(
+        value: 'delete',
+        label: 'Excluir recorrência',
+        destructive: true,
+      ),
+    ];
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return _FolegoActionSheet(title: item.name, actions: actions);
+      },
+    );
+
+    switch (action) {
+      case 'realize':
+        onRealize();
+        break;
+
+      case 'edit':
+        onEdit();
+        break;
+
+      case 'toggle':
+        onToggle();
+        break;
+
+      case 'delete':
+        onDelete();
+        break;
+    }
+  }
 }
 
-class _ErrorState
-    extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
+class _FolegoActionSheet extends StatelessWidget {
+  const _FolegoActionSheet({required this.title, required this.actions});
+
+  final String title;
+  final List<_SheetAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    final isDark = brightness == Brightness.dark;
+
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final border = AppColors.border(brightness);
+
+    return Center(
+      heightFactor: 1,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: border,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: primaryText,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ...actions.map((action) {
+                final foreground = action.destructive
+                    ? AppPalette.pink
+                    : primaryText;
+
+                final background = action.destructive
+                    ? AppPalette.pink.withValues(alpha: .09)
+                    : secondaryText.withValues(alpha: .07);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop(action.value);
+                    },
+                    borderRadius: BorderRadius.circular(18),
+                    child: Container(
+                      width: double.infinity,
+                      height: 50,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: background,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        action.label,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: foreground,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetAction {
+  const _SheetAction({
+    required this.value,
+    required this.label,
+    this.destructive = false,
   });
+
+  final String value;
+  final String label;
+  final bool destructive;
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
 
-  final Future<void> Function()
-      onRetry;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          24,
-        ),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.cloud_off_rounded,
-              size: 46,
-            ),
+            const Icon(Icons.cloud_off_rounded, size: 46),
             const SizedBox(height: 14),
             Text(
               'Não foi possível carregar os lançamentos.',
-              textAlign:
-                  TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(
-                    fontWeight:
-                        FontWeight.w800,
-                  ),
+              textAlign: TextAlign.center,
+              style: AppTypography.section(context, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
+              style: AppTypography.body(context, fontSize: 12),
             ),
             const SizedBox(height: 18),
             FilledButton(
               onPressed: onRetry,
-              child: const Text(
-                'Tentar novamente',
-              ),
+              child: const Text('Tentar novamente'),
             ),
           ],
         ),
@@ -1409,20 +1596,10 @@ class _ErrorState
   }
 }
 
-String _formatDate(
-  DateTime date,
-) {
-  final day =
-      date.day.toString().padLeft(
-            2,
-            '0',
-          );
+String _formatDate(DateTime date) {
+  final day = date.day.toString().padLeft(2, '0');
 
-  final month =
-      date.month.toString().padLeft(
-            2,
-            '0',
-          );
+  final month = date.month.toString().padLeft(2, '0');
 
   return '$day/$month/${date.year}';
 }

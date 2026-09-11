@@ -7,6 +7,7 @@ import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../shared/widgets/category_icon_badge.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({
@@ -38,10 +39,7 @@ class _PlanScreenState extends State<PlanScreen> {
 
     final now = DateTime.now();
 
-    _month = DateTime(
-      now.year,
-      now.month,
-    );
+    _month = DateTime(now.year, now.month);
 
     _load();
   }
@@ -56,11 +54,10 @@ class _PlanScreenState extends State<PlanScreen> {
     return result;
   }
 
-  List<BudgetOverviewItem> _childrenOf(
-    BudgetOverviewItem parent,
-  ) {
-    final result =
-        _items.where((item) => item.parentId == parent.categoryId).toList();
+  List<BudgetOverviewItem> _childrenOf(BudgetOverviewItem parent) {
+    final result = _items
+        .where((item) => item.parentId == parent.categoryId)
+        .toList();
 
     result.sort(
       (a, b) => _sortKey(a.categoryName).compareTo(_sortKey(b.categoryName)),
@@ -70,27 +67,17 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   double get _totalPlanned {
-    return _parents.fold(
-      0.0,
-      (total, item) => total + item.plannedAmount,
-    );
+    return _parents.fold(0.0, (total, item) => total + item.plannedAmount);
   }
 
   double get _totalActual {
-    return _parents.fold(
-      0.0,
-      (total, item) => total + item.actualAmount,
-    );
+    return _parents.fold(0.0, (total, item) => total + item.actualAmount);
   }
 
   double get _totalRemaining => _totalPlanned - _totalActual;
 
   int get _budgetedCount {
-    return _items
-        .where(
-          (item) => item.isSubcategory && item.hasBudget,
-        )
-        .length;
+    return _items.where((item) => item.isSubcategory && item.hasBudget).length;
   }
 
   Future<void> _load() async {
@@ -149,19 +136,15 @@ class _PlanScreenState extends State<PlanScreen> {
 
       setState(() {
         _loading = false;
+
         _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  Future<void> _changeMonth(
-    int delta,
-  ) async {
+  Future<void> _changeMonth(int delta) async {
     setState(() {
-      _month = DateTime(
-        _month.year,
-        _month.month + delta,
-      );
+      _month = DateTime(_month.year, _month.month + delta);
 
       _expandedParents.clear();
     });
@@ -169,9 +152,7 @@ class _PlanScreenState extends State<PlanScreen> {
     await _load();
   }
 
-  void _toggleParent(
-    String categoryId,
-  ) {
+  void _toggleParent(String categoryId) {
     setState(() {
       if (_expandedParents.contains(categoryId)) {
         _expandedParents.remove(categoryId);
@@ -181,9 +162,7 @@ class _PlanScreenState extends State<PlanScreen> {
     });
   }
 
-  String _monthLabel(
-    DateTime date,
-  ) {
+  String _monthLabel(DateTime date) {
     const months = [
       'Janeiro',
       'Fevereiro',
@@ -202,11 +181,8 @@ class _PlanScreenState extends State<PlanScreen> {
     return '${months[date.month - 1]} ${date.year}';
   }
 
-  double? _parseMoney(
-    String text,
-  ) {
-    var normalized =
-        text.trim().replaceAll(RegExp(r'[^0-9,.\-]'), '');
+  double? _parseMoney(String text) {
+    var normalized = text.trim().replaceAll(RegExp(r'[^0-9,.\-]'), '');
 
     if (normalized.isEmpty) {
       return null;
@@ -219,10 +195,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return double.tryParse(normalized);
   }
 
-  Color _progressColor(
-    BudgetOverviewItem item,
-    Brightness brightness,
-  ) {
+  Color _progressColor(BudgetOverviewItem item, Brightness brightness) {
     if (item.isOverBudget || item.status == 'critical') {
       return AppColors.expenseText(brightness);
     }
@@ -236,9 +209,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return AppColors.primaryPurple(brightness);
   }
 
-  String _statusLabel(
-    BudgetOverviewItem item,
-  ) {
+  String _statusLabel(BudgetOverviewItem item) {
     if (!item.hasBudget) {
       if (item.hasActivity) {
         return '${Formatters.money(item.actualAmount)} gasto';
@@ -254,16 +225,16 @@ class _PlanScreenState extends State<PlanScreen> {
     switch (item.status) {
       case 'critical':
         return 'Quase no limite';
+
       case 'warning':
         return 'Atenção';
+
       default:
         return 'Dentro do plano';
     }
   }
 
-  Future<void> _editBudget(
-    BudgetOverviewItem item,
-  ) async {
+  Future<void> _editBudget(BudgetOverviewItem item) async {
     final controller = TextEditingController(
       text: item.plannedAmount > 0
           ? item.plannedAmount.toStringAsFixed(2).replaceAll('.', ',')
@@ -279,18 +250,25 @@ class _PlanScreenState extends State<PlanScreen> {
       showDragHandle: false,
       builder: (sheetContext) {
         return StatefulBuilder(
-          builder: (
-            innerContext,
-            setSheetState,
-          ) {
+          builder: (innerContext, setSheetState) {
             final brightness = Theme.of(innerContext).brightness;
+
             final primaryText = AppColors.primaryText(brightness);
+
             final secondaryText = AppColors.secondaryText(brightness);
+
             final border = AppColors.border(brightness);
+
             final parentName = item.parentName ?? item.categoryName;
+
             final familyColor = CategoryVisuals.colorFor(
               category: parentName,
               brightness: brightness,
+            );
+
+            final icon = CategoryVisuals.iconFor(
+              category: parentName,
+              subcategory: item.isSubcategory ? item.categoryName : null,
             );
 
             return Padding(
@@ -317,23 +295,12 @@ class _PlanScreenState extends State<PlanScreen> {
                   const SizedBox(height: 22),
                   Row(
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: familyColor.withValues(alpha: .13),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Icon(
-                          CategoryVisuals.iconFor(
-                            category: parentName,
-                            subcategory:
-                                item.isSubcategory ? item.categoryName : null,
-                          ),
-                          color: familyColor,
-                          size: 23,
-                        ),
+                      CategoryIconBadge(
+                        icon: icon,
+                        color: familyColor,
+                        size: 48,
+                        iconSize: 23,
+                        radius: 15,
                       ),
                       const SizedBox(width: 13),
                       Expanded(
@@ -412,6 +379,7 @@ class _PlanScreenState extends State<PlanScreen> {
                         setSheetState(() {
                           validationError = 'Digite um valor válido.';
                         });
+
                         return;
                       }
 
@@ -465,18 +433,14 @@ class _PlanScreenState extends State<PlanScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Não consegui salvar: $error'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Não consegui salvar: $error')));
     }
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
 
     return ColoredBox(
@@ -484,28 +448,19 @@ class _PlanScreenState extends State<PlanScreen> {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 760,
-            ),
+            constraints: const BoxConstraints(maxWidth: 760),
             child: RefreshIndicator(
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  18,
-                  22,
-                  18,
-                  120,
-                ),
+                padding: const EdgeInsets.fromLTRB(18, 22, 18, 120),
                 children: [
                   _buildHeader(brightness),
                   const SizedBox(height: 24),
                   if (_loading)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 80),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else if (_error != null)
                     _buildError(brightness)
@@ -518,10 +473,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       _buildEmpty(brightness)
                     else
                       ..._parents.map(
-                        (parent) => _buildCategoryTree(
-                          parent,
-                          brightness,
-                        ),
+                        (parent) => _buildCategoryTree(parent, brightness),
                       ),
                   ],
                 ],
@@ -533,12 +485,13 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildHeader(
-    Brightness brightness,
-  ) {
+  Widget _buildHeader(Brightness brightness) {
     final surface = AppColors.surface(brightness);
+
     final border = AppColors.border(brightness);
+
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
 
     return Column(
@@ -560,25 +513,19 @@ class _PlanScreenState extends State<PlanScreen> {
               decoration: BoxDecoration(
                 color: surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: border,
-                ),
+                border: Border.all(color: border),
               ),
               child: Row(
                 children: [
                   IconButton(
                     tooltip: 'Mês anterior',
                     onPressed: () => _changeMonth(-1),
-                    icon: const Icon(
-                      AppIcons.chevronLeft,
-                    ),
+                    icon: const Icon(AppIcons.chevronLeft),
                   ),
                   IconButton(
                     tooltip: 'Próximo mês',
                     onPressed: () => _changeMonth(1),
-                    icon: const Icon(
-                      AppIcons.chevronRight,
-                    ),
+                    icon: const Icon(AppIcons.chevronRight),
                   ),
                 ],
               ),
@@ -596,10 +543,7 @@ class _PlanScreenState extends State<PlanScreen> {
         ),
         const SizedBox(height: 18),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 13,
-            vertical: 9,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
             color: AppColors.lime.withValues(alpha: .14),
             borderRadius: BorderRadius.circular(99),
@@ -607,11 +551,7 @@ class _PlanScreenState extends State<PlanScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                AppIcons.calendar,
-                size: 17,
-                color: AppColors.lime,
-              ),
+              const Icon(AppIcons.calendar, size: 17, color: AppColors.lime),
               const SizedBox(width: 7),
               Text(
                 _monthLabel(_month),
@@ -629,10 +569,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildSummary(
-    Brightness brightness,
-  ) {
+  Widget _buildSummary(Brightness brightness) {
     final purple = AppColors.primaryPurple(brightness);
+
     final remaining = _totalRemaining;
 
     return Container(
@@ -679,19 +618,9 @@ class _PlanScreenState extends State<PlanScreen> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(
-                child: _summaryMetric(
-                  'Planejado',
-                  _totalPlanned,
-                ),
-              ),
+              Expanded(child: _summaryMetric('Planejado', _totalPlanned)),
               const SizedBox(width: 10),
-              Expanded(
-                child: _summaryMetric(
-                  'Realizado',
-                  _totalActual,
-                ),
-              ),
+              Expanded(child: _summaryMetric('Realizado', _totalActual)),
             ],
           ),
           const SizedBox(height: 10),
@@ -704,11 +633,7 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
             child: Row(
               children: [
-                const Icon(
-                  AppIcons.plan,
-                  color: Colors.white,
-                  size: 19,
-                ),
+                const Icon(AppIcons.plan, color: Colors.white, size: 19),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
@@ -730,10 +655,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _summaryMetric(
-    String label,
-    double value,
-  ) {
+  Widget _summaryMetric(String label, double value) {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
@@ -769,10 +691,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildCategoriesHeader(
-    Brightness brightness,
-  ) {
+  Widget _buildCategoriesHeader(Brightness brightness) {
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
 
     return Column(
@@ -799,24 +720,27 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildCategoryTree(
-    BudgetOverviewItem parent,
-    Brightness brightness,
-  ) {
+  Widget _buildCategoryTree(BudgetOverviewItem parent, Brightness brightness) {
     final children = _childrenOf(parent);
+
     final expanded = _expandedParents.contains(parent.categoryId);
+
     final surface = AppColors.surface(brightness);
+
     final border = AppColors.border(brightness);
+
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
+
     final familyColor = CategoryVisuals.colorFor(
       category: parent.categoryName,
       brightness: brightness,
     );
-    final progressColor = _progressColor(
-      parent,
-      brightness,
-    );
+
+    final parentIcon = CategoryVisuals.iconFor(category: parent.categoryName);
+
+    final progressColor = _progressColor(parent, brightness);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -824,9 +748,7 @@ class _PlanScreenState extends State<PlanScreen> {
         decoration: BoxDecoration(
           color: surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: border,
-          ),
+          border: Border.all(color: border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -839,21 +761,12 @@ class _PlanScreenState extends State<PlanScreen> {
                 padding: const EdgeInsets.all(15),
                 child: Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: familyColor.withValues(alpha: .13),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        CategoryVisuals.iconFor(
-                          category: parent.categoryName,
-                        ),
-                        color: familyColor,
-                        size: 22,
-                      ),
+                    CategoryIconBadge(
+                      icon: parentIcon,
+                      color: familyColor,
+                      size: 44,
+                      iconSize: 22,
+                      radius: 14,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -927,21 +840,14 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
             if (parent.hasBudget)
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  0,
-                  16,
-                  14,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(99),
                   child: LinearProgressIndicator(
                     value: parent.progress,
                     minHeight: 5,
                     backgroundColor: border.withValues(alpha: .55),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      progressColor,
-                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                   ),
                 ),
               ),
@@ -972,27 +878,15 @@ class _PlanScreenState extends State<PlanScreen> {
     );
 
     final uncategorized = (parent.actualAmount - childActualTotal)
-        .clamp(
-          0.0,
-          double.infinity,
-        )
+        .clamp(0.0, double.infinity)
         .toDouble();
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: border,
-          ),
-        ),
+        border: Border(top: BorderSide(color: border)),
       ),
-      padding: const EdgeInsets.fromLTRB(
-        12,
-        5,
-        12,
-        10,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 5, 12, 10),
       child: Column(
         children: [
           ...children.map(
@@ -1022,14 +916,19 @@ class _PlanScreenState extends State<PlanScreen> {
     required Color familyColor,
   }) {
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
+
     final border = AppColors.border(brightness);
-    final progressColor = _progressColor(
-      child,
-      brightness,
-    );
+
+    final progressColor = _progressColor(child, brightness);
 
     final percentage = (child.usageRatio * 100).round();
+
+    final childIcon = CategoryVisuals.iconFor(
+      category: parent.categoryName,
+      subcategory: child.categoryName,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1039,30 +938,17 @@ class _PlanScreenState extends State<PlanScreen> {
           onTap: () => _editBudget(child),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 7,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 9),
             child: Column(
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: familyColor.withValues(alpha: .09),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: Icon(
-                        CategoryVisuals.iconFor(
-                          category: parent.categoryName,
-                          subcategory: child.categoryName,
-                        ),
-                        size: 19,
-                        color: familyColor,
-                      ),
+                    CategoryIconBadge(
+                      icon: childIcon,
+                      color: familyColor,
+                      size: 36,
+                      iconSize: 19,
+                      radius: 11,
                     ),
                     const SizedBox(width: 11),
                     Expanded(
@@ -1083,8 +969,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             child.hasBudget
                                 ? '${Formatters.money(child.actualAmount)} de ${Formatters.money(child.plannedAmount)}'
                                 : child.hasActivity
-                                    ? '${Formatters.money(child.actualAmount)} gasto · sem limite'
-                                    : 'Sem limite',
+                                ? '${Formatters.money(child.actualAmount)} gasto · sem limite'
+                                : 'Sem limite',
                             style: AppTypography.label(
                               context,
                               fontSize: 10,
@@ -1105,17 +991,11 @@ class _PlanScreenState extends State<PlanScreen> {
                         context,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: child.hasBudget
-                            ? primaryText
-                            : familyColor,
+                        color: child.hasBudget ? primaryText : familyColor,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(
-                      AppIcons.chevronRight,
-                      size: 17,
-                      color: secondaryText,
-                    ),
+                    Icon(AppIcons.chevronRight, size: 17, color: secondaryText),
                   ],
                 ),
                 if (child.hasBudget) ...[
@@ -1163,32 +1043,21 @@ class _PlanScreenState extends State<PlanScreen> {
     required Color familyColor,
   }) {
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
 
+    final icon = CategoryVisuals.iconFor(category: parent.categoryName);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        7,
-        8,
-        7,
-        4,
-      ),
+      padding: const EdgeInsets.fromLTRB(7, 8, 7, 4),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: familyColor.withValues(alpha: .07),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Icon(
-              CategoryVisuals.iconFor(
-                category: parent.categoryName,
-              ),
-              size: 18,
-              color: familyColor,
-            ),
+          CategoryIconBadge(
+            icon: icon,
+            color: familyColor,
+            size: 36,
+            iconSize: 18,
+            radius: 11,
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -1229,12 +1098,13 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildError(
-    Brightness brightness,
-  ) {
+  Widget _buildError(Brightness brightness) {
     final surface = AppColors.surface(brightness);
+
     final border = AppColors.border(brightness);
+
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
 
     return Container(
@@ -1242,9 +1112,7 @@ class _PlanScreenState extends State<PlanScreen> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: border,
-        ),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: [
@@ -1275,23 +1143,19 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton(
-            onPressed: _load,
-            child: const Text(
-              'Tentar novamente',
-            ),
-          ),
+          FilledButton(onPressed: _load, child: const Text('Tentar novamente')),
         ],
       ),
     );
   }
 
-  Widget _buildEmpty(
-    Brightness brightness,
-  ) {
+  Widget _buildEmpty(Brightness brightness) {
     final surface = AppColors.surface(brightness);
+
     final border = AppColors.border(brightness);
+
     final primaryText = AppColors.primaryText(brightness);
+
     final secondaryText = AppColors.secondaryText(brightness);
 
     return Container(
@@ -1299,9 +1163,7 @@ class _PlanScreenState extends State<PlanScreen> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: border,
-        ),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: [
@@ -1336,9 +1198,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  String _sortKey(
-    String value,
-  ) {
+  String _sortKey(String value) {
     return value
         .toLowerCase()
         .replaceAll('á', 'a')
