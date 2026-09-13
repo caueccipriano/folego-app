@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 
@@ -18,9 +21,6 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  static const _purple = Color(0xFF6C3BF0);
-  static const _lime = Color(0xFFC6F135);
-
   bool _loading = true;
   String? _error;
 
@@ -31,6 +31,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
+
     _load();
   }
 
@@ -70,10 +71,12 @@ class _WalletScreenState extends State<WalletScreen> {
     final absolute = value.abs();
 
     final parts = absolute.toStringAsFixed(2).split('.');
+
     final integer = parts.first;
     final decimal = parts.last;
 
     final reversed = integer.split('').reversed.toList();
+
     final groups = <String>[];
 
     for (var i = 0; i < reversed.length; i += 3) {
@@ -101,19 +104,19 @@ class _WalletScreenState extends State<WalletScreen> {
   String _accountType(String value) {
     switch (value) {
       case 'checking':
-        return 'Conta corrente';
+        return 'conta corrente';
 
       case 'savings':
-        return 'Poupança';
+        return 'poupança';
 
       case 'cash':
-        return 'Dinheiro';
+        return 'dinheiro';
 
       case 'investment':
-        return 'Investimento';
+        return 'investimento';
 
       case 'benefit':
-        return 'Benefício';
+        return 'benefício';
 
       default:
         return value;
@@ -123,54 +126,73 @@ class _WalletScreenState extends State<WalletScreen> {
   IconData _accountIcon(String type) {
     switch (type) {
       case 'cash':
-        return Icons.payments_outlined;
+        return TablerIcons.cashBanknote;
 
       case 'investment':
-        return Icons.trending_up_rounded;
+        return TablerIcons.chartLine;
 
       case 'benefit':
-        return Icons.card_giftcard_rounded;
+        return TablerIcons.gift;
 
       default:
-        return Icons.account_balance_rounded;
+        return TablerIcons.buildingBank;
     }
+  }
+
+  Color _valueColor({
+    required double value,
+    required Brightness brightness,
+    required Color fallback,
+  }) {
+    if (value < 0) {
+      return AppColors.expenseText(brightness);
+    }
+
+    return fallback;
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 120),
-              children: [
-                _buildHeader(),
+    final brightness = Theme.of(context).brightness;
 
-                const SizedBox(height: 22),
+    final background = AppColors.background(brightness);
 
-                if (_loading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 100),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_error != null)
-                  _buildError()
-                else if (_overview != null) ...[
-                  _buildSummary(),
+    return ColoredBox(
+      color: background,
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(18, 22, 18, 150),
+                children: [
+                  _buildHeader(brightness),
 
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 22),
 
-                  _buildSelector(),
+                  if (_loading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 100),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_error != null)
+                    _buildError(brightness)
+                  else if (_overview != null) ...[
+                    _buildSummary(brightness),
 
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 24),
 
-                  _buildSelectedSection(),
+                    _buildSelector(brightness),
+
+                    const SizedBox(height: 20),
+
+                    _buildSelectedSection(brightness),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -178,7 +200,15 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Brightness brightness) {
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final surface = AppColors.surface(brightness);
+
+    final border = AppColors.border(brightness);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -186,160 +216,265 @@ class _WalletScreenState extends State<WalletScreen> {
           children: [
             Expanded(
               child: Text(
-                'Carteira',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+                'carteira',
+                style: AppTypography.display(
+                  context,
+                  fontSize: 28,
+                  color: primaryText,
                 ),
               ),
             ),
             IconButton(
-              tooltip: 'Atualizar',
+              tooltip: 'atualizar',
               onPressed: _load,
-              icon: const Icon(Icons.refresh_rounded),
+              style: IconButton.styleFrom(
+                minimumSize: const Size(42, 42),
+                backgroundColor: surface,
+                foregroundColor: secondaryText,
+                side: BorderSide(color: border),
+              ),
+              icon: const Icon(TablerIcons.refresh, size: 19),
             ),
           ],
         ),
         const SizedBox(height: 5),
         Text(
-          'Tudo que faz parte da sua vida financeira.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: .58),
+          'tudo que faz parte da sua vida financeira',
+          style: AppTypography.body(
+            context,
+            fontSize: 13,
+            color: secondaryText,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSummary() {
+  Widget _buildSummary(Brightness brightness) {
     final summary = _overview!.summary;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF7444F4), Color(0xFF5A22E8)],
-        ),
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Dinheiro disponível',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: .74),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+    final surface = AppColors.surface(brightness);
 
-          const SizedBox(height: 5),
+    final border = AppColors.border(brightness);
 
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              _money(summary.availableCash),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
+    final primaryText = AppColors.primaryText(brightness);
 
-          const SizedBox(height: 6),
+    final secondaryText = AppColors.secondaryText(brightness);
 
-          Text(
-            'O que está disponível nas contas '
-            'marcadas para uso.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: .70),
-              fontSize: 12,
-            ),
-          ),
+    final purple = AppColors.primaryPurple(brightness);
 
-          const SizedBox(height: 20),
+    final expense = AppColors.expenseText(brightness);
 
-          Row(
-            children: [
-              Expanded(
-                child: _summaryMetric(
-                  label: 'Em contas',
-                  value: summary.totalCash,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _summaryMetric(
-                  label: 'Faturas',
-                  value: summary.totalCardInvoice,
-                ),
-              ),
-            ],
-          ),
+    final availableColor = _valueColor(
+      value: summary.availableCash,
+      brightness: brightness,
+      fallback: primaryText,
+    );
 
-          const SizedBox(height: 10),
+    final highInvoice = summary.totalCardInvoice > summary.totalCash;
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (highInvoice) ...[
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(18),
+              color: expense.withValues(alpha: .10),
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: expense.withValues(alpha: .24)),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Saldo restante em dívidas',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: .76),
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
+                Icon(TablerIcons.alertCircle, size: 16, color: expense),
+                const SizedBox(width: 6),
                 Text(
-                  _money(summary.totalDebtRemaining),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                  'fatura alta chegando',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: expense,
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 10),
         ],
-      ),
+
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: purple.withValues(alpha: .22)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: purple.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(TablerIcons.wallet, size: 19, color: purple),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'dinheiro disponível',
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _money(summary.availableCash),
+                  style: AppTypography.money(
+                    context,
+                    fontSize: 31,
+                    color: availableColor,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                'o que está disponível nas contas marcadas para uso',
+                style: AppTypography.body(
+                  context,
+                  fontSize: 12,
+                  color: secondaryText,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _summaryMetric(
+                      label: 'em contas',
+                      value: summary.totalCash,
+                      brightness: brightness,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _summaryMetric(
+                      label: 'faturas',
+                      value: summary.totalCardInvoice,
+                      brightness: brightness,
+                      emphasize: highInvoice,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: purple.withValues(alpha: .07),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(TablerIcons.wallet, color: purple, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'saldo restante em dívidas',
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 12,
+                          color: secondaryText,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _money(summary.totalDebtRemaining),
+                      style: AppTypography.money(
+                        context,
+                        fontSize: 12,
+                        color: _valueColor(
+                          value: summary.totalDebtRemaining,
+                          brightness: brightness,
+                          fallback: primaryText,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _summaryMetric({required String label, required double value}) {
+  Widget _summaryMetric({
+    required String label,
+    required double value,
+    required Brightness brightness,
+    bool emphasize = false,
+  }) {
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final border = AppColors.border(brightness);
+
+    final expense = AppColors.expenseText(brightness);
+
+    final valueColor = value < 0
+        ? expense
+        : emphasize
+        ? expense
+        : primaryText;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .12),
+        color: emphasize
+            ? expense.withValues(alpha: .07)
+            : border.withValues(alpha: .18),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: emphasize ? expense.withValues(alpha: .20) : border,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: .70),
-              fontSize: 12,
+            style: AppTypography.label(
+              context,
+              fontSize: 10,
+              color: secondaryText,
             ),
           ),
           const SizedBox(height: 5),
@@ -348,10 +483,10 @@ class _WalletScreenState extends State<WalletScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               _money(value),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
+              style: AppTypography.money(
+                context,
+                fontSize: 15,
+                color: valueColor,
               ),
             ),
           ),
@@ -360,16 +495,12 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildSelector() {
+  Widget _buildSelector(Brightness brightness) {
     final sections = [
-      ('Contas', Icons.account_balance_rounded, _overview!.accounts.length),
-      ('Cartões', Icons.credit_card_rounded, _overview!.cards.length),
-      ('Dívidas', Icons.receipt_long_rounded, _overview!.debts.length),
-      (
-        'Parcelas',
-        Icons.calendar_view_month_rounded,
-        _overview!.installments.length,
-      ),
+      ('contas', TablerIcons.buildingBank, _overview!.accounts.length),
+      ('cartões', TablerIcons.creditCard, _overview!.cards.length),
+      ('dívidas', TablerIcons.wallet, _overview!.debts.length),
+      ('parcelas', TablerIcons.calendarDollar, _overview!.installments.length),
     ];
 
     return SingleChildScrollView(
@@ -382,15 +513,15 @@ class _WalletScreenState extends State<WalletScreen> {
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
+            child: _WalletSectionChip(
+              label: '${section.$1} ${section.$3}',
+              icon: section.$2,
               selected: selected,
-              onSelected: (_) {
+              onTap: () {
                 setState(() {
                   _section = index;
                 });
               },
-              avatar: Icon(section.$2, size: 18),
-              label: Text('${section.$1} ${section.$3}'),
             ),
           );
         }),
@@ -398,26 +529,34 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildSelectedSection() {
+  Widget _buildSelectedSection(Brightness brightness) {
     switch (_section) {
       case 0:
-        return _buildAccounts();
+        return _buildAccounts(brightness);
 
       case 1:
-        return _buildCards();
+        return _buildCards(brightness);
 
       case 2:
-        return _buildDebts();
+        return _buildDebts(brightness);
 
       case 3:
-        return _buildInstallments();
+        return _buildInstallments(brightness);
 
       default:
         return const SizedBox();
     }
   }
 
-  Widget _sectionHeader({required String title, required String description}) {
+  Widget _sectionHeader({
+    required String title,
+    required String description,
+    required Brightness brightness,
+  }) {
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -425,17 +564,19 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           Text(
             title,
-            style: Theme.of(
+            style: AppTypography.section(
               context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              fontSize: 20,
+              color: primaryText,
+            ),
           ),
           const SizedBox(height: 3),
           Text(
             description,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: .55),
+            style: AppTypography.body(
+              context,
+              fontSize: 12,
+              color: secondaryText,
             ),
           ),
         ],
@@ -443,34 +584,51 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildAccounts() {
+  Widget _buildAccounts(Brightness brightness) {
     final accounts = _overview!.accounts;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(
-          title: 'Suas contas',
-          description: 'Onde seu dinheiro está hoje.',
+          title: 'suas contas',
+          description: 'onde seu dinheiro está hoje',
+          brightness: brightness,
         ),
 
         if (accounts.isEmpty)
           _emptySection(
-            icon: Icons.account_balance_outlined,
-            title: 'Nenhuma conta cadastrada',
-            description: 'Suas contas bancárias aparecerão aqui.',
+            icon: TablerIcons.buildingBank,
+            title: 'nenhuma conta cadastrada',
+            description: 'suas contas aparecerão aqui',
+            brightness: brightness,
           )
         else
-          ...accounts.map((account) => _accountCard(account)),
+          ...accounts.map((account) => _accountCard(account, brightness)),
       ],
     );
   }
 
-  Widget _accountCard(WalletAccount account) {
+  Widget _accountCard(WalletAccount account, Brightness brightness) {
+    final purple = AppColors.primaryPurple(brightness);
+
+    final positive = AppColors.positiveText(brightness);
+
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final balanceColor = _valueColor(
+      value: account.balance,
+      brightness: brightness,
+      fallback: primaryText,
+    );
+
     return _baseCard(
+      brightness: brightness,
       child: Row(
         children: [
-          _iconBox(icon: _accountIcon(account.type), color: _purple),
+          _iconBox(icon: _accountIcon(account.type), color: purple),
 
           const SizedBox(width: 12),
 
@@ -480,27 +638,32 @@ class _WalletScreenState extends State<WalletScreen> {
               children: [
                 Text(
                   account.name,
-                  style: const TextStyle(
+                  style: AppTypography.body(
+                    context,
                     fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
+                    color: primaryText,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   account.institution ?? _accountType(account.type),
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: secondaryText,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   account.availableForSpending
-                      ? 'Disponível para gastar'
-                      : 'Protegido do Fôlego',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: account.availableForSpending
-                        ? const Color(0xFF368C45)
-                        : _purple,
+                      ? 'disponível para gastar'
+                      : 'protegido do Fôlego',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: account.availableForSpending ? positive : purple,
                   ),
                 ),
               ],
@@ -513,7 +676,11 @@ class _WalletScreenState extends State<WalletScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               _money(account.balance),
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+              style: AppTypography.money(
+                context,
+                fontSize: 14,
+                color: balanceColor,
+              ),
             ),
           ),
         ],
@@ -521,42 +688,53 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildCards() {
+  Widget _buildCards(Brightness brightness) {
     final cards = _overview!.cards;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(
-          title: 'Seus cartões',
-          description: 'Faturas, limites e vencimentos.',
+          title: 'seus cartões',
+          description: 'faturas, limites e vencimentos',
+          brightness: brightness,
         ),
 
         if (cards.isEmpty)
           _emptySection(
-            icon: Icons.credit_card_off_rounded,
-            title: 'Nenhum cartão cadastrado',
-            description: 'Seus cartões de crédito aparecerão aqui.',
+            icon: TablerIcons.creditCard,
+            title: 'nenhum cartão cadastrado',
+            description: 'seus cartões de crédito aparecerão aqui',
+            brightness: brightness,
           )
         else
-          ...cards.map((card) => _cardCard(card)),
+          ...cards.map((card) => _cardCard(card, brightness)),
       ],
     );
   }
 
-  Widget _cardCard(WalletCard card) {
+  Widget _cardCard(WalletCard card, Brightness brightness) {
     final limit = card.effectiveLimit;
 
     final ratio = limit != null && limit > 0
         ? (card.invoiceBalance / limit).clamp(0.0, 1.0)
         : null;
 
+    final purple = AppColors.primaryPurple(brightness);
+
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final border = AppColors.border(brightness);
+
     return _baseCard(
+      brightness: brightness,
       child: Column(
         children: [
           Row(
             children: [
-              _iconBox(icon: Icons.credit_card_rounded, color: _purple),
+              _iconBox(icon: TablerIcons.creditCard, color: purple),
 
               const SizedBox(width: 12),
 
@@ -566,9 +744,11 @@ class _WalletScreenState extends State<WalletScreen> {
                   children: [
                     Text(
                       card.name,
-                      style: const TextStyle(
+                      style: AppTypography.body(
+                        context,
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -578,7 +758,11 @@ class _WalletScreenState extends State<WalletScreen> {
                         if (card.lastFour != null)
                           '•••• ${card.lastFour!.trim()}',
                       ].join(' · '),
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondaryText,
+                      ),
                     ),
                   ],
                 ),
@@ -587,10 +771,25 @@ class _WalletScreenState extends State<WalletScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('Fatura', style: TextStyle(fontSize: 11)),
+                  Text(
+                    'fatura',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      color: secondaryText,
+                    ),
+                  ),
                   Text(
                     _money(card.invoiceBalance),
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 13,
+                      color: _valueColor(
+                        value: card.invoiceBalance,
+                        brightness: brightness,
+                        fallback: primaryText,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -605,10 +804,8 @@ class _WalletScreenState extends State<WalletScreen> {
               child: LinearProgressIndicator(
                 value: ratio,
                 minHeight: 7,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
-                valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+                backgroundColor: border.withValues(alpha: .45),
+                valueColor: AlwaysStoppedAnimation<Color>(purple),
               ),
             ),
             const SizedBox(height: 8),
@@ -618,19 +815,25 @@ class _WalletScreenState extends State<WalletScreen> {
             children: [
               Expanded(
                 child: _smallInfo(
-                  label: 'Limite disponível',
+                  label: 'limite disponível',
                   value: card.availableLimit == null
                       ? '—'
                       : _money(card.availableLimit!),
+                  brightness: brightness,
+                  valueColor:
+                      card.availableLimit != null && card.availableLimit! < 0
+                      ? AppColors.expenseText(brightness)
+                      : null,
                 ),
               ),
               Expanded(
                 child: _smallInfo(
-                  label: 'Vencimento',
+                  label: 'vencimento',
                   value: card.invoiceDueDate != null
                       ? _date(card.invoiceDueDate)
-                      : 'Dia ${card.dueDay}',
+                      : 'dia ${card.dueDay}',
                   alignRight: true,
+                  brightness: brightness,
                 ),
               ),
             ],
@@ -642,14 +845,22 @@ class _WalletScreenState extends State<WalletScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Fecha dia ${card.closingDay}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'fecha dia ${card.closingDay}',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 10,
+                    color: secondaryText,
+                  ),
                 ),
               ),
               if (limit != null)
                 Text(
-                  'Limite ${_money(limit)}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'limite ${_money(limit)}',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 10,
+                    color: secondaryText,
+                  ),
                 ),
             ],
           ),
@@ -658,45 +869,53 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildDebts() {
+  Widget _buildDebts(Brightness brightness) {
     final debts = _overview!.debts;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(
-          title: 'Suas dívidas',
-          description: 'Acompanhe o que ainda falta pagar.',
+          title: 'suas dívidas',
+          description: 'acompanhe o que ainda falta pagar',
+          brightness: brightness,
         ),
 
         if (debts.isEmpty)
           _emptySection(
-            icon: Icons.check_circle_outline_rounded,
-            title: 'Nenhuma dívida ativa',
-            description: 'Quando houver uma dívida ativa, ela aparecerá aqui.',
+            icon: TablerIcons.wallet,
+            title: 'nenhuma dívida ativa',
+            description: 'quando houver uma dívida ativa, ela aparecerá aqui',
+            brightness: brightness,
           )
         else
-          ...debts.map((debt) => _debtCard(debt)),
+          ...debts.map((debt) => _debtCard(debt, brightness)),
       ],
     );
   }
 
-  Widget _debtCard(WalletDebt debt) {
+  Widget _debtCard(WalletDebt debt, Brightness brightness) {
     final total = debt.originalAmount ?? debt.openingBalance;
 
     final progress = total > 0
         ? ((total - debt.remainingBalance) / total).clamp(0.0, 1.0)
         : 0.0;
 
+    final expense = AppColors.expenseText(brightness);
+
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final border = AppColors.border(brightness);
+
     return _baseCard(
+      brightness: brightness,
       child: Column(
         children: [
           Row(
             children: [
-              _iconBox(
-                icon: Icons.receipt_long_rounded,
-                color: const Color(0xFFED7A3B),
-              ),
+              _iconBox(icon: TablerIcons.wallet, color: expense),
 
               const SizedBox(width: 12),
 
@@ -706,16 +925,22 @@ class _WalletScreenState extends State<WalletScreen> {
                   children: [
                     Text(
                       debt.name,
-                      style: const TextStyle(
+                      style: AppTypography.body(
+                        context,
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
                       ),
                     ),
                     if (debt.creditor != null) ...[
                       const SizedBox(height: 3),
                       Text(
                         debt.creditor!,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: secondaryText,
+                        ),
                       ),
                     ],
                   ],
@@ -725,10 +950,21 @@ class _WalletScreenState extends State<WalletScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('Falta pagar', style: TextStyle(fontSize: 11)),
+                  Text(
+                    'falta pagar',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      color: secondaryText,
+                    ),
+                  ),
                   Text(
                     _money(debt.remainingBalance),
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 13,
+                      color: primaryText,
+                    ),
                   ),
                 ],
               ),
@@ -742,10 +978,8 @@ class _WalletScreenState extends State<WalletScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest,
-              valueColor: const AlwaysStoppedAnimation<Color>(_lime),
+              backgroundColor: border.withValues(alpha: .45),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.lime),
             ),
           ),
 
@@ -755,17 +989,22 @@ class _WalletScreenState extends State<WalletScreen> {
             children: [
               Expanded(
                 child: _smallInfo(
-                  label: 'Próxima parcela',
+                  label: 'próxima parcela',
                   value: debt.nextDueDate == null
                       ? '—'
                       : '${_money(debt.nextAmount)} · ${_date(debt.nextDueDate)}',
+                  brightness: brightness,
                 ),
               ),
               if (debt.totalInstallments != null)
                 Text(
                   '${debt.paidInstallments}/'
                   '${debt.totalInstallments} pagas',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 10,
+                    color: secondaryText,
+                  ),
                 ),
             ],
           ),
@@ -774,42 +1013,53 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildInstallments() {
+  Widget _buildInstallments(Brightness brightness) {
     final installments = _overview!.installments;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(
-          title: 'Parcelamentos',
-          description: 'Compras parceladas ainda em andamento.',
+          title: 'parcelamentos',
+          description: 'compras parceladas ainda em andamento',
+          brightness: brightness,
         ),
 
         if (installments.isEmpty)
           _emptySection(
-            icon: Icons.calendar_month_outlined,
-            title: 'Nenhum parcelamento ativo',
-            description: 'Compras parceladas aparecerão aqui.',
+            icon: TablerIcons.calendarDollar,
+            title: 'nenhum parcelamento ativo',
+            description: 'compras parceladas aparecerão aqui',
+            brightness: brightness,
           )
         else
-          ...installments.map((item) => _installmentCard(item)),
+          ...installments.map((item) => _installmentCard(item, brightness)),
       ],
     );
   }
 
-  Widget _installmentCard(WalletInstallment item) {
+  Widget _installmentCard(WalletInstallment item, Brightness brightness) {
     final paid = item.installmentsCount - item.remainingInstallments;
 
     final progress = item.installmentsCount > 0
         ? (paid / item.installmentsCount).clamp(0.0, 1.0)
         : 0.0;
 
+    final purple = AppColors.primaryPurple(brightness);
+
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final border = AppColors.border(brightness);
+
     return _baseCard(
+      brightness: brightness,
       child: Column(
         children: [
           Row(
             children: [
-              _iconBox(icon: Icons.calendar_view_month_rounded, color: _purple),
+              _iconBox(icon: TablerIcons.calendarDollar, color: purple),
 
               const SizedBox(width: 12),
 
@@ -821,15 +1071,21 @@ class _WalletScreenState extends State<WalletScreen> {
                       item.description,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: AppTypography.body(
+                        context,
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       item.cardName,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondaryText,
+                      ),
                     ),
                   ],
                 ),
@@ -838,10 +1094,21 @@ class _WalletScreenState extends State<WalletScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('Restante', style: TextStyle(fontSize: 11)),
+                  Text(
+                    'restante',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      color: secondaryText,
+                    ),
+                  ),
                   Text(
                     _money(item.remainingAmount),
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 13,
+                      color: primaryText,
+                    ),
                   ),
                 ],
               ),
@@ -855,10 +1122,8 @@ class _WalletScreenState extends State<WalletScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest,
-              valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+              backgroundColor: border.withValues(alpha: .45),
+              valueColor: AlwaysStoppedAnimation<Color>(purple),
             ),
           ),
 
@@ -870,13 +1135,21 @@ class _WalletScreenState extends State<WalletScreen> {
                 child: Text(
                   '$paid de '
                   '${item.installmentsCount} parcelas concluídas',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 10,
+                    color: secondaryText,
+                  ),
                 ),
               ),
               if (item.nextDueDate != null)
                 Text(
-                  'Próxima ${_date(item.nextDueDate)}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'próxima ${_date(item.nextDueDate)}',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 10,
+                    color: secondaryText,
+                  ),
                 ),
             ],
           ),
@@ -885,17 +1158,15 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _baseCard({required Widget child}) {
+  Widget _baseCard({required Widget child, required Brightness brightness}) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: .28),
-        ),
+        border: Border.all(color: AppColors.border(brightness)),
       ),
       child: child,
     );
@@ -917,8 +1188,14 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _smallInfo({
     required String label,
     required String value,
+    required Brightness brightness,
     bool alignRight = false,
+    Color? valueColor,
   }) {
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
     return Column(
       crossAxisAlignment: alignRight
           ? CrossAxisAlignment.end
@@ -926,13 +1203,22 @@ class _WalletScreenState extends State<WalletScreen> {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+          style: AppTypography.label(
+            context,
+            fontSize: 9,
+            color: secondaryText,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
           textAlign: alignRight ? TextAlign.right : TextAlign.left,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: AppTypography.body(
+            context,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: valueColor ?? primaryText,
+          ),
         ),
       ],
     );
@@ -942,58 +1228,156 @@ class _WalletScreenState extends State<WalletScreen> {
     required IconData icon,
     required String title,
     required String description,
+    required Brightness brightness,
   }) {
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final purple = AppColors.primaryPurple(brightness);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: .25),
-        ),
+        border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 38),
+          _iconBox(icon: icon, color: purple),
           const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: AppTypography.body(
+              context,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: primaryText,
+            ),
           ),
           const SizedBox(height: 5),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              color: secondaryText,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildError() {
+  Widget _buildError(Brightness brightness) {
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final expense = AppColors.expenseText(brightness);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline_rounded, size: 40),
+          _iconBox(icon: TablerIcons.alertCircle, color: expense),
           const SizedBox(height: 12),
-          const Text(
-            'Não consegui carregar sua carteira.',
+          Text(
+            'não consegui carregar sua carteira',
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.w800),
+            style: AppTypography.body(
+              context,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: primaryText,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(_error!, textAlign: TextAlign.center),
+          Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              color: secondaryText,
+            ),
+          ),
           const SizedBox(height: 18),
-          FilledButton(onPressed: _load, child: const Text('Tentar novamente')),
+          FilledButton(onPressed: _load, child: const Text('tentar novamente')),
         ],
+      ),
+    );
+  }
+}
+
+class _WalletSectionChip extends StatelessWidget {
+  const _WalletSectionChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    final purple = AppColors.primaryPurple(brightness);
+
+    final primaryText = AppColors.primaryText(brightness);
+
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    final surface = AppColors.surface(brightness);
+
+    final border = AppColors.border(brightness);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(99),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? purple.withValues(alpha: .13) : surface,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(
+              color: selected ? purple.withValues(alpha: .45) : border,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: selected ? purple : secondaryText),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTypography.label(
+                  context,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? primaryText : secondaryText,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -39,7 +39,10 @@ class _PlanScreenState extends State<PlanScreen> {
 
     final now = DateTime.now();
 
-    _month = DateTime(now.year, now.month);
+    _month = DateTime(
+      now.year,
+      now.month,
+    );
 
     _load();
   }
@@ -48,36 +51,58 @@ class _PlanScreenState extends State<PlanScreen> {
     final result = _items.where((item) => item.isParent).toList();
 
     result.sort(
-      (a, b) => _sortKey(a.categoryName).compareTo(_sortKey(b.categoryName)),
+      (a, b) => _sortKey(
+        a.categoryName,
+      ).compareTo(
+        _sortKey(b.categoryName),
+      ),
     );
 
     return result;
   }
 
-  List<BudgetOverviewItem> _childrenOf(BudgetOverviewItem parent) {
+  List<BudgetOverviewItem> _childrenOf(
+    BudgetOverviewItem parent,
+  ) {
     final result = _items
-        .where((item) => item.parentId == parent.categoryId)
+        .where(
+          (item) => item.parentId == parent.categoryId,
+        )
         .toList();
 
     result.sort(
-      (a, b) => _sortKey(a.categoryName).compareTo(_sortKey(b.categoryName)),
+      (a, b) => _sortKey(
+        a.categoryName,
+      ).compareTo(
+        _sortKey(b.categoryName),
+      ),
     );
 
     return result;
   }
 
   double get _totalPlanned {
-    return _parents.fold(0.0, (total, item) => total + item.plannedAmount);
+    return _parents.fold(
+      0.0,
+      (total, item) => total + item.plannedAmount,
+    );
   }
 
   double get _totalActual {
-    return _parents.fold(0.0, (total, item) => total + item.actualAmount);
+    return _parents.fold(
+      0.0,
+      (total, item) => total + item.actualAmount,
+    );
   }
 
   double get _totalRemaining => _totalPlanned - _totalActual;
 
   int get _budgetedCount {
-    return _items.where((item) => item.isSubcategory && item.hasBudget).length;
+    return _items
+        .where(
+          (item) => item.isSubcategory && item.hasBudget,
+        )
+        .length;
   }
 
   Future<void> _load() async {
@@ -136,15 +161,19 @@ class _PlanScreenState extends State<PlanScreen> {
 
       setState(() {
         _loading = false;
-
         _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  Future<void> _changeMonth(int delta) async {
+  Future<void> _changeMonth(
+    int delta,
+  ) async {
     setState(() {
-      _month = DateTime(_month.year, _month.month + delta);
+      _month = DateTime(
+        _month.year,
+        _month.month + delta,
+      );
 
       _expandedParents.clear();
     });
@@ -152,7 +181,9 @@ class _PlanScreenState extends State<PlanScreen> {
     await _load();
   }
 
-  void _toggleParent(String categoryId) {
+  void _toggleParent(
+    String categoryId,
+  ) {
     setState(() {
       if (_expandedParents.contains(categoryId)) {
         _expandedParents.remove(categoryId);
@@ -162,7 +193,21 @@ class _PlanScreenState extends State<PlanScreen> {
     });
   }
 
-  String _monthLabel(DateTime date) {
+  void _expandParent(
+    String categoryId,
+  ) {
+    if (_expandedParents.contains(categoryId)) {
+      return;
+    }
+
+    setState(() {
+      _expandedParents.add(categoryId);
+    });
+  }
+
+  String _monthLabel(
+    DateTime date,
+  ) {
     const months = [
       'Janeiro',
       'Fevereiro',
@@ -181,21 +226,31 @@ class _PlanScreenState extends State<PlanScreen> {
     return '${months[date.month - 1]} ${date.year}';
   }
 
-  double? _parseMoney(String text) {
-    var normalized = text.trim().replaceAll(RegExp(r'[^0-9,.\-]'), '');
+  double? _parseMoney(
+    String text,
+  ) {
+    var normalized = text.trim().replaceAll(
+          RegExp(r'[^0-9,.\-]'),
+          '',
+        );
 
     if (normalized.isEmpty) {
       return null;
     }
 
     if (normalized.contains(',')) {
-      normalized = normalized.replaceAll('.', '').replaceAll(',', '.');
+      normalized = normalized
+          .replaceAll('.', '')
+          .replaceAll(',', '.');
     }
 
     return double.tryParse(normalized);
   }
 
-  Color _progressColor(BudgetOverviewItem item, Brightness brightness) {
+  Color _progressColor(
+    BudgetOverviewItem item,
+    Brightness brightness,
+  ) {
     if (item.isOverBudget || item.status == 'critical') {
       return AppColors.expenseText(brightness);
     }
@@ -209,32 +264,36 @@ class _PlanScreenState extends State<PlanScreen> {
     return AppColors.primaryPurple(brightness);
   }
 
-  String _statusLabel(BudgetOverviewItem item) {
+  String _statusLabel(
+    BudgetOverviewItem item,
+  ) {
     if (!item.hasBudget) {
       if (item.hasActivity) {
         return '${Formatters.money(item.actualAmount)} gasto';
       }
 
-      return 'Sem limite';
+      return '';
     }
 
     if (item.isOverBudget) {
-      return 'Acima do plano';
+      return 'acima do plano';
     }
 
     switch (item.status) {
       case 'critical':
-        return 'Quase no limite';
+        return 'quase no limite';
 
       case 'warning':
-        return 'Atenção';
+        return 'atenção';
 
       default:
-        return 'Dentro do plano';
+        return 'dentro do plano';
     }
   }
 
-  Future<void> _editBudget(BudgetOverviewItem item) async {
+  Future<void> _editBudget(
+    BudgetOverviewItem item,
+  ) async {
     final controller = TextEditingController(
       text: item.plannedAmount > 0
           ? item.plannedAmount.toStringAsFixed(2).replaceAll('.', ',')
@@ -250,7 +309,10 @@ class _PlanScreenState extends State<PlanScreen> {
       showDragHandle: false,
       builder: (sheetContext) {
         return StatefulBuilder(
-          builder: (innerContext, setSheetState) {
+          builder: (
+            innerContext,
+            setSheetState,
+          ) {
             final brightness = Theme.of(innerContext).brightness;
 
             final primaryText = AppColors.primaryText(brightness);
@@ -292,7 +354,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 22),
+
                   Row(
                     children: [
                       CategoryIconBadge(
@@ -302,13 +366,15 @@ class _PlanScreenState extends State<PlanScreen> {
                         iconSize: 23,
                         radius: 15,
                       ),
+
                       const SizedBox(width: 13),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Planejar ${item.categoryName}',
+                              'planejar ${item.categoryName.toLowerCase()}',
                               style: AppTypography.section(
                                 innerContext,
                                 fontSize: 18,
@@ -329,7 +395,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 22),
+
                   TextField(
                     controller: controller,
                     autofocus: true,
@@ -342,13 +410,15 @@ class _PlanScreenState extends State<PlanScreen> {
                       color: primaryText,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Limite mensal',
+                      labelText: 'limite mensal',
                       prefixText: 'R\$ ',
                       errorText: validationError,
                     ),
                   ),
+
                   if (item.actualAmount > 0) ...[
                     const SizedBox(height: 12),
+
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -359,9 +429,9 @@ class _PlanScreenState extends State<PlanScreen> {
                         ),
                       ),
                       child: Text(
-                        'Você já gastou '
+                        'você já gastou '
                         '${Formatters.money(item.actualAmount)} '
-                        'em ${item.categoryName}.',
+                        'em ${item.categoryName.toLowerCase()}',
                         style: AppTypography.body(
                           innerContext,
                           fontSize: 12,
@@ -370,7 +440,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                     ),
                   ],
+
                   const SizedBox(height: 20),
+
                   FilledButton(
                     onPressed: () {
                       final amount = _parseMoney(controller.text);
@@ -389,7 +461,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       backgroundColor: AppColors.lime,
                       foregroundColor: AppColors.iconOnLime,
                     ),
-                    child: const Text('Salvar planejamento'),
+                    child: const Text('salvar planejamento'),
                   ),
                 ],
               ),
@@ -421,8 +493,8 @@ class _PlanScreenState extends State<PlanScreen> {
         SnackBar(
           content: Text(
             newAmount == 0
-                ? 'Limite de ${item.categoryName} removido.'
-                : '${item.categoryName}: ${Formatters.money(newAmount)}.',
+                ? 'limite de ${item.categoryName.toLowerCase()} removido'
+                : '${item.categoryName}: ${Formatters.money(newAmount)}',
           ),
         ),
       );
@@ -433,14 +505,20 @@ class _PlanScreenState extends State<PlanScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Não consegui salvar: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'não consegui salvar: $error',
+          ),
+        ),
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     final brightness = Theme.of(context).brightness;
 
     return ColoredBox(
@@ -448,32 +526,52 @@ class _PlanScreenState extends State<PlanScreen> {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
+            constraints: const BoxConstraints(
+              maxWidth: 760,
+            ),
             child: RefreshIndicator(
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(18, 22, 18, 120),
+                padding: const EdgeInsets.fromLTRB(
+                  18,
+                  22,
+                  18,
+                  140,
+                ),
                 children: [
                   _buildHeader(brightness),
+
                   const SizedBox(height: 24),
+
                   if (_loading)
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 80),
-                      child: Center(child: CircularProgressIndicator()),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 80,
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     )
                   else if (_error != null)
                     _buildError(brightness)
                   else ...[
                     _buildSummary(brightness),
+
                     const SizedBox(height: 30),
+
                     _buildCategoriesHeader(brightness),
+
                     const SizedBox(height: 14),
+
                     if (_parents.isEmpty)
                       _buildEmpty(brightness)
                     else
                       ..._parents.map(
-                        (parent) => _buildCategoryTree(parent, brightness),
+                        (parent) => _buildCategoryTree(
+                          parent,
+                          brightness,
+                        ),
                       ),
                   ],
                 ],
@@ -485,7 +583,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildHeader(Brightness brightness) {
+  Widget _buildHeader(
+    Brightness brightness,
+  ) {
     final surface = AppColors.surface(brightness);
 
     final border = AppColors.border(brightness);
@@ -509,41 +609,55 @@ class _PlanScreenState extends State<PlanScreen> {
                 ),
               ),
             ),
+
             Container(
               decoration: BoxDecoration(
                 color: surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: border),
+                border: Border.all(
+                  color: border,
+                ),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Mês anterior',
+                    tooltip: 'mês anterior',
                     onPressed: () => _changeMonth(-1),
-                    icon: const Icon(AppIcons.chevronLeft),
+                    icon: const Icon(
+                      AppIcons.chevronLeft,
+                    ),
                   ),
                   IconButton(
-                    tooltip: 'Próximo mês',
+                    tooltip: 'próximo mês',
                     onPressed: () => _changeMonth(1),
-                    icon: const Icon(AppIcons.chevronRight),
+                    icon: const Icon(
+                      AppIcons.chevronRight,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+
         const SizedBox(height: 6),
+
         Text(
-          'Organize o mês sem transformar sua vida em uma planilha.',
+          'organize o mês sem transformar sua vida em uma planilha',
           style: AppTypography.body(
             context,
             fontSize: 13,
             color: secondaryText,
           ),
         ),
+
         const SizedBox(height: 18),
+
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 13,
+            vertical: 9,
+          ),
           decoration: BoxDecoration(
             color: AppColors.lime.withValues(alpha: .14),
             borderRadius: BorderRadius.circular(99),
@@ -551,7 +665,11 @@ class _PlanScreenState extends State<PlanScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(AppIcons.calendar, size: 17, color: AppColors.lime),
+              const Icon(
+                AppIcons.calendar,
+                size: 17,
+                color: AppColors.lime,
+              ),
               const SizedBox(width: 7),
               Text(
                 _monthLabel(_month),
@@ -569,7 +687,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildSummary(Brightness brightness) {
+  Widget _buildSummary(
+    Brightness brightness,
+  ) {
     final purple = AppColors.primaryPurple(brightness);
 
     final remaining = _totalRemaining;
@@ -593,7 +713,9 @@ class _PlanScreenState extends State<PlanScreen> {
               color: Colors.white.withValues(alpha: .75),
             ),
           ),
+
           const SizedBox(height: 7),
+
           Text(
             remaining >= 0
                 ? Formatters.money(remaining)
@@ -604,7 +726,9 @@ class _PlanScreenState extends State<PlanScreen> {
               color: AppColors.lime,
             ),
           ),
+
           const SizedBox(height: 4),
+
           Text(
             remaining >= 0
                 ? 'ainda disponíveis no orçamento'
@@ -615,15 +739,29 @@ class _PlanScreenState extends State<PlanScreen> {
               color: Colors.white.withValues(alpha: .75),
             ),
           ),
+
           const SizedBox(height: 20),
+
           Row(
             children: [
-              Expanded(child: _summaryMetric('Planejado', _totalPlanned)),
+              Expanded(
+                child: _summaryMetric(
+                  'planejado',
+                  _totalPlanned,
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _summaryMetric('Realizado', _totalActual)),
+              Expanded(
+                child: _summaryMetric(
+                  'realizado',
+                  _totalActual,
+                ),
+              ),
             ],
           ),
+
           const SizedBox(height: 10),
+
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(13),
@@ -633,7 +771,11 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
             child: Row(
               children: [
-                const Icon(AppIcons.plan, color: Colors.white, size: 19),
+                const Icon(
+                  AppIcons.plan,
+                  color: Colors.white,
+                  size: 19,
+                ),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
@@ -655,7 +797,10 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _summaryMetric(String label, double value) {
+  Widget _summaryMetric(
+    String label,
+    double value,
+  ) {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
@@ -673,7 +818,9 @@ class _PlanScreenState extends State<PlanScreen> {
               color: Colors.white.withValues(alpha: .70),
             ),
           ),
+
           const SizedBox(height: 5),
+
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -691,7 +838,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildCategoriesHeader(Brightness brightness) {
+  Widget _buildCategoriesHeader(
+    Brightness brightness,
+  ) {
     final primaryText = AppColors.primaryText(brightness);
 
     final secondaryText = AppColors.secondaryText(brightness);
@@ -707,9 +856,11 @@ class _PlanScreenState extends State<PlanScreen> {
             color: primaryText,
           ),
         ),
+
         const SizedBox(height: 4),
+
         Text(
-          'Defina seus limites nas subcategorias.',
+          'defina seus limites nas subcategorias',
           style: AppTypography.body(
             context,
             fontSize: 12,
@@ -720,7 +871,10 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildCategoryTree(BudgetOverviewItem parent, Brightness brightness) {
+  Widget _buildCategoryTree(
+    BudgetOverviewItem parent,
+    Brightness brightness,
+  ) {
     final children = _childrenOf(parent);
 
     final expanded = _expandedParents.contains(parent.categoryId);
@@ -738,119 +892,176 @@ class _PlanScreenState extends State<PlanScreen> {
       brightness: brightness,
     );
 
-    final parentIcon = CategoryVisuals.iconFor(category: parent.categoryName);
+    final parentIcon = CategoryVisuals.iconFor(
+      category: parent.categoryName,
+    );
 
-    final progressColor = _progressColor(parent, brightness);
+    final progressColor = _progressColor(
+      parent,
+      brightness,
+    );
+
+    final status = _statusLabel(parent);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(
+        bottom: 12,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: border),
+          border: Border.all(
+            color: border,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            InkWell(
-              onTap: children.isEmpty
-                  ? null
-                  : () => _toggleParent(parent.categoryId),
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Row(
-                  children: [
-                    CategoryIconBadge(
-                      icon: parentIcon,
-                      color: familyColor,
-                      size: 44,
-                      iconSize: 22,
-                      radius: 14,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            parent.categoryName,
-                            style: AppTypography.body(
-                              context,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: primaryText,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            parent.hasBudget
-                                ? '${Formatters.money(parent.plannedAmount)} planejado'
-                                : _statusLabel(parent),
-                            style: AppTypography.label(
-                              context,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: parent.hasBudget
-                                  ? familyColor
-                                  : secondaryText,
-                            ),
-                          ),
-                        ],
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: children.isEmpty
+                    ? null
+                    : () => _toggleParent(
+                          parent.categoryId,
+                        ),
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Row(
+                    children: [
+                      CategoryIconBadge(
+                        icon: parentIcon,
+                        color: familyColor,
+                        size: 44,
+                        iconSize: 22,
+                        radius: 14,
                       ),
-                    ),
-                    if (parent.actualAmount > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              Formatters.money(parent.actualAmount),
-                              style: AppTypography.money(
+                              parent.categoryName,
+                              style: AppTypography.body(
                                 context,
-                                fontSize: 12,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
                                 color: primaryText,
                               ),
                             ),
-                            Text(
-                              'gasto',
-                              style: AppTypography.label(
-                                context,
-                                fontSize: 9,
-                                color: secondaryText,
-                              ),
-                            ),
+
+                            const SizedBox(height: 5),
+
+                            if (parent.hasBudget)
+                              Text(
+                                '${Formatters.money(parent.plannedAmount)} planejado',
+                                style: AppTypography.label(
+                                  context,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: familyColor,
+                                ),
+                              )
+                            else ...[
+                              if (status.isNotEmpty) ...[
+                                Text(
+                                  status,
+                                  style: AppTypography.label(
+                                    context,
+                                    fontSize: 10,
+                                    color: secondaryText,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+
+                              if (children.isNotEmpty)
+                                _LimitActionChip(
+                                  label: 'definir limite',
+                                  color: familyColor,
+                                  showChevron: false,
+                                  onTap: () => _expandParent(
+                                    parent.categoryId,
+                                  ),
+                                ),
+                            ],
                           ],
                         ),
                       ),
-                    if (children.isNotEmpty)
-                      AnimatedRotation(
-                        duration: const Duration(milliseconds: 180),
-                        turns: expanded ? .25 : 0,
-                        child: Icon(
-                          AppIcons.chevronRight,
-                          size: 20,
-                          color: secondaryText,
+
+                      if (parent.actualAmount > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            right: 10,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                Formatters.money(
+                                  parent.actualAmount,
+                                ),
+                                style: AppTypography.money(
+                                  context,
+                                  fontSize: 12,
+                                  color: primaryText,
+                                ),
+                              ),
+                              Text(
+                                'gasto',
+                                style: AppTypography.label(
+                                  context,
+                                  fontSize: 9,
+                                  color: secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
+
+                      if (children.isNotEmpty)
+                        AnimatedRotation(
+                          duration: const Duration(
+                            milliseconds: 180,
+                          ),
+                          turns: expanded ? .25 : 0,
+                          child: Icon(
+                            AppIcons.chevronRight,
+                            size: 20,
+                            color: secondaryText,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
+
             if (parent.hasBudget)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  16,
+                  14,
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(99),
                   child: LinearProgressIndicator(
                     value: parent.progress,
                     minHeight: 5,
                     backgroundColor: border.withValues(alpha: .55),
-                    valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      progressColor,
+                    ),
                   ),
                 ),
               ),
+
             if (children.isNotEmpty && expanded)
               _buildChildren(
                 parent: parent,
@@ -878,15 +1089,27 @@ class _PlanScreenState extends State<PlanScreen> {
     );
 
     final uncategorized = (parent.actualAmount - childActualTotal)
-        .clamp(0.0, double.infinity)
+        .clamp(
+          0.0,
+          double.infinity,
+        )
         .toDouble();
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: border)),
+        border: Border(
+          top: BorderSide(
+            color: border,
+          ),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 5, 12, 10),
+      padding: const EdgeInsets.fromLTRB(
+        12,
+        5,
+        12,
+        10,
+      ),
       child: Column(
         children: [
           ...children.map(
@@ -897,6 +1120,7 @@ class _PlanScreenState extends State<PlanScreen> {
               familyColor: familyColor,
             ),
           ),
+
           if (uncategorized > .009)
             _buildUncategorizedRow(
               parent: parent,
@@ -921,7 +1145,10 @@ class _PlanScreenState extends State<PlanScreen> {
 
     final border = AppColors.border(brightness);
 
-    final progressColor = _progressColor(child, brightness);
+    final progressColor = _progressColor(
+      child,
+      brightness,
+    );
 
     final percentage = (child.usageRatio * 100).round();
 
@@ -931,14 +1158,19 @@ class _PlanScreenState extends State<PlanScreen> {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        vertical: 4,
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _editBudget(child),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 9),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 7,
+              vertical: 10,
+            ),
             child: Column(
               children: [
                 Row(
@@ -950,7 +1182,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       iconSize: 19,
                       radius: 11,
                     ),
+
                     const SizedBox(width: 11),
+
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -964,42 +1198,63 @@ class _PlanScreenState extends State<PlanScreen> {
                               color: primaryText,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            child.hasBudget
-                                ? '${Formatters.money(child.actualAmount)} de ${Formatters.money(child.plannedAmount)}'
-                                : child.hasActivity
-                                ? '${Formatters.money(child.actualAmount)} gasto · sem limite'
-                                : 'Sem limite',
-                            style: AppTypography.label(
-                              context,
-                              fontSize: 10,
-                              color: child.hasBudget
-                                  ? progressColor
-                                  : secondaryText,
+
+                          if (child.hasBudget || child.hasActivity) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              child.hasBudget
+                                  ? '${Formatters.money(child.actualAmount)} de ${Formatters.money(child.plannedAmount)}'
+                                  : '${Formatters.money(child.actualAmount)} gasto',
+                              style: AppTypography.label(
+                                context,
+                                fontSize: 10,
+                                color: child.hasBudget
+                                    ? progressColor
+                                    : secondaryText,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
+
                     const SizedBox(width: 8),
-                    Text(
-                      child.hasBudget
-                          ? Formatters.money(child.plannedAmount)
-                          : 'Definir',
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: child.hasBudget ? primaryText : familyColor,
+
+                    if (child.hasBudget)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            Formatters.money(
+                              child.plannedAmount,
+                            ),
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: primaryText,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Icon(
+                            AppIcons.chevronRight,
+                            size: 16,
+                            color: secondaryText,
+                          ),
+                        ],
+                      )
+                    else
+                      _LimitActionChip(
+                        label: 'definir limite',
+                        color: familyColor,
+                        onTap: () => _editBudget(child),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(AppIcons.chevronRight, size: 17, color: secondaryText),
                   ],
                 ),
+
                 if (child.hasBudget) ...[
                   const SizedBox(height: 8),
+
                   Row(
                     children: [
                       Expanded(
@@ -1015,7 +1270,9 @@ class _PlanScreenState extends State<PlanScreen> {
                           ),
                         ),
                       ),
+
                       const SizedBox(width: 8),
+
                       Text(
                         '$percentage%',
                         style: AppTypography.label(
@@ -1046,10 +1303,17 @@ class _PlanScreenState extends State<PlanScreen> {
 
     final secondaryText = AppColors.secondaryText(brightness);
 
-    final icon = CategoryVisuals.iconFor(category: parent.categoryName);
+    final icon = CategoryVisuals.iconFor(
+      category: parent.categoryName,
+    );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(7, 8, 7, 4),
+      padding: const EdgeInsets.fromLTRB(
+        7,
+        8,
+        7,
+        4,
+      ),
       child: Row(
         children: [
           CategoryIconBadge(
@@ -1059,13 +1323,15 @@ class _PlanScreenState extends State<PlanScreen> {
             iconSize: 18,
             radius: 11,
           ),
+
           const SizedBox(width: 11),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Sem subcategoria',
+                  'sem subcategoria',
                   style: AppTypography.body(
                     context,
                     fontSize: 12,
@@ -1075,7 +1341,7 @@ class _PlanScreenState extends State<PlanScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'lançado direto em ${parent.categoryName}',
+                  'lançado direto em ${parent.categoryName.toLowerCase()}',
                   style: AppTypography.label(
                     context,
                     fontSize: 9,
@@ -1085,6 +1351,7 @@ class _PlanScreenState extends State<PlanScreen> {
               ],
             ),
           ),
+
           Text(
             Formatters.money(amount),
             style: AppTypography.money(
@@ -1098,7 +1365,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildError(Brightness brightness) {
+  Widget _buildError(
+    Brightness brightness,
+  ) {
     final surface = AppColors.surface(brightness);
 
     final border = AppColors.border(brightness);
@@ -1112,7 +1381,9 @@ class _PlanScreenState extends State<PlanScreen> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: border),
+        border: Border.all(
+          color: border,
+        ),
       ),
       child: Column(
         children: [
@@ -1123,7 +1394,7 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Não consegui carregar seu planejamento.',
+            'não consegui carregar seu planejamento',
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
@@ -1143,13 +1414,20 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton(onPressed: _load, child: const Text('Tentar novamente')),
+          FilledButton(
+            onPressed: _load,
+            child: const Text(
+              'tentar novamente',
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEmpty(Brightness brightness) {
+  Widget _buildEmpty(
+    Brightness brightness,
+  ) {
     final surface = AppColors.surface(brightness);
 
     final border = AppColors.border(brightness);
@@ -1163,7 +1441,9 @@ class _PlanScreenState extends State<PlanScreen> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: border),
+        border: Border.all(
+          color: border,
+        ),
       ),
       child: Column(
         children: [
@@ -1174,7 +1454,7 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Nenhuma categoria encontrada.',
+            'nenhuma categoria encontrada',
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
@@ -1185,7 +1465,7 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Suas categorias aparecerão aqui.',
+            'suas categorias aparecerão aqui',
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
@@ -1198,7 +1478,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  String _sortKey(String value) {
+  String _sortKey(
+    String value,
+  ) {
     return value
         .toLowerCase()
         .replaceAll('á', 'a')
@@ -1224,5 +1506,68 @@ class _PlanScreenState extends State<PlanScreen> {
         .replaceAll('û', 'u')
         .replaceAll('ü', 'u')
         .replaceAll('ç', 'c');
+  }
+}
+
+class _LimitActionChip extends StatelessWidget {
+  const _LimitActionChip({
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.showChevron = true,
+  });
+
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool showChevron;
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(99),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: .10),
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(
+              color: color.withValues(alpha: .26),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: AppTypography.label(
+                  context,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+
+              if (showChevron) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  AppIcons.chevronRight,
+                  size: 13,
+                  color: color,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

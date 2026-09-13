@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
@@ -153,11 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final snapshot = _snapshot!;
 
-    final theme = Theme.of(context);
-
-    final brightness = theme.brightness;
-
-    final isDark = brightness == Brightness.dark;
+    final brightness = Theme.of(context).brightness;
 
     final background = AppColors.background(brightness);
 
@@ -175,6 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final latest = _latestTransaction();
 
+    // Espaço da bottom nav flutuante +
+    // safe area do aparelho.
+    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 180;
+
     return ColoredBox(
       color: background,
       child: SafeArea(
@@ -185,26 +184,30 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 26, 20, 120),
+                padding: EdgeInsets.fromLTRB(20, 26, 20, bottomListPadding),
                 children: [
                   _buildHeader(
                     snapshot: snapshot,
-                    isDark: isDark,
                     surface: surface,
                     border: border,
                     primaryText: primaryText,
-                    secondaryText: secondaryText,
                   ),
+
                   const SizedBox(height: 26),
+
                   _buildHero(snapshot: snapshot, primaryPurple: primaryPurple),
+
                   const SizedBox(height: 26),
+
                   _buildQuickActions(
                     surface: surface,
                     border: border,
                     primaryText: primaryText,
                     brightness: brightness,
                   ),
+
                   const SizedBox(height: 24),
+
                   _buildUpcomingCard(
                     surface: surface,
                     border: border,
@@ -212,14 +215,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     secondaryText: secondaryText,
                     primaryPurple: primaryPurple,
                   ),
+
                   const SizedBox(height: 32),
+
                   _buildSectionHeader(
                     title: 'seus gastos',
                     subtitle: 'onde seu dinheiro passou neste período',
                     primaryText: primaryText,
                     secondaryText: secondaryText,
                   ),
+
                   const SizedBox(height: 16),
+
                   Row(
                     children: [
                       Expanded(
@@ -253,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+
                   if (latest != null) ...[
                     const SizedBox(height: 30),
                     _buildSectionHeader(
@@ -294,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 18),
               FilledButton(
                 onPressed: _load,
-                child: const Text('Tentar novamente'),
+                child: const Text('tentar novamente'),
               ),
             ],
           ),
@@ -305,24 +313,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeader({
     required FolegoSnapshot snapshot,
-    required bool isDark,
     required Color surface,
     required Color border,
     required Color primaryText,
-    required Color secondaryText,
   }) {
-    final themeButton = IconButton(
-      onPressed: () => AppThemeController.toggle(context),
-      tooltip: isDark ? 'Tema claro' : 'Tema escuro',
-      style: IconButton.styleFrom(
-        minimumSize: const Size(42, 42),
-        backgroundColor: surface,
-        foregroundColor: secondaryText,
-        side: BorderSide(color: border),
-      ),
-      icon: Icon(isDark ? AppIcons.lightTheme : AppIcons.darkTheme, size: 19),
-    );
-
     final daysChip = snapshot.daysUntilIncome == null
         ? null
         : Container(
@@ -360,23 +354,15 @@ class _HomeScreenState extends State<HomeScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'e aí, ${_name.toLowerCase()}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.display(
-                        context,
-                        fontSize: 28,
-                        color: primaryText,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  themeButton,
-                ],
+              Text(
+                'e aí, ${_name.toLowerCase()}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(
+                  context,
+                  fontSize: 28,
+                  color: primaryText,
+                ),
               ),
               if (daysChip != null) ...[const SizedBox(height: 12), daysChip],
             ],
@@ -397,9 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            themeButton,
-            if (daysChip != null) ...[const SizedBox(width: 8), daysChip],
+            if (daysChip != null) ...[const SizedBox(width: 12), daysChip],
           ],
         );
       },
@@ -568,7 +552,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Próximos dias',
+                      'próximos dias',
                       style: AppTypography.body(
                         context,
                         fontSize: 15,
@@ -578,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Veja o que entra e sai '
+                      'veja o que entra e sai '
                       'nos próximos 30 dias',
                       style: AppTypography.body(
                         context,
@@ -636,10 +620,18 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    final amountColor = latest.isIncome
-        ? AppColors.positiveText(brightness)
-        : latest.isExpense
+    // Tipo + valor são considerados.
+    // Assim, qualquer valor negativo também
+    // recebe obrigatoriamente a semântica
+    // de despesa/alerta.
+    final isNegative = latest.isExpense || latest.amount < 0;
+
+    final isPositive = latest.isIncome && latest.amount >= 0;
+
+    final amountColor = isNegative
         ? AppColors.expenseText(brightness)
+        : isPositive
+        ? AppColors.positiveText(brightness)
         : AppColors.primaryPurple(brightness);
 
     final categoryPath = _categoryPathFor(latest);
@@ -668,10 +660,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ? latest.categoryName!.trim()
         : _typeLabel(latest.eventType);
 
-    final sign = latest.isIncome
-        ? '+'
-        : latest.isExpense
+    final sign = isNegative
         ? '-'
+        : isPositive
+        ? '+'
         : '';
 
     return Container(
@@ -1015,6 +1007,7 @@ class _CategoryCard extends StatelessWidget {
             summary.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: AppTypography.label(
               context,
               fontSize: 11,
