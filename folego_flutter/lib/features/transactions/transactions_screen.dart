@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
@@ -683,80 +684,74 @@ class _TransactionsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
-      return Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: RefreshIndicator(
-            onRefresh: onRefresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24),
-              children: [
-                const SizedBox(height: 110),
-                Icon(
-                  CategoryVisuals.iconFor(category: 'A classificar'),
-                  size: 46,
-                  color: CategoryVisuals.colorFor(
-                    category: 'A classificar',
-                    brightness: Theme.of(context).brightness,
-                  ),
+      return AppContentContainer.list(
+        fillHeight: true,
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(0, 24, 0, 120),
+            children: [
+              const SizedBox(height: 86),
+              Icon(
+                CategoryVisuals.iconFor(category: 'A classificar'),
+                size: 46,
+                color: CategoryVisuals.colorFor(
+                  category: 'A classificar',
+                  brightness: Theme.of(context).brightness,
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  'Nenhum lançamento ainda.',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.body(
-                    context,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Nenhum lançamento ainda.',
+                textAlign: TextAlign.center,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
     }
 
     final showFooter = loadingMore || loadMoreError != null;
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (hasMore &&
-                !loadingMore &&
-                notification.metrics.extentAfter < 360) {
-              onLoadMore();
-            }
-            return false;
-          },
-          child: RefreshIndicator(
-            onRefresh: onRefresh,
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-              itemCount: transactions.length + (showFooter ? 1 : 0),
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                if (index >= transactions.length) {
-                  return _TransactionLoadMoreFooter(
-                    loading: loadingMore,
-                    error: loadMoreError,
-                    onRetry: () => onLoadMore(),
-                  );
-                }
-                final transaction = transactions[index];
-                return _TransactionCard(
-                  transaction: transaction,
-                  categoryById: categoryById,
-                  onEdit: () => onEdit(transaction),
-                  onDelete: () => onDelete(transaction),
+    return AppContentContainer.list(
+      fillHeight: true,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (hasMore &&
+              !loadingMore &&
+              notification.metrics.extentAfter < 360) {
+            onLoadMore();
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 120),
+            itemCount: transactions.length + (showFooter ? 1 : 0),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              if (index >= transactions.length) {
+                return _TransactionLoadMoreFooter(
+                  loading: loadingMore,
+                  error: loadMoreError,
+                  onRetry: () => onLoadMore(),
                 );
-              },
-            ),
+              }
+              final transaction = transactions[index];
+              return _TransactionCard(
+                transaction: transaction,
+                categoryById: categoryById,
+                onEdit: () => onEdit(transaction),
+                onDelete: () => onDelete(transaction),
+              );
+            },
           ),
         ),
       ),

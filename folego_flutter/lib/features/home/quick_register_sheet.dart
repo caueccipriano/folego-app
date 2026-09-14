@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
@@ -13,12 +13,6 @@ import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
-
-enum _QuickRegisterLayout {
-  compact,
-  medium,
-  expanded,
-}
 
 class QuickRegisterSheet extends StatefulWidget {
   const QuickRegisterSheet({
@@ -259,41 +253,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
   }
 
-  _QuickRegisterLayout _layoutFor(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-
-    if (width < 600) {
-      return _QuickRegisterLayout.compact;
-    }
-
-    if (width < 1024) {
-      return _QuickRegisterLayout.medium;
-    }
-
-    return _QuickRegisterLayout.expanded;
-  }
-
   bool _usesDialogPicker(BuildContext context) {
-    final layout = _layoutFor(context);
-
-    if (kIsWeb) {
-      return layout != _QuickRegisterLayout.compact;
-    }
-
-    final platform = Theme.of(context).platform;
-
-    if (platform == TargetPlatform.android ||
-        platform == TargetPlatform.iOS ||
-        platform == TargetPlatform.fuchsia) {
-      return false;
-    }
-
-    return layout != _QuickRegisterLayout.compact;
+    return AppBreakpoints.of(context) != AppLayoutSize.compact;
   }
 
   Future<T?> _showAdaptivePicker<T>({
     required Widget Function(BuildContext context, bool dialogMode) builder,
-    double dialogMaxWidth = 520,
+    double dialogMaxWidth = AppContentWidths.form,
     double heightFactor = .78,
   }) async {
     FocusScope.of(context).unfocus();
@@ -378,7 +344,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   Future<void> _pickMonthlyDay() async {
     final selectedDay = await _showAdaptivePicker<int>(
-      dialogMaxWidth: 480,
+      dialogMaxWidth: AppContentWidths.auth,
       heightFactor: .82,
       builder: (pickerContext, dialogMode) {
         return _MonthlyDayPicker(
@@ -614,7 +580,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final brightness = Theme.of(context).brightness;
     final mediaQuery = MediaQuery.of(context);
     final viewport = mediaQuery.size;
-    final layout = _layoutFor(context);
+    final layout = AppBreakpoints.of(context);
 
     final background = AppColors.background(brightness);
     final surface = AppColors.surface(brightness);
@@ -626,23 +592,19 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         ? AppColors.lime
         : AppColors.positiveText(brightness);
 
-    final maxWidth = switch (layout) {
-      _QuickRegisterLayout.compact => viewport.width,
-      _QuickRegisterLayout.medium => 600.0,
-      _QuickRegisterLayout.expanded => 640.0,
-    };
+    final maxWidth = layout == AppLayoutSize.compact
+        ? viewport.width
+        : AppContentWidths.form;
 
     final maxHeightFactor = switch (layout) {
-      _QuickRegisterLayout.compact => .94,
-      _QuickRegisterLayout.medium => .92,
-      _QuickRegisterLayout.expanded => .90,
+      AppLayoutSize.compact => .94,
+      AppLayoutSize.medium => .92,
+      AppLayoutSize.expanded => .90,
+      AppLayoutSize.wide => .90,
     };
 
-    final horizontalPadding = switch (layout) {
-      _QuickRegisterLayout.compact => 20.0,
-      _QuickRegisterLayout.medium => 24.0,
-      _QuickRegisterLayout.expanded => 28.0,
-    };
+    final horizontalPadding =
+        AppResponsiveSpacing.horizontalForWidth(viewport.width);
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -1218,7 +1180,6 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                       style: AppTypography.button(
                                         context,
                                       ),
-                                    ),
                             ),
                           ),
                           const SizedBox(height: 8),

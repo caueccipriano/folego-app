@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
+import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
@@ -211,202 +212,200 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ColoredBox(
       color: background,
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 26, 20, 120),
-              children: [
-                Text(
-                  'perfil',
-                  style: AppTypography.display(
-                    context,
-                    fontSize: 28,
-                    color: primaryText,
-                  ),
+        child: AppContentContainer.form(
+          fillHeight: true,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(0, 26, 0, 120),
+            children: [
+              Text(
+                'perfil',
+                style: AppTypography.display(
+                  context,
+                  fontSize: 28,
+                  color: primaryText,
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // PERFIL DO USUÁRIO
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: surface,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: purple.withValues(alpha: .14),
-                          borderRadius: BorderRadius.circular(19),
-                        ),
-                        child: Text(
-                          initial,
-                          style: AppTypography.section(
-                            context,
-                            fontSize: 22,
-                            color: purple,
-                          ),
+              // PERFIL DO USUÁRIO
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: purple.withValues(alpha: .14),
+                        borderRadius: BorderRadius.circular(19),
+                      ),
+                      child: Text(
+                        initial,
+                        style: AppTypography.section(
+                          context,
+                          fontSize: 22,
+                          color: purple,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _name.toLowerCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.section(
+                              context,
+                              fontSize: 18,
+                              color: primaryText,
+                            ),
+                          ),
+                          if (email.isNotEmpty) ...[
+                            const SizedBox(height: 3),
                             Text(
-                              _name.toLowerCase(),
+                              email,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.section(
+                              style: AppTypography.body(
                                 context,
-                                fontSize: 18,
-                                color: primaryText,
+                                fontSize: 12,
+                                color: secondaryText,
                               ),
                             ),
-                            if (email.isNotEmpty) ...[
-                              const SizedBox(height: 3),
-                              Text(
-                                email,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.body(
-                                  context,
-                                  fontSize: 12,
-                                  color: secondaryText,
-                                ),
-                              ),
-                            ],
                           ],
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                _SectionTitle(
-                  title: 'aparência',
-                  subtitle: 'deixe o Fôlego do seu jeito',
-                  primaryText: primaryText,
-                  secondaryText: secondaryText,
-                ),
-
-                const SizedBox(height: 12),
-
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: surface,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: border),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _AppearanceOption(
-                          label: 'sistema',
-                          icon: TablerIcons.deviceDesktop,
-                          selected: _appearance == 'system',
-                          onTap: () => _setAppearance('system'),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: _AppearanceOption(
-                          label: 'claro',
-                          icon: TablerIcons.sun,
-                          selected: _appearance == 'light',
-                          onTap: () => _setAppearance('light'),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: _AppearanceOption(
-                          label: 'escuro',
-                          icon: TablerIcons.moon,
-                          selected: _appearance == 'dark',
-                          onTap: () => _setAppearance('dark'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                _SectionTitle(
-                  title: 'preferências',
-                  subtitle: 'ajustes que acompanham você',
-                  primaryText: primaryText,
-                  secondaryText: secondaryText,
-                ),
-
-                const SizedBox(height: 12),
-
-                _SettingsCard(
-                  children: [
-                    _SettingsRow(
-                      icon: TablerIcons.language,
-                      title: 'idioma',
-                      subtitle: 'português (Brasil)',
-                      trailingLabel: 'em breve',
-                      enabled: false,
-                    ),
-                    _SettingsDivider(color: border),
-                    _SettingsRow(
-                      icon: TablerIcons.bell,
-                      title: 'notificações',
-                      subtitle: 'avisos e lembretes do Fôlego',
-                      trailingLabel: 'em breve',
-                      enabled: false,
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-                _SectionTitle(
-                  title: 'privacidade e segurança',
-                  subtitle: 'seus dados continuam seus',
-                  primaryText: primaryText,
-                  secondaryText: secondaryText,
+              _SectionTitle(
+                title: 'aparência',
+                subtitle: 'deixe o Fôlego do seu jeito',
+                primaryText: primaryText,
+                secondaryText: secondaryText,
+              ),
+
+              const SizedBox(height: 12),
+
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: border),
                 ),
-
-                const SizedBox(height: 12),
-
-                _SettingsCard(
+                child: Row(
                   children: [
-                    _SettingsRow(
-                      icon: TablerIcons.lock,
-                      title: 'conta protegida',
-                      subtitle: 'autenticação e RLS ativos',
+                    Expanded(
+                      child: _AppearanceOption(
+                        label: 'sistema',
+                        icon: TablerIcons.deviceDesktop,
+                        selected: _appearance == 'system',
+                        onTap: () => _setAppearance('system'),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: _AppearanceOption(
+                        label: 'claro',
+                        icon: TablerIcons.sun,
+                        selected: _appearance == 'light',
+                        onTap: () => _setAppearance('light'),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: _AppearanceOption(
+                        label: 'escuro',
+                        icon: TablerIcons.moon,
+                        selected: _appearance == 'dark',
+                        onTap: () => _setAppearance('dark'),
+                      ),
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-                _SettingsCard(
-                  children: [
-                    _SettingsRow(
-                      icon: TablerIcons.logout,
-                      title: 'sair',
-                      subtitle: 'encerrar sessão neste dispositivo',
-                      destructive: true,
-                      onTap: _confirmSignOut,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              _SectionTitle(
+                title: 'preferências',
+                subtitle: 'ajustes que acompanham você',
+                primaryText: primaryText,
+                secondaryText: secondaryText,
+              ),
+
+              const SizedBox(height: 12),
+
+              _SettingsCard(
+                children: [
+                  _SettingsRow(
+                    icon: TablerIcons.language,
+                    title: 'idioma',
+                    subtitle: 'português (Brasil)',
+                    trailingLabel: 'em breve',
+                    enabled: false,
+                  ),
+                  _SettingsDivider(color: border),
+                  _SettingsRow(
+                    icon: TablerIcons.bell,
+                    title: 'notificações',
+                    subtitle: 'avisos e lembretes do Fôlego',
+                    trailingLabel: 'em breve',
+                    enabled: false,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 28),
+
+              _SectionTitle(
+                title: 'privacidade e segurança',
+                subtitle: 'seus dados continuam seus',
+                primaryText: primaryText,
+                secondaryText: secondaryText,
+              ),
+
+              const SizedBox(height: 12),
+
+              _SettingsCard(
+                children: [
+                  _SettingsRow(
+                    icon: TablerIcons.lock,
+                    title: 'conta protegida',
+                    subtitle: 'autenticação e RLS ativos',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 28),
+
+              _SettingsCard(
+                children: [
+                  _SettingsRow(
+                    icon: TablerIcons.logout,
+                    title: 'sair',
+                    subtitle: 'encerrar sessão neste dispositivo',
+                    destructive: true,
+                    onTap: _confirmSignOut,
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

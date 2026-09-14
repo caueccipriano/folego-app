@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
+import '../../core/layout/app_breakpoints.dart';
+import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/wallet_overview.dart';
@@ -156,43 +158,71 @@ class _WalletScreenState extends State<WalletScreen> {
     final brightness = Theme.of(context).brightness;
 
     final background = AppColors.background(brightness);
+    final layout = AppBreakpoints.of(context);
+    final useTwoColumns =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+
+    Widget? loadedContent;
+    if (_overview != null) {
+      final details = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildSelector(brightness),
+          const SizedBox(height: 20),
+          _buildSelectedSection(brightness),
+        ],
+      );
+
+      loadedContent = useTwoColumns
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _buildSummary(brightness),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  flex: 7,
+                  child: details,
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildSummary(brightness),
+                const SizedBox(height: 24),
+                details,
+              ],
+            );
+    }
 
     return ColoredBox(
       color: background,
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(18, 22, 18, 150),
-                children: [
-                  _buildHeader(brightness),
+        child: AppContentContainer.dashboard(
+          fillHeight: true,
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(0, 22, 0, 150),
+              children: [
+                _buildHeader(brightness),
 
-                  const SizedBox(height: 22),
+                const SizedBox(height: 22),
 
-                  if (_loading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 100),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (_error != null)
-                    _buildError(brightness)
-                  else if (_overview != null) ...[
-                    _buildSummary(brightness),
-
-                    const SizedBox(height: 24),
-
-                    _buildSelector(brightness),
-
-                    const SizedBox(height: 20),
-
-                    _buildSelectedSection(brightness),
-                  ],
-                ],
-              ),
+                if (_loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 100),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_error != null)
+                  _buildError(brightness)
+                else if (loadedContent != null)
+                  loadedContent,
+              ],
             ),
           ),
         ),

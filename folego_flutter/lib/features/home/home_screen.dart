@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
+import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
@@ -170,117 +172,148 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final latest = _latestTransaction();
 
+    final layout = AppBreakpoints.of(context);
+    final useTwoColumns =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+
     // Espaço da bottom nav flutuante +
     // safe area do aparelho.
     final bottomListPadding = MediaQuery.paddingOf(context).bottom + 180;
 
+    final hero = _buildHero(
+      snapshot: snapshot,
+      primaryPurple: primaryPurple,
+    );
+
+    final quickActions = _buildQuickActions(
+      surface: surface,
+      border: border,
+      primaryText: primaryText,
+      brightness: brightness,
+    );
+
+    final upcoming = _buildUpcomingCard(
+      surface: surface,
+      border: border,
+      primaryText: primaryText,
+      secondaryText: secondaryText,
+      primaryPurple: primaryPurple,
+    );
+
     return ColoredBox(
       color: background,
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(20, 26, 20, bottomListPadding),
-                children: [
-                  _buildHeader(
-                    snapshot: snapshot,
-                    surface: surface,
-                    border: border,
-                    primaryText: primaryText,
-                  ),
+        child: AppContentContainer.dashboard(
+          fillHeight: true,
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(0, 26, 0, bottomListPadding),
+              children: [
+                _buildHeader(
+                  snapshot: snapshot,
+                  surface: surface,
+                  border: border,
+                  primaryText: primaryText,
+                ),
 
-                  const SizedBox(height: 26),
+                const SizedBox(height: 26),
 
-                  _buildHero(snapshot: snapshot, primaryPurple: primaryPurple),
-
-                  const SizedBox(height: 26),
-
-                  _buildQuickActions(
-                    surface: surface,
-                    border: border,
-                    primaryText: primaryText,
-                    brightness: brightness,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  _buildUpcomingCard(
-                    surface: surface,
-                    border: border,
-                    primaryText: primaryText,
-                    secondaryText: secondaryText,
-                    primaryPurple: primaryPurple,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  _buildSectionHeader(
-                    title: 'seus gastos',
-                    subtitle: 'onde seu dinheiro passou neste período',
-                    primaryText: primaryText,
-                    secondaryText: secondaryText,
-                  ),
-
-                  const SizedBox(height: 16),
-
+                if (useTwoColumns)
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _CategoryCard(
-                          summary: categories[0],
-                          surface: surface,
-                          border: border,
-                          primaryText: primaryText,
-                          secondaryText: secondaryText,
-                        ),
+                        flex: 6,
+                        child: hero,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 24),
                       Expanded(
-                        child: _CategoryCard(
-                          summary: categories[1],
-                          surface: surface,
-                          border: border,
-                          primaryText: primaryText,
-                          secondaryText: secondaryText,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _CategoryCard(
-                          summary: categories[2],
-                          surface: surface,
-                          border: border,
-                          primaryText: primaryText,
-                          secondaryText: secondaryText,
+                        flex: 5,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            quickActions,
+                            const SizedBox(height: 24),
+                            upcoming,
+                          ],
                         ),
                       ),
                     ],
-                  ),
+                  )
+                else ...[
+                  hero,
+                  const SizedBox(height: 26),
+                  quickActions,
+                  const SizedBox(height: 24),
+                  upcoming,
+                ],
 
-                  if (latest != null) ...[
-                    const SizedBox(height: 30),
-                    _buildSectionHeader(
-                      title: 'último movimento',
-                      subtitle: 'o que aconteceu por último',
-                      primaryText: primaryText,
-                      secondaryText: secondaryText,
+                const SizedBox(height: 32),
+
+                _buildSectionHeader(
+                  title: 'seus gastos',
+                  subtitle: 'onde seu dinheiro passou neste período',
+                  primaryText: primaryText,
+                  secondaryText: secondaryText,
+                ),
+
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _CategoryCard(
+                        summary: categories[0],
+                        surface: surface,
+                        border: border,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                      ),
                     ),
-                    const SizedBox(height: 14),
-                    _buildLatestCard(
-                      latest: latest,
-                      brightness: brightness,
-                      surface: surface,
-                      border: border,
-                      primaryText: primaryText,
-                      secondaryText: secondaryText,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _CategoryCard(
+                        summary: categories[1],
+                        surface: surface,
+                        border: border,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _CategoryCard(
+                        summary: categories[2],
+                        surface: surface,
+                        border: border,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                      ),
                     ),
                   ],
+                ),
+
+                if (latest != null) ...[
+                  const SizedBox(height: 30),
+                  _buildSectionHeader(
+                    title: 'último movimento',
+                    subtitle: 'o que aconteceu por último',
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                  ),
+                  const SizedBox(height: 14),
+                  _buildLatestCard(
+                    latest: latest,
+                    brightness: brightness,
+                    surface: surface,
+                    border: border,
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -346,47 +379,41 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 390;
-
-        if (compact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'e aí, ${_name.toLowerCase()}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.display(
-                  context,
-                  fontSize: 28,
-                  color: primaryText,
-                ),
-              ),
-              if (daysChip != null) ...[const SizedBox(height: 12), daysChip],
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(
-              child: Text(
-                'e aí, ${_name.toLowerCase()}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.display(
-                  context,
-                  fontSize: 30,
-                  color: primaryText,
-                ),
-              ),
+    if (AppBreakpoints.of(context) == AppLayoutSize.compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'e aí, ${_name.toLowerCase()}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.display(
+              context,
+              fontSize: 28,
+              color: primaryText,
             ),
-            if (daysChip != null) ...[const SizedBox(width: 12), daysChip],
-          ],
-        );
-      },
+          ),
+          if (daysChip != null) ...[const SizedBox(height: 12), daysChip],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'e aí, ${_name.toLowerCase()}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.display(
+              context,
+              fontSize: 30,
+              color: primaryText,
+            ),
+          ),
+        ),
+        if (daysChip != null) ...[const SizedBox(width: 12), daysChip],
+      ],
     );
   }
 

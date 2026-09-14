@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
+import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
@@ -520,62 +522,79 @@ class _PlanScreenState extends State<PlanScreen> {
     BuildContext context,
   ) {
     final brightness = Theme.of(context).brightness;
+    final layout = AppBreakpoints.of(context);
+    final useTwoColumns =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+
+    final categoriesContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildCategoriesHeader(brightness),
+        const SizedBox(height: 14),
+        if (_parents.isEmpty)
+          _buildEmpty(brightness)
+        else
+          ..._parents.map(
+            (parent) => _buildCategoryTree(
+              parent,
+              brightness,
+            ),
+          ),
+      ],
+    );
 
     return ColoredBox(
       color: AppColors.background(brightness),
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 760,
-            ),
-            child: RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  18,
-                  22,
-                  18,
-                  140,
-                ),
-                children: [
-                  _buildHeader(brightness),
-
-                  const SizedBox(height: 24),
-
-                  if (_loading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 80,
-                      ),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (_error != null)
-                    _buildError(brightness)
-                  else ...[
-                    _buildSummary(brightness),
-
-                    const SizedBox(height: 30),
-
-                    _buildCategoriesHeader(brightness),
-
-                    const SizedBox(height: 14),
-
-                    if (_parents.isEmpty)
-                      _buildEmpty(brightness)
-                    else
-                      ..._parents.map(
-                        (parent) => _buildCategoryTree(
-                          parent,
-                          brightness,
-                        ),
-                      ),
-                  ],
-                ],
+        child: AppContentContainer.dashboard(
+          fillHeight: true,
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                0,
+                22,
+                0,
+                140,
               ),
+              children: [
+                _buildHeader(brightness),
+
+                const SizedBox(height: 24),
+
+                if (_loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 80,
+                    ),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (_error != null)
+                  _buildError(brightness)
+                else if (useTwoColumns)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: _buildSummary(brightness),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        flex: 7,
+                        child: categoriesContent,
+                      ),
+                    ],
+                  )
+                else ...[
+                  _buildSummary(brightness),
+                  const SizedBox(height: 30),
+                  categoriesContent,
+                ],
+              ],
             ),
           ),
         ),

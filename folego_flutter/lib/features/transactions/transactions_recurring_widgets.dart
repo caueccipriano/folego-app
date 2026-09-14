@@ -24,67 +24,33 @@ class _RecurringTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: RefreshIndicator(
-            onRefresh: onRefresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(22, 90, 22, 120),
-              children: [
-                CategoryIconBadge(
-                  icon: CategoryVisuals.iconFor(category: 'A classificar'),
-                  color: CategoryVisuals.colorFor(
-                    category: 'A classificar',
-                    brightness: Theme.of(context).brightness,
-                  ),
-                  size: 50,
-                  iconSize: 25,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Nenhuma recorrência',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.section(context, fontSize: 18),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Para criar uma, volte para a Home e registre um Gasto ou Receita escolhendo uma repetição.',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.body(
-                    context,
-                    fontSize: 12,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: .58),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
+      return AppContentContainer.list(
+        fillHeight: true,
         child: RefreshIndicator(
           onRefresh: onRefresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 120),
+            padding: const EdgeInsets.fromLTRB(0, 90, 0, 120),
             children: [
+              CategoryIconBadge(
+                icon: CategoryVisuals.iconFor(category: 'A classificar'),
+                color: CategoryVisuals.colorFor(
+                  category: 'A classificar',
+                  brightness: Theme.of(context).brightness,
+                ),
+                size: 50,
+                iconSize: 25,
+              ),
+              const SizedBox(height: 16),
               Text(
-                'Suas recorrências',
+                'Nenhuma recorrência',
+                textAlign: TextAlign.center,
                 style: AppTypography.section(context, fontSize: 18),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 8),
               Text(
-                'Edite ou pause o que se repete no seu mês.',
+                'Para criar uma, volte para a Home e registre um Gasto ou Receita escolhendo uma repetição.',
+                textAlign: TextAlign.center,
                 style: AppTypography.body(
                   context,
                   fontSize: 12,
@@ -93,20 +59,48 @@ class _RecurringTab extends StatelessWidget {
                   ).colorScheme.onSurface.withValues(alpha: .58),
                 ),
               ),
-              const SizedBox(height: 20),
-              ...items.map(
-                (item) => _RecurringCard(
-                  item: item,
-                  categories: categories,
-                  isDark: isDark,
-                  onEdit: () => onEdit(item),
-                  onRealize: () => onRealize(item),
-                  onToggle: () => onToggle(item),
-                  onDelete: () => onDelete(item),
-                ),
-              ),
             ],
           ),
+        ),
+      );
+    }
+
+    return AppContentContainer.list(
+      fillHeight: true,
+      child: RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(0, 18, 0, 120),
+          children: [
+            Text(
+              'Suas recorrências',
+              style: AppTypography.section(context, fontSize: 18),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Edite ou pause o que se repete no seu mês.',
+              style: AppTypography.body(
+                context,
+                fontSize: 12,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: .58),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ...items.map(
+              (item) => _RecurringCard(
+                item: item,
+                categories: categories,
+                isDark: isDark,
+                onEdit: () => onEdit(item),
+                onRealize: () => onRealize(item),
+                onToggle: () => onToggle(item),
+                onDelete: () => onDelete(item),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -14,6 +14,7 @@ class AppContentContainer extends StatelessWidget {
     required this.child,
     this.verticalPadding = 0,
     this.alignment = Alignment.topCenter,
+    this.fillHeight = false,
   });
 
   const AppContentContainer.auth({
@@ -21,6 +22,7 @@ class AppContentContainer extends StatelessWidget {
     required this.child,
     this.verticalPadding = 0,
     this.alignment = Alignment.topCenter,
+    this.fillHeight = false,
   }) : maxWidth = AppContentWidths.auth;
 
   const AppContentContainer.form({
@@ -28,6 +30,7 @@ class AppContentContainer extends StatelessWidget {
     required this.child,
     this.verticalPadding = 0,
     this.alignment = Alignment.topCenter,
+    this.fillHeight = false,
   }) : maxWidth = AppContentWidths.form;
 
   const AppContentContainer.list({
@@ -35,6 +38,7 @@ class AppContentContainer extends StatelessWidget {
     required this.child,
     this.verticalPadding = 0,
     this.alignment = Alignment.topCenter,
+    this.fillHeight = false,
   }) : maxWidth = AppContentWidths.list;
 
   const AppContentContainer.dashboard({
@@ -42,12 +46,14 @@ class AppContentContainer extends StatelessWidget {
     required this.child,
     this.verticalPadding = 0,
     this.alignment = Alignment.topCenter,
+    this.fillHeight = false,
   }) : maxWidth = AppContentWidths.dashboard;
 
   final double maxWidth;
   final Widget child;
   final double verticalPadding;
   final AlignmentGeometry alignment;
+  final bool fillHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -60,12 +66,17 @@ class AppContentContainer extends StatelessWidget {
         final horizontalPadding =
             AppResponsiveSpacing.horizontalForWidth(availableWidth);
 
+        final height = fillHeight && constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : null;
+
         return Align(
           alignment: alignment,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: SizedBox(
               width: double.infinity,
+              height: height,
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: horizontalPadding,
