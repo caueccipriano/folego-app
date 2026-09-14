@@ -478,7 +478,7 @@ class FolegoRepository {
     }
 
     if (accountId == null && cardId == null) {
-      throw ArgumentError('Selecione uma conta.');
+      throw ArgumentError('Selecione uma conta ou cartão.');
     }
 
     const validFrequencies = {'weekly', 'biweekly', 'monthly', 'yearly'};

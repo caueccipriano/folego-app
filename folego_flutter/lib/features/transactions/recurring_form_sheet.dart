@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/recurring_item.dart';
+import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 
 class RecurringFormSheet extends StatefulWidget {
@@ -29,6 +33,7 @@ class _RecurringFormSheetState extends State<RecurringFormSheet> {
   final _amount = TextEditingController();
 
   List<AccountItem> _accounts = const [];
+  List<_RecurringCardOption> _cards = const [];
   List<CategoryItem> _expenseCategories = const [];
   List<CategoryItem> _incomeCategories = const [];
 
@@ -36,6 +41,7 @@ class _RecurringFormSheetState extends State<RecurringFormSheet> {
   String _frequency = 'monthly';
 
   String? _accountId;
+  String? _cardId;
   String? _categoryId;
 
   int _dayOfMonth = 1;
@@ -67,6 +73,14 @@ bool _monthlyLastDay = false;
 
   bool get _isExpense => _type == 'expense';
 
+  bool get _showAccountDestination {
+    return !_editing || _accountId != null || _cardId == null;
+  }
+
+  bool get _showCardDestination {
+    return _editing && _cardId != null;
+  }
+
   List<CategoryItem> get _availableCategories {
     return _isExpense ? _expenseCategories : _incomeCategories;
   }
@@ -86,6 +100,7 @@ bool _monthlyLastDay = false;
       _frequency = item.frequency;
 
       _accountId = item.accountId;
+      _cardId = item.cardId;
       _categoryId = item.categoryId;
 
       _dayOfMonth = item.dayOfMonth ?? item.startsOn.day;
@@ -127,8 +142,13 @@ _monthlyLastDay = false;
 
   Future<void> _load() async {
     try {
+      final cardOverviewFuture = _showCardDestination
+          ? widget.repository.getWalletOverview(spaceId: widget.space.id)
+          : Future<WalletOverview?>.value(null);
+
       final values = await Future.wait([
         widget.repository.listAccounts(widget.space.id),
+        cardOverviewFuture,
         widget.repository.listExpenseCategories(widget.space.id),
         widget.repository.listIncomeCategories(widget.space.id),
       ]);
@@ -139,9 +159,33 @@ _monthlyLastDay = false;
 
       final accounts = values[0] as List<AccountItem>;
 
-      final expenseCategories = values[1] as List<CategoryItem>;
+      final walletOverview = values[1] as WalletOverview?;
 
-      final incomeCategories = values[2] as List<CategoryItem>;
+      final cards = <_RecurringCardOption>[
+        for (final card in walletOverview?.cards ?? const <WalletCard>[])
+          _RecurringCardOption(
+            id: card.id,
+            name: card.name,
+            available: true,
+          ),
+      ];
+
+      final currentCardId = _cardId;
+
+      if (currentCardId != null &&
+          !cards.any((card) => card.id == currentCardId)) {
+        cards.add(
+          _RecurringCardOption(
+            id: currentCardId,
+            name: 'Cartão atual',
+            available: false,
+          ),
+        );
+      }
+
+      final expenseCategories = values[2] as List<CategoryItem>;
+
+      final incomeCategories = values[3] as List<CategoryItem>;
 
       _sortCategories(expenseCategories);
       _sortCategories(incomeCategories);
@@ -149,11 +193,15 @@ _monthlyLastDay = false;
       setState(() {
         _accounts = accounts;
 
+        _cards = cards;
+
         _expenseCategories = expenseCategories;
 
         _incomeCategories = incomeCategories;
 
-        _accountId ??= accounts.isEmpty ? null : accounts.first.id;
+        if (!_editing && _accountId == null && _cardId == null) {
+          _accountId = accounts.isEmpty ? null : accounts.first.id;
+        }
 
         final categories = _availableCategories;
 
@@ -377,9 +425,11 @@ Future<void> _pickMonthlyDay() async {
       return;
     }
 
-    if (_accountId == null) {
+    if (_accountId == null && _cardId == null) {
       setState(() {
-        _error = 'Selecione uma conta.';
+        _error = _editing
+            ? 'Selecione uma conta ou cartão.'
+            : 'Selecione uma conta.';
       });
 
       return;
@@ -419,7 +469,8 @@ Future<void> _pickMonthlyDay() async {
           itemType: _type,
           amount: amount,
           frequency: _frequency,
-          accountId: _accountId!,
+          accountId: _accountId,
+          cardId: _cardId,
           categoryId: _categoryId,
           dayOfMonth: dayOfMonth,
 
@@ -446,7 +497,8 @@ monthlyLastDay:
           itemType: _type,
           amount: amount,
           frequency: _frequency,
-          accountId: _accountId!,
+          accountId: _accountId,
+          cardId: _cardId,
           categoryId: _categoryId,
           dayOfMonth: dayOfMonth,
           monthlyDays:
@@ -637,23 +689,81 @@ monthlyLastDay:
 
                     const SizedBox(height: 12),
 
-                    DropdownButtonFormField<String>(
-                      initialValue: _accountId,
-                      decoration: const InputDecoration(labelText: 'Conta'),
-                      items: _accounts
-                          .map(
-                            (account) => DropdownMenuItem<String>(
-                              value: account.id,
-                              child: Text(account.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _accountId = value;
-                        });
-                      },
-                    ),
+                    if (_showAccountDestination)
+                      DropdownButtonFormField<String>(
+                        initialValue: _accountId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Conta',
+                          prefixIcon: Icon(AppIcons.account),
+                        ),
+                        items: _accounts
+                            .map(
+                              (account) => DropdownMenuItem<String>(
+                                value: account.id,
+                                child: Text(account.name),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _accountId = value;
+                            _error = null;
+                          });
+                        },
+                      ),
+
+                    if (_showAccountDestination && _showCardDestination)
+                      const SizedBox(height: 12),
+
+                    if (_showCardDestination) ...[
+                      DropdownButtonFormField<String>(
+                        initialValue: _cardId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Cartão',
+                          prefixIcon: Icon(AppIcons.creditCard),
+                        ),
+                        items: _cards
+                            .map(
+                              (card) => DropdownMenuItem<String>(
+                                value: card.id,
+                                child: Text(
+                                  card.available
+                                      ? card.name
+                                      : '${card.name} (inativo ou indisponível)',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+
+                          setState(() {
+                            _cardId = value;
+                            _error = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _cards.any(
+                          (card) => card.id == _cardId && !card.available,
+                        )
+                            ? 'Este cartão não aparece mais entre os cartões ativos. O vínculo atual será preservado.'
+                            : 'Esta recorrência continuará vinculada ao cartão selecionado.',
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: AppColors.secondaryText(
+                            Theme.of(context).brightness,
+                          ),
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 12),
 
@@ -1084,6 +1194,18 @@ if (_frequency == 'monthly') ...[
         .replaceFirst('Invalid argument(s): ', '')
         .replaceFirst('Exception: ', '');
   }
+}
+
+class _RecurringCardOption {
+  const _RecurringCardOption({
+    required this.id,
+    required this.name,
+    required this.available,
+  });
+
+  final String id;
+  final String name;
+  final bool available;
 }
 
 class _DateTile extends StatelessWidget {
