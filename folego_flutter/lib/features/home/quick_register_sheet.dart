@@ -68,6 +68,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   bool _loading = true;
   bool _saving = false;
+  bool _categoryPickerExpanded = false;
 
   String? _error;
 
@@ -340,80 +341,37 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     );
   }
 
-  Future<String?> _showCategoryPicker({
-    required String title,
-    required String subtitle,
-    required List<CategoryItem> categories,
-    required String? selectedId,
-    required String eventType,
-  }) {
-    return _showAdaptivePicker<String>(
-      builder: (pickerContext, dialogMode) {
-        return _CategoryPickerSheet(
-          title: title,
-          subtitle: subtitle,
-          categories: categories,
-          selectedId: selectedId,
-          eventType: eventType,
-          dialogMode: dialogMode,
-        );
-      },
-    );
-  }
-
-  Future<void> _pickExpenseParentCategory() async {
-    final categories = _expenseParentCategories;
+  void _toggleCategoryPicker() {
+    final categories =
+        _isExpense ? _expenseParentCategories : _incomeCategories;
 
     if (categories.isEmpty) {
       setState(() {
-        _error = 'nenhuma categoria de gasto foi encontrada';
+        _error = _isExpense
+            ? 'nenhuma categoria de gasto foi encontrada'
+            : 'nenhuma categoria de receita foi encontrada';
       });
-
       return;
     }
 
-    final selectedId = await _showCategoryPicker(
-      title: 'categoria',
-      subtitle: 'onde esse gasto entra?',
-      categories: categories,
-      selectedId: _expenseParentCategoryId,
-      eventType: 'expense',
-    );
-
-    if (selectedId == null || !mounted) {
-      return;
-    }
+    FocusScope.of(context).unfocus();
 
     setState(() {
-      _expenseParentCategoryId = selectedId;
-      _expenseSubcategoryId = null;
+      _categoryPickerExpanded = !_categoryPickerExpanded;
       _error = null;
     });
   }
 
-  Future<void> _pickIncomeCategory() async {
-    if (_incomeCategories.isEmpty) {
-      setState(() {
-        _error = 'nenhuma categoria de receita foi encontrada';
-      });
-
-      return;
-    }
-
-    final selectedId = await _showCategoryPicker(
-      title: 'categoria da receita',
-      subtitle: 'de onde esse dinheiro veio?',
-      categories: _incomeCategories,
-      selectedId: _incomeCategoryId,
-      eventType: 'income',
-    );
-
-    if (selectedId == null || !mounted) {
-      return;
-    }
-
+  void _selectCategory(String categoryId) {
     setState(() {
-      _incomeCategoryId = selectedId;
+      if (_isExpense) {
+        _expenseParentCategoryId = categoryId;
+        _expenseSubcategoryId = null;
+      } else {
+        _incomeCategoryId = categoryId;
+      }
+
+      _categoryPickerExpanded = false;
       _error = null;
     });
   }
@@ -1281,24 +1239,43 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     required Color border,
     required Color surface,
   }) {
+    final categories =
+        _isExpense ? _expenseParentCategories : _incomeCategories;
+    final selectedId =
+        _isExpense ? _expenseParentCategoryId : _incomeCategoryId;
+    final eventType = _isExpense ? 'expense' : 'income';
+
     if (!_isExpense) {
       final selected = _selectedIncomeCategory;
 
       final visual = CategoryVisuals.resolve(
         brightness: brightness,
         category: selected?.name,
-        eventType: 'income',
+        eventType: eventType,
       );
 
       return _FormPanel(
         surface: surface,
         border: border,
-        child: _CategorySelectTile(
-          label: 'categoria da receita',
-          value: selected?.name ?? 'selecionar categoria',
-          icon: visual.icon,
-          color: visual.color,
-          onTap: _pickIncomeCategory,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _CategorySelectTile(
+              label: 'categoria da receita',
+              value: selected?.name ?? 'selecionar categoria',
+              icon: visual.icon,
+              color: visual.color,
+              expanded: _categoryPickerExpanded,
+              onTap: _toggleCategoryPicker,
+            ),
+            _InlineCategoryPicker(
+              expanded: _categoryPickerExpanded,
+              categories: categories,
+              selectedId: selectedId,
+              eventType: eventType,
+              onSelected: _selectCategory,
+            ),
+          ],
         ),
       );
     }
@@ -1330,7 +1307,15 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             value: parent?.name ?? 'selecionar categoria',
             icon: familyIcon,
             color: familyColor,
-            onTap: _pickExpenseParentCategory,
+            expanded: _categoryPickerExpanded,
+            onTap: _toggleCategoryPicker,
+          ),
+          _InlineCategoryPicker(
+            expanded: _categoryPickerExpanded,
+            categories: categories,
+            selectedId: selectedId,
+            eventType: eventType,
+            onSelected: _selectCategory,
           ),
           if (parent != null && subcategories.isNotEmpty) ...[
             const SizedBox(height: 18),
@@ -1517,205 +1502,135 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 }
 
-class _CategoryPickerSheet extends StatelessWidget {
-  const _CategoryPickerSheet({
-    required this.title,
-    required this.subtitle,
+class _InlineCategoryPicker extends StatelessWidget {
+  const _InlineCategoryPicker({
+    required this.expanded,
     required this.categories,
     required this.selectedId,
     required this.eventType,
-    required this.dialogMode,
+    required this.onSelected,
   });
 
-  final String title;
-  final String subtitle;
+  final bool expanded;
   final List<CategoryItem> categories;
   final String? selectedId;
   final String eventType;
-  final bool dialogMode;
+  final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
-    final background = AppColors.background(brightness);
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: dialogMode
-            ? BorderRadius.circular(28)
-            : const BorderRadius.vertical(
-                top: Radius.circular(30),
-              ),
-        border: dialogMode
-            ? Border.all(color: border)
-            : Border(
-                top: BorderSide(color: border),
-              ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            if (!dialogMode) ...[
-              const SizedBox(height: 14),
-              Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: border,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-            ] else
-              const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                20,
-                12,
-                14,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: AppTypography.section(
-                            context,
-                            fontSize: 21,
-                            color: primaryText,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: AppTypography.body(
-                            context,
-                            fontSize: 11,
-                            color: secondaryText,
-                          ),
-                        ),
-                      ],
-                    ),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: !expanded
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 260),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: border),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
+                  child: ListView.separated(
+                    primary: false,
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: categories.length,
+                    separatorBuilder: (context, index) {
+                      return const SizedBox(height: 6);
                     },
-                    icon: Icon(
-                      AppIcons.close,
-                      color: secondaryText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  4,
-                  20,
-                  24,
-                ),
-                itemCount: categories.length,
-                separatorBuilder: (_, __) {
-                  return const SizedBox(height: 8);
-                },
-                itemBuilder: (context, index) {
-                  final category = categories[index];
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      final selected = category.id == selectedId;
+                      final visual = CategoryVisuals.resolve(
+                        brightness: brightness,
+                        category: category.name,
+                        eventType: eventType,
+                      );
 
-                  final selected = category.id == selectedId;
-
-                  final visual = CategoryVisuals.resolve(
-                    brightness: brightness,
-                    category: category.name,
-                    eventType: eventType,
-                  );
-
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).pop(category.id);
-                      },
-                      borderRadius: BorderRadius.circular(18),
-                      child: Ink(
-                        padding: const EdgeInsets.all(13),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? visual.color.withValues(alpha: .10)
-                              : surface,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: selected
-                                ? visual.color.withValues(alpha: .45)
-                                : border,
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => onSelected(category.id),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Ink(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? visual.color.withValues(alpha: .10)
+                                  : surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: selected
+                                    ? visual.color.withValues(alpha: .40)
+                                    : border,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                CategoryIconBadge(
+                                  icon: visual.icon,
+                                  color: visual.color,
+                                  size: 36,
+                                  iconSize: 18,
+                                  radius: 12,
+                                ),
+                                const SizedBox(width: 11),
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    style: AppTypography.body(
+                                      context,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: primaryText,
+                                    ),
+                                  ),
+                                ),
+                                if (selected)
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: purple.withValues(alpha: .12),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      AppIcons.check,
+                                      size: 15,
+                                      color: purple,
+                                    ),
+                                  )
+                                else
+                                  Icon(
+                                    AppIcons.chevronRight,
+                                    size: 17,
+                                    color: secondaryText,
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            CategoryIconBadge(
-                              icon: visual.icon,
-                              color: visual.color,
-                              size: 40,
-                              iconSize: 20,
-                              radius: 13,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                category.name,
-                                style: AppTypography.body(
-                                  context,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: primaryText,
-                                ),
-                              ),
-                            ),
-                            if (selected)
-                              Container(
-                                width: 26,
-                                height: 26,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: purple.withValues(alpha: .12),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  AppIcons.check,
-                                  size: 16,
-                                  color: purple,
-                                ),
-                              )
-                            else
-                              Icon(
-                                AppIcons.chevronRight,
-                                size: 18,
-                                color: secondaryText,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -1881,6 +1796,7 @@ class _CategorySelectTile extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    required this.expanded,
     required this.onTap,
   });
 
@@ -1888,6 +1804,7 @@ class _CategorySelectTile extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final bool expanded;
   final VoidCallback onTap;
 
   @override
@@ -1952,10 +1869,14 @@ class _CategorySelectTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                AppIcons.chevronRight,
-                size: 18,
-                color: secondaryText,
+              AnimatedRotation(
+                turns: expanded ? .25 : 0,
+                duration: const Duration(milliseconds: 160),
+                child: Icon(
+                  AppIcons.chevronRight,
+                  size: 18,
+                  color: secondaryText,
+                ),
               ),
             ],
           ),
