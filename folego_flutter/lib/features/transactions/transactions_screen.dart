@@ -34,6 +34,9 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   List<RecurringItem> _recurringItems = const [];
   List<CategoryItem> _categories = const [];
 
+  final Map<String, _PendingTransactionDeletion> _pendingDeletions = {};
+  final Set<String> _hiddenTransactionIds = <String>{};
+
   bool _loading = true;
   String? _error;
 
@@ -78,6 +81,18 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         return;
       }
 
+      final rawTransactions = results[0] as List<TransactionItem>;
+
+      final visibleTransactions = rawTransactions
+          .where(
+            (transaction) => !_hiddenTransactionIds.contains(transaction.id),
+          )
+          .toList();
+
+      final rawTransactionIds = rawTransactions
+          .map((transaction) => transaction.id)
+          .toSet();
+
       final expenseCategories = results[2] as List<CategoryItem>;
 
       final incomeCategories = results[3] as List<CategoryItem>;
@@ -91,11 +106,17 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       setState(() {
         _space = space;
 
-        _transactions = results[0] as List<TransactionItem>;
+        _transactions = visibleTransactions;
 
         _recurringItems = results[1] as List<RecurringItem>;
 
         _categories = categoriesById.values.toList();
+
+        _hiddenTransactionIds.removeWhere(
+          (eventId) =>
+              !_pendingDeletions.containsKey(eventId) &&
+              !rawTransactionIds.contains(eventId),
+        );
 
         _loading = false;
       });
@@ -245,34 +266,141 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       },
     );
 
-    if (confirmed != true) {
+    if (confirmed != true || !mounted) {
       return;
     }
 
+    if (_pendingDeletions.containsKey(item.id)) {
+      return;
+    }
+
+    final originalIndex = _transactions.indexWhere(
+      (transaction) => transaction.id == item.id,
+    );
+
+    if (originalIndex < 0) {
+      return;
+    }
+
+    final pending = _PendingTransactionDeletion(
+      eventId: item.id,
+      item: item,
+      originalIndex: originalIndex,
+      spaceId: space.id,
+    );
+
+    setState(() {
+      _pendingDeletions[item.id] = pending;
+      _hiddenTransactionIds.add(item.id);
+      _transactions = _transactions
+          .where((transaction) => transaction.id != item.id)
+          .toList();
+    });
+
+    final controller = ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Lançamento excluído.'),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () {
+            _undoPendingDeletion(item.id);
+          },
+        ),
+      ),
+    );
+
+    await controller.closed;
+    await _commitPendingDeletion(item.id);
+  }
+
+  void _undoPendingDeletion(String eventId) {
+    final pending = _pendingDeletions[eventId];
+
+    if (pending == null || pending.committing) {
+      return;
+    }
+
+    _pendingDeletions.remove(eventId);
+    _hiddenTransactionIds.remove(eventId);
+
+    _restorePendingDeletion(pending);
+  }
+
+  Future<void> _commitPendingDeletion(String eventId) async {
+    final pending = _pendingDeletions[eventId];
+
+    if (pending == null || pending.committing) {
+      return;
+    }
+
+    pending.committing = true;
+
     try {
       await widget.repository.cancelSimpleTransaction(
-        spaceId: space.id,
-        eventId: item.id,
+        spaceId: pending.spaceId,
+        eventId: pending.eventId,
       );
 
-      await _load();
-
-      if (!mounted) {
-        return;
+      if (identical(_pendingDeletions[eventId], pending)) {
+        _pendingDeletions.remove(eventId);
       }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lançamento excluído.')));
     } catch (error) {
+      if (identical(_pendingDeletions[eventId], pending)) {
+        _pendingDeletions.remove(eventId);
+      }
+
+      _hiddenTransactionIds.remove(eventId);
+
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+      _restorePendingDeletion(pending);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Não foi possível excluir o lançamento. ${_friendlyError(error)}',
+          ),
+        ),
+      );
     }
+  }
+
+  void _restorePendingDeletion(_PendingTransactionDeletion pending) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (_transactions.any(
+        (transaction) => transaction.id == pending.eventId,
+      )) {
+        return;
+      }
+
+      var insertIndex = pending.originalIndex;
+
+      for (final other in _pendingDeletions.values) {
+        if (other.eventId != pending.eventId &&
+            other.originalIndex < pending.originalIndex) {
+          insertIndex -= 1;
+        }
+      }
+
+      if (insertIndex < 0) {
+        insertIndex = 0;
+      }
+
+      if (insertIndex > _transactions.length) {
+        insertIndex = _transactions.length;
+      }
+
+      final restored = [..._transactions]
+        ..insert(insertIndex, pending.item);
+
+      _transactions = restored;
+    });
   }
 
   Future<void> _editRecurring(RecurringItem item) async {
@@ -649,6 +777,22 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         .replaceFirst('Exception: ', '')
         .replaceFirst('Invalid argument(s): ', '');
   }
+}
+
+class _PendingTransactionDeletion {
+  _PendingTransactionDeletion({
+    required this.eventId,
+    required this.item,
+    required this.originalIndex,
+    required this.spaceId,
+  });
+
+  final String eventId;
+  final TransactionItem item;
+  final int originalIndex;
+  final String spaceId;
+
+  bool committing = false;
 }
 
 class _TransactionsTab extends StatelessWidget {
