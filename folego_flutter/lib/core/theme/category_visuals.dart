@@ -339,6 +339,13 @@ class CategoryVisuals {
 
       case 'vestuario':
         return AppIcons.categoryClothing;
+
+      case 'viagens':
+        return AppIcons.categoryTravel;
+
+      case 'outros':
+      case 'outros gastos':
+        return AppIcons.categoryOther;
     }
 
     // =========================================================
@@ -504,6 +511,15 @@ class CategoryVisuals {
       case 'vestuario':
         return isDark ? const Color(0xFF5DDCFF) : const Color(0xFF247B95);
 
+      // CIANO ELÉTRICO — VIAGENS
+      case 'viagens':
+        return isDark ? const Color(0xFF4FEAFF) : const Color(0xFF167D91);
+
+      // NEUTRO — OUTROS
+      case 'outros':
+      case 'outros gastos':
+        return isDark ? const Color(0xFFB5B2C0) : const Color(0xFF6B6656);
+
       // TRANSFERÊNCIAS — CIANO ELÉTRICO
       case 'transferencia':
       case 'transferencias':
@@ -573,6 +589,13 @@ class CategoryVisuals {
 
       case 'vestuario':
         return 'Vestuário';
+
+      case 'viagens':
+        return 'Viagens';
+
+      case 'outros':
+      case 'outros gastos':
+        return 'Outros';
 
       case 'adiantamento':
         return 'Adiantamento';
