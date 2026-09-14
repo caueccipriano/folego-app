@@ -346,7 +346,46 @@ class CategoryVisuals {
     // =========================================================
 
     if (c != null && _incomeCategoryKeys.contains(c)) {
-      return AppIcons.income;
+      switch (c) {
+        case 'adiantamento':
+          return AppIcons.debtInstallment;
+
+        case 'bonificacao':
+        case 'bonus':
+          return AppIcons.achievements;
+
+        case 'comissao':
+        case 'comissoes':
+          return AppIcons.financeInterest;
+
+        case 'freela':
+        case 'freelance':
+          return AppIcons.journal;
+
+        case 'outra receita':
+        case 'outras receitas':
+        case 'receita':
+        case 'receitas':
+        case 'renda':
+          return AppIcons.income;
+
+        case 'presente recebido':
+          return AppIcons.giftsPresent;
+
+        case 'rendimento':
+        case 'rendimentos':
+          return AppIcons.categoryFinance;
+
+        case 'salario':
+          return AppIcons.cash;
+
+        case 'trabalho extra':
+          return AppIcons.shoppingElectronics;
+
+        case 'venda':
+        case 'vendas':
+          return AppIcons.categoryShopping;
+      }
     }
 
     // =========================================================
