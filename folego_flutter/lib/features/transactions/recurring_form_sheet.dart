@@ -449,6 +449,9 @@ monthlyLastDay:
           accountId: _accountId!,
           categoryId: _categoryId,
           dayOfMonth: dayOfMonth,
+          monthlyDays:
+              _frequency == 'monthly' ? (_monthlyDays.toList()..sort()) : null,
+          monthlyLastDay: _frequency == 'monthly' ? _monthlyLastDay : false,
           weekday: weekday,
           monthOfYear: monthOfYear,
           startsOn: _startsOn,
