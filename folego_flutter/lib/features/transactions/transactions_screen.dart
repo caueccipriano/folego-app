@@ -13,6 +13,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import 'recurring_form_sheet.dart';
+import 'recurring_occurrence.dart';
 import 'transaction_edit_sheet.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -552,6 +553,18 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
     var initialDate = _suggestOccurrenceDate(item);
 
+    if (initialDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não há uma ocorrência válida para realizar no período desta recorrência.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
     if (initialDate.isBefore(item.startsOn)) {
       initialDate = item.startsOn;
     }
@@ -689,18 +702,21 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     );
   }
 
-  DateTime _suggestOccurrenceDate(RecurringItem item) {
+  DateTime? _suggestOccurrenceDate(RecurringItem item) {
     final now = DateTime.now();
 
     final today = DateTime(now.year, now.month, now.day);
 
     switch (item.frequency) {
       case 'monthly':
-        final day = item.dayOfMonth ?? item.startsOn.day;
-
-        final lastDay = DateTime(today.year, today.month + 1, 0).day;
-
-        return DateTime(today.year, today.month, day > lastDay ? lastDay : day);
+        return suggestMonthlyOccurrenceDate(
+          referenceDate: today,
+          startsOn: item.startsOn,
+          endsOn: item.endsOn,
+          monthlyDays: item.monthlyDays,
+          monthlyLastDay: item.monthlyLastDay,
+          dayOfMonth: item.dayOfMonth,
+        );
 
       case 'weekly':
         final target = item.weekday ?? item.startsOn.weekday % 7;
