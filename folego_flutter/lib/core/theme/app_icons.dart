@@ -66,6 +66,12 @@ abstract final class AppIcons {
 
   static const IconData categoryTravel = TablerIcons.plane;
 
+  static const IconData categoryFamily = TablerIcons.heartHandshake;
+
+  static const IconData categoryPets = TablerIcons.heart;
+
+  static const IconData categoryInsurance = TablerIcons.fileCheck;
+
   static const IconData categoryOther = TablerIcons.dots;
 
   // ===========================================================================
