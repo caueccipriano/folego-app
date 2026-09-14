@@ -8,6 +8,7 @@ import '../models/folego_snapshot.dart';
 import '../models/onboarding_state.dart';
 import '../models/recurring_item.dart';
 import '../models/transaction_item.dart';
+import '../models/transaction_page.dart';
 import '../models/upcoming_events.dart';
 import '../models/wallet_overview.dart';
 
@@ -99,7 +100,37 @@ class FolegoRepository {
   // ---------------------------------------------------------------------------
 
   Future<List<TransactionItem>> getTransactions(String spaceId) async {
-    final response = await _client
+    var transactions = <TransactionItem>[];
+    TransactionCursor? cursor;
+
+    while (true) {
+      final page = await getTransactionsPage(spaceId, cursor: cursor);
+
+      transactions = mergeTransactionPages(
+        existing: transactions,
+        incoming: page.items,
+      );
+
+      if (!page.hasMore || page.nextCursor == null) {
+        break;
+      }
+
+      cursor = page.nextCursor;
+    }
+
+    return transactions;
+  }
+
+  Future<TransactionPage> getTransactionsPage(
+    String spaceId, {
+    TransactionCursor? cursor,
+    int pageSize = transactionPageSize,
+  }) async {
+    if (pageSize <= 0) {
+      throw ArgumentError.value(pageSize, 'pageSize', 'Deve ser maior que zero.');
+    }
+
+    var query = _client
         .from('financial_events')
         .select('''
         id,
@@ -128,13 +159,25 @@ class FolegoRepository {
         ''')
         .eq('space_id', spaceId)
         .neq('status', 'ignored')
-        .neq('status', 'cancelled')
+        .neq('status', 'cancelled');
+
+    if (cursor != null) {
+      final occurredAt = cursor.occurredAt.toUtc().toIso8601String();
+
+      query = query.or(
+        'occurred_at.lt.$occurredAt,and(occurred_at.eq.$occurredAt,id.lt.${cursor.id})',
+      );
+    }
+
+    final response = await query
         .order('occurred_at', ascending: false)
-        .limit(100);
+        .order('id', ascending: false)
+        .limit(pageSize + 1);
 
     final rows = List<Map<String, dynamic>>.from(response);
+    final fetched = rows.map(TransactionItem.fromJson).toList();
 
-    return rows.map(TransactionItem.fromJson).toList();
+    return TransactionPage.fromFetched(fetched, pageSize: pageSize);
   }
 
   Future<void> updateSimpleTransaction({
