@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -171,8 +172,6 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
 
     try {
-      debugPrint('[QuickRegister] carregando contas...');
-
       final accounts = await widget.repository
           .listAccounts(widget.space.id)
           .timeout(
@@ -184,18 +183,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             },
           );
 
-      debugPrint(
-        '[QuickRegister] contas carregadas: ${accounts.length}',
-      );
-
       List<CategoryItem> expenseCategories = const [];
       List<CategoryItem> incomeCategories = const [];
 
       if (_isExpense) {
-        debugPrint(
-          '[QuickRegister] carregando categorias de gasto...',
-        );
-
         expenseCategories = await widget.repository
             .listExpenseCategories(widget.space.id)
             .timeout(
@@ -206,16 +197,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                 );
               },
             );
-
-        debugPrint(
-          '[QuickRegister] categorias de gasto: '
-          '${expenseCategories.length}',
-        );
       } else {
-        debugPrint(
-          '[QuickRegister] carregando categorias de receita...',
-        );
-
         incomeCategories = await widget.repository
             .listIncomeCategories(widget.space.id)
             .timeout(
@@ -226,11 +208,6 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                 );
               },
             );
-
-        debugPrint(
-          '[QuickRegister] categorias de receita: '
-          '${incomeCategories.length}',
-        );
       }
 
       if (!mounted) {
@@ -263,12 +240,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
         _loading = false;
       });
-
-      debugPrint('[QuickRegister] carregamento concluído.');
-    } catch (error, stackTrace) {
-      debugPrint('[QuickRegister] ERRO: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -280,9 +252,91 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
   }
 
-  Future<void> _pickExpenseParentCategory() async {
+  bool _usesDialogPicker(BuildContext context) {
+    if (kIsWeb) {
+      return true;
+    }
+
+    final platform = Theme.of(context).platform;
+
+    return platform != TargetPlatform.android &&
+        platform != TargetPlatform.iOS &&
+        platform != TargetPlatform.fuchsia &&
+        MediaQuery.sizeOf(context).width >= 600;
+  }
+
+  Future<T?> _showAdaptivePicker<T>({
+    required Widget Function(BuildContext context, bool dialogMode) builder,
+    double dialogMaxWidth = 520,
+    double heightFactor = .78,
+  }) async {
     FocusScope.of(context).unfocus();
 
+    if (_usesDialogPicker(context)) {
+      return showDialog<T>(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          final viewport = MediaQuery.sizeOf(dialogContext);
+          final height = viewport.height * heightFactor;
+
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 24,
+            ),
+            child: SizedBox(
+              width: dialogMaxWidth,
+              height: height > viewport.height * .88
+                  ? viewport.height * .88
+                  : height,
+              child: builder(dialogContext, true),
+            ),
+          );
+        },
+      );
+    }
+
+    return showModalBottomSheet<T>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      showDragHandle: false,
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: heightFactor,
+          child: builder(sheetContext, false),
+        );
+      },
+    );
+  }
+
+  Future<String?> _showCategoryPicker({
+    required String title,
+    required String subtitle,
+    required List<CategoryItem> categories,
+    required String? selectedId,
+    required String eventType,
+  }) {
+    return _showAdaptivePicker<String>(
+      builder: (pickerContext, dialogMode) {
+        return _CategoryPickerSheet(
+          title: title,
+          subtitle: subtitle,
+          categories: categories,
+          selectedId: selectedId,
+          eventType: eventType,
+          dialogMode: dialogMode,
+        );
+      },
+    );
+  }
+
+  Future<void> _pickExpenseParentCategory() async {
     final categories = _expenseParentCategories;
 
     if (categories.isEmpty) {
@@ -293,32 +347,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       return;
     }
 
-    final selectedId = await showModalBottomSheet<String>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      showDragHandle: false,
-      builder: (sheetContext) {
-        return _CategoryPickerSheet(
-          title: 'categoria',
-          subtitle: 'onde esse gasto entra?',
-          categories: categories,
-          selectedId: _expenseParentCategoryId,
-          iconBuilder: (category) {
-            return CategoryVisuals.iconFor(
-              category: category.name,
-            );
-          },
-          colorBuilder: (category, brightness) {
-            return CategoryVisuals.colorFor(
-              category: category.name,
-              brightness: brightness,
-            );
-          },
-        );
-      },
+    final selectedId = await _showCategoryPicker(
+      title: 'categoria',
+      subtitle: 'onde esse gasto entra?',
+      categories: categories,
+      selectedId: _expenseParentCategoryId,
+      eventType: 'expense',
     );
 
     if (selectedId == null || !mounted) {
@@ -333,8 +367,6 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   Future<void> _pickIncomeCategory() async {
-    FocusScope.of(context).unfocus();
-
     if (_incomeCategories.isEmpty) {
       setState(() {
         _error = 'nenhuma categoria de receita foi encontrada';
@@ -343,25 +375,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       return;
     }
 
-    final selectedId = await showModalBottomSheet<String>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      showDragHandle: false,
-      builder: (sheetContext) {
-        return _CategoryPickerSheet(
-          title: 'categoria da receita',
-          subtitle: 'de onde esse dinheiro veio?',
-          categories: _incomeCategories,
-          selectedId: _incomeCategoryId,
-          iconBuilder: (_) => AppIcons.income,
-          colorBuilder: (_, brightness) {
-            return AppColors.positiveText(brightness);
-          },
-        );
-      },
+    final selectedId = await _showCategoryPicker(
+      title: 'categoria da receita',
+      subtitle: 'de onde esse dinheiro veio?',
+      categories: _incomeCategories,
+      selectedId: _incomeCategoryId,
+      eventType: 'income',
     );
 
     if (selectedId == null || !mounted) {
@@ -375,122 +394,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   Future<void> _pickMonthlyDay() async {
-    final selectedDay = await showModalBottomSheet<int>(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      showDragHandle: false,
-      builder: (sheetContext) {
-        final brightness = Theme.of(sheetContext).brightness;
-
-        final background = AppColors.background(brightness);
-        final border = AppColors.border(brightness);
-        final primaryText = AppColors.primaryText(brightness);
-        final secondaryText = AppColors.secondaryText(brightness);
-        final purple = AppColors.primaryPurple(brightness);
-
-        return Container(
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              14,
-              20,
-              28,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: border,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  'qual dia?',
-                  style: AppTypography.section(
-                    sheetContext,
-                    fontSize: 20,
-                    color: primaryText,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'você pode adicionar mais de um dia',
-                  style: AppTypography.body(
-                    sheetContext,
-                    fontSize: 12,
-                    color: secondaryText,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 31,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 1.2,
-                  ),
-                  itemBuilder: (context, index) {
-                    final day = index + 1;
-
-                    final selected = _monthlyDays.contains(day);
-
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: selected
-                            ? null
-                            : () {
-                                Navigator.of(sheetContext).pop(day);
-                              },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? purple.withValues(alpha: .13)
-                                : AppColors.surface(brightness),
-                            border: Border.all(
-                              color: selected ? purple : border,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Text(
-                            '$day',
-                            style: AppTypography.label(
-                              sheetContext,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: selected ? purple : primaryText,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+    final selectedDay = await _showAdaptivePicker<int>(
+      dialogMaxWidth: 480,
+      heightFactor: .82,
+      builder: (pickerContext, dialogMode) {
+        return _MonthlyDayPicker(
+          selectedDays: _monthlyDays,
+          dialogMode: dialogMode,
         );
       },
     );
@@ -1318,7 +1228,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     if (!_isExpense) {
       final selected = _selectedIncomeCategory;
 
-      final positive = AppColors.positiveText(brightness);
+      final visual = CategoryVisuals.resolve(
+        brightness: brightness,
+        category: selected?.name,
+        eventType: 'income',
+      );
 
       return _FormPanel(
         surface: surface,
@@ -1326,8 +1240,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         child: _CategorySelectTile(
           label: 'categoria da receita',
           value: selected?.name ?? 'selecionar categoria',
-          icon: AppIcons.income,
-          color: positive,
+          icon: visual.icon,
+          color: visual.color,
           onTap: _pickIncomeCategory,
         ),
       );
@@ -1553,19 +1467,16 @@ class _CategoryPickerSheet extends StatelessWidget {
     required this.subtitle,
     required this.categories,
     required this.selectedId,
-    required this.iconBuilder,
-    required this.colorBuilder,
+    required this.eventType,
+    required this.dialogMode,
   });
 
   final String title;
   final String subtitle;
   final List<CategoryItem> categories;
   final String? selectedId;
-  final IconData Function(CategoryItem category) iconBuilder;
-  final Color Function(
-    CategoryItem category,
-    Brightness brightness,
-  ) colorBuilder;
+  final String eventType;
+  final bool dialogMode;
 
   @override
   Widget build(BuildContext context) {
@@ -1578,22 +1489,25 @@ class _CategoryPickerSheet extends StatelessWidget {
     final secondaryText = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
 
-    return FractionallySizedBox(
-      heightFactor: .76,
-      child: Container(
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(30),
-          ),
-          border: Border(
-            top: BorderSide(color: border),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
+    return Container(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: dialogMode
+            ? BorderRadius.circular(28)
+            : const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+        border: dialogMode
+            ? Border.all(color: border)
+            : Border(
+                top: BorderSide(color: border),
+              ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            if (!dialogMode) ...[
               const SizedBox(height: 14),
               Container(
                 width: 44,
@@ -1603,39 +1517,239 @@ class _CategoryPickerSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
-              Padding(
+            ] else
+              const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                20,
+                12,
+                14,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: AppTypography.section(
+                            context,
+                            fontSize: 21,
+                            color: primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 11,
+                            color: secondaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: Icon(
+                      AppIcons.close,
+                      color: secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(
                   20,
-                  22,
+                  4,
                   20,
-                  14,
+                  24,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: AppTypography.section(
-                              context,
-                              fontSize: 21,
-                              color: primaryText,
-                            ),
+                itemCount: categories.length,
+                separatorBuilder: (_, __) {
+                  return const SizedBox(height: 8);
+                },
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+
+                  final selected = category.id == selectedId;
+
+                  final visual = CategoryVisuals.resolve(
+                    brightness: brightness,
+                    category: category.name,
+                    eventType: eventType,
+                  );
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop(category.id);
+                      },
+                      borderRadius: BorderRadius.circular(18),
+                      child: Ink(
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? visual.color.withValues(alpha: .10)
+                              : surface,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: selected
+                                ? visual.color.withValues(alpha: .45)
+                                : border,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            style: AppTypography.body(
-                              context,
-                              fontSize: 11,
-                              color: secondaryText,
+                        ),
+                        child: Row(
+                          children: [
+                            CategoryIconBadge(
+                              icon: visual.icon,
+                              color: visual.color,
+                              size: 40,
+                              iconSize: 20,
+                              radius: 13,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                category.name,
+                                style: AppTypography.body(
+                                  context,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryText,
+                                ),
+                              ),
+                            ),
+                            if (selected)
+                              Container(
+                                width: 26,
+                                height: 26,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: purple.withValues(alpha: .12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  AppIcons.check,
+                                  size: 16,
+                                  color: purple,
+                                ),
+                              )
+                            else
+                              Icon(
+                                AppIcons.chevronRight,
+                                size: 18,
+                                color: secondaryText,
+                              ),
+                          ],
+                        ),
                       ),
                     ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MonthlyDayPicker extends StatelessWidget {
+  const _MonthlyDayPicker({
+    required this.selectedDays,
+    required this.dialogMode,
+  });
+
+  final Set<int> selectedDays;
+  final bool dialogMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final background = AppColors.background(brightness);
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final primaryText = AppColors.primaryText(brightness);
+    final secondaryText = AppColors.secondaryText(brightness);
+    final purple = AppColors.primaryPurple(brightness);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: dialogMode
+            ? BorderRadius.circular(28)
+            : const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+        border: dialogMode
+            ? Border.all(color: border)
+            : Border(
+                top: BorderSide(color: border),
+              ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            14,
+            20,
+            28,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!dialogMode) ...[
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: border,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'qual dia?',
+                          style: AppTypography.section(
+                            context,
+                            fontSize: 20,
+                            color: primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'você pode adicionar mais de um dia',
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 12,
+                            color: secondaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (dialogMode)
                     IconButton(
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -1645,100 +1759,57 @@ class _CategoryPickerSheet extends StatelessWidget {
                         color: secondaryText,
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    20,
-                    4,
-                    20,
-                    24,
-                  ),
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) {
-                    return const SizedBox(height: 8);
-                  },
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
+              const SizedBox(height: 18),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 31,
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1.2,
+                ),
+                itemBuilder: (context, index) {
+                  final day = index + 1;
+                  final selected = selectedDays.contains(day);
 
-                    final selected = category.id == selectedId;
-
-                    final color = colorBuilder(
-                      category,
-                      brightness,
-                    );
-
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).pop(category.id);
-                        },
-                        borderRadius: BorderRadius.circular(18),
-                        child: Ink(
-                          padding: const EdgeInsets.all(13),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? color.withValues(alpha: .10)
-                                : surface,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: selected
-                                  ? color.withValues(alpha: .45)
-                                  : border,
-                            ),
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: selected
+                          ? null
+                          : () {
+                              Navigator.of(context).pop(day);
+                            },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? purple.withValues(alpha: .13)
+                              : surface,
+                          border: Border.all(
+                            color: selected ? purple : border,
                           ),
-                          child: Row(
-                            children: [
-                              CategoryIconBadge(
-                                icon: iconBuilder(category),
-                                color: color,
-                                size: 40,
-                                iconSize: 20,
-                                radius: 13,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  category.name,
-                                  style: AppTypography.body(
-                                    context,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: primaryText,
-                                  ),
-                                ),
-                              ),
-                              if (selected)
-                                Container(
-                                  width: 26,
-                                  height: 26,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: purple.withValues(alpha: .12),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    AppIcons.check,
-                                    size: 16,
-                                    color: purple,
-                                  ),
-                                )
-                              else
-                                Icon(
-                                  AppIcons.chevronRight,
-                                  size: 18,
-                                  color: secondaryText,
-                                ),
-                            ],
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          '$day',
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: selected ? purple : primaryText,
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -1776,7 +1847,7 @@ class _CategorySelectTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
+        child: Ink(
           padding: const EdgeInsets.symmetric(
             horizontal: 13,
             vertical: 12,
