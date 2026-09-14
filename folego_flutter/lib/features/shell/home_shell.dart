@@ -36,22 +36,14 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
-    return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Scaffold(
-            extendBody: true,
-            body: IndexedStack(index: _index, children: pages),
-            bottomNavigationBar: LiquidGlassNavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (value) {
-                setState(() => _index = value);
-              },
-            ),
-          ),
-        ),
+    return Scaffold(
+      extendBody: true,
+      body: IndexedStack(index: _index, children: pages),
+      bottomNavigationBar: LiquidGlassNavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (value) {
+          setState(() => _index = value);
+        },
       ),
     );
   }

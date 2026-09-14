@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/layout/app_content_container.dart';
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.client});
 
@@ -75,9 +77,8 @@ class _AuthScreenState extends State<AuthScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
+            child: AppContentContainer.auth(
+              verticalPadding: 24,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
