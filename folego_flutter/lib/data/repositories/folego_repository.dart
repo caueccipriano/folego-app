@@ -299,26 +299,19 @@ class FolegoRepository {
           'category_id': categoryId,
           'account_id': accountId,
           'card_id': cardId,
-
           'day_of_month': frequency == 'monthly'
               ? (normalizedMonthlyDays.isEmpty
                     ? null
                     : normalizedMonthlyDays.first)
               : dayOfMonth,
-
           'monthly_days': frequency == 'monthly'
               ? normalizedMonthlyDays
               : <int>[],
-
           'monthly_last_day': frequency == 'monthly' ? monthlyLastDay : false,
-
           'weekday': weekday,
           'month_of_year': monthOfYear,
-
           'starts_on': _date(startsOn),
-
           'ends_on': endsOn == null ? null : _date(endsOn),
-
           'certainty': certainty,
           'active': true,
         })
@@ -379,26 +372,19 @@ class FolegoRepository {
           'category_id': categoryId,
           'account_id': accountId,
           'card_id': cardId,
-
           'day_of_month': frequency == 'monthly'
               ? (normalizedMonthlyDays.isEmpty
                     ? null
                     : normalizedMonthlyDays.first)
               : dayOfMonth,
-
           'monthly_days': frequency == 'monthly'
               ? normalizedMonthlyDays
               : <int>[],
-
           'monthly_last_day': frequency == 'monthly' ? monthlyLastDay : false,
-
           'weekday': weekday,
           'month_of_year': monthOfYear,
-
           'starts_on': _date(startsOn),
-
           'ends_on': endsOn == null ? null : _date(endsOn),
-
           'certainty': certainty,
           'active': active,
         })
@@ -578,88 +564,59 @@ class FolegoRepository {
   // CATEGORIAS
   // ---------------------------------------------------------------------------
 
-  /// Retorna categorias principais + subcategorias de despesa.
-  ///
-  /// parent_id == null:
-  /// categoria principal.
-  ///
-  /// parent_id preenchido:
-  /// subcategoria.
-  Future<List<CategoryItem>> listExpenseCategories(String spaceId) async {
-    final response = await _client
-        .from('categories')
-        .select('''
-          id,
-          name,
-          essential,
-          parent_id
-          ''')
-        .eq('space_id', spaceId)
-        .eq('kind', 'expense')
-        .eq('active', true)
-        .order('name', ascending: true);
+  Future<List<CategoryItem>> _listCategoryCatalog(
+    String spaceId,
+    String kind,
+  ) async {
+    final response = await _client.rpc(
+      'get_category_catalog',
+      params: {
+        'p_space_id': spaceId,
+        'p_kind': kind,
+      },
+    );
 
-    return List<Map<String, dynamic>>.from(
-      response,
-    ).map(CategoryItem.fromJson).toList();
+    return List<Map<String, dynamic>>.from(response as List)
+        .map(CategoryItem.fromJson)
+        .toList();
   }
 
-  /// Apenas categorias principais de despesa.
+  /// Taxonomia econômica ativa de despesas: categorias + subcategorias.
+  Future<List<CategoryItem>> listExpenseCategories(String spaceId) {
+    return _listCategoryCatalog(spaceId, 'expense');
+  }
+
   Future<List<CategoryItem>> listExpenseParentCategories(String spaceId) async {
     final categories = await listExpenseCategories(spaceId);
-
     return categories.where((category) => category.isParent).toList();
   }
 
-  /// Retorna as subcategorias de uma categoria principal.
   Future<List<CategoryItem>> listExpenseSubcategories({
     required String spaceId,
     required String parentId,
   }) async {
     final categories = await listExpenseCategories(spaceId);
-
     return categories
         .where((category) => category.parentId == parentId)
         .toList();
   }
 
-  /// Retorna categorias principais + subcategorias de receita.
-  Future<List<CategoryItem>> listIncomeCategories(String spaceId) async {
-    final response = await _client
-        .from('categories')
-        .select('''
-          id,
-          name,
-          essential,
-          parent_id
-          ''')
-        .eq('space_id', spaceId)
-        .eq('kind', 'income')
-        .eq('active', true)
-        .order('name', ascending: true);
-
-    return List<Map<String, dynamic>>.from(
-      response,
-    ).map(CategoryItem.fromJson).toList();
+  /// Receitas econômicas ativas. O grupo interno Receitas nunca é selecionável.
+  Future<List<CategoryItem>> listIncomeCategories(String spaceId) {
+    return _listCategoryCatalog(spaceId, 'income');
   }
 
-  /// Apenas categorias principais de receita.
-  Future<List<CategoryItem>> listIncomeParentCategories(String spaceId) async {
-    final categories = await listIncomeCategories(spaceId);
-
-    return categories.where((category) => category.isParent).toList();
+  /// Compatibilidade: para a UI, cada folha de receita é uma escolha final.
+  Future<List<CategoryItem>> listIncomeParentCategories(String spaceId) {
+    return listIncomeCategories(spaceId);
   }
 
-  /// Retorna as subcategorias de uma categoria principal de receita.
   Future<List<CategoryItem>> listIncomeSubcategories({
     required String spaceId,
     required String parentId,
   }) async {
     final categories = await listIncomeCategories(spaceId);
-
-    return categories
-        .where((category) => category.parentId == parentId)
-        .toList();
+    return categories.where((category) => category.parentId == parentId).toList();
   }
 
   // ---------------------------------------------------------------------------
@@ -939,11 +896,8 @@ class FolegoRepository {
 
   String _date(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
-
     final month = date.month.toString().padLeft(2, '0');
-
     final day = date.day.toString().padLeft(2, '0');
-
     return '$year-$month-$day';
   }
 }
