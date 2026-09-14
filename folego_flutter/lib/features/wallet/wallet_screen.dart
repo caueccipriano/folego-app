@@ -4,9 +4,11 @@ import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
+import 'card_invoice_payment_sheet.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({
@@ -66,6 +68,29 @@ class _WalletScreenState extends State<WalletScreen> {
         _error = error.toString();
       });
     }
+  }
+
+  Future<void> _openInvoicePayment(WalletCard card) async {
+    if (card.invoiceId == null || card.invoiceBalance <= 0) {
+      return;
+    }
+
+    final paid = await showCardInvoicePaymentSheet(
+      context: context,
+      repository: widget.repository,
+      spaceId: widget.spaceId,
+      card: card,
+    );
+
+    if (paid != true || !mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('fatura atualizada')),
+    );
+
+    await _load();
   }
 
   String _money(double value) {
@@ -894,6 +919,26 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
             ],
           ),
+
+          if (card.invoiceId != null && card.invoiceBalance > 0) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _openInvoicePayment(card),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(46),
+                  foregroundColor: purple,
+                  side: BorderSide(color: purple.withValues(alpha: .38)),
+                ),
+                icon: const Icon(AppIcons.cash, size: 18),
+                label: Text(
+                  'pagar fatura',
+                  style: AppTypography.button(context, color: purple),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
