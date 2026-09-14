@@ -64,6 +64,10 @@ abstract final class AppIcons {
 
   static const IconData categoryClothing = TablerIcons.shirt;
 
+  static const IconData categoryTravel = TablerIcons.plane;
+
+  static const IconData categoryOther = TablerIcons.dots;
+
   // ===========================================================================
   // ALIMENTAÇÃO
   // ===========================================================================
