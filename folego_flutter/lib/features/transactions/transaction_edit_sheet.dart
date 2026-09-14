@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/category_visuals.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_categories.dart';
+import '../../data/repositories/folego_repository_payment_instruments.dart';
+import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/category_search_picker.dart';
 
 class TransactionEditSheet extends StatefulWidget {
   const TransactionEditSheet({
@@ -21,100 +28,44 @@ class TransactionEditSheet extends StatefulWidget {
   final TransactionItem transaction;
 
   @override
-  State<TransactionEditSheet> createState() =>
-      _TransactionEditSheetState();
+  State<TransactionEditSheet> createState() => _TransactionEditSheetState();
 }
 
-class _TransactionEditSheetState
-    extends State<TransactionEditSheet> {
+class _TransactionEditSheetState extends State<TransactionEditSheet> {
   final _formKey = GlobalKey<FormState>();
-
   late final TextEditingController _amountController;
   late final TextEditingController _descriptionController;
 
   List<AccountItem> _accounts = const [];
   List<CategoryItem> _categories = const [];
-
   String? _selectedAccountId;
-  String _selectedParentCategoryId = '';
-  String? _selectedSubcategoryId;
-
+  String? _selectedCategoryId;
   late DateTime _occurredAt;
-
   bool _loading = true;
   bool _saving = false;
   String? _error;
 
-  bool get _isIncome =>
-      widget.transaction.eventType == 'income';
+  bool get _isIncome => widget.transaction.eventType == 'income';
 
-  List<CategoryItem> get _parentCategories {
-    final result = _categories
-        .where(
-          (category) => category.parentId == null,
-        )
-        .toList();
-
-    result.sort(
-      (a, b) => _sortKey(a.name).compareTo(
-        _sortKey(b.name),
-      ),
-    );
-
-    return result;
-  }
-
-  List<CategoryItem> get _subcategories {
-    if (_selectedParentCategoryId.isEmpty) {
-      return const [];
+  CategoryItem? get _selectedCategory {
+    final id = _selectedCategoryId;
+    if (id == null) return null;
+    for (final item in _categories) {
+      if (item.id == id) return item;
     }
-
-    final result = _categories
-        .where(
-          (category) =>
-              category.parentId ==
-              _selectedParentCategoryId,
-        )
-        .toList();
-
-    result.sort(
-      (a, b) => _sortKey(a.name).compareTo(
-        _sortKey(b.name),
-      ),
-    );
-
-    return result;
-  }
-
-  String? get _effectiveCategoryId {
-    if (_selectedSubcategoryId != null) {
-      return _selectedSubcategoryId;
-    }
-
-    if (_selectedParentCategoryId.isEmpty) {
-      return null;
-    }
-
-    return _selectedParentCategoryId;
+    return null;
   }
 
   @override
   void initState() {
     super.initState();
-
     _amountController = TextEditingController(
-      text: widget.transaction.amount
-          .abs()
-          .toStringAsFixed(2)
-          .replaceAll('.', ','),
+      text: widget.transaction.amount.abs().toStringAsFixed(2).replaceAll('.', ','),
     );
-
     _descriptionController = TextEditingController(
       text: widget.transaction.description,
     );
-
     _occurredAt = widget.transaction.occurredAt;
-
     _loadChoices();
   }
 
@@ -127,81 +78,38 @@ class _TransactionEditSheetState
 
   Future<void> _loadChoices() async {
     try {
-      final results = await Future.wait([
-        widget.repository.listAccounts(
-          widget.space.id,
-        ),
+      final results = await Future.wait<dynamic>([
+        widget.repository.listPaymentAccounts(widget.space.id),
         _isIncome
-            ? widget.repository.listIncomeCategories(
-                widget.space.id,
-              )
-            : widget.repository.listExpenseCategories(
-                widget.space.id,
-              ),
+            ? widget.repository.listIncomeCategoryCatalog(widget.space.id)
+            : widget.repository.listExpenseCategoryCatalog(widget.space.id),
       ]);
+      if (!mounted) return;
 
-      if (!mounted) {
-        return;
+      final accounts = results[0] as List<AccountItem>;
+      final categories = (results[1] as List<CategoryItem>)
+          .where((category) => category.isSelectable)
+          .toList();
+
+      var accountId = widget.transaction.accountId;
+      if (accountId != null && !accounts.any((item) => item.id == accountId)) {
+        accountId = null;
       }
 
-      final accounts =
-          results[0] as List<AccountItem>;
-
-      final categories =
-          results[1] as List<CategoryItem>;
-
-      var selectedAccountId =
-          widget.transaction.accountId;
-
-      if (selectedAccountId != null &&
-          !accounts.any(
-            (account) =>
-                account.id == selectedAccountId,
-          )) {
-        selectedAccountId = null;
-      }
-
-      var parentId = '';
-      String? subcategoryId;
-
-      final transactionCategoryId =
-          widget.transaction.categoryId;
-
-      if (transactionCategoryId != null) {
-        final current = _findCategory(
-          categories,
-          transactionCategoryId,
-        );
-
-        if (current != null) {
-          if (current.parentId == null) {
-            parentId = current.id;
-          } else {
-            parentId = current.parentId!;
-            subcategoryId = current.id;
-          }
-        } else if (widget
-                .transaction.categoryParentId !=
-            null) {
-          parentId =
-              widget.transaction.categoryParentId!;
-          subcategoryId = transactionCategoryId;
-        }
+      var categoryId = widget.transaction.categoryId;
+      if (categoryId != null && !categories.any((item) => item.id == categoryId)) {
+        categoryId = null;
       }
 
       setState(() {
         _accounts = accounts;
         _categories = categories;
-        _selectedAccountId = selectedAccountId;
-        _selectedParentCategoryId = parentId;
-        _selectedSubcategoryId = subcategoryId;
+        _selectedAccountId = accountId;
+        _selectedCategoryId = categoryId;
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = _friendlyError(error);
@@ -209,37 +117,52 @@ class _TransactionEditSheetState
     }
   }
 
-  CategoryItem? _findCategory(
-    List<CategoryItem> categories,
-    String id,
-  ) {
-    for (final category in categories) {
-      if (category.id == id) {
-        return category;
-      }
-    }
+  Future<void> _pickCategory() async {
+    if (_categories.isEmpty) return;
+    final dialogMode = AppBreakpoints.of(context) != AppLayoutSize.compact;
+    final selected = dialogMode
+        ? await showDialog<CategoryItem>(
+            context: context,
+            builder: (dialogContext) => Dialog(
+              backgroundColor: Colors.transparent,
+              child: SizedBox(
+                width: AppContentWidths.form,
+                height: MediaQuery.sizeOf(dialogContext).height * .80,
+                child: CategorySearchPicker(
+                  categories: _categories,
+                  selectedId: _selectedCategoryId,
+                  eventType: _isIncome ? 'income' : 'expense',
+                  dialogMode: true,
+                ),
+              ),
+            ),
+          )
+        : await showModalBottomSheet<CategoryItem>(
+            context: context,
+            useSafeArea: true,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => FractionallySizedBox(
+              heightFactor: .84,
+              child: CategorySearchPicker(
+                categories: _categories,
+                selectedId: _selectedCategoryId,
+                eventType: _isIncome ? 'income' : 'expense',
+              ),
+            ),
+          );
 
-    return null;
+    if (selected != null && mounted) {
+      setState(() => _selectedCategoryId = selected.id);
+    }
   }
 
   double? _parseMoney(String text) {
-    var normalized = text
-        .trim()
-        .replaceAll(
-          RegExp(r'[^0-9,.\-]'),
-          '',
-        );
-
-    if (normalized.isEmpty) {
-      return null;
-    }
-
+    var normalized = text.trim().replaceAll(RegExp(r'[^0-9,.\-]'), '');
+    if (normalized.isEmpty) return null;
     if (normalized.contains(',')) {
-      normalized = normalized
-          .replaceAll('.', '')
-          .replaceAll(',', '.');
+      normalized = normalized.replaceAll('.', '').replaceAll(',', '.');
     }
-
     return double.tryParse(normalized);
   }
 
@@ -253,11 +176,7 @@ class _TransactionEditSheetState
       cancelText: 'Cancelar',
       confirmText: 'Selecionar',
     );
-
-    if (selected == null || !mounted) {
-      return;
-    }
-
+    if (selected == null || !mounted) return;
     setState(() {
       _occurredAt = DateTime(
         selected.year,
@@ -273,88 +192,46 @@ class _TransactionEditSheetState
   }
 
   Future<void> _save() async {
-    if (_saving) {
-      return;
-    }
-
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
+    if (_saving || !_formKey.currentState!.validate()) return;
     final accountId = _selectedAccountId;
+    final amount = _parseMoney(_amountController.text);
+    if (accountId == null || amount == null || amount <= 0) return;
 
-    if (accountId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Escolha a conta do lançamento.',
-          ),
-        ),
-      );
-
-      return;
-    }
-
-    final amount = _parseMoney(
-      _amountController.text,
-    );
-
-    if (amount == null || amount <= 0) {
-      return;
-    }
-
-    setState(() {
-      _saving = true;
-    });
-
+    setState(() => _saving = true);
     try {
       await widget.repository.updateSimpleTransaction(
         spaceId: widget.space.id,
         eventId: widget.transaction.id,
         accountId: accountId,
         amount: amount.abs(),
-        description:
-            _descriptionController.text.trim(),
-        categoryId: _effectiveCategoryId,
+        description: _descriptionController.text.trim(),
+        categoryId: _selectedCategoryId,
         occurredAt: _occurredAt,
       );
-
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _saving = false;
-      });
-
+      if (!mounted) return;
+      setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _friendlyError(error),
-          ),
-        ),
+        SnackBar(content: Text(_friendlyError(error))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final brightness =
-        Theme.of(context).brightness;
-
-    final primaryText =
-        AppColors.primaryText(brightness);
-
-    final secondaryText =
-        AppColors.secondaryText(brightness);
-
+    final brightness = Theme.of(context).brightness;
+    final primaryText = AppColors.primaryText(brightness);
+    final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
+    final category = _selectedCategory;
+    final visual = CategoryVisuals.resolve(
+      brightness: brightness,
+      category: category?.parentName ?? category?.name,
+      subcategory: category?.parentName == null ? null : category?.name,
+      eventType: _isIncome ? 'income' : 'expense',
+    );
 
     return SafeArea(
       top: false,
@@ -363,20 +240,16 @@ class _TransactionEditSheetState
           20,
           12,
           20,
-          MediaQuery.of(context).viewInsets.bottom +
-              24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
         ),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 560,
-            ),
+            constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
@@ -384,8 +257,7 @@ class _TransactionEditSheetState
                       height: 4,
                       decoration: BoxDecoration(
                         color: border,
-                        borderRadius:
-                            BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(99),
                       ),
                     ),
                   ),
@@ -400,9 +272,7 @@ class _TransactionEditSheetState
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    _isIncome
-                        ? 'Ajuste os dados desta receita.'
-                        : 'Ajuste os dados deste gasto.',
+                    _isIncome ? 'Ajuste os dados desta receita.' : 'Ajuste os dados deste gasto.',
                     style: AppTypography.body(
                       context,
                       fontSize: 12,
@@ -412,216 +282,100 @@ class _TransactionEditSheetState
                   const SizedBox(height: 24),
                   if (_loading)
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 44,
-                      ),
-                      child: Center(
-                        child:
-                            CircularProgressIndicator(),
-                      ),
+                      padding: EdgeInsets.symmetric(vertical: 44),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else if (_error != null)
-                    _buildError(
-                      primaryText,
-                      secondaryText,
-                    )
+                    _buildError(primaryText, secondaryText)
                   else ...[
                     TextFormField(
                       controller: _amountController,
-                      keyboardType:
-                          const TextInputType
-                              .numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration:
-                          const InputDecoration(
-                        labelText: 'Valor',
-                        prefixText: 'R\$ ',
-                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Valor', prefixText: 'R\$ '),
                       validator: (value) {
-                        final amount = _parseMoney(
-                          value ?? '',
-                        );
-
-                        if (amount == null ||
-                            amount <= 0) {
-                          return 'Digite um valor válido.';
-                        }
-
-                        return null;
+                        final amount = _parseMoney(value ?? '');
+                        return amount == null || amount <= 0 ? 'Digite um valor válido.' : null;
                       },
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
-                      controller:
-                          _descriptionController,
-                      textCapitalization:
-                          TextCapitalization.sentences,
-                      decoration:
-                          const InputDecoration(
-                        labelText: 'Descrição',
-                      ),
-                      validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
-                          return 'Digite uma descrição.';
-                        }
-
-                        return null;
-                      },
+                      controller: _descriptionController,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(labelText: 'Descrição'),
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? 'Digite uma descrição.'
+                          : null,
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(
-                      initialValue:
-                          _selectedAccountId,
-                      decoration:
-                          const InputDecoration(
-                        labelText: 'Conta',
-                      ),
+                      initialValue: _selectedAccountId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Conta'),
                       items: _accounts
                           .map(
-                            (account) =>
-                                DropdownMenuItem(
+                            (account) => DropdownMenuItem(
                               value: account.id,
-                              child: Text(
-                                account.name,
-                              ),
+                              child: Text(account.name),
                             ),
                           )
                           .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedAccountId =
-                              value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Escolha uma conta.';
-                        }
-
-                        return null;
-                      },
+                      onChanged: (value) => setState(() => _selectedAccountId = value),
+                      validator: (value) => value == null ? 'Escolha uma conta.' : null,
                     ),
                     const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(
-                        'parent-$_selectedParentCategoryId',
-                      ),
-                      initialValue:
-                          _selectedParentCategoryId,
-                      decoration:
-                          const InputDecoration(
-                        labelText: 'Categoria',
-                      ),
-                      items: [
-                        const DropdownMenuItem(
-                          value: '',
-                          child: Text(
-                            'Sem categoria',
-                          ),
-                        ),
-                        ..._parentCategories.map(
-                          (category) =>
-                              DropdownMenuItem(
-                            value: category.id,
-                            child: Text(
-                              category.name,
+                    InkWell(
+                      onTap: _pickCategory,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(labelText: 'Categoria'),
+                        child: Row(
+                          children: [
+                            CategoryIconBadge(
+                              icon: visual.icon,
+                              color: visual.color,
+                              size: 34,
+                              iconSize: 17,
+                              radius: 10,
                             ),
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedParentCategoryId =
-                              value ?? '';
-                          _selectedSubcategoryId =
-                              null;
-                        });
-                      },
-                    ),
-                    if (_subcategories.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      DropdownButtonFormField<String?>(
-                        key: ValueKey(
-                          'sub-$_selectedParentCategoryId-$_selectedSubcategoryId',
-                        ),
-                        initialValue:
-                            _selectedSubcategoryId,
-                        decoration:
-                            const InputDecoration(
-                          labelText:
-                              'Subcategoria',
-                        ),
-                        items: [
-                          const DropdownMenuItem<
-                              String?>(
-                            value: null,
-                            child: Text(
-                              'Sem subcategoria',
-                            ),
-                          ),
-                          ..._subcategories.map(
-                            (category) =>
-                                DropdownMenuItem<
-                                    String?>(
-                              value: category.id,
+                            const SizedBox(width: 10),
+                            Expanded(
                               child: Text(
-                                category.name,
+                                category?.breadcrumb ?? 'Sem categoria',
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.body(context, fontSize: 13),
                               ),
                             ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSubcategoryId =
-                                value;
-                          });
-                        },
+                            Icon(AppIcons.search, size: 17, color: secondaryText),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                     const SizedBox(height: 14),
                     InkWell(
                       onTap: _pickDate,
-                      borderRadius:
-                          BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16),
                       child: InputDecorator(
-                        decoration:
-                            const InputDecoration(
-                          labelText: 'Data',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Data'),
                         child: Text(
                           _formatDate(_occurredAt),
-                          style: AppTypography.body(
-                            context,
-                            fontSize: 14,
-                            color: primaryText,
-                          ),
+                          style: AppTypography.body(context, fontSize: 14, color: primaryText),
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
                     FilledButton(
-                      onPressed:
-                          _saving ? null : _save,
+                      onPressed: _saving ? null : _save,
                       style: FilledButton.styleFrom(
-                        backgroundColor:
-                            AppColors.lime,
-                        foregroundColor:
-                            AppColors.iconOnLime,
+                        backgroundColor: AppColors.lime,
+                        foregroundColor: AppColors.iconOnLime,
                       ),
                       child: _saving
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text(
-                              'Salvar alterações',
-                            ),
+                          : const Text('Salvar alterações'),
                     ),
                   ],
                 ],
@@ -633,17 +387,12 @@ class _TransactionEditSheetState
     );
   }
 
-  Widget _buildError(
-    Color primaryText,
-    Color secondaryText,
-  ) {
+  Widget _buildError(Color primaryText, Color secondaryText) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         children: [
@@ -661,11 +410,7 @@ class _TransactionEditSheetState
           Text(
             _error!,
             textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              color: secondaryText,
-            ),
+            style: AppTypography.body(context, fontSize: 11, color: secondaryText),
           ),
           const SizedBox(height: 14),
           OutlinedButton(
@@ -674,12 +419,9 @@ class _TransactionEditSheetState
                 _loading = true;
                 _error = null;
               });
-
               _loadChoices();
             },
-            child: const Text(
-              'Tentar novamente',
-            ),
+            child: const Text('Tentar novamente'),
           ),
         ],
       ),
@@ -690,47 +432,12 @@ class _TransactionEditSheetState
     return error
         .toString()
         .replaceFirst('Exception: ', '')
-        .replaceFirst(
-          'Invalid argument(s): ',
-          '',
-        );
+        .replaceFirst('Invalid argument(s): ', '');
   }
 
   String _formatDate(DateTime date) {
-    final day =
-        date.day.toString().padLeft(2, '0');
-
-    final month =
-        date.month.toString().padLeft(2, '0');
-
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
     return '$day/$month/${date.year}';
-  }
-
-  String _sortKey(String value) {
-    return value
-        .toLowerCase()
-        .replaceAll('á', 'a')
-        .replaceAll('à', 'a')
-        .replaceAll('â', 'a')
-        .replaceAll('ã', 'a')
-        .replaceAll('ä', 'a')
-        .replaceAll('é', 'e')
-        .replaceAll('è', 'e')
-        .replaceAll('ê', 'e')
-        .replaceAll('ë', 'e')
-        .replaceAll('í', 'i')
-        .replaceAll('ì', 'i')
-        .replaceAll('î', 'i')
-        .replaceAll('ï', 'i')
-        .replaceAll('ó', 'o')
-        .replaceAll('ò', 'o')
-        .replaceAll('ô', 'o')
-        .replaceAll('õ', 'o')
-        .replaceAll('ö', 'o')
-        .replaceAll('ú', 'u')
-        .replaceAll('ù', 'u')
-        .replaceAll('û', 'u')
-        .replaceAll('ü', 'u')
-        .replaceAll('ç', 'c');
   }
 }
