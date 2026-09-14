@@ -14,6 +14,12 @@ import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 
+enum _QuickRegisterLayout {
+  compact,
+  medium,
+  expanded,
+}
+
 class QuickRegisterSheet extends StatefulWidget {
   const QuickRegisterSheet({
     super.key,
@@ -252,17 +258,36 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
   }
 
+  _QuickRegisterLayout _layoutFor(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+
+    if (width < 600) {
+      return _QuickRegisterLayout.compact;
+    }
+
+    if (width < 1024) {
+      return _QuickRegisterLayout.medium;
+    }
+
+    return _QuickRegisterLayout.expanded;
+  }
+
   bool _usesDialogPicker(BuildContext context) {
+    final layout = _layoutFor(context);
+
     if (kIsWeb) {
-      return true;
+      return layout != _QuickRegisterLayout.compact;
     }
 
     final platform = Theme.of(context).platform;
 
-    return platform != TargetPlatform.android &&
-        platform != TargetPlatform.iOS &&
-        platform != TargetPlatform.fuchsia &&
-        MediaQuery.sizeOf(context).width >= 600;
+    if (platform == TargetPlatform.android ||
+        platform == TargetPlatform.iOS ||
+        platform == TargetPlatform.fuchsia) {
+      return false;
+    }
+
+    return layout != _QuickRegisterLayout.compact;
   }
 
   Future<T?> _showAdaptivePicker<T>({
@@ -629,6 +654,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     BuildContext context,
   ) {
     final brightness = Theme.of(context).brightness;
+    final mediaQuery = MediaQuery.of(context);
+    final viewport = mediaQuery.size;
+    final layout = _layoutFor(context);
 
     final background = AppColors.background(brightness);
     final surface = AppColors.surface(brightness);
@@ -640,578 +668,606 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         ? AppColors.lime
         : AppColors.positiveText(brightness);
 
-    return SafeArea(
-      top: false,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * .94,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
-            ),
-            border: Border(
-              top: BorderSide(
-                color: border,
+    final maxWidth = switch (layout) {
+      _QuickRegisterLayout.compact => viewport.width,
+      _QuickRegisterLayout.medium => 600.0,
+      _QuickRegisterLayout.expanded => 640.0,
+    };
+
+    final maxHeightFactor = switch (layout) {
+      _QuickRegisterLayout.compact => .94,
+      _QuickRegisterLayout.medium => .92,
+      _QuickRegisterLayout.expanded => .90,
+    };
+
+    final horizontalPadding = switch (layout) {
+      _QuickRegisterLayout.compact => 20.0,
+      _QuickRegisterLayout.medium => 24.0,
+      _QuickRegisterLayout.expanded => 28.0,
+    };
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: maxWidth,
+            maxHeight: viewport.height * maxHeightFactor,
+          ),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: border,
+                ),
               ),
             ),
-          ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              14,
-              20,
-              MediaQuery.viewInsetsOf(context).bottom + 18,
-            ),
-            child: _loading
-                ? const SizedBox(
-                    height: 320,
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 44,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: border,
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-                        Row(
-                          children: [
-                            Container(
-                              width: 52,
-                              height: 52,
-                              alignment: Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                14,
+                horizontalPadding,
+                mediaQuery.viewInsets.bottom + 18,
+              ),
+              child: _loading
+                  ? const SizedBox(
+                      height: 320,
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 44,
+                              height: 4,
                               decoration: BoxDecoration(
-                                color: accent.withValues(alpha: .13),
-                                borderRadius: BorderRadius.circular(17),
-                                border: Border.all(
-                                  color: accent.withValues(alpha: .22),
-                                ),
+                                color: border,
+                                borderRadius: BorderRadius.circular(99),
                               ),
-                              child: Icon(
-                                _isExpense
-                                    ? AppIcons.expense
-                                    : AppIcons.income,
-                                color: accent,
-                                size: 26,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _title,
-                                    style: AppTypography.section(
-                                      context,
-                                      fontSize: 21,
-                                      color: primaryText,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    _subtitle,
-                                    style: AppTypography.body(
-                                      context,
-                                      fontSize: 12,
-                                      color: secondaryText,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 22),
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(
-                            16,
-                            14,
-                            16,
-                            10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: surface,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: accent.withValues(alpha: .24),
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 22),
+                          Row(
                             children: [
-                              Text(
-                                'quanto?',
-                                style: AppTypography.label(
-                                  context,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: secondaryText,
+                              Container(
+                                width: 52,
+                                height: 52,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: .13),
+                                  borderRadius: BorderRadius.circular(17),
+                                  border: Border.all(
+                                    color: accent.withValues(alpha: .22),
+                                  ),
+                                ),
+                                child: Icon(
+                                  _isExpense
+                                      ? AppIcons.expense
+                                      : AppIcons.income,
+                                  color: accent,
+                                  size: 26,
                                 ),
                               ),
-                              TextField(
-                                controller: _amount,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                                textInputAction: TextInputAction.next,
-                                style: AppTypography.money(
-                                  context,
-                                  fontSize: 30,
-                                  color: primaryText,
-                                ),
-                                decoration: const InputDecoration(
-                                  prefixText: 'R\$ ',
-                                  hintText: '0,00',
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                onChanged: (_) {
-                                  if (_error != null) {
-                                    setState(() {
-                                      _error = null;
-                                    });
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        _SectionLabel(
-                          title: 'categoria',
-                          subtitle: _isExpense
-                              ? 'onde esse gasto entra'
-                              : 'de onde esse dinheiro veio',
-                        ),
-                        const SizedBox(height: 10),
-                        _buildCategorySelector(
-                          brightness: brightness,
-                          primaryText: primaryText,
-                          secondaryText: secondaryText,
-                          border: border,
-                          surface: surface,
-                        ),
-                        const SizedBox(height: 24),
-                        const _SectionLabel(
-                          title: 'detalhes',
-                          subtitle: 'o básico para lembrar depois',
-                        ),
-                        const SizedBox(height: 10),
-                        _FormPanel(
-                          surface: surface,
-                          border: border,
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: _description,
-                                textInputAction: TextInputAction.next,
-                                decoration: InputDecoration(
-                                  labelText: 'descrição',
-                                  hintText: _descriptionHint,
-                                ),
-                                onChanged: (_) {
-                                  if (_error != null) {
-                                    setState(() {
-                                      _error = null;
-                                    });
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              DropdownButtonFormField<String>(
-                                initialValue: _accountId,
-                                decoration: const InputDecoration(
-                                  labelText: 'conta',
-                                ),
-                                items: _accounts
-                                    .map(
-                                      (account) => DropdownMenuItem<String>(
-                                        value: account.id,
-                                        child: Text(
-                                          account.name,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _title,
+                                      style: AppTypography.section(
+                                        context,
+                                        fontSize: 21,
+                                        color: primaryText,
                                       ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _accountId = value;
-                                    _error = null;
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              _DateTile(
-                                title: _isRecurring ? 'começa em' : 'data',
-                                value: _formatDate(_date),
-                                onTap: _pickDate,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const _SectionLabel(
-                          title: 'repetição',
-                          subtitle: 'é uma vez só ou faz parte da rotina?',
-                        ),
-                        const SizedBox(height: 10),
-                        _FormPanel(
-                          surface: surface,
-                          border: border,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              DropdownButtonFormField<String>(
-                                initialValue: _repeat,
-                                decoration: const InputDecoration(
-                                  labelText: 'repete?',
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'once',
-                                    child: Text('uma vez'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'weekly',
-                                    child: Text('toda semana'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'biweekly',
-                                    child: Text('a cada 2 semanas'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'monthly',
-                                    child: Text('todo mês'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'yearly',
-                                    child: Text('todo ano'),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  if (value == null) {
-                                    return;
-                                  }
-
-                                  _changeRepeat(value);
-                                },
-                              ),
-                              if (_repeat == 'weekly') ...[
-                                const SizedBox(height: 12),
-                                DropdownButtonFormField<int>(
-                                  initialValue: _weekday,
-                                  decoration: const InputDecoration(
-                                    labelText: 'dia da semana',
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 0,
-                                      child: Text('domingo'),
                                     ),
-                                    DropdownMenuItem(
-                                      value: 1,
-                                      child: Text('segunda-feira'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 2,
-                                      child: Text('terça-feira'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 3,
-                                      child: Text('quarta-feira'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 4,
-                                      child: Text('quinta-feira'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 5,
-                                      child: Text('sexta-feira'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 6,
-                                      child: Text('sábado'),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      _subtitle,
+                                      style: AppTypography.body(
+                                        context,
+                                        fontSize: 12,
+                                        color: secondaryText,
+                                      ),
                                     ),
                                   ],
-                                  onChanged: (value) {
-                                    if (value != null) {
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(
+                              16,
+                              14,
+                              16,
+                              10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: surface,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: accent.withValues(alpha: .24),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'quanto?',
+                                  style: AppTypography.label(
+                                    context,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: secondaryText,
+                                  ),
+                                ),
+                                TextField(
+                                  controller: _amount,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                  textInputAction: TextInputAction.next,
+                                  style: AppTypography.money(
+                                    context,
+                                    fontSize: 30,
+                                    color: primaryText,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    prefixText: 'R\$ ',
+                                    hintText: '0,00',
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  onChanged: (_) {
+                                    if (_error != null) {
                                       setState(() {
-                                        _weekday = value;
+                                        _error = null;
                                       });
                                     }
                                   },
                                 ),
                               ],
-                              if (_repeat == 'biweekly') ...[
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _SectionLabel(
+                            title: 'categoria',
+                            subtitle: _isExpense
+                                ? 'onde esse gasto entra'
+                                : 'de onde esse dinheiro veio',
+                          ),
+                          const SizedBox(height: 10),
+                          _buildCategorySelector(
+                            brightness: brightness,
+                            primaryText: primaryText,
+                            secondaryText: secondaryText,
+                            border: border,
+                            surface: surface,
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionLabel(
+                            title: 'detalhes',
+                            subtitle: 'o básico para lembrar depois',
+                          ),
+                          const SizedBox(height: 10),
+                          _FormPanel(
+                            surface: surface,
+                            border: border,
+                            child: Column(
+                              children: [
+                                TextField(
+                                  controller: _description,
+                                  textInputAction: TextInputAction.next,
+                                  decoration: InputDecoration(
+                                    labelText: 'descrição',
+                                    hintText: _descriptionHint,
+                                  ),
+                                  onChanged: (_) {
+                                    if (_error != null) {
+                                      setState(() {
+                                        _error = null;
+                                      });
+                                    }
+                                  },
+                                ),
                                 const SizedBox(height: 12),
-                                _InfoBox(
-                                  icon: AppIcons.recurring,
-                                  text:
-                                      'repete a cada 14 dias a partir de ${_formatDate(_date)}',
+                                DropdownButtonFormField<String>(
+                                  initialValue: _accountId,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'conta',
+                                  ),
+                                  items: _accounts
+                                      .map(
+                                        (account) => DropdownMenuItem<String>(
+                                          value: account.id,
+                                          child: Text(
+                                            account.name,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _accountId = value;
+                                      _error = null;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                                _DateTile(
+                                  title: _isRecurring ? 'começa em' : 'data',
+                                  value: _formatDate(_date),
+                                  onTap: _pickDate,
                                 ),
                               ],
-                              if (_repeat == 'monthly') ...[
-                                const SizedBox(height: 18),
-                                Text(
-                                  'dias do mês',
-                                  style: AppTypography.label(
-                                    context,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: primaryText,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionLabel(
+                            title: 'repetição',
+                            subtitle: 'é uma vez só ou faz parte da rotina?',
+                          ),
+                          const SizedBox(height: 10),
+                          _FormPanel(
+                            surface: surface,
+                            border: border,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                DropdownButtonFormField<String>(
+                                  initialValue: _repeat,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'repete?',
                                   ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'once',
+                                      child: Text('uma vez'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'weekly',
+                                      child: Text('toda semana'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'biweekly',
+                                      child: Text('a cada 2 semanas'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'monthly',
+                                      child: Text('todo mês'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'yearly',
+                                      child: Text('todo ano'),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value == null) {
+                                      return;
+                                    }
+
+                                    _changeRepeat(value);
+                                  },
                                 ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'toque em um dia escolhido para removê-lo',
-                                  style: AppTypography.body(
-                                    context,
-                                    fontSize: 10,
-                                    color: secondaryText,
+                                if (_repeat == 'weekly') ...[
+                                  const SizedBox(height: 12),
+                                  DropdownButtonFormField<int>(
+                                    initialValue: _weekday,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'dia da semana',
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 0,
+                                        child: Text('domingo'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 1,
+                                        child: Text('segunda-feira'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 2,
+                                        child: Text('terça-feira'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 3,
+                                        child: Text('quarta-feira'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 4,
+                                        child: Text('quinta-feira'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 5,
+                                        child: Text('sexta-feira'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 6,
+                                        child: Text('sábado'),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          _weekday = value;
+                                        });
+                                      }
+                                    },
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    ...(_monthlyDays.toList()..sort()).map(
-                                      (day) => _CompactPill(
-                                        label: 'dia $day',
-                                        selected: true,
+                                ],
+                                if (_repeat == 'biweekly') ...[
+                                  const SizedBox(height: 12),
+                                  _InfoBox(
+                                    icon: AppIcons.recurring,
+                                    text:
+                                        'repete a cada 14 dias a partir de ${_formatDate(_date)}',
+                                  ),
+                                ],
+                                if (_repeat == 'monthly') ...[
+                                  const SizedBox(height: 18),
+                                  Text(
+                                    'dias do mês',
+                                    style: AppTypography.label(
+                                      context,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: primaryText,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    'toque em um dia escolhido para removê-lo',
+                                    style: AppTypography.body(
+                                      context,
+                                      fontSize: 10,
+                                      color: secondaryText,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      ...(_monthlyDays.toList()..sort()).map(
+                                        (day) => _CompactPill(
+                                          label: 'dia $day',
+                                          selected: true,
+                                          color: AppColors.primaryPurple(
+                                            brightness,
+                                          ),
+                                          onTap: () {
+                                            setState(() {
+                                              _monthlyDays.remove(day);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      _CompactPill(
+                                        label: 'último dia',
+                                        selected: _monthlyLastDay,
                                         color: AppColors.primaryPurple(
                                           brightness,
                                         ),
                                         onTap: () {
                                           setState(() {
-                                            _monthlyDays.remove(day);
+                                            _monthlyLastDay = !_monthlyLastDay;
                                           });
                                         },
                                       ),
-                                    ),
-                                    _CompactPill(
-                                      label: 'último dia',
-                                      selected: _monthlyLastDay,
-                                      color: AppColors.primaryPurple(
-                                        brightness,
+                                      _CompactPill(
+                                        label: 'outro dia',
+                                        icon: AppIcons.add,
+                                        color: AppColors.primaryPurple(
+                                          brightness,
+                                        ),
+                                        onTap: _pickMonthlyDay,
                                       ),
-                                      onTap: () {
-                                        setState(() {
-                                          _monthlyLastDay = !_monthlyLastDay;
-                                        });
-                                      },
-                                    ),
-                                    _CompactPill(
-                                      label: 'outro dia',
-                                      icon: AppIcons.add,
-                                      color: AppColors.primaryPurple(
-                                        brightness,
+                                    ],
+                                  ),
+                                  if (_monthlyDays.length +
+                                          (_monthlyLastDay ? 1 : 0) >
+                                      1) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'o valor informado será considerado em cada uma dessas datas',
+                                      style: AppTypography.body(
+                                        context,
+                                        fontSize: 11,
+                                        color: secondaryText,
                                       ),
-                                      onTap: _pickMonthlyDay,
                                     ),
                                   ],
-                                ),
-                                if (_monthlyDays.length +
-                                        (_monthlyLastDay ? 1 : 0) >
-                                    1) ...[
+                                ],
+                                if (_repeat == 'yearly') ...[
                                   const SizedBox(height: 12),
-                                  Text(
-                                    'o valor informado será considerado em cada uma dessas datas',
-                                    style: AppTypography.body(
-                                      context,
-                                      fontSize: 11,
-                                      color: secondaryText,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          initialValue: _dayOfMonth,
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'dia',
+                                          ),
+                                          items: List.generate(
+                                            31,
+                                            (index) => DropdownMenuItem<int>(
+                                              value: index + 1,
+                                              child: Text('${index + 1}'),
+                                            ),
+                                          ),
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              setState(() {
+                                                _dayOfMonth = value;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          initialValue: _monthOfYear,
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'mês',
+                                          ),
+                                          items: const [
+                                            DropdownMenuItem(
+                                              value: 1,
+                                              child: Text('janeiro'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 2,
+                                              child: Text('fevereiro'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 3,
+                                              child: Text('março'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 4,
+                                              child: Text('abril'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 5,
+                                              child: Text('maio'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 6,
+                                              child: Text('junho'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 7,
+                                              child: Text('julho'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 8,
+                                              child: Text('agosto'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 9,
+                                              child: Text('setembro'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 10,
+                                              child: Text('outubro'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 11,
+                                              child: Text('novembro'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 12,
+                                              child: Text('dezembro'),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              setState(() {
+                                                _monthOfYear = value;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (_isRecurring) ...[
+                                  const SizedBox(height: 12),
+                                  const _InfoBox(
+                                    icon: AppIcons.recurring,
+                                    text:
+                                        'o Fôlego considera as próximas ocorrências automaticamente',
                                   ),
                                 ],
                               ],
-                              if (_repeat == 'yearly') ...[
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<int>(
-                                        initialValue: _dayOfMonth,
-                                        decoration: const InputDecoration(
-                                          labelText: 'dia',
-                                        ),
-                                        items: List.generate(
-                                          31,
-                                          (index) => DropdownMenuItem<int>(
-                                            value: index + 1,
-                                            child: Text('${index + 1}'),
-                                          ),
-                                        ),
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            setState(() {
-                                              _dayOfMonth = value;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: DropdownButtonFormField<int>(
-                                        initialValue: _monthOfYear,
-                                        decoration: const InputDecoration(
-                                          labelText: 'mês',
-                                        ),
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value: 1,
-                                            child: Text('janeiro'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 2,
-                                            child: Text('fevereiro'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 3,
-                                            child: Text('março'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 4,
-                                            child: Text('abril'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 5,
-                                            child: Text('maio'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 6,
-                                            child: Text('junho'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 7,
-                                            child: Text('julho'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 8,
-                                            child: Text('agosto'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 9,
-                                            child: Text('setembro'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 10,
-                                            child: Text('outubro'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 11,
-                                            child: Text('novembro'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 12,
-                                            child: Text('dezembro'),
-                                          ),
-                                        ],
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            setState(() {
-                                              _monthOfYear = value;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                              if (_isRecurring) ...[
-                                const SizedBox(height: 12),
-                                const _InfoBox(
-                                  icon: AppIcons.recurring,
-                                  text:
-                                      'o Fôlego considera as próximas ocorrências automaticamente',
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        if (_error != null) ...[
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.all(13),
-                            decoration: BoxDecoration(
-                              color: AppColors.expenseText(
-                                brightness,
-                              ).withValues(alpha: .10),
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(
-                                color: AppColors.expenseText(
-                                  brightness,
-                                ).withValues(alpha: .20),
-                              ),
-                            ),
-                            child: Text(
-                              _error!,
-                              style: AppTypography.body(
-                                context,
-                                fontSize: 12,
-                                color: AppColors.expenseText(
-                                  brightness,
-                                ),
-                              ),
                             ),
                           ),
-                        ],
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          height: 52,
-                          child: FilledButton(
-                            onPressed: _saving ? null : _save,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.lime,
-                              foregroundColor: AppColors.iconOnLime,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(17),
+                          if (_error != null) ...[
+                            const SizedBox(height: 14),
+                            Container(
+                              padding: const EdgeInsets.all(13),
+                              decoration: BoxDecoration(
+                                color: AppColors.expenseText(
+                                  brightness,
+                                ).withValues(alpha: .10),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: AppColors.expenseText(
+                                    brightness,
+                                  ).withValues(alpha: .20),
+                                ),
                               ),
-                            ),
-                            child: _saving
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.iconOnLime,
-                                    ),
-                                  )
-                                : Text(
-                                    _buttonLabel,
-                                    style: AppTypography.button(
-                                      context,
-                                    ),
+                              child: Text(
+                                _error!,
+                                style: AppTypography.body(
+                                  context,
+                                  fontSize: 12,
+                                  color: AppColors.expenseText(
+                                    brightness,
                                   ),
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 52,
+                            child: FilledButton(
+                              onPressed: _saving ? null : _save,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.lime,
+                                foregroundColor: AppColors.iconOnLime,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(17),
+                                ),
+                              ),
+                              child: _saving
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.iconOnLime,
+                                      ),
+                                    )
+                                  : Text(
+                                      _buttonLabel,
+                                      style: AppTypography.button(
+                                        context,
+                                      ),
+                                    ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
+                          const SizedBox(height: 8),
+                        ],
+                      ),
                     ),
-                  ),
+            ),
           ),
         ),
       ),
