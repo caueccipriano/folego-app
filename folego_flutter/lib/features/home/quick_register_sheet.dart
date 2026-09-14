@@ -295,6 +295,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
     final selectedId = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
@@ -344,6 +345,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
     final selectedId = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
@@ -375,6 +377,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   Future<void> _pickMonthlyDay() async {
     final selectedDay = await showModalBottomSheet<int>(
       context: context,
+      useRootNavigator: true,
       useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
