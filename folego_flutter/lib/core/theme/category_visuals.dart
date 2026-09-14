@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+
+import 'app_colors.dart';
+import 'app_icons.dart';
 
 class CategoryVisualData {
   const CategoryVisualData({required this.icon, required this.color});
@@ -8,7 +10,37 @@ class CategoryVisualData {
   final Color color;
 }
 
+/// Fonte única de verdade para o visual de categorias.
+///
+/// Regras:
+/// - categoria principal = ícone oficial + cor da família;
+/// - subcategoria = ícone próprio quando mapeado + cor da categoria pai;
+/// - subcategoria sem ícone próprio herda o ícone da categoria pai;
+/// - receitas usam a semântica visual oficial de receita do Fôlego;
+/// - telas não devem criar mapas locais de categoria.
 class CategoryVisuals {
+  static const Set<String> _incomeCategoryKeys = {
+    'adiantamento',
+    'bonificacao',
+    'bonus',
+    'comissao',
+    'comissoes',
+    'freela',
+    'freelance',
+    'outra receita',
+    'outras receitas',
+    'presente recebido',
+    'receita',
+    'receitas',
+    'renda',
+    'rendimento',
+    'rendimentos',
+    'salario',
+    'trabalho extra',
+    'venda',
+    'vendas',
+  };
+
   static CategoryVisualData resolve({
     required Brightness brightness,
     String? category,
@@ -25,7 +57,11 @@ class CategoryVisuals {
         subcategory: subcategory,
         eventType: eventType,
       ),
-      color: colorFor(category: categoryName, brightness: brightness),
+      color: colorFor(
+        category: categoryName,
+        brightness: brightness,
+        eventType: eventType,
+      ),
     );
   }
 
@@ -46,316 +82,325 @@ class CategoryVisuals {
         // ALIMENTAÇÃO
         case 'supermercado':
         case 'mercado':
-          return TablerIcons.shoppingCart;
+          return AppIcons.foodSupermarket;
 
         case 'restaurante':
-          return TablerIcons.toolsKitchen;
+          return AppIcons.foodRestaurant;
 
         case 'delivery':
         case 'ifood':
-          return TablerIcons.motorbike;
+          return AppIcons.foodDelivery;
 
         case 'cafe / lanche':
         case 'cafe':
         case 'lanche':
-          return TablerIcons.coffee;
+          return AppIcons.foodCafe;
 
         // ASSINATURAS
         case 'apps':
-          return TablerIcons.apps;
+          return AppIcons.subscriptionApps;
 
         case 'musica':
-          return TablerIcons.music;
+          return AppIcons.subscriptionMusic;
 
         case 'software':
-          return TablerIcons.code;
+          return AppIcons.subscriptionSoftware;
 
         case 'streaming':
-          return TablerIcons.deviceTv;
+          return AppIcons.subscriptionStreaming;
 
         // BELEZA E CUIDADOS
         case 'cabelo / barbearia':
         case 'cabelo':
         case 'barbearia':
-          return TablerIcons.scissors;
+          return AppIcons.beautyHair;
 
         case 'cosmeticos':
-          return TablerIcons.brush;
+          return AppIcons.beautyCosmetics;
 
         case 'cuidados pessoais':
-          return TablerIcons.heart;
+          return AppIcons.beautyPersonalCare;
 
         case 'estetica':
-          return TablerIcons.sparkles;
+          return AppIcons.beautyAesthetics;
 
         // COMPRAS
         case 'casa':
-          return TablerIcons.package;
+          return AppIcons.shoppingHome;
 
         case 'compras online':
-          return TablerIcons.shoppingCart;
+          return AppIcons.shoppingOnline;
 
         case 'eletronicos':
-          return TablerIcons.deviceLaptop;
+          return AppIcons.shoppingElectronics;
 
         case 'marketplace':
-          return TablerIcons.buildingStore;
+          return AppIcons.shoppingMarketplace;
 
         // CONTAS DA CASA
         case 'agua':
-          return TablerIcons.droplet;
+          return AppIcons.billsWater;
 
         case 'energia':
-          return TablerIcons.bolt;
+          return AppIcons.billsEnergy;
 
         case 'gas':
-          return TablerIcons.flame;
+          return AppIcons.billsGas;
 
         case 'internet / telefone':
         case 'internet':
-          return TablerIcons.wifi;
+          return AppIcons.billsInternet;
 
         case 'telefone':
-          return TablerIcons.phone;
+          return AppIcons.billsPhone;
 
         // DÍVIDAS E EMPRÉSTIMOS
         case 'acordos':
-          return TablerIcons.fileCheck;
+          return AppIcons.debtAgreement;
 
         case 'emprestimos':
         case 'emprestimo':
-          return TablerIcons.cashBanknote;
+          return AppIcons.debtLoan;
 
         case 'financiamentos':
         case 'financiamento':
-          return TablerIcons.fileDollar;
+          return AppIcons.debtFinancing;
 
         case 'parcelamentos':
         case 'parcelamento':
-          return TablerIcons.calendarDollar;
+          return AppIcons.debtInstallment;
 
         // EDUCAÇÃO
         case 'cursos':
         case 'curso':
-          return TablerIcons.certificate;
+          return AppIcons.educationCourse;
 
         case 'faculdade':
-          return TablerIcons.school;
+          return AppIcons.educationCollege;
 
         case 'livros / material':
         case 'livros':
-          return TablerIcons.books;
+          return AppIcons.educationBooks;
 
         // FINANCEIRO
         case 'ajustes financeiros':
         case 'ajuste':
-          return TablerIcons.arrowsExchange;
+          return AppIcons.financeAdjustment;
 
         case 'iof / taxas':
         case 'iof':
         case 'taxas':
-          return TablerIcons.receiptTax;
+          return AppIcons.financeTax;
 
         case 'juros':
-          return TablerIcons.percentage;
+          return AppIcons.financeInterest;
 
         case 'tarifas bancarias':
-          return TablerIcons.buildingBank;
+          return AppIcons.financeBankFee;
 
         // LAZER
         case 'cinema':
-          return TablerIcons.movie;
+          return AppIcons.leisureCinema;
 
         case 'eventos':
-          return TablerIcons.ticket;
+          return AppIcons.leisureEvent;
 
         case 'hobbies':
-          return TablerIcons.palette;
+          return AppIcons.leisureHobby;
 
         case 'jogos':
-          return TablerIcons.deviceGamepad;
+          return AppIcons.leisureGames;
 
         case 'passeios':
-          return TablerIcons.mapPin;
+          return AppIcons.leisureOuting;
+
+        // MORADIA / TRANSPORTE
+        // "Manutenção" existe nas duas famílias e usa o mesmo glyph oficial.
+        case 'manutencao':
+          return AppIcons.housingMaintenance;
 
         // MORADIA
         case 'aluguel':
-          return TablerIcons.home;
+          return AppIcons.housingRent;
 
         case 'condominio':
-          return TablerIcons.building;
-
-        case 'manutencao':
-          return TablerIcons.tools;
+          return AppIcons.housingCondo;
 
         case 'moveis / utilidades':
         case 'moveis':
-          return TablerIcons.armchair;
+          return AppIcons.housingFurniture;
 
         // PRESENTES
         case 'datas comemorativas':
-          return TablerIcons.confetti;
+          return AppIcons.giftsCelebration;
 
         case 'doacoes':
-          return TablerIcons.heartHandshake;
+          return AppIcons.giftsDonation;
 
         // SAÚDE
         case 'academia / bem-estar':
         case 'academia':
-          return TablerIcons.dumbbell;
+          return AppIcons.healthGym;
 
         case 'consulta':
-          return TablerIcons.stethoscope;
+          return AppIcons.healthConsultation;
 
         case 'exames':
-          return TablerIcons.microscope;
+          return AppIcons.healthExams;
 
         case 'farmacia':
-          return TablerIcons.pill;
+          return AppIcons.healthPharmacy;
 
         case 'terapia':
-          return TablerIcons.brain;
+          return AppIcons.healthTherapy;
 
         // TRANSPORTE
         case 'estacionamento / pedagio':
         case 'estacionamento':
-          return TablerIcons.parking;
+          return AppIcons.transportParking;
 
         case 'pedagio':
-          return TablerIcons.road;
+          return AppIcons.transportToll;
 
         case 'gasolina':
         case 'combustivel':
-          return TablerIcons.gasStation;
+          return AppIcons.transportFuel;
 
         case 'transporte publico':
-          return TablerIcons.bus;
+          return AppIcons.transportPublic;
 
         case 'uber / taxi':
         case 'uber':
         case 'taxi':
-          return TablerIcons.car;
+          return AppIcons.transportRide;
 
         // VESTUÁRIO
         case 'acessorios':
-          return TablerIcons.eyeglass2;
+          return AppIcons.clothingAccessories;
 
         case 'calcados':
-          return TablerIcons.shoe;
+          return AppIcons.clothingShoes;
 
         case 'roupas':
-          return TablerIcons.shirt;
+          return AppIcons.clothingClothes;
       }
     }
 
     // =========================================================
-    // CATEGORIAS PRINCIPAIS
+    // CATEGORIAS PRINCIPAIS DE DESPESA
     // =========================================================
 
     switch (c) {
       case 'a classificar':
-        return TablerIcons.category;
+        return AppIcons.categoryUnclassified;
 
       case 'alimentacao':
-        return TablerIcons.toolsKitchen2;
+        return AppIcons.categoryFood;
 
       case 'assinaturas':
-        return TablerIcons.repeat;
+        return AppIcons.categorySubscriptions;
 
       case 'beleza e cuidados':
       case 'beleza':
-        return TablerIcons.sparkles;
+        return AppIcons.categoryBeauty;
 
       case 'compras':
-        return TablerIcons.shoppingBag;
+        return AppIcons.categoryShopping;
 
       case 'contas da casa':
-        return TablerIcons.bolt;
+        return AppIcons.categoryHouseholdBills;
 
       case 'dividas e emprestimos':
       case 'dividas':
       case 'emprestimos':
-        return TablerIcons.wallet;
+        return AppIcons.categoryDebt;
 
       case 'educacao':
-        return TablerIcons.school;
+        return AppIcons.categoryEducation;
 
       case 'financeiro':
-        return TablerIcons.buildingBank;
+        return AppIcons.categoryFinance;
 
       case 'lazer':
-        return TablerIcons.confetti;
+        return AppIcons.categoryLeisure;
 
       case 'moradia':
       case 'casa':
-        return TablerIcons.home;
+        return AppIcons.categoryHousing;
 
       case 'presentes':
-        return TablerIcons.gift;
+        return AppIcons.categoryGifts;
 
       case 'saude':
-        return TablerIcons.heartRateMonitor;
+        return AppIcons.categoryHealth;
 
       case 'transporte':
-        return TablerIcons.car;
+        return AppIcons.categoryTransport;
 
       case 'vestuario':
-        return TablerIcons.shirt;
-
-      case 'receita':
-      case 'receitas':
-      case 'renda':
-      case 'salario':
-        return TablerIcons.cashBanknote;
-
-      case 'transferencia':
-      case 'transferencias':
-        return TablerIcons.arrowsExchange;
-
-      case 'saldo inicial':
-      case 'ajustes':
-        return TablerIcons.wallet;
+        return AppIcons.categoryClothing;
     }
 
     // =========================================================
-    // FALLBACK PELO TIPO DO EVENTO
+    // CATEGORIAS DE RECEITA
     // =========================================================
+
+    if (c != null && _incomeCategoryKeys.contains(c)) {
+      return AppIcons.income;
+    }
+
+    // =========================================================
+    // OUTROS TIPOS / FALLBACK PELO EVENTO
+    // =========================================================
+
+    switch (c) {
+      case 'transferencia':
+      case 'transferencias':
+        return AppIcons.transfer;
+
+      case 'saldo inicial':
+      case 'ajustes':
+        return AppIcons.wallet;
+    }
 
     switch (eventType) {
       case 'income':
-        return TablerIcons.cashBanknote;
+        return AppIcons.income;
 
       case 'expense':
-        return TablerIcons.receipt2;
+      case 'benefit_expense':
+        return AppIcons.expense;
 
       case 'transfer':
-        return TablerIcons.arrowsExchange;
+        return AppIcons.transfer;
 
       case 'card_purchase':
-        return TablerIcons.creditCard;
+        return AppIcons.creditCard;
 
       case 'card_payment':
-        return TablerIcons.receipt2;
+        return AppIcons.expense;
 
       case 'opening_balance':
-        return TablerIcons.wallet;
-
-      case 'benefit_expense':
-        return TablerIcons.receipt2;
+        return AppIcons.wallet;
 
       case 'debt_payment':
-        return TablerIcons.wallet;
+        return AppIcons.categoryDebt;
 
       default:
-        return TablerIcons.category;
+        return AppIcons.categoryUnclassified;
     }
   }
 
   static Color colorFor({
     required String category,
     required Brightness brightness,
+    String? eventType,
   }) {
     final c = _normalize(category) ?? 'a classificar';
+
+    if (_incomeCategoryKeys.contains(c) || eventType == 'income') {
+      return AppColors.positiveText(brightness);
+    }
 
     final isDark = brightness == Brightness.dark;
 
@@ -419,13 +464,6 @@ class CategoryVisuals {
       // CIANO NEON
       case 'vestuario':
         return isDark ? const Color(0xFF5DDCFF) : const Color(0xFF247B95);
-
-      // RECEITAS — VERDE-LIME MAIS FORTE
-      case 'receita':
-      case 'receitas':
-      case 'renda':
-      case 'salario':
-        return isDark ? const Color(0xFFA8FF60) : const Color(0xFF4F8617);
 
       // TRANSFERÊNCIAS — CIANO ELÉTRICO
       case 'transferencia':
@@ -497,10 +535,45 @@ class CategoryVisuals {
       case 'vestuario':
         return 'Vestuário';
 
+      case 'adiantamento':
+        return 'Adiantamento';
+
+      case 'bonificacao':
+      case 'bonus':
+        return 'Bonificação';
+
+      case 'comissao':
+      case 'comissoes':
+        return 'Comissões';
+
+      case 'freela':
+      case 'freelance':
+        return 'Freelance';
+
+      case 'outra receita':
+      case 'outras receitas':
+        return 'Outras receitas';
+
+      case 'presente recebido':
+        return 'Presente recebido';
+
+      case 'rendimento':
+      case 'rendimentos':
+        return 'Rendimentos';
+
+      case 'salario':
+        return 'Salário';
+
+      case 'trabalho extra':
+        return 'Trabalho extra';
+
+      case 'venda':
+      case 'vendas':
+        return 'Venda';
+
       case 'receita':
       case 'receitas':
       case 'renda':
-      case 'salario':
         return 'Receitas';
 
       case 'transferencia':
