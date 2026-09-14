@@ -4,6 +4,9 @@ import '../models/account_item.dart';
 import '../models/credit_card_item.dart';
 import 'folego_repository.dart';
 
+const int cardPurchaseMinInstallments = 1;
+const int cardPurchaseMaxInstallments = 120;
+
 extension FolegoRepositoryPaymentInstruments on FolegoRepository {
   Future<List<AccountItem>> listPaymentAccounts(String spaceId) async {
     final response = await Supabase.instance.client
@@ -47,5 +50,66 @@ extension FolegoRepositoryPaymentInstruments on FolegoRepository {
         .map(CreditCardItem.fromJson)
         .where((card) => card.active)
         .toList();
+  }
+
+  Future<String> registerCardPurchase({
+    required String spaceId,
+    required String cardId,
+    required num totalAmount,
+    required String description,
+    int installmentsCount = cardPurchaseMinInstallments,
+    String? categoryId,
+    DateTime? purchaseAt,
+    String? merchant,
+  }) async {
+    if (installmentsCount < cardPurchaseMinInstallments ||
+        installmentsCount > cardPurchaseMaxInstallments) {
+      throw ArgumentError.value(
+        installmentsCount,
+        'installmentsCount',
+        'Deve estar entre $cardPurchaseMinInstallments e $cardPurchaseMaxInstallments.',
+      );
+    }
+
+    final data = await Supabase.instance.client.rpc(
+      'register_card_purchase',
+      params: {
+        'p_space_id': spaceId,
+        'p_card_id': cardId,
+        'p_total_amount': totalAmount,
+        'p_description': description,
+        'p_installments_count': installmentsCount,
+        'p_category_id': categoryId,
+        'p_purchase_at': (purchaseAt ?? DateTime.now()).toIso8601String(),
+        'p_merchant': merchant?.trim().isEmpty == true ? null : merchant?.trim(),
+        'p_source': 'app',
+        'p_external_id': null,
+      },
+    );
+
+    return data as String;
+  }
+
+  Future<String> registerBenefit({
+    required String spaceId,
+    required String accountId,
+    required num amount,
+    required String description,
+    required bool isCredit,
+    String? categoryId,
+  }) async {
+    final data = await Supabase.instance.client.rpc(
+      'register_benefit',
+      params: {
+        'p_space_id': spaceId,
+        'p_account_id': accountId,
+        'p_amount': amount,
+        'p_description': description,
+        'p_is_credit': isCredit,
+        'p_category_id': categoryId,
+      },
+    );
+
+    return data as String;
   }
 }

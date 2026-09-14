@@ -259,6 +259,8 @@ abstract final class AppIcons {
 
   static const IconData account = TablerIcons.buildingBank;
 
+  static const IconData benefit = TablerIcons.ticket;
+
   static const IconData cash = TablerIcons.cash;
 
   static const IconData transfer = TablerIcons.arrowsExchange;

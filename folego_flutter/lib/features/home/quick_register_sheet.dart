@@ -10,9 +10,12 @@ import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
+import '../../data/models/credit_card_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import 'quick_register_payment_state.dart';
 
 class QuickRegisterSheet extends StatefulWidget {
   const QuickRegisterSheet({
@@ -36,17 +39,20 @@ class QuickRegisterSheet extends StatefulWidget {
 class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   final _description = TextEditingController();
   final _amount = TextEditingController();
+  final _merchant = TextEditingController();
 
-  List<AccountItem> _accounts = const [];
+  List<AccountItem> _paymentAccounts = const [];
+  List<AccountItem> _benefitAccounts = const [];
+  List<CreditCardItem> _creditCards = const [];
 
   List<CategoryItem> _expenseCategories = const [];
   List<CategoryItem> _incomeCategories = const [];
 
-  String? _accountId;
+  String? _incomeAccountId;
+  QuickExpensePaymentState _expensePayment = const QuickExpensePaymentState();
 
   String? _expenseParentCategoryId;
   String? _expenseSubcategoryId;
-
   String? _incomeCategoryId;
 
   String _repeat = 'once';
@@ -160,8 +166,19 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   void dispose() {
     _description.dispose();
     _amount.dispose();
+    _merchant.dispose();
 
     super.dispose();
+  }
+
+  Future<T> _withTimeout<T>(
+    Future<T> future,
+    String message,
+  ) {
+    return future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw TimeoutException(message),
+    );
   }
 
   Future<void> _load() async {
@@ -173,42 +190,49 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
 
     try {
-      final accounts = await widget.repository
-          .listAccounts(widget.space.id)
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw TimeoutException(
-                'As contas demoraram demais para carregar.',
-              );
-            },
-          );
+      final accountsFuture = _withTimeout(
+        widget.repository.listPaymentAccounts(widget.space.id),
+        'As contas demoraram demais para carregar.',
+      );
 
+      List<AccountItem> paymentAccounts;
+      List<AccountItem> benefitAccounts = <AccountItem>[];
+      List<CreditCardItem> creditCards = <CreditCardItem>[];
       List<CategoryItem> expenseCategories = <CategoryItem>[];
       List<CategoryItem> incomeCategories = <CategoryItem>[];
 
       if (_isExpense) {
-        expenseCategories = await widget.repository
-            .listExpenseCategories(widget.space.id)
-            .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw TimeoutException(
-                  'As categorias de gasto demoraram demais para carregar.',
-                );
-              },
-            );
+        final results = await Future.wait<dynamic>([
+          accountsFuture,
+          _withTimeout(
+            widget.repository.listBenefitAccounts(widget.space.id),
+            'Os benefícios demoraram demais para carregar.',
+          ),
+          _withTimeout(
+            widget.repository.listActiveCreditCards(widget.space.id),
+            'Os cartões demoraram demais para carregar.',
+          ),
+          _withTimeout(
+            widget.repository.listExpenseCategories(widget.space.id),
+            'As categorias de gasto demoraram demais para carregar.',
+          ),
+        ]);
+
+        paymentAccounts = results[0] as List<AccountItem>;
+        benefitAccounts = results[1] as List<AccountItem>;
+        creditCards = results[2] as List<CreditCardItem>;
+        expenseCategories = results[3] as List<CategoryItem>;
       } else {
-        incomeCategories = await widget.repository
-            .listIncomeCategories(widget.space.id)
-            .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw TimeoutException(
-                  'As categorias de receita demoraram demais para carregar.',
-                );
-              },
-            );
+        final results = await Future.wait<dynamic>([
+          accountsFuture,
+          _withTimeout(
+            widget.repository.listIncomeCategories(widget.space.id),
+            'As categorias de receita demoraram demais para carregar.',
+          ),
+        ]);
+
+        paymentAccounts = results[0] as List<AccountItem>;
+        incomeCategories = results[1] as List<CategoryItem>;
       }
 
       if (!mounted) {
@@ -223,13 +247,21 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
       _sortCategories(expenseParents);
 
+      final defaultAccountId =
+          paymentAccounts.isEmpty ? null : paymentAccounts.first.id;
+
       setState(() {
-        _accounts = accounts;
+        _paymentAccounts = paymentAccounts;
+        _benefitAccounts = benefitAccounts;
+        _creditCards = creditCards;
 
         _expenseCategories = expenseCategories;
         _incomeCategories = incomeCategories;
 
-        _accountId = accounts.isEmpty ? null : accounts.first.id;
+        _incomeAccountId = defaultAccountId;
+        _expensePayment = QuickExpensePaymentState(
+          accountId: defaultAccountId,
+        );
 
         _expenseParentCategoryId =
             expenseParents.isEmpty ? null : expenseParents.first.id;
@@ -342,6 +374,38 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     });
   }
 
+  void _changeExpensePaymentType(QuickExpensePaymentType type) {
+    setState(() {
+      _expensePayment = _expensePayment.select(type);
+
+      if (!_expensePayment.supportsRecurring) {
+        _repeat = 'once';
+      }
+
+      if (type == QuickExpensePaymentType.benefit) {
+        final now = DateTime.now();
+        _date = DateTime(now.year, now.month, now.day);
+      }
+
+      _error = null;
+    });
+  }
+
+  void _changeInstallments(int delta) {
+    final next = (_expensePayment.installmentsCount + delta)
+        .clamp(cardPurchaseMinInstallments, cardPurchaseMaxInstallments)
+        .toInt();
+
+    if (next == _expensePayment.installmentsCount) {
+      return;
+    }
+
+    setState(() {
+      _expensePayment = _expensePayment.withInstallmentsCount(next);
+      _error = null;
+    });
+  }
+
   Future<void> _pickMonthlyDay() async {
     final selectedDay = await _showAdaptivePicker<int>(
       dialogMaxWidth: AppContentWidths.auth,
@@ -368,6 +432,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   Future<void> _pickDate() async {
+    if (_isExpense &&
+        _expensePayment.type == QuickExpensePaymentType.benefit) {
+      return;
+    }
+
     final selected = await showDatePicker(
       context: context,
       initialDate: _date,
@@ -402,9 +471,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     });
   }
 
-  void _changeRepeat(
-    String value,
-  ) {
+  void _changeRepeat(String value) {
+    if (_isExpense && !_expensePayment.supportsRecurring) {
+      return;
+    }
+
     setState(() {
       _repeat = value;
 
@@ -433,6 +504,23 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     });
   }
 
+  String? _validateSelectedInstrument() {
+    if (!_isExpense) {
+      return _incomeAccountId == null ? 'selecione uma conta' : null;
+    }
+
+    return switch (_expensePayment.type) {
+      QuickExpensePaymentType.account =>
+        _expensePayment.accountId == null ? 'selecione uma conta' : null,
+      QuickExpensePaymentType.creditCard =>
+        _expensePayment.cardId == null ? 'selecione um cartão' : null,
+      QuickExpensePaymentType.benefit =>
+        _expensePayment.benefitAccountId == null
+            ? 'selecione um benefício'
+            : null,
+    };
+  }
+
   Future<void> _save() async {
     final amount = Formatters.parseMoney(_amount.text);
 
@@ -452,9 +540,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       return;
     }
 
-    if (_accountId == null) {
+    final instrumentError = _validateSelectedInstrument();
+
+    if (instrumentError != null) {
       setState(() {
-        _error = 'selecione uma conta';
+        _error = instrumentError;
       });
 
       return;
@@ -465,6 +555,28 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         _error = _isExpense
             ? 'selecione uma categoria de gasto'
             : 'selecione uma categoria de receita';
+      });
+
+      return;
+    }
+
+    if (_isExpense &&
+        _expensePayment.type == QuickExpensePaymentType.creditCard &&
+        (_expensePayment.installmentsCount < cardPurchaseMinInstallments ||
+            _expensePayment.installmentsCount >
+                cardPurchaseMaxInstallments)) {
+      setState(() {
+        _error = 'informe uma quantidade válida de parcelas';
+      });
+
+      return;
+    }
+
+    if (_isExpense &&
+        !_expensePayment.supportsRecurring &&
+        _repeat != 'once') {
+      setState(() {
+        _error = 'este meio de pagamento só pode ser registrado uma vez';
       });
 
       return;
@@ -514,25 +626,49 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
   }
 
-  Future<void> _registerOnce(
-    num amount,
-  ) async {
+  Future<void> _registerOnce(num amount) async {
     if (_isExpense) {
-      await widget.repository.registerExpense(
-        spaceId: widget.space.id,
-        accountId: _accountId!,
-        amount: amount,
-        description: _description.text.trim(),
-        categoryId: _effectiveCategoryId,
-        occurredAt: _date,
-      );
+      switch (_expensePayment.saveTarget) {
+        case QuickExpenseSaveTarget.expense:
+          await widget.repository.registerExpense(
+            spaceId: widget.space.id,
+            accountId: _expensePayment.accountId!,
+            amount: amount,
+            description: _description.text.trim(),
+            categoryId: _effectiveCategoryId,
+            occurredAt: _date,
+          );
+          return;
 
-      return;
+        case QuickExpenseSaveTarget.cardPurchase:
+          await widget.repository.registerCardPurchase(
+            spaceId: widget.space.id,
+            cardId: _expensePayment.cardId!,
+            totalAmount: amount,
+            description: _description.text.trim(),
+            installmentsCount: _expensePayment.installmentsCount,
+            categoryId: _effectiveCategoryId,
+            purchaseAt: _date,
+            merchant: _merchant.text,
+          );
+          return;
+
+        case QuickExpenseSaveTarget.benefitExpense:
+          await widget.repository.registerBenefit(
+            spaceId: widget.space.id,
+            accountId: _expensePayment.benefitAccountId!,
+            amount: amount,
+            description: _description.text.trim(),
+            isCredit: false,
+            categoryId: _effectiveCategoryId,
+          );
+          return;
+      }
     }
 
     await widget.repository.registerIncome(
       spaceId: widget.space.id,
-      accountId: _accountId!,
+      accountId: _incomeAccountId!,
       amount: amount,
       description: _description.text.trim(),
       categoryId: _effectiveCategoryId,
@@ -540,9 +676,18 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     );
   }
 
-  Future<void> _registerRecurring(
-    num amount,
-  ) async {
+  Future<void> _registerRecurring(num amount) async {
+    if (_isExpense && !_expensePayment.supportsRecurring) {
+      throw StateError('Recorrência não disponível para este meio de pagamento.');
+    }
+
+    final accountId =
+        _isExpense ? _expensePayment.accountId : _incomeAccountId;
+
+    if (accountId == null) {
+      throw StateError('Selecione uma conta.');
+    }
+
     final dayOfMonth = _repeat == 'monthly' || _repeat == 'yearly'
         ? _dayOfMonth
         : null;
@@ -562,7 +707,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       itemType: widget.initialType,
       amount: amount,
       frequency: _repeat,
-      accountId: _accountId!,
+      accountId: accountId,
       categoryId: _effectiveCategoryId,
       dayOfMonth: dayOfMonth,
       monthlyDays: monthlyDays,
@@ -574,9 +719,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final mediaQuery = MediaQuery.of(context);
     final viewport = mediaQuery.size;
@@ -623,9 +766,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                 top: Radius.circular(30),
               ),
               border: Border(
-                top: BorderSide(
-                  color: border,
-                ),
+                top: BorderSide(color: border),
               ),
             ),
             child: Padding(
@@ -638,9 +779,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               child: _loading
                   ? const SizedBox(
                       height: 320,
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   : SingleChildScrollView(
                       keyboardDismissBehavior:
@@ -710,12 +849,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                           ),
                           const SizedBox(height: 22),
                           Container(
-                            padding: const EdgeInsets.fromLTRB(
-                              16,
-                              14,
-                              16,
-                              10,
-                            ),
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
                             decoration: BoxDecoration(
                               color: surface,
                               borderRadius: BorderRadius.circular(22),
@@ -757,9 +891,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                   ),
                                   onChanged: (_) {
                                     if (_error != null) {
-                                      setState(() {
-                                        _error = null;
-                                      });
+                                      setState(() => _error = null);
                                     }
                                   },
                                 ),
@@ -781,6 +913,34 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                             border: border,
                             surface: surface,
                           ),
+                          if (_isExpense) ...[
+                            const SizedBox(height: 24),
+                            const _SectionLabel(
+                              title: 'como pagou?',
+                              subtitle: 'escolha o meio usado neste gasto',
+                            ),
+                            const SizedBox(height: 10),
+                            _FormPanel(
+                              surface: surface,
+                              border: border,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _PaymentMethodSelector(
+                                    selected: _expensePayment.type,
+                                    onSelected: _changeExpensePaymentType,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _buildPaymentFields(
+                                    surface: surface,
+                                    border: border,
+                                    primaryText: primaryText,
+                                    secondaryText: secondaryText,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           const _SectionLabel(
                             title: 'detalhes',
@@ -801,43 +961,64 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                   ),
                                   onChanged: (_) {
                                     if (_error != null) {
-                                      setState(() {
-                                        _error = null;
-                                      });
+                                      setState(() => _error = null);
                                     }
                                   },
                                 ),
+                                if (!_isExpense) ...[
+                                  const SizedBox(height: 12),
+                                  if (_paymentAccounts.isEmpty)
+                                    const _EmptyInstrumentState(
+                                      text: 'Nenhuma conta disponível',
+                                    )
+                                  else
+                                    DropdownButtonFormField<String>(
+                                      initialValue: _incomeAccountId,
+                                      isExpanded: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'conta',
+                                      ),
+                                      items: _paymentAccounts
+                                          .map(
+                                            (account) =>
+                                                DropdownMenuItem<String>(
+                                              value: account.id,
+                                              child: Text(
+                                                account.name,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _incomeAccountId = value;
+                                          _error = null;
+                                        });
+                                      },
+                                    ),
+                                ],
                                 const SizedBox(height: 12),
-                                DropdownButtonFormField<String>(
-                                  initialValue: _accountId,
-                                  isExpanded: true,
-                                  decoration: const InputDecoration(
-                                    labelText: 'conta',
+                                if (_isExpense &&
+                                    _expensePayment.type ==
+                                        QuickExpensePaymentType.benefit) ...[
+                                  _DateTile(
+                                    title: 'data',
+                                    value: 'hoje · definida pelo benefício',
+                                    onTap: null,
                                   ),
-                                  items: _accounts
-                                      .map(
-                                        (account) => DropdownMenuItem<String>(
-                                          value: account.id,
-                                          child: Text(
-                                            account.name,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _accountId = value;
-                                      _error = null;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 12),
-                                _DateTile(
-                                  title: _isRecurring ? 'começa em' : 'data',
-                                  value: _formatDate(_date),
-                                  onTap: _pickDate,
-                                ),
+                                  const SizedBox(height: 10),
+                                  const _InfoBox(
+                                    icon: AppIcons.info,
+                                    text:
+                                        'benefícios são registrados com a data atual pelo backend',
+                                  ),
+                                ] else
+                                  _DateTile(
+                                    title: _isRecurring ? 'começa em' : 'data',
+                                    value: _formatDate(_date),
+                                    onTap: _pickDate,
+                                  ),
                               ],
                             ),
                           ),
@@ -847,299 +1028,57 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                             subtitle: 'é uma vez só ou faz parte da rotina?',
                           ),
                           const SizedBox(height: 10),
-                          _FormPanel(
-                            surface: surface,
-                            border: border,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                DropdownButtonFormField<String>(
-                                  initialValue: _repeat,
-                                  isExpanded: true,
-                                  decoration: const InputDecoration(
-                                    labelText: 'repete?',
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'once',
-                                      child: Text('uma vez'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'weekly',
-                                      child: Text('toda semana'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'biweekly',
-                                      child: Text('a cada 2 semanas'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'monthly',
-                                      child: Text('todo mês'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'yearly',
-                                      child: Text('todo ano'),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value == null) {
-                                      return;
-                                    }
-
-                                    _changeRepeat(value);
-                                  },
-                                ),
-                                if (_repeat == 'weekly') ...[
-                                  const SizedBox(height: 12),
-                                  DropdownButtonFormField<int>(
-                                    initialValue: _weekday,
+                          if (_isExpense &&
+                              !_expensePayment.supportsRecurring)
+                            _FormPanel(
+                              surface: surface,
+                              border: border,
+                              child: Column(
+                                children: [
+                                  DropdownButtonFormField<String>(
+                                    initialValue: 'once',
                                     isExpanded: true,
                                     decoration: const InputDecoration(
-                                      labelText: 'dia da semana',
+                                      labelText: 'repete?',
                                     ),
                                     items: const [
                                       DropdownMenuItem(
-                                        value: 0,
-                                        child: Text('domingo'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 1,
-                                        child: Text('segunda-feira'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 2,
-                                        child: Text('terça-feira'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 3,
-                                        child: Text('quarta-feira'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 4,
-                                        child: Text('quinta-feira'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 5,
-                                        child: Text('sexta-feira'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 6,
-                                        child: Text('sábado'),
+                                        value: 'once',
+                                        child: Text('uma vez'),
                                       ),
                                     ],
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        setState(() {
-                                          _weekday = value;
-                                        });
-                                      }
-                                    },
+                                    onChanged: null,
                                   ),
-                                ],
-                                if (_repeat == 'biweekly') ...[
                                   const SizedBox(height: 12),
                                   _InfoBox(
                                     icon: AppIcons.recurring,
-                                    text:
-                                        'repete a cada 14 dias a partir de ${_formatDate(_date)}',
+                                    text: _expensePayment.type ==
+                                            QuickExpensePaymentType.creditCard
+                                        ? 'recorrência de cartão ainda não está disponível; registre esta compra uma vez'
+                                        : 'recorrência de benefício ainda não está disponível; registre este gasto uma vez',
                                   ),
                                 ],
-                                if (_repeat == 'monthly') ...[
-                                  const SizedBox(height: 18),
-                                  Text(
-                                    'dias do mês',
-                                    style: AppTypography.label(
-                                      context,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: primaryText,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    'toque em um dia escolhido para removê-lo',
-                                    style: AppTypography.body(
-                                      context,
-                                      fontSize: 10,
-                                      color: secondaryText,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      ...(_monthlyDays.toList()..sort()).map(
-                                        (day) => _CompactPill(
-                                          label: 'dia $day',
-                                          selected: true,
-                                          color: AppColors.primaryPurple(
-                                            brightness,
-                                          ),
-                                          onTap: () {
-                                            setState(() {
-                                              _monthlyDays.remove(day);
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      _CompactPill(
-                                        label: 'último dia',
-                                        selected: _monthlyLastDay,
-                                        color: AppColors.primaryPurple(
-                                          brightness,
-                                        ),
-                                        onTap: () {
-                                          setState(() {
-                                            _monthlyLastDay = !_monthlyLastDay;
-                                          });
-                                        },
-                                      ),
-                                      _CompactPill(
-                                        label: 'outro dia',
-                                        icon: AppIcons.add,
-                                        color: AppColors.primaryPurple(
-                                          brightness,
-                                        ),
-                                        onTap: _pickMonthlyDay,
-                                      ),
-                                    ],
-                                  ),
-                                  if (_monthlyDays.length +
-                                          (_monthlyLastDay ? 1 : 0) >
-                                      1) ...[
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'o valor informado será considerado em cada uma dessas datas',
-                                      style: AppTypography.body(
-                                        context,
-                                        fontSize: 11,
-                                        color: secondaryText,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                                if (_repeat == 'yearly') ...[
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: DropdownButtonFormField<int>(
-                                          initialValue: _dayOfMonth,
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'dia',
-                                          ),
-                                          items: List.generate(
-                                            31,
-                                            (index) => DropdownMenuItem<int>(
-                                              value: index + 1,
-                                              child: Text('${index + 1}'),
-                                            ),
-                                          ),
-                                          onChanged: (value) {
-                                            if (value != null) {
-                                              setState(() {
-                                                _dayOfMonth = value;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: DropdownButtonFormField<int>(
-                                          initialValue: _monthOfYear,
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'mês',
-                                          ),
-                                          items: const [
-                                            DropdownMenuItem(
-                                              value: 1,
-                                              child: Text('janeiro'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 2,
-                                              child: Text('fevereiro'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 3,
-                                              child: Text('março'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 4,
-                                              child: Text('abril'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 5,
-                                              child: Text('maio'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 6,
-                                              child: Text('junho'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 7,
-                                              child: Text('julho'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 8,
-                                              child: Text('agosto'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 9,
-                                              child: Text('setembro'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 10,
-                                              child: Text('outubro'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 11,
-                                              child: Text('novembro'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 12,
-                                              child: Text('dezembro'),
-                                            ),
-                                          ],
-                                          onChanged: (value) {
-                                            if (value != null) {
-                                              setState(() {
-                                                _monthOfYear = value;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                if (_isRecurring) ...[
-                                  const SizedBox(height: 12),
-                                  const _InfoBox(
-                                    icon: AppIcons.recurring,
-                                    text:
-                                        'o Fôlego considera as próximas ocorrências automaticamente',
-                                  ),
-                                ],
-                              ],
+                              ),
+                            )
+                          else
+                            _buildRecurringPanel(
+                              surface: surface,
+                              border: border,
+                              primaryText: primaryText,
+                              secondaryText: secondaryText,
+                              brightness: brightness,
                             ),
-                          ),
                           if (_error != null) ...[
                             const SizedBox(height: 14),
                             Container(
                               padding: const EdgeInsets.all(13),
                               decoration: BoxDecoration(
-                                color: AppColors.expenseText(
-                                  brightness,
-                                ).withValues(alpha: .10),
+                                color: AppColors.expenseText(brightness)
+                                    .withValues(alpha: .10),
                                 borderRadius: BorderRadius.circular(15),
                                 border: Border.all(
-                                  color: AppColors.expenseText(
-                                    brightness,
-                                  ).withValues(alpha: .20),
+                                  color: AppColors.expenseText(brightness)
+                                      .withValues(alpha: .20),
                                 ),
                               ),
                               child: Text(
@@ -1147,9 +1086,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                 style: AppTypography.body(
                                   context,
                                   fontSize: 12,
-                                  color: AppColors.expenseText(
-                                    brightness,
-                                  ),
+                                  color: AppColors.expenseText(brightness),
                                 ),
                               ),
                             ),
@@ -1177,9 +1114,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                     )
                                   : Text(
                                       _buttonLabel,
-                                      style: AppTypography.button(
-                                        context,
-                                      ),
+                                      style: AppTypography.button(context),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -1189,6 +1125,335 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentFields({
+    required Color surface,
+    required Color border,
+    required Color primaryText,
+    required Color secondaryText,
+  }) {
+    switch (_expensePayment.type) {
+      case QuickExpensePaymentType.account:
+        if (_paymentAccounts.isEmpty) {
+          return const _EmptyInstrumentState(
+            text: 'Nenhuma conta disponível',
+          );
+        }
+
+        return DropdownButtonFormField<String>(
+          initialValue: _expensePayment.accountId,
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'conta'),
+          items: _paymentAccounts
+              .map(
+                (account) => DropdownMenuItem<String>(
+                  value: account.id,
+                  child: Text(
+                    account.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _expensePayment = _expensePayment.withAccountId(value);
+              _error = null;
+            });
+          },
+        );
+
+      case QuickExpensePaymentType.creditCard:
+        if (_creditCards.isEmpty) {
+          return const _EmptyInstrumentState(
+            text: 'Nenhum cartão cadastrado',
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DropdownButtonFormField<String>(
+              initialValue: _expensePayment.cardId,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'cartão'),
+              items: _creditCards
+                  .map(
+                    (card) => DropdownMenuItem<String>(
+                      value: card.id,
+                      child: Text(
+                        _cardDisplayLabel(card),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _expensePayment = _expensePayment.withCardId(value);
+                  _error = null;
+                });
+              },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _merchant,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'estabelecimento',
+                hintText: 'opcional',
+              ),
+            ),
+            const SizedBox(height: 12),
+            _InstallmentsStepper(
+              value: _expensePayment.installmentsCount,
+              canDecrement: _expensePayment.installmentsCount >
+                  cardPurchaseMinInstallments,
+              canIncrement: _expensePayment.installmentsCount <
+                  cardPurchaseMaxInstallments,
+              onDecrement: () => _changeInstallments(-1),
+              onIncrement: () => _changeInstallments(1),
+            ),
+          ],
+        );
+
+      case QuickExpensePaymentType.benefit:
+        if (_benefitAccounts.isEmpty) {
+          return const _EmptyInstrumentState(
+            text: 'Nenhum benefício cadastrado',
+          );
+        }
+
+        return DropdownButtonFormField<String>(
+          initialValue: _expensePayment.benefitAccountId,
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'benefício'),
+          items: _benefitAccounts
+              .map(
+                (account) => DropdownMenuItem<String>(
+                  value: account.id,
+                  child: Text(
+                    account.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _expensePayment = _expensePayment.withBenefitAccountId(value);
+              _error = null;
+            });
+          },
+        );
+    }
+  }
+
+  String _cardDisplayLabel(CreditCardItem card) {
+    final details = <String>[
+      if (card.brand != null) card.brand!,
+      if (card.lastFour != null) 'final ${card.lastFour}',
+      if (card.issuer != null && card.issuer != card.brand) card.issuer!,
+    ];
+
+    if (details.isEmpty) {
+      return card.name;
+    }
+
+    return '${card.name} · ${details.join(' · ')}';
+  }
+
+  Widget _buildRecurringPanel({
+    required Color surface,
+    required Color border,
+    required Color primaryText,
+    required Color secondaryText,
+    required Brightness brightness,
+  }) {
+    return _FormPanel(
+      surface: surface,
+      border: border,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: _repeat,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'repete?'),
+            items: const [
+              DropdownMenuItem(value: 'once', child: Text('uma vez')),
+              DropdownMenuItem(value: 'weekly', child: Text('toda semana')),
+              DropdownMenuItem(
+                value: 'biweekly',
+                child: Text('a cada 2 semanas'),
+              ),
+              DropdownMenuItem(value: 'monthly', child: Text('todo mês')),
+              DropdownMenuItem(value: 'yearly', child: Text('todo ano')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _changeRepeat(value);
+              }
+            },
+          ),
+          if (_repeat == 'weekly') ...[
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: _weekday,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'dia da semana'),
+              items: const [
+                DropdownMenuItem(value: 0, child: Text('domingo')),
+                DropdownMenuItem(value: 1, child: Text('segunda-feira')),
+                DropdownMenuItem(value: 2, child: Text('terça-feira')),
+                DropdownMenuItem(value: 3, child: Text('quarta-feira')),
+                DropdownMenuItem(value: 4, child: Text('quinta-feira')),
+                DropdownMenuItem(value: 5, child: Text('sexta-feira')),
+                DropdownMenuItem(value: 6, child: Text('sábado')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _weekday = value);
+                }
+              },
+            ),
+          ],
+          if (_repeat == 'biweekly') ...[
+            const SizedBox(height: 12),
+            _InfoBox(
+              icon: AppIcons.recurring,
+              text:
+                  'repete a cada 14 dias a partir de ${_formatDate(_date)}',
+            ),
+          ],
+          if (_repeat == 'monthly') ...[
+            const SizedBox(height: 18),
+            Text(
+              'dias do mês',
+              style: AppTypography.label(
+                context,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: primaryText,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'toque em um dia escolhido para removê-lo',
+              style: AppTypography.body(
+                context,
+                fontSize: 10,
+                color: secondaryText,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ...(_monthlyDays.toList()..sort()).map(
+                  (day) => _CompactPill(
+                    label: 'dia $day',
+                    selected: true,
+                    color: AppColors.primaryPurple(brightness),
+                    onTap: () {
+                      setState(() => _monthlyDays.remove(day));
+                    },
+                  ),
+                ),
+                _CompactPill(
+                  label: 'último dia',
+                  selected: _monthlyLastDay,
+                  color: AppColors.primaryPurple(brightness),
+                  onTap: () {
+                    setState(() => _monthlyLastDay = !_monthlyLastDay);
+                  },
+                ),
+                _CompactPill(
+                  label: 'outro dia',
+                  icon: AppIcons.add,
+                  color: AppColors.primaryPurple(brightness),
+                  onTap: _pickMonthlyDay,
+                ),
+              ],
+            ),
+            if (_monthlyDays.length + (_monthlyLastDay ? 1 : 0) > 1) ...[
+              const SizedBox(height: 12),
+              Text(
+                'o valor informado será considerado em cada uma dessas datas',
+                style: AppTypography.body(
+                  context,
+                  fontSize: 11,
+                  color: secondaryText,
+                ),
+              ),
+            ],
+          ],
+          if (_repeat == 'yearly') ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    initialValue: _dayOfMonth,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'dia'),
+                    items: List.generate(
+                      31,
+                      (index) => DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Text('${index + 1}'),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _dayOfMonth = value);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    initialValue: _monthOfYear,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'mês'),
+                    items: const [
+                      DropdownMenuItem(value: 1, child: Text('janeiro')),
+                      DropdownMenuItem(value: 2, child: Text('fevereiro')),
+                      DropdownMenuItem(value: 3, child: Text('março')),
+                      DropdownMenuItem(value: 4, child: Text('abril')),
+                      DropdownMenuItem(value: 5, child: Text('maio')),
+                      DropdownMenuItem(value: 6, child: Text('junho')),
+                      DropdownMenuItem(value: 7, child: Text('julho')),
+                      DropdownMenuItem(value: 8, child: Text('agosto')),
+                      DropdownMenuItem(value: 9, child: Text('setembro')),
+                      DropdownMenuItem(value: 10, child: Text('outubro')),
+                      DropdownMenuItem(value: 11, child: Text('novembro')),
+                      DropdownMenuItem(value: 12, child: Text('dezembro')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _monthOfYear = value);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_isRecurring) ...[
+            const SizedBox(height: 12),
+            const _InfoBox(
+              icon: AppIcons.recurring,
+              text:
+                  'o Fôlego considera as próximas ocorrências automaticamente',
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -1252,7 +1517,6 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
     if (!_isExpense) {
       final selected = _selectedIncomeCategory;
-
       final visual = CategoryVisuals.resolve(
         brightness: brightness,
         category: selected?.name,
@@ -1297,9 +1561,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
     final familyIcon = parent == null
         ? CategoryVisuals.iconFor(category: 'A classificar')
-        : CategoryVisuals.iconFor(
-            category: parent.name,
-          );
+        : CategoryVisuals.iconFor(category: parent.name);
 
     return _FormPanel(
       surface: surface,
@@ -1363,9 +1625,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               children: [
                 _CategoryChoiceChip(
                   label: 'sem subcategoria',
-                  icon: CategoryVisuals.iconFor(
-                    category: parent.name,
-                  ),
+                  icon: CategoryVisuals.iconFor(category: parent.name),
                   color: familyColor,
                   selected: _expenseSubcategoryId == null,
                   onTap: () {
@@ -1405,16 +1665,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     );
   }
 
-  int _postgresWeekday(
-    DateTime date,
-  ) {
-    return date.weekday % 7;
-  }
+  int _postgresWeekday(DateTime date) => date.weekday % 7;
 
-  CategoryItem? _findCategory(
-    List<CategoryItem> categories,
-    String? id,
-  ) {
+  CategoryItem? _findCategory(List<CategoryItem> categories, String? id) {
     if (id == null) {
       return null;
     }
@@ -1428,19 +1681,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     return null;
   }
 
-  void _sortCategories(
-    List<CategoryItem> categories,
-  ) {
+  void _sortCategories(List<CategoryItem> categories) {
     categories.sort(
-      (a, b) => _sortKey(a.name).compareTo(
-        _sortKey(b.name),
-      ),
+      (a, b) => _sortKey(a.name).compareTo(_sortKey(b.name)),
     );
   }
 
-  String _sortKey(
-    String value,
-  ) {
+  String _sortKey(String value) {
     return value
         .toLowerCase()
         .replaceAll('á', 'a')
@@ -1468,19 +1715,14 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         .replaceAll('ç', 'c');
   }
 
-  String _formatDate(
-    DateTime date,
-  ) {
+  String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
-
     final month = date.month.toString().padLeft(2, '0');
 
     return '$day/$month/${date.year}';
   }
 
-  String _friendlyError(
-    Object error,
-  ) {
+  String _friendlyError(Object error) {
     final text = error.toString();
 
     if (text.contains('write_access_denied')) {
@@ -1491,19 +1733,288 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       return 'o valor precisa ser maior que zero';
     }
 
+    if (text.contains('invalid_installments_count')) {
+      return 'a quantidade de parcelas não é válida';
+    }
+
+    if (text.contains('invalid_card')) {
+      return 'selecione um cartão válido';
+    }
+
+    if (text.contains('invalid_benefit_account')) {
+      return 'selecione um benefício válido';
+    }
+
     if (error is TimeoutException) {
       return error.message ?? 'demorou demais para carregar';
     }
 
     return text
-        .replaceFirst(
-          'Invalid argument(s): ',
-          '',
-        )
-        .replaceFirst(
-          'Exception: ',
-          '',
+        .replaceFirst('Invalid argument(s): ', '')
+        .replaceFirst('Exception: ', '');
+  }
+}
+
+class _PaymentMethodSelector extends StatelessWidget {
+  const _PaymentMethodSelector({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final QuickExpensePaymentType selected;
+  final ValueChanged<QuickExpensePaymentType> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - 16) / 3;
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _PaymentMethodOption(
+              width: itemWidth,
+              label: 'Conta',
+              icon: AppIcons.account,
+              selected: selected == QuickExpensePaymentType.account,
+              onTap: () => onSelected(QuickExpensePaymentType.account),
+            ),
+            _PaymentMethodOption(
+              width: itemWidth,
+              label: 'Cartão',
+              icon: AppIcons.creditCard,
+              selected: selected == QuickExpensePaymentType.creditCard,
+              onTap: () => onSelected(QuickExpensePaymentType.creditCard),
+            ),
+            _PaymentMethodOption(
+              width: itemWidth,
+              label: 'Benefício',
+              icon: AppIcons.benefit,
+              selected: selected == QuickExpensePaymentType.benefit,
+              onTap: () => onSelected(QuickExpensePaymentType.benefit),
+            ),
+          ],
         );
+      },
+    );
+  }
+}
+
+class _PaymentMethodOption extends StatelessWidget {
+  const _PaymentMethodOption({
+    required this.width,
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final double width;
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final border = AppColors.border(brightness);
+    final primaryText = AppColors.primaryText(brightness);
+    final accent = AppColors.lime;
+
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 11),
+            decoration: BoxDecoration(
+              color: selected
+                  ? accent.withValues(alpha: .12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected ? accent.withValues(alpha: .55) : border,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: selected ? accent : primaryText,
+                ),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? accent : primaryText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InstallmentsStepper extends StatelessWidget {
+  const _InstallmentsStepper({
+    required this.value,
+    required this.canDecrement,
+    required this.canIncrement,
+    required this.onDecrement,
+    required this.onIncrement,
+  });
+
+  final int value;
+  final bool canDecrement;
+  final bool canIncrement;
+  final VoidCallback onDecrement;
+  final VoidCallback onIncrement;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final border = AppColors.border(brightness);
+    final primaryText = AppColors.primaryText(brightness);
+    final secondaryText = AppColors.secondaryText(brightness);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'parcelas',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 9,
+                    color: secondaryText,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${value}x',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: primaryText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _StepperButton(
+            label: '−',
+            enabled: canDecrement,
+            onTap: onDecrement,
+          ),
+          const SizedBox(width: 8),
+          _StepperButton(
+            label: '+',
+            enabled: canIncrement,
+            onTap: onIncrement,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final border = AppColors.border(brightness);
+    final primaryText = AppColors.primaryText(brightness);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border.all(color: border),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: AppTypography.section(
+              context,
+              fontSize: 18,
+              color: enabled ? primaryText : primaryText.withValues(alpha: .35),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyInstrumentState extends StatelessWidget {
+  const _EmptyInstrumentState({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: AppColors.primaryPurple(brightness).withValues(alpha: .05),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.border(brightness)),
+      ),
+      child: Text(
+        text,
+        style: AppTypography.body(
+          context,
+          fontSize: 11,
+          color: AppColors.secondaryText(brightness),
+        ),
+      ),
+    );
   }
 }
 
@@ -1551,9 +2062,8 @@ class _InlineCategoryPicker extends StatelessWidget {
                     shrinkWrap: true,
                     padding: const EdgeInsets.all(8),
                     itemCount: categories.length,
-                    separatorBuilder: (context, index) {
-                      return const SizedBox(height: 6);
-                    },
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 6),
                     itemBuilder: (context, index) {
                       final category = categories[index];
                       final selected = category.id == selectedId;
@@ -1664,24 +2174,15 @@ class _MonthlyDayPicker extends StatelessWidget {
         color: background,
         borderRadius: dialogMode
             ? BorderRadius.circular(28)
-            : const BorderRadius.vertical(
-                top: Radius.circular(30),
-              ),
+            : const BorderRadius.vertical(top: Radius.circular(30)),
         border: dialogMode
             ? Border.all(color: border)
-            : Border(
-                top: BorderSide(color: border),
-              ),
+            : Border(top: BorderSide(color: border)),
       ),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            14,
-            20,
-            28,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1727,13 +2228,8 @@ class _MonthlyDayPicker extends StatelessWidget {
                   ),
                   if (dialogMode)
                     IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: Icon(
-                        AppIcons.close,
-                        color: secondaryText,
-                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(AppIcons.close, color: secondaryText),
                     ),
                 ],
               ),
@@ -1758,9 +2254,7 @@ class _MonthlyDayPicker extends StatelessWidget {
                     child: InkWell(
                       onTap: selected
                           ? null
-                          : () {
-                              Navigator.of(context).pop(day);
-                            },
+                          : () => Navigator.of(context).pop(day),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         alignment: Alignment.center,
@@ -1815,7 +2309,6 @@ class _CategorySelectTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -1826,15 +2319,10 @@ class _CategorySelectTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Ink(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 13,
-            vertical: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: border,
-            ),
+            border: Border.all(color: border),
           ),
           child: Row(
             children: [
@@ -1892,18 +2380,13 @@ class _CategorySelectTile extends StatelessWidget {
 }
 
 class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SectionLabel({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
 
     return Column(
@@ -1943,18 +2426,14 @@ class _FormPanel extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: border,
-        ),
+        border: Border.all(color: border),
       ),
       child: child,
     );
@@ -1977,11 +2456,8 @@ class _CategoryChoiceChip extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final primaryText = AppColors.primaryText(brightness);
     final border = AppColors.border(brightness);
 
@@ -1991,21 +2467,14 @@ class _CategoryChoiceChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(99),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(
-            7,
-            6,
-            11,
-            6,
-          ),
+          padding: const EdgeInsets.fromLTRB(7, 6, 11, 6),
           decoration: BoxDecoration(
             color: selected
                 ? color.withValues(alpha: .14)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(99),
             border: Border.all(
-              color: selected
-                  ? color.withValues(alpha: .48)
-                  : border,
+              color: selected ? color.withValues(alpha: .48) : border,
             ),
           ),
           child: Row(
@@ -2048,16 +2517,12 @@ class _CompactPill extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-
   final bool selected;
   final IconData? icon;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
 
@@ -2067,30 +2532,21 @@ class _CompactPill extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(99),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 11,
-            vertical: 7,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           decoration: BoxDecoration(
             color: selected
                 ? color.withValues(alpha: .13)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(99),
             border: Border.all(
-              color: selected
-                  ? color.withValues(alpha: .42)
-                  : border,
+              color: selected ? color.withValues(alpha: .42) : border,
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 15,
-                  color: color,
-                ),
+                Icon(icon, size: 15, color: color),
                 const SizedBox(width: 5),
               ],
               Text(
@@ -2119,14 +2575,11 @@ class _DateTile extends StatelessWidget {
 
   final String title;
   final String value;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -2138,14 +2591,9 @@ class _DateTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 13,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
-            border: Border.all(
-              color: border,
-            ),
+            border: Border.all(color: border),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -2158,11 +2606,7 @@ class _DateTile extends StatelessWidget {
                   color: purple.withValues(alpha: .10),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(
-                  AppIcons.calendar,
-                  size: 18,
-                  color: purple,
-                ),
+                child: Icon(AppIcons.calendar, size: 18, color: purple),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -2190,11 +2634,12 @@ class _DateTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                AppIcons.chevronRight,
-                size: 18,
-                color: secondaryText,
-              ),
+              if (onTap != null)
+                Icon(
+                  AppIcons.chevronRight,
+                  size: 18,
+                  color: secondaryText,
+                ),
             ],
           ),
         ),
@@ -2204,20 +2649,14 @@ class _DateTile extends StatelessWidget {
 }
 
 class _InfoBox extends StatelessWidget {
-  const _InfoBox({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoBox({required this.icon, required this.text});
 
   final IconData icon;
   final String text;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final border = AppColors.border(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
@@ -2226,19 +2665,13 @@ class _InfoBox extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: purple.withValues(alpha: .06),
-        border: Border.all(
-          color: border,
-        ),
+        border: Border.all(color: border),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: purple,
-          ),
+          Icon(icon, size: 18, color: purple),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
