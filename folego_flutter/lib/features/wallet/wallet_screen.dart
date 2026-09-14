@@ -27,15 +27,12 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   bool _loading = true;
   String? _error;
-
   WalletOverview? _overview;
-
   int _section = 0;
 
   @override
   void initState() {
     super.initState();
-
     _load();
   }
 
@@ -50,18 +47,14 @@ class _WalletScreenState extends State<WalletScreen> {
         spaceId: widget.spaceId,
       );
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _overview = overview;
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _loading = false;
@@ -71,9 +64,7 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Future<void> _openInvoicePayment(WalletCard card) async {
-    if (card.invoiceId == null || card.invoiceBalance <= 0) {
-      return;
-    }
+    if (!card.canPayInvoice) return;
 
     final paid = await showCardInvoicePaymentSheet(
       context: context,
@@ -82,9 +73,7 @@ class _WalletScreenState extends State<WalletScreen> {
       card: card,
     );
 
-    if (paid != true || !mounted) {
-      return;
-    }
+    if (paid != true || !mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('fatura atualizada')),
@@ -95,34 +84,20 @@ class _WalletScreenState extends State<WalletScreen> {
 
   String _money(double value) {
     final negative = value < 0;
-    final absolute = value.abs();
-
-    final parts = absolute.toStringAsFixed(2).split('.');
-
-    final integer = parts.first;
-    final decimal = parts.last;
-
-    final reversed = integer.split('').reversed.toList();
-
+    final parts = value.abs().toStringAsFixed(2).split('.');
+    final reversed = parts.first.split('').reversed.toList();
     final groups = <String>[];
 
     for (var i = 0; i < reversed.length; i += 3) {
       final end = i + 3 < reversed.length ? i + 3 : reversed.length;
-
       groups.add(reversed.sublist(i, end).reversed.join());
     }
 
-    final formatted = groups.reversed.join('.');
-
-    return '${negative ? '-' : ''}'
-        'R\$ $formatted,$decimal';
+    return '${negative ? '-' : ''}R\$ ${groups.reversed.join('.')},${parts.last}';
   }
 
   String _date(DateTime? value) {
-    if (value == null) {
-      return '—';
-    }
-
+    if (value == null) return '—';
     return '${value.day.toString().padLeft(2, '0')}/'
         '${value.month.toString().padLeft(2, '0')}/'
         '${value.year}';
@@ -132,19 +107,16 @@ class _WalletScreenState extends State<WalletScreen> {
     switch (value) {
       case 'checking':
         return 'conta corrente';
-
       case 'savings':
         return 'poupança';
-
       case 'cash':
         return 'dinheiro';
-
+      case 'reserve':
+        return 'reserva';
       case 'investment':
         return 'investimento';
-
-      case 'benefit':
-        return 'benefício';
-
+      case 'other':
+        return 'outra conta';
       default:
         return value;
     }
@@ -154,13 +126,10 @@ class _WalletScreenState extends State<WalletScreen> {
     switch (type) {
       case 'cash':
         return TablerIcons.cashBanknote;
-
       case 'investment':
         return TablerIcons.chartLine;
-
-      case 'benefit':
-        return TablerIcons.gift;
-
+      case 'reserve':
+        return TablerIcons.lock;
       default:
         return TablerIcons.buildingBank;
     }
@@ -171,17 +140,12 @@ class _WalletScreenState extends State<WalletScreen> {
     required Brightness brightness,
     required Color fallback,
   }) {
-    if (value < 0) {
-      return AppColors.expenseText(brightness);
-    }
-
-    return fallback;
+    return value < 0 ? AppColors.expenseText(brightness) : fallback;
   }
 
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final background = AppColors.background(brightness);
     final layout = AppBreakpoints.of(context);
     final useTwoColumns =
@@ -202,15 +166,9 @@ class _WalletScreenState extends State<WalletScreen> {
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: 5,
-                  child: _buildSummary(brightness),
-                ),
+                Expanded(flex: 5, child: _buildSummary(brightness)),
                 const SizedBox(width: 24),
-                Expanded(
-                  flex: 7,
-                  child: details,
-                ),
+                Expanded(flex: 7, child: details),
               ],
             )
           : Column(
@@ -235,9 +193,7 @@ class _WalletScreenState extends State<WalletScreen> {
               padding: const EdgeInsets.fromLTRB(0, 22, 0, 150),
               children: [
                 _buildHeader(brightness),
-
                 const SizedBox(height: 22),
-
                 if (_loading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 100),
@@ -257,11 +213,8 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildHeader(Brightness brightness) {
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final surface = AppColors.surface(brightness);
-
     final border = AppColors.border(brightness);
 
     return Column(
@@ -307,25 +260,17 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildSummary(Brightness brightness) {
     final summary = _overview!.summary;
-
     final surface = AppColors.surface(brightness);
-
     final border = AppColors.border(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final purple = AppColors.primaryPurple(brightness);
-
     final expense = AppColors.expenseText(brightness);
-
     final availableColor = _valueColor(
       value: summary.availableCash,
       brightness: brightness,
       fallback: primaryText,
     );
-
     final highInvoice = summary.totalCardInvoice > summary.totalCash;
 
     return Column(
@@ -358,7 +303,6 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
           const SizedBox(height: 10),
         ],
-
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -394,9 +338,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
@@ -409,9 +351,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 6),
-
               Text(
                 'o que está disponível nas contas marcadas para uso',
                 style: AppTypography.body(
@@ -420,9 +360,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   color: secondaryText,
                 ),
               ),
-
               const SizedBox(height: 20),
-
               Row(
                 children: [
                   Expanded(
@@ -443,9 +381,14 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
-
+              _summaryMetric(
+                label: 'benefícios disponíveis',
+                value: summary.totalBenefit,
+                brightness: brightness,
+                icon: AppIcons.benefit,
+              ),
+              const SizedBox(height: 10),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -495,22 +438,21 @@ class _WalletScreenState extends State<WalletScreen> {
     required double value,
     required Brightness brightness,
     bool emphasize = false,
+    IconData? icon,
   }) {
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final border = AppColors.border(brightness);
-
     final expense = AppColors.expenseText(brightness);
-
+    final purple = AppColors.primaryPurple(brightness);
     final valueColor = value < 0
         ? expense
         : emphasize
-        ? expense
-        : primaryText;
+            ? expense
+            : primaryText;
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: emphasize
@@ -521,28 +463,38 @@ class _WalletScreenState extends State<WalletScreen> {
           color: emphasize ? expense.withValues(alpha: .20) : border,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            label,
-            style: AppTypography.label(
-              context,
-              fontSize: 10,
-              color: secondaryText,
-            ),
-          ),
-          const SizedBox(height: 5),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              _money(value),
-              style: AppTypography.money(
-                context,
-                fontSize: 15,
-                color: valueColor,
-              ),
+          if (icon != null) ...[
+            Icon(icon, size: 17, color: purple),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 10,
+                    color: secondaryText,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _money(value),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 15,
+                      color: valueColor,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -552,10 +504,11 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildSelector(Brightness brightness) {
     final sections = [
-      ('contas', TablerIcons.buildingBank, _overview!.accounts.length),
-      ('cartões', TablerIcons.creditCard, _overview!.cards.length),
-      ('dívidas', TablerIcons.wallet, _overview!.debts.length),
-      ('parcelas', TablerIcons.calendarDollar, _overview!.installments.length),
+      ('contas', AppIcons.account, _overview!.paymentAccounts.length),
+      ('cartões', AppIcons.creditCard, _overview!.cards.length),
+      ('benefícios', AppIcons.benefit, _overview!.benefits.length),
+      ('dívidas', AppIcons.debt, _overview!.debts.length),
+      ('parcelas', AppIcons.calendar, _overview!.installments.length),
     ];
 
     return SingleChildScrollView(
@@ -563,7 +516,6 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Row(
         children: List.generate(sections.length, (index) {
           final selected = _section == index;
-
           final section = sections[index];
 
           return Padding(
@@ -572,11 +524,7 @@ class _WalletScreenState extends State<WalletScreen> {
               label: '${section.$1} ${section.$3}',
               icon: section.$2,
               selected: selected,
-              onTap: () {
-                setState(() {
-                  _section = index;
-                });
-              },
+              onTap: () => setState(() => _section = index),
             ),
           );
         }),
@@ -588,16 +536,14 @@ class _WalletScreenState extends State<WalletScreen> {
     switch (_section) {
       case 0:
         return _buildAccounts(brightness);
-
       case 1:
         return _buildCards(brightness);
-
       case 2:
-        return _buildDebts(brightness);
-
+        return _buildBenefits(brightness);
       case 3:
+        return _buildDebts(brightness);
+      case 4:
         return _buildInstallments(brightness);
-
       default:
         return const SizedBox();
     }
@@ -608,10 +554,6 @@ class _WalletScreenState extends State<WalletScreen> {
     required String description,
     required Brightness brightness,
   }) {
-    final primaryText = AppColors.primaryText(brightness);
-
-    final secondaryText = AppColors.secondaryText(brightness);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -622,7 +564,7 @@ class _WalletScreenState extends State<WalletScreen> {
             style: AppTypography.section(
               context,
               fontSize: 20,
-              color: primaryText,
+              color: AppColors.primaryText(brightness),
             ),
           ),
           const SizedBox(height: 3),
@@ -631,7 +573,7 @@ class _WalletScreenState extends State<WalletScreen> {
             style: AppTypography.body(
               context,
               fontSize: 12,
-              color: secondaryText,
+              color: AppColors.secondaryText(brightness),
             ),
           ),
         ],
@@ -639,8 +581,30 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  Widget _responsiveCards(List<Widget> cards) {
+    final layout = AppBreakpoints.of(context);
+    final useGrid =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+
+    if (!useGrid) {
+      return Column(children: cards);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          children: cards
+              .map((card) => SizedBox(width: width, child: card))
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+
   Widget _buildAccounts(Brightness brightness) {
-    final accounts = _overview!.accounts;
+    final accounts = _overview!.paymentAccounts;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,43 +614,33 @@ class _WalletScreenState extends State<WalletScreen> {
           description: 'onde seu dinheiro está hoje',
           brightness: brightness,
         ),
-
         if (accounts.isEmpty)
           _emptySection(
-            icon: TablerIcons.buildingBank,
+            icon: AppIcons.account,
             title: 'nenhuma conta cadastrada',
             description: 'suas contas aparecerão aqui',
             brightness: brightness,
           )
         else
-          ...accounts.map((account) => _accountCard(account, brightness)),
+          _responsiveCards(
+            accounts.map((account) => _accountCard(account, brightness)).toList(),
+          ),
       ],
     );
   }
 
   Widget _accountCard(WalletAccount account, Brightness brightness) {
     final purple = AppColors.primaryPurple(brightness);
-
     final positive = AppColors.positiveText(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
-    final balanceColor = _valueColor(
-      value: account.balance,
-      brightness: brightness,
-      fallback: primaryText,
-    );
 
     return _baseCard(
       brightness: brightness,
       child: Row(
         children: [
           _iconBox(icon: _accountIcon(account.type), color: purple),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,9 +678,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ],
             ),
           ),
-
           const SizedBox(width: 10),
-
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -734,7 +686,130 @@ class _WalletScreenState extends State<WalletScreen> {
               style: AppTypography.money(
                 context,
                 fontSize: 14,
-                color: balanceColor,
+                color: _valueColor(
+                  value: account.balance,
+                  brightness: brightness,
+                  fallback: primaryText,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefits(Brightness brightness) {
+    final benefits = _overview!.benefits;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          title: 'seus benefícios',
+          description: 'saldos de alimentação, refeição e outros benefícios',
+          brightness: brightness,
+        ),
+        if (benefits.isEmpty)
+          _emptySection(
+            icon: AppIcons.benefit,
+            title: 'nenhum benefício cadastrado',
+            description: 'seus saldos de benefício aparecerão aqui',
+            brightness: brightness,
+          )
+        else
+          _responsiveCards(
+            benefits.map((benefit) => _benefitCard(benefit, brightness)).toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _benefitCard(WalletAccount benefit, Brightness brightness) {
+    final purple = AppColors.primaryPurple(brightness);
+    final primaryText = AppColors.primaryText(brightness);
+    final secondaryText = AppColors.secondaryText(brightness);
+    final positive = AppColors.positiveText(brightness);
+
+    return _baseCard(
+      brightness: brightness,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _iconBox(icon: AppIcons.benefit, color: purple),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      benefit.name,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      benefit.institution == null || benefit.institution!.trim().isEmpty
+                          ? 'benefício'
+                          : '${benefit.institution} · benefício',
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'saldo disponível',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      color: secondaryText,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _money(benefit.balance),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 14,
+                      color: _valueColor(
+                        value: benefit.balance,
+                        brightness: brightness,
+                        fallback: primaryText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: positive.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: positive.withValues(alpha: .18)),
+            ),
+            child: Text(
+              'saldo de benefício · não é crédito e não possui fatura',
+              style: AppTypography.body(
+                context,
+                fontSize: 10,
+                color: secondaryText,
               ),
             ),
           ),
@@ -754,33 +829,29 @@ class _WalletScreenState extends State<WalletScreen> {
           description: 'faturas, limites e vencimentos',
           brightness: brightness,
         ),
-
         if (cards.isEmpty)
           _emptySection(
-            icon: TablerIcons.creditCard,
+            icon: AppIcons.creditCard,
             title: 'nenhum cartão cadastrado',
             description: 'seus cartões de crédito aparecerão aqui',
             brightness: brightness,
           )
         else
-          ...cards.map((card) => _cardCard(card, brightness)),
+          _responsiveCards(
+            cards.map((card) => _cardCard(card, brightness)).toList(),
+          ),
       ],
     );
   }
 
   Widget _cardCard(WalletCard card, Brightness brightness) {
     final limit = card.effectiveLimit;
-
     final ratio = limit != null && limit > 0
         ? (card.invoiceBalance / limit).clamp(0.0, 1.0)
         : null;
-
     final purple = AppColors.primaryPurple(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final border = AppColors.border(brightness);
 
     return _baseCard(
@@ -789,10 +860,8 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           Row(
             children: [
-              _iconBox(icon: TablerIcons.creditCard, color: purple),
-
+              _iconBox(icon: AppIcons.creditCard, color: purple),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,8 +879,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     Text(
                       [
                         if (card.brand != null) card.brand!,
-                        if (card.lastFour != null)
-                          '•••• ${card.lastFour!.trim()}',
+                        if (card.lastFour != null) '•••• ${card.lastFour!.trim()}',
                       ].join(' · '),
                       style: AppTypography.body(
                         context,
@@ -822,7 +890,6 @@ class _WalletScreenState extends State<WalletScreen> {
                   ],
                 ),
               ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -850,9 +917,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           if (ratio != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(99),
@@ -865,7 +930,6 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             const SizedBox(height: 8),
           ],
-
           Row(
             children: [
               Expanded(
@@ -875,8 +939,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       ? '—'
                       : _money(card.availableLimit!),
                   brightness: brightness,
-                  valueColor:
-                      card.availableLimit != null && card.availableLimit! < 0
+                  valueColor: card.availableLimit != null && card.availableLimit! < 0
                       ? AppColors.expenseText(brightness)
                       : null,
                 ),
@@ -893,9 +956,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
           Row(
             children: [
               Expanded(
@@ -919,8 +980,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
             ],
           ),
-
-          if (card.invoiceId != null && card.invoiceBalance > 0) ...[
+          if (card.canPayInvoice) ...[
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
@@ -955,33 +1015,29 @@ class _WalletScreenState extends State<WalletScreen> {
           description: 'acompanhe o que ainda falta pagar',
           brightness: brightness,
         ),
-
         if (debts.isEmpty)
           _emptySection(
-            icon: TablerIcons.wallet,
+            icon: AppIcons.debt,
             title: 'nenhuma dívida ativa',
             description: 'quando houver uma dívida ativa, ela aparecerá aqui',
             brightness: brightness,
           )
         else
-          ...debts.map((debt) => _debtCard(debt, brightness)),
+          _responsiveCards(
+            debts.map((debt) => _debtCard(debt, brightness)).toList(),
+          ),
       ],
     );
   }
 
   Widget _debtCard(WalletDebt debt, Brightness brightness) {
     final total = debt.originalAmount ?? debt.openingBalance;
-
     final progress = total > 0
         ? ((total - debt.remainingBalance) / total).clamp(0.0, 1.0)
         : 0.0;
-
     final expense = AppColors.expenseText(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final border = AppColors.border(brightness);
 
     return _baseCard(
@@ -990,10 +1046,8 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           Row(
             children: [
-              _iconBox(icon: TablerIcons.wallet, color: expense),
-
+              _iconBox(icon: AppIcons.debt, color: expense),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1021,7 +1075,6 @@ class _WalletScreenState extends State<WalletScreen> {
                   ],
                 ),
               ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -1045,9 +1098,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
@@ -1057,9 +1108,7 @@ class _WalletScreenState extends State<WalletScreen> {
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.lime),
             ),
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
               Expanded(
@@ -1073,8 +1122,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               if (debt.totalInstallments != null)
                 Text(
-                  '${debt.paidInstallments}/'
-                  '${debt.totalInstallments} pagas',
+                  '${debt.paidInstallments}/${debt.totalInstallments} pagas',
                   style: AppTypography.body(
                     context,
                     fontSize: 10,
@@ -1099,33 +1147,29 @@ class _WalletScreenState extends State<WalletScreen> {
           description: 'compras parceladas ainda em andamento',
           brightness: brightness,
         ),
-
         if (installments.isEmpty)
           _emptySection(
-            icon: TablerIcons.calendarDollar,
+            icon: AppIcons.calendar,
             title: 'nenhum parcelamento ativo',
             description: 'compras parceladas aparecerão aqui',
             brightness: brightness,
           )
         else
-          ...installments.map((item) => _installmentCard(item, brightness)),
+          _responsiveCards(
+            installments.map((item) => _installmentCard(item, brightness)).toList(),
+          ),
       ],
     );
   }
 
   Widget _installmentCard(WalletInstallment item, Brightness brightness) {
     final paid = item.installmentsCount - item.remainingInstallments;
-
     final progress = item.installmentsCount > 0
         ? (paid / item.installmentsCount).clamp(0.0, 1.0)
         : 0.0;
-
     final purple = AppColors.primaryPurple(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final border = AppColors.border(brightness);
 
     return _baseCard(
@@ -1134,10 +1178,8 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           Row(
             children: [
-              _iconBox(icon: TablerIcons.calendarDollar, color: purple),
-
+              _iconBox(icon: AppIcons.calendar, color: purple),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1165,7 +1207,6 @@ class _WalletScreenState extends State<WalletScreen> {
                   ],
                 ),
               ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -1189,9 +1230,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
@@ -1201,15 +1240,12 @@ class _WalletScreenState extends State<WalletScreen> {
               valueColor: AlwaysStoppedAnimation<Color>(purple),
             ),
           ),
-
           const SizedBox(height: 9),
-
           Row(
             children: [
               Expanded(
                 child: Text(
-                  '$paid de '
-                  '${item.installmentsCount} parcelas concluídas',
+                  '$paid de ${item.installmentsCount} parcelas concluídas',
                   style: AppTypography.body(
                     context,
                     fontSize: 10,
@@ -1267,21 +1303,16 @@ class _WalletScreenState extends State<WalletScreen> {
     bool alignRight = false,
     Color? valueColor,
   }) {
-    final primaryText = AppColors.primaryText(brightness);
-
-    final secondaryText = AppColors.secondaryText(brightness);
-
     return Column(
-      crossAxisAlignment: alignRight
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
+      crossAxisAlignment:
+          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: AppTypography.label(
             context,
             fontSize: 9,
-            color: secondaryText,
+            color: AppColors.secondaryText(brightness),
           ),
         ),
         const SizedBox(height: 2),
@@ -1292,7 +1323,7 @@ class _WalletScreenState extends State<WalletScreen> {
             context,
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: valueColor ?? primaryText,
+            color: valueColor ?? AppColors.primaryText(brightness),
           ),
         ),
       ],
@@ -1306,9 +1337,7 @@ class _WalletScreenState extends State<WalletScreen> {
     required Brightness brightness,
   }) {
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final purple = AppColors.primaryPurple(brightness);
 
     return Container(
@@ -1350,9 +1379,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildError(Brightness brightness) {
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final expense = AppColors.expenseText(brightness);
 
     return Container(
@@ -1410,15 +1437,10 @@ class _WalletSectionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-
     final purple = AppColors.primaryPurple(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final surface = AppColors.surface(brightness);
-
     final border = AppColors.border(brightness);
 
     return Material(

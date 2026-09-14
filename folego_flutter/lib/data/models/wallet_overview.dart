@@ -13,6 +13,14 @@ class WalletOverview {
   final List<WalletDebt> debts;
   final List<WalletInstallment> installments;
 
+  List<WalletAccount> get paymentAccounts => accounts
+      .where((account) => !account.isBenefit)
+      .toList(growable: false);
+
+  List<WalletAccount> get benefits => accounts
+      .where((account) => account.isBenefit)
+      .toList(growable: false);
+
   factory WalletOverview.fromJson(
     Map<String, dynamic> json,
   ) {
@@ -60,10 +68,12 @@ class WalletSummary {
     required this.availableCash,
     required this.totalCardInvoice,
     required this.totalDebtRemaining,
+    this.totalBenefit = 0,
   });
 
   final double totalCash;
   final double availableCash;
+  final double totalBenefit;
   final double totalCardInvoice;
   final double totalDebtRemaining;
 
@@ -74,6 +84,8 @@ class WalletSummary {
       totalCash: _number(json['total_cash']),
       availableCash:
           _number(json['available_cash']),
+      totalBenefit:
+          _number(json['total_benefit']),
       totalCardInvoice:
           _number(json['total_card_invoice']),
       totalDebtRemaining:
@@ -92,12 +104,18 @@ class WalletAccount {
     this.institution,
   });
 
+  static const benefitType = 'benefit';
+
   final String id;
   final String name;
   final String? institution;
   final String type;
   final bool availableForSpending;
   final double balance;
+
+  bool get isBenefit => type == benefitType;
+
+  bool get isCashAccount => !isBenefit;
 
   factory WalletAccount.fromJson(
     Map<String, dynamic> json,
@@ -156,6 +174,8 @@ class WalletCard {
 
   double? get effectiveLimit =>
       personalLimit ?? issuerLimit;
+
+  bool get canPayInvoice => invoiceId != null && invoiceBalance > 0;
 
   factory WalletCard.fromJson(
     Map<String, dynamic> json,
