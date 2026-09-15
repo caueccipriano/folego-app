@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:folego/data/models/account_item.dart';
 import 'package:folego/data/models/category_item.dart';
@@ -50,7 +49,8 @@ void main() {
       expect(repository.createdAccountId, isNull);
       expect(repository.createdCardId, 'card-1');
     } finally {
-      await _disposeHarness(tester, repository);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     }
   });
 
@@ -91,7 +91,8 @@ void main() {
       expect(repository.createdAccountId, 'account-1');
       expect(repository.createdCardId, isNull);
     } finally {
-      await _disposeHarness(tester, repository);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     }
   });
 }
@@ -102,33 +103,9 @@ Future<void> _flushUi(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 250));
 }
 
-Future<void> _disposeHarness(
-  WidgetTester tester,
-  _FakeFolegoRepository repository,
-) async {
-  await tester.pumpWidget(const SizedBox.shrink());
-  await tester.pump();
-  await repository.dispose();
-}
-
-class _FakeFolegoRepository extends FolegoRepository {
-  factory _FakeFolegoRepository() {
-    final client = SupabaseClient(
-      'https://example.supabase.co',
-      'test-anon-key',
-      authOptions: const AuthClientOptions(autoRefreshToken: false),
-    );
-    return _FakeFolegoRepository._(client);
-  }
-
-  _FakeFolegoRepository._(this.client) : super(client);
-
-  final SupabaseClient client;
-
+class _FakeFolegoRepository implements FolegoRepository {
   String? createdAccountId;
   String? createdCardId;
-
-  Future<void> dispose() => client.dispose();
 
   @override
   Future<List<AccountItem>> listAccounts(String spaceId) async => const [
@@ -180,4 +157,7 @@ class _FakeFolegoRepository extends FolegoRepository {
     createdCardId = cardId;
     return 'recurring-created';
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
