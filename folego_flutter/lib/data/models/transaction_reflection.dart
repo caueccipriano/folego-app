@@ -27,7 +27,12 @@ bool isDiaryEligibleEventType(String eventType) {
 }
 
 String diaryDisplayDescription(String value) {
-  return value.replaceFirst(RegExp(r'\s*\[extrato\s+\d+\]\s*\$', caseSensitive: false), '').trim();
+  return value
+      .replaceFirst(
+        RegExp(r'\s*\[extrato\s+\d+\]\s*$', caseSensitive: false),
+        '',
+      )
+      .trim();
 }
 
 class TransactionReflection {
