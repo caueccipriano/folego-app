@@ -97,9 +97,10 @@ extension FolegoRepositoryPaymentInstruments on FolegoRepository {
     required String description,
     required bool isCredit,
     String? categoryId,
+    DateTime? occurredAt,
   }) async {
     final data = await Supabase.instance.client.rpc(
-      'register_benefit',
+      'register_benefit_at',
       params: {
         'p_space_id': spaceId,
         'p_account_id': accountId,
@@ -107,6 +108,7 @@ extension FolegoRepositoryPaymentInstruments on FolegoRepository {
         'p_description': description,
         'p_is_credit': isCredit,
         'p_category_id': categoryId,
+        'p_occurred_at': (occurredAt ?? DateTime.now()).toIso8601String(),
       },
     );
 

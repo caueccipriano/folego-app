@@ -150,8 +150,6 @@ class TransactionDetail {
   bool get isSimple => eventType == 'income' || eventType == 'expense';
   bool get isCardPurchase => eventType == 'card_purchase';
   bool get isBenefitExpense => eventType == 'benefit_expense';
-  bool get isCanonicalTransfer =>
-      eventType == 'transfer' && !legacyException && sourceAccountId != null && destinationAccountId != null;
   bool get isCardPayment => eventType == 'card_payment';
 
   TransactionDetailAccountImpact? get sourceImpact {
@@ -182,39 +180,84 @@ class TransactionDetail {
   String? get benefitAccountId => benefitImpact?.accountId;
   String? get benefitAccountName => benefitImpact?.accountName;
 
+  bool get isCanonicalTransfer {
+    if (eventType != 'transfer' || legacyException) return false;
+    final cash = impacts.where((impact) => impact.dimension == 'cash').toList(growable: false);
+    if (cash.length != 2) return false;
+    if (impacts.any((impact) => impact.dimension != 'cash')) return false;
+    final source = cash.where((impact) => impact.amount < 0).toList(growable: false);
+    final destination = cash.where((impact) => impact.amount > 0).toList(growable: false);
+    if (source.length != 1 || destination.length != 1) return false;
+    if (source.first.accountId == null || destination.first.accountId == null) return false;
+    if (source.first.accountId == destination.first.accountId) return false;
+    final sum = cash.fold<double>(0, (value, impact) => value + impact.amount);
+    return sum.abs() < 0.000001;
+  }
+
+  bool get hasCardPurchaseBacking =>
+      cardPurchaseId != null &&
+      cardId != null &&
+      cardPurchaseAt != null &&
+      cardPurchaseStatus == 'confirmed';
+
+  bool get hasBenefitBacking => benefitAccountId != null;
+
   bool get canEdit {
     if (legacyException || status != 'confirmed') return false;
-    return isSimple || isCardPurchase || isBenefitExpense || isCanonicalTransfer;
+    if (isSimple) return true;
+    if (isCardPurchase) return hasCardPurchaseBacking;
+    if (isBenefitExpense) return hasBenefitBacking;
+    return isCanonicalTransfer;
   }
 
   bool get canReverse {
     if (legacyException || status != 'confirmed') return false;
     if (isSimple) return true;
-    if (isCardPurchase) return cardPurchaseReversible;
-    if (isBenefitExpense) return true;
+    if (isCardPurchase) return hasCardPurchaseBacking && cardPurchaseReversible;
+    if (isBenefitExpense) return hasBenefitBacking;
     if (isCanonicalTransfer) return true;
-    if (isCardPayment) return cardPaymentReversible;
+    if (isCardPayment) {
+      return cardPaymentId != null &&
+          cardPaymentInvoiceId != null &&
+          cardPaymentAccountId != null &&
+          cardPaymentStatus == 'confirmed' &&
+          cardPaymentReversible;
+    }
     return false;
   }
 
   String get typeLabel {
     switch (eventType) {
-      case 'income': return 'receita';
-      case 'expense': return 'gasto';
-      case 'card_purchase': return 'compra no cartão';
-      case 'card_payment': return 'pagamento de fatura';
-      case 'benefit_expense': return 'gasto com benefício';
-      case 'benefit_credit': return 'crédito de benefício';
-      case 'transfer': return legacyKind == 'financing_inflow_missing_liability_details'
-          ? 'entrada de financiamento'
-          : 'transferência';
-      case 'debt_payment': return 'pagamento de dívida';
-      case 'opening_balance': return 'saldo inicial';
-      case 'refund': return 'estorno';
-      case 'reimbursement': return 'reembolso';
-      case 'reserve_transfer': return 'movimento de reserva';
-      case 'adjustment': return 'ajuste';
-      default: return eventType.replaceAll('_', ' ');
+      case 'income':
+        return 'receita';
+      case 'expense':
+        return 'gasto';
+      case 'card_purchase':
+        return 'compra no cartão';
+      case 'card_payment':
+        return 'pagamento de fatura';
+      case 'benefit_expense':
+        return 'gasto com benefício';
+      case 'benefit_credit':
+        return 'crédito de benefício';
+      case 'transfer':
+        return legacyKind == 'financing_inflow_missing_liability_details'
+            ? 'entrada de financiamento'
+            : 'transferência';
+      case 'debt_payment':
+        return 'pagamento de dívida';
+      case 'opening_balance':
+        return 'saldo inicial';
+      case 'refund':
+        return 'estorno';
+      case 'reimbursement':
+        return 'reembolso';
+      case 'reserve_transfer':
+        return 'movimento de reserva';
+      case 'adjustment':
+        return 'ajuste';
+      default:
+        return eventType.replaceAll('_', ' ');
     }
   }
 }

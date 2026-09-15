@@ -237,16 +237,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     setState(() {
       _expensePayment = _expensePayment.select(type);
       if (!_expensePayment.supportsRecurring) _repeat = 'once';
-      if (type == QuickExpensePaymentType.benefit) {
-        final now = DateTime.now();
-        _date = DateTime(now.year, now.month, now.day);
-      }
       _error = null;
     });
   }
 
   Future<void> _pickDate() async {
-    if (_isExpense && _expensePayment.type == QuickExpensePaymentType.benefit) return;
     final selected = await showDatePicker(
       context: context,
       initialDate: _date,
@@ -457,6 +452,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           description: description,
           isCredit: false,
           categoryId: _categoryId,
+          occurredAt: _date,
         );
     }
   }
