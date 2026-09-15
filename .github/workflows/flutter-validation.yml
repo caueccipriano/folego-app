@@ -1,0 +1,65 @@
+name: Flutter validation
+
+on:
+  push:
+    branches:
+      - feat/transactions-recurring
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: folego_flutter
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Check formatting of corrected files
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/features/diary/diary_screen.dart
+          lib/features/transactions/recurring_form_sheet.dart
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Critical tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests=(
+            test/financial_display_text_test.dart
+            test/transaction_detail_model_test.dart
+            test/recurring_card_creation_test.dart
+            test/recurring_card_backing_test.dart
+            test/quick_register_payment_state_test.dart
+            test/card_invoice_payment_state_test.dart
+            test/recurring_occurrence_test.dart
+            test/transaction_pagination_test.dart
+          )
+          for test_file in "${tests[@]}"; do
+            if [[ ! -f "$test_file" ]]; then
+              echo "::error::Missing required test file: $test_file"
+              exit 1
+            fi
+            flutter test "$test_file" -r expanded
+          done
+
+      - name: Full Flutter test suite
+        run: flutter test -r expanded
