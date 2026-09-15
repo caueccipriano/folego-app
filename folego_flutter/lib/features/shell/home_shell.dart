@@ -33,6 +33,7 @@ class _HomeShellState extends State<HomeShell> {
       ProfileScreen(
         client: Supabase.instance.client,
         repository: widget.repository,
+        spaceId: widget.space.id,
       ),
     ];
 

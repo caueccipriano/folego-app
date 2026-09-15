@@ -18,6 +18,9 @@ dependencies:
   supabase_flutter: ^2.17.2
   google_fonts: ^8.2.1
   tabler_icons_plus: ^3.46.0
+  shared_preferences: ^2.5.5
+  package_info_plus: ^8.3.1
+  share_plus: ^11.1.0
 
 dev_dependencies:
   flutter_test:

@@ -299,6 +299,16 @@ abstract final class AppIcons {
 
   static const IconData darkTheme = TablerIcons.moon;
 
+  static const IconData systemTheme = TablerIcons.deviceDesktop;
+
+  static const IconData language = TablerIcons.language;
+
+  static const IconData privacy = TablerIcons.shieldLock;
+
+  static const IconData exportData = TablerIcons.fileExport;
+
+  static const IconData logout = TablerIcons.logout;
+
   // ---------------------------------------------------------------------------
   // INTERFACE
   // ---------------------------------------------------------------------------
