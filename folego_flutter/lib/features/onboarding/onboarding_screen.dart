@@ -125,12 +125,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _recurringCategoryId ??= categories.isEmpty
             ? null
             : categories.first.id;
-        final discretionary = categories
+
+        final subcategories = categories
+            .where((item) => item.isSubcategory)
+            .toList();
+        final discretionarySubcategories = subcategories
             .where((item) => !item.essential)
             .toList();
-        _budgetCategoryId ??= discretionary.isNotEmpty
-            ? discretionary.first.id
-            : (categories.isEmpty ? null : categories.first.id);
+        final budgetOptions = discretionarySubcategories.isNotEmpty
+            ? discretionarySubcategories
+            : subcategories;
+        _budgetCategoryId ??= budgetOptions.isEmpty
+            ? null
+            : budgetOptions.first.id;
       });
     } catch (error) {
       if (mounted) setState(() => _error = _message(error));
@@ -407,7 +414,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 4:
         return 'Se já existe uma fatura em aberto, informe o saldo atual para o cálculo começar certo desde o primeiro dia.';
       default:
-        return 'Defina um limite para uma categoria variável. Isso faz o Fôlego respeitar não só seu caixa, mas também seu plano mensal.';
+        return 'Defina um limite para uma subcategoria variável. Isso faz o Fôlego respeitar não só seu caixa, mas também seu plano mensal.';
     }
   }
 
@@ -506,7 +513,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             _categoryDropdown(recurring: false),
             const SizedBox(height: 12),
-            _moneyField(_budgetAmount, 'Limite mensal da categoria'),
+            _moneyField(_budgetAmount, 'Limite mensal da subcategoria'),
             const SizedBox(height: 10),
             const _Hint(
               text:
@@ -563,16 +570,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _categoryDropdown({required bool recurring}) {
-    final discretionary = _categories.where((item) => !item.essential).toList();
+    final subcategories = _categories
+        .where((item) => item.isSubcategory)
+        .toList();
+    final discretionary = subcategories
+        .where((item) => !item.essential)
+        .toList();
     final list = recurring
         ? _categories
-        : (discretionary.isEmpty ? _categories : discretionary);
+        : (discretionary.isEmpty ? subcategories : discretionary);
     final current = recurring ? _recurringCategoryId : _budgetCategoryId;
     return DropdownButtonFormField<String>(
       key: ValueKey(current),
       initialValue: list.any((item) => item.id == current) ? current : null,
       decoration: InputDecoration(
-        labelText: recurring ? 'Categoria' : 'Categoria do orçamento',
+        labelText: recurring ? 'Categoria' : 'Subcategoria do orçamento',
       ),
       items: list
           .map(
