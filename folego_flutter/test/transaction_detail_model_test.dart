@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/transaction_detail.dart';
+import 'package:folego/data/models/transaction_detail.dart';
 
 TransactionDetail detail({
   required String type,

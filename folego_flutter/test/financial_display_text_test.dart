@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/core/utils/financial_display_text.dart';
+import 'package:folego/core/utils/financial_display_text.dart';
 
 void main() {
   test('import suffix is removed only for display', () {
