@@ -23,14 +23,13 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
     final items = <_NavItem>[
       _NavItem(icon: AppIcons.home, label: l10n.home),
-      _NavItem(icon: AppIcons.transactions, label: l10n.transactions),
+      const _NavItem(icon: AppIcons.journal, label: 'diário'),
       _NavItem(icon: AppIcons.plan, label: l10n.plan),
       _NavItem(icon: AppIcons.wallet, label: l10n.wallet),
       _NavItem(icon: AppIcons.profile, label: l10n.profile),
     ];
 
     final background = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return SafeArea(
@@ -69,9 +68,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                         child: _Destination(
                           item: items[index],
                           selected: selectedIndex == index,
-                          onTap: () {
-                            onDestinationSelected(index);
-                          },
+                          onTap: () => onDestinationSelected(index),
                         ),
                       );
                     }),
@@ -100,15 +97,11 @@ class _Destination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final isDark = theme.brightness == Brightness.dark;
-
     final activePurple = isDark ? AppColors.purpleDark : AppColors.purpleLight;
-
     final inactiveColor = isDark
         ? AppColors.darkSecondaryText
         : AppColors.lightSecondaryText;
-
     final activeForeground = isDark ? AppColors.darkPrimaryText : Colors.white;
 
     return Semantics(

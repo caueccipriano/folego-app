@@ -19,7 +19,6 @@ abstract final class AppTypography {
     ).apply(bodyColor: primaryText, displayColor: primaryText);
 
     return manrope.copyWith(
-      // DISPLAY — UNBOUNDED
       displayLarge: GoogleFonts.unbounded(
         textStyle: manrope.displayLarge,
         fontSize: 44,
@@ -44,8 +43,6 @@ abstract final class AppTypography {
         letterSpacing: -.8,
         color: primaryText,
       ),
-
-      // HEADINGS — UNBOUNDED
       headlineLarge: GoogleFonts.unbounded(
         textStyle: manrope.headlineLarge,
         fontSize: 26,
@@ -70,8 +67,6 @@ abstract final class AppTypography {
         letterSpacing: -.25,
         color: primaryText,
       ),
-
-      // TITLES
       titleLarge: GoogleFonts.unbounded(
         textStyle: manrope.titleLarge,
         fontSize: 18,
@@ -94,8 +89,6 @@ abstract final class AppTypography {
         height: 1.25,
         color: primaryText,
       ),
-
-      // BODY — MANROPE
       bodyLarge: GoogleFonts.manrope(
         textStyle: manrope.bodyLarge,
         fontSize: 14,
@@ -117,8 +110,6 @@ abstract final class AppTypography {
         height: 1.40,
         color: secondaryText,
       ),
-
-      // LABELS — MANROPE
       labelLarge: GoogleFonts.manrope(
         textStyle: manrope.labelLarge,
         fontSize: 13,
@@ -143,10 +134,6 @@ abstract final class AppTypography {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // DISPLAY
-  // ---------------------------------------------------------------------------
-
   static TextStyle display(
     BuildContext context, {
     double fontSize = 40,
@@ -161,10 +148,6 @@ abstract final class AppTypography {
       color: color,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // SECTION HEADING
-  // ---------------------------------------------------------------------------
 
   static TextStyle section(
     BuildContext context, {
@@ -181,10 +164,6 @@ abstract final class AppTypography {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // MONEY / HERO VALUE
-  // ---------------------------------------------------------------------------
-
   static TextStyle money(
     BuildContext context, {
     double fontSize = 52,
@@ -200,20 +179,18 @@ abstract final class AppTypography {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // OPTIONAL HELPERS FOR NEW COMPONENTS
-  // ---------------------------------------------------------------------------
-
   static TextStyle body(
     BuildContext context, {
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w400,
+    FontStyle? fontStyle,
     Color? color,
   }) {
     return GoogleFonts.manrope(
       textStyle: Theme.of(context).textTheme.bodyMedium,
       fontSize: fontSize,
       fontWeight: fontWeight,
+      fontStyle: fontStyle,
       height: 1.45,
       color: color,
     );

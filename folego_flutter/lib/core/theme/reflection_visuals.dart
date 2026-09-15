@@ -40,7 +40,7 @@ abstract final class ReflectionVisuals {
   static IconData icon(ReflectionType type) {
     return switch (type) {
       ReflectionType.necessary => AppIcons.check,
-      ReflectionType.want => AppIcons.heart,
+      ReflectionType.want => AppIcons.categoryPets,
       ReflectionType.selfInvestment => AppIcons.savingsGoal,
     };
   }
