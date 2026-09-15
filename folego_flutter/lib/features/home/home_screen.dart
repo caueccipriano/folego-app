@@ -13,6 +13,7 @@ import '../../data/models/folego_snapshot.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../goals/goals_screen.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 
@@ -134,6 +135,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       await _load();
     }
+  }
+
+  Future<void> _openGoals() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => GoalsScreen(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+        ),
+      ),
+    );
   }
 
   void _comingSoon(String feature) {
@@ -527,7 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: AppIcons.goals,
             background: AppColors.primaryPurple(brightness),
             foreground: Colors.white,
-            onTap: () => _comingSoon('Metas'),
+            onTap: _openGoals,
           ),
         ),
         const SizedBox(width: 10),

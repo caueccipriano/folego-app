@@ -291,7 +291,7 @@ abstract final class AppIcons {
 
   static const IconData achievements = TablerIcons.award;
 
-  static const IconData savingsGoal = TablerIcons.flag;
+  static const IconData savingsGoal = TablerIcons.pigMoney;
 
   static const IconData notifications = TablerIcons.bell;
 
