@@ -32,19 +32,19 @@ void main() {
           ),
         ),
       );
-      await _flushUi(tester);
+      await _waitFor(tester, find.text('Criar recorrência'));
 
       await tester.enterText(find.byType(TextField).at(0), 'Spotify');
       await tester.enterText(find.byType(TextField).at(1), '21,90');
       await tester.tap(find.text('Cartão'));
-      await _flushUi(tester);
+      await tester.pump();
 
       expect(find.text('Cartão principal'), findsOneWidget);
       expect(find.text('Conta ativa'), findsNothing);
 
       await tester.ensureVisible(find.text('Criar recorrência'));
       await tester.tap(find.text('Criar recorrência'));
-      await _flushUi(tester);
+      await tester.pump();
 
       expect(repository.createdAccountId, isNull);
       expect(repository.createdCardId, 'card-1');
@@ -77,7 +77,7 @@ void main() {
           ),
         ),
       );
-      await _flushUi(tester);
+      await _waitFor(tester, find.text('Criar recorrência'));
 
       await tester.enterText(find.byType(TextField).at(0), 'Academia');
       await tester.enterText(find.byType(TextField).at(1), '99,90');
@@ -86,7 +86,7 @@ void main() {
 
       await tester.ensureVisible(find.text('Criar recorrência'));
       await tester.tap(find.text('Criar recorrência'));
-      await _flushUi(tester);
+      await tester.pump();
 
       expect(repository.createdAccountId, 'account-1');
       expect(repository.createdCardId, isNull);
@@ -97,10 +97,11 @@ void main() {
   });
 }
 
-Future<void> _flushUi(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
-  await tester.pump(const Duration(milliseconds: 250));
+Future<void> _waitFor(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 20 && finder.evaluate().isEmpty; i += 1) {
+    await tester.pump(const Duration(milliseconds: 10));
+  }
+  expect(finder, findsOneWidget);
 }
 
 class _FakeFolegoRepository implements FolegoRepository {
@@ -114,8 +115,8 @@ class _FakeFolegoRepository implements FolegoRepository {
 
   @override
   Future<List<CategoryItem>> listExpenseCategories(String spaceId) async {
-    return const [
-      CategoryItem(
+    return [
+      const CategoryItem(
         id: 'category-1',
         name: 'Assinaturas',
         essential: false,
@@ -125,8 +126,8 @@ class _FakeFolegoRepository implements FolegoRepository {
 
   @override
   Future<List<CategoryItem>> listIncomeCategories(String spaceId) async {
-    return const [
-      CategoryItem(
+    return [
+      const CategoryItem(
         id: 'income-category-1',
         name: 'Salário',
         essential: true,
