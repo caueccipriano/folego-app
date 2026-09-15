@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   flutter-validation:
@@ -30,130 +30,8 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Audit lockfile generated diff
-        shell: bash
-        run: |
-          if ! git diff --quiet -- pubspec.lock; then
-            echo "flutter pub get updated the stale lockfile to match declared dependencies."
-            git diff -- pubspec.lock
-          else
-            echo "pubspec.lock unchanged."
-          fi
-
-      - name: Apply known analyzer cleanup
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          def replace(path, old, new):
-              file = Path(path)
-              text = file.read_text()
-              if old not in text:
-                  raise SystemExit(f"Expected text not found in {path}: {old!r}")
-              file.write_text(text.replace(old, new, 1))
-
-          replace(
-              'lib/data/models/category_item.dart',
-              '          if (parentName != null) parentName!,\n',
-              '          ?parentName,\n',
-          )
-          replace(
-              'lib/data/repositories/folego_repository_categories.dart',
-              "      'updated_at': DateTime.now().toUtc().toIso8601String(),\n      if (active != null) 'active': active,\n    };\n",
-              "      'updated_at': DateTime.now().toUtc().toIso8601String(),\n    };\n    if (active != null) {\n      values['active'] = active;\n    }\n",
-          )
-          replace(
-              'lib/data/repositories/folego_repository_transaction_detail.dart',
-              ".eq('card_id', cardId!)",
-              ".eq('card_id', cardId)",
-          )
-          for path in [
-              'lib/features/auth/auth_gate.dart',
-              'lib/features/auth/auth_screen.dart',
-              'lib/features/auth/password_recovery_screen.dart',
-          ]:
-              replace(path, "import 'package:flutter/foundation.dart';\n", '')
-          replace(
-              'lib/features/home/quick_register_sheet_v2.dart',
-              '    final surface = AppColors.surface(brightness);\n',
-              '',
-          )
-          replace(
-              'lib/features/profile/profile_screen_v2.dart',
-              "      final rows = await widget.repository.listProfileExportRows(\n        spaceId: widget.spaceId,\n      );\n",
-              "      final rows = await widget.repository.listProfileExportRows(\n        spaceId: widget.spaceId,\n      );\n      if (!anchorContext.mounted) return;\n",
-          )
-          PY
-
-      - name: Apply remaining safe Dart fixes
-        run: dart fix --apply
-
-      - name: Format modified Dart files
-        run: >-
-          dart format
-          lib/features/diary/diary_screen.dart
-          lib/features/transactions/recurring_form_sheet.dart
-          lib/data/models/category_item.dart
-          lib/data/repositories/folego_repository_categories.dart
-          lib/data/repositories/folego_repository_transaction_detail.dart
-          lib/features/auth/auth_gate.dart
-          lib/features/auth/auth_screen.dart
-          lib/features/auth/password_recovery_screen.dart
-          lib/features/home/quick_register_sheet_v2.dart
-          lib/features/profile/profile_screen_v2.dart
-
       - name: Flutter analyze
         run: flutter analyze
 
-      - name: Critical tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          tests=(
-            test/financial_display_text_test.dart
-            test/transaction_detail_model_test.dart
-            test/recurring_card_creation_test.dart
-            test/recurring_card_backing_test.dart
-            test/quick_register_payment_state_test.dart
-            test/card_invoice_payment_state_test.dart
-            test/recurring_occurrence_test.dart
-            test/transaction_pagination_test.dart
-          )
-          for test_file in "${tests[@]}"; do
-            if [[ ! -f "$test_file" ]]; then
-              echo "::error::Missing required test file: $test_file"
-              exit 1
-            fi
-            flutter test "$test_file" -r expanded
-          done
-
-      - name: Full Flutter test suite
+      - name: Flutter test
         run: flutter test -r expanded
-
-      - name: Commit validated cleanup
-        shell: bash
-        run: |
-          set -euo pipefail
-          files=(
-            pubspec.lock
-            lib/features/diary/diary_screen.dart
-            lib/features/transactions/recurring_form_sheet.dart
-            lib/data/models/category_item.dart
-            lib/data/repositories/folego_repository_categories.dart
-            lib/data/repositories/folego_repository_transaction_detail.dart
-            lib/features/auth/auth_gate.dart
-            lib/features/auth/auth_screen.dart
-            lib/features/auth/password_recovery_screen.dart
-            lib/features/home/quick_register_sheet_v2.dart
-            lib/features/profile/profile_screen_v2.dart
-          )
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- "${files[@]}"
-          if git diff --cached --quiet; then
-            echo "No validated cleanup to commit."
-            exit 0
-          fi
-          git commit -m "fix: stabilize Flutter integration"
-          git push origin HEAD:feat/transactions-recurring
