@@ -9,6 +9,8 @@ void main() {
       expect(state.type, QuickExpensePaymentType.account);
       expect(state.installmentsCount, 1);
       expect(state.supportsRecurring, isTrue);
+      expect(state.recurringAccountId, 'account-1');
+      expect(state.recurringCardId, isNull);
       expect(state.saveTarget, QuickExpenseSaveTarget.expense);
     });
 
@@ -21,7 +23,17 @@ void main() {
       expect(next.benefitAccountId, isNull);
       expect(next.type, QuickExpensePaymentType.creditCard);
       expect(next.saveTarget, QuickExpenseSaveTarget.cardPurchase);
-      expect(next.supportsRecurring, isFalse);
+      expect(next.supportsRecurring, isTrue);
+    });
+
+    test('card recurrence exposes card id and keeps account id null', () {
+      final state = const QuickExpensePaymentState()
+          .select(QuickExpensePaymentType.creditCard)
+          .withCardId('card-1');
+
+      expect(state.recurringAccountId, isNull);
+      expect(state.recurringCardId, 'card-1');
+      expect(state.supportsRecurring, isTrue);
     });
 
     test('switching card to benefit clears card id', () {
@@ -38,6 +50,8 @@ void main() {
       expect(next.type, QuickExpensePaymentType.benefit);
       expect(next.saveTarget, QuickExpenseSaveTarget.benefitExpense);
       expect(next.supportsRecurring, isFalse);
+      expect(next.recurringAccountId, isNull);
+      expect(next.recurringCardId, isNull);
     });
 
     test('card installments can be changed without selecting another source', () {

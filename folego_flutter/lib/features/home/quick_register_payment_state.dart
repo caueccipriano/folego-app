@@ -25,7 +25,13 @@ class QuickExpensePaymentState {
   final String? benefitAccountId;
   final int installmentsCount;
 
-  bool get supportsRecurring => type == QuickExpensePaymentType.account;
+  bool get supportsRecurring => type != QuickExpensePaymentType.benefit;
+
+  String? get recurringAccountId =>
+      type == QuickExpensePaymentType.account ? accountId : null;
+
+  String? get recurringCardId =>
+      type == QuickExpensePaymentType.creditCard ? cardId : null;
 
   QuickExpenseSaveTarget get saveTarget => switch (type) {
     QuickExpensePaymentType.account => QuickExpenseSaveTarget.expense,

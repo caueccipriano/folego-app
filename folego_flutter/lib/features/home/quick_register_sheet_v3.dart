@@ -308,6 +308,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     if (_isExpense && !_expensePayment.supportsRecurring) return;
     setState(() {
       _repeat = value;
+      if (_isExpense &&
+          value != 'once' &&
+          _expensePayment.type == QuickExpensePaymentType.creditCard &&
+          _expensePayment.installmentsCount != 1) {
+        _expensePayment = _expensePayment.withInstallmentsCount(1);
+      }
       switch (value) {
         case 'weekly':
         case 'biweekly':
@@ -459,8 +465,15 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     if (_isExpense && !_expensePayment.supportsRecurring) {
       throw StateError('Recorrência não disponível para este meio de pagamento.');
     }
-    final accountId = _isExpense ? _expensePayment.accountId : _incomeAccountId;
-    if (accountId == null) throw StateError('Selecione uma conta.');
+
+    final accountId = _isExpense
+        ? _expensePayment.recurringAccountId
+        : _incomeAccountId;
+    final cardId = _isExpense ? _expensePayment.recurringCardId : null;
+
+    if (accountId == null && cardId == null) {
+      throw StateError(_isExpense ? 'Selecione uma conta ou cartão.' : 'Selecione uma conta.');
+    }
 
     final monthlyDays = _repeat == 'monthly'
         ? (_monthlyDays.toList()..sort())
@@ -473,6 +486,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       amount: amount,
       frequency: _repeat,
       accountId: accountId,
+      cardId: cardId,
       categoryId: _categoryId,
       dayOfMonth: _repeat == 'monthly' || _repeat == 'yearly'
           ? _dayOfMonth
@@ -730,6 +744,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               ),
             ),
           QuickExpensePaymentType.creditCard => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _creditCards.any((e) => e.id == _expensePayment.cardId)
@@ -744,44 +759,55 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'parcelas',
-                        style: AppTypography.body(context, fontSize: 11),
+                if (_isRecurring)
+                  Text(
+                    'cada ocorrência será lançada como uma compra 1x no cartão.',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      color: AppColors.secondaryText(brightness),
+                    ),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'parcelas',
+                          style: AppTypography.body(context, fontSize: 11),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: _expensePayment.installmentsCount <= 1
-                          ? null
-                          : () => setState(() {
-                              _expensePayment = _expensePayment.withInstallmentsCount(
-                                _expensePayment.installmentsCount - 1,
-                              );
-                            }),
-                      icon: const Icon(AppIcons.delete, size: 17),
-                    ),
-                    Text('${_expensePayment.installmentsCount}x'),
-                    IconButton(
-                      onPressed: _expensePayment.installmentsCount >= cardPurchaseMaxInstallments
-                          ? null
-                          : () => setState(() {
-                              _expensePayment = _expensePayment.withInstallmentsCount(
-                                _expensePayment.installmentsCount + 1,
-                              );
-                            }),
-                      icon: const Icon(AppIcons.add, size: 18),
-                    ),
-                  ],
-                ),
-                TextField(
-                  controller: _merchant,
-                  decoration: const InputDecoration(
-                    labelText: 'estabelecimento',
-                    hintText: 'opcional',
+                      IconButton(
+                        onPressed: _expensePayment.installmentsCount <= 1
+                            ? null
+                            : () => setState(() {
+                                _expensePayment = _expensePayment.withInstallmentsCount(
+                                  _expensePayment.installmentsCount - 1,
+                                );
+                              }),
+                        icon: const Icon(AppIcons.delete, size: 17),
+                      ),
+                      Text('${_expensePayment.installmentsCount}x'),
+                      IconButton(
+                        onPressed: _expensePayment.installmentsCount >= cardPurchaseMaxInstallments
+                            ? null
+                            : () => setState(() {
+                                _expensePayment = _expensePayment.withInstallmentsCount(
+                                  _expensePayment.installmentsCount + 1,
+                                );
+                              }),
+                        icon: const Icon(AppIcons.add, size: 18),
+                      ),
+                    ],
                   ),
-                ),
+                  TextField(
+                    controller: _merchant,
+                    decoration: const InputDecoration(
+                      labelText: 'estabelecimento',
+                      hintText: 'opcional',
+                    ),
+                  ),
+                ],
               ],
             ),
           QuickExpensePaymentType.benefit => DropdownButtonFormField<String>(
@@ -908,7 +934,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final available = !_isExpense || _expensePayment.supportsRecurring;
     if (!available) {
       return Text(
-        'recorrência fica disponível para gastos em conta.',
+        'recorrência não está disponível para benefícios.',
         style: AppTypography.label(
           context,
           fontSize: 9,

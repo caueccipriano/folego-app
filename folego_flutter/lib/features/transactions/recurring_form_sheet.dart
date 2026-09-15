@@ -7,10 +7,16 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
+import '../../data/models/credit_card_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/recurring_item.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_payment_instruments.dart';
+
+typedef ActiveRecurringCardLoader = Future<List<CreditCardItem>> Function(
+  String spaceId,
+);
 
 class RecurringFormSheet extends StatefulWidget {
   const RecurringFormSheet({
@@ -18,11 +24,13 @@ class RecurringFormSheet extends StatefulWidget {
     required this.space,
     required this.repository,
     this.item,
+    this.activeCardLoader,
   });
 
   final FinancialSpace space;
   final FolegoRepository repository;
   final RecurringItem? item;
+  final ActiveRecurringCardLoader? activeCardLoader;
 
   @override
   State<RecurringFormSheet> createState() => _RecurringFormSheetState();
@@ -74,11 +82,11 @@ bool _monthlyLastDay = false;
   bool get _isExpense => _type == 'expense';
 
   bool get _showAccountDestination {
-    return !_editing || _accountId != null || _cardId == null;
+    return !_isExpense || _cardId == null;
   }
 
   bool get _showCardDestination {
-    return _editing && _cardId != null;
+    return _isExpense && _cardId != null;
   }
 
   List<CategoryItem> get _availableCategories {
@@ -140,15 +148,28 @@ _monthlyLastDay = false;
     super.dispose();
   }
 
+  Future<List<CreditCardItem>> _loadActiveCards() {
+    final loader = widget.activeCardLoader;
+    if (loader != null) {
+      return loader(widget.space.id);
+    }
+    return widget.repository.listActiveCreditCards(widget.space.id);
+  }
+
   Future<void> _load() async {
     try {
-      final cardOverviewFuture = _showCardDestination
+      final cardOverviewFuture = _editing && _cardId != null
           ? widget.repository.getWalletOverview(spaceId: widget.space.id)
           : Future<WalletOverview?>.value(null);
+
+      final activeCardsFuture = !_editing && _isExpense
+          ? _loadActiveCards()
+          : Future<List<CreditCardItem>>.value(const <CreditCardItem>[]);
 
       final values = await Future.wait([
         widget.repository.listAccounts(widget.space.id),
         cardOverviewFuture,
+        activeCardsFuture,
         widget.repository.listExpenseCategories(widget.space.id),
         widget.repository.listIncomeCategories(widget.space.id),
       ]);
@@ -157,35 +178,41 @@ _monthlyLastDay = false;
         return;
       }
 
-      final accounts = values[0] as List<AccountItem>;
+      final accounts = (values[0] as List<AccountItem>)
+          .where((account) => !account.isBenefit)
+          .toList();
 
       final walletOverview = values[1] as WalletOverview?;
+      final activeCards = values[2] as List<CreditCardItem>;
 
-      final cards = <_RecurringCardOption>[
+      final cardsById = <String, _RecurringCardOption>{
         for (final card in walletOverview?.cards ?? const <WalletCard>[])
-          _RecurringCardOption(
+          card.id: _RecurringCardOption(
             id: card.id,
             name: card.name,
             available: true,
           ),
-      ];
+        for (final card in activeCards)
+          card.id: _RecurringCardOption(
+            id: card.id,
+            name: card.name,
+            available: true,
+          ),
+      };
 
       final currentCardId = _cardId;
 
-      if (currentCardId != null &&
-          !cards.any((card) => card.id == currentCardId)) {
-        cards.add(
-          _RecurringCardOption(
-            id: currentCardId,
-            name: 'Cartão atual',
-            available: false,
-          ),
+      if (currentCardId != null && !cardsById.containsKey(currentCardId)) {
+        cardsById[currentCardId] = _RecurringCardOption(
+          id: currentCardId,
+          name: 'Cartão atual',
+          available: false,
         );
       }
 
-      final expenseCategories = values[2] as List<CategoryItem>;
+      final expenseCategories = values[3] as List<CategoryItem>;
 
-      final incomeCategories = values[3] as List<CategoryItem>;
+      final incomeCategories = values[4] as List<CategoryItem>;
 
       _sortCategories(expenseCategories);
       _sortCategories(incomeCategories);
@@ -193,7 +220,7 @@ _monthlyLastDay = false;
       setState(() {
         _accounts = accounts;
 
-        _cards = cards;
+        _cards = cardsById.values.toList();
 
         _expenseCategories = expenseCategories;
 
@@ -201,6 +228,9 @@ _monthlyLastDay = false;
 
         if (!_editing && _accountId == null && _cardId == null) {
           _accountId = accounts.isEmpty ? null : accounts.first.id;
+          if (_accountId == null && _cards.isNotEmpty && _isExpense) {
+            _cardId = _cards.first.id;
+          }
         }
 
         final categories = _availableCategories;
@@ -226,6 +256,23 @@ _monthlyLastDay = false;
         _error = _friendlyError(error);
       });
     }
+  }
+
+  void _selectDestination(bool useCard) {
+    if (!_isExpense) {
+      return;
+    }
+
+    setState(() {
+      if (useCard) {
+        _accountId = null;
+        _cardId ??= _cards.isEmpty ? null : _cards.first.id;
+      } else {
+        _cardId = null;
+        _accountId ??= _accounts.isEmpty ? null : _accounts.first.id;
+      }
+      _error = null;
+    });
   }
 
 Future<void> _pickMonthlyDay() async {
@@ -372,6 +419,11 @@ Future<void> _pickMonthlyDay() async {
     setState(() {
       _type = type;
 
+      if (!_isExpense) {
+        _cardId = null;
+        _accountId ??= _accounts.isEmpty ? null : _accounts.first.id;
+      }
+
       final categories = _availableCategories;
 
       _categoryId = categories.isEmpty ? null : categories.first.id;
@@ -425,9 +477,15 @@ Future<void> _pickMonthlyDay() async {
       return;
     }
 
-    if (_accountId == null && _cardId == null) {
+    final hasAccount = _accountId != null;
+    final hasCard = _cardId != null;
+    final invalidDestination = _isExpense
+        ? hasAccount == hasCard
+        : !hasAccount || hasCard;
+
+    if (invalidDestination) {
       setState(() {
-        _error = _editing
+        _error = _isExpense
             ? 'Selecione uma conta ou cartão.'
             : 'Selecione uma conta.';
       });
@@ -689,6 +747,28 @@ monthlyLastDay:
 
                     const SizedBox(height: 12),
 
+                    if (_isExpense && _cards.isNotEmpty) ...[
+                      SegmentedButton<bool>(
+                        segments: const [
+                          ButtonSegment(
+                            value: false,
+                            label: Text('Conta'),
+                            icon: Icon(AppIcons.account),
+                          ),
+                          ButtonSegment(
+                            value: true,
+                            label: Text('Cartão'),
+                            icon: Icon(AppIcons.creditCard),
+                          ),
+                        ],
+                        selected: {_cardId != null},
+                        onSelectionChanged: (values) {
+                          _selectDestination(values.first);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
                     if (_showAccountDestination)
                       DropdownButtonFormField<String>(
                         initialValue: _accountId,
@@ -708,6 +788,7 @@ monthlyLastDay:
                         onChanged: (value) {
                           setState(() {
                             _accountId = value;
+                            _cardId = null;
                             _error = null;
                           });
                         },
@@ -744,6 +825,7 @@ monthlyLastDay:
 
                           setState(() {
                             _cardId = value;
+                            _accountId = null;
                             _error = null;
                           });
                         },
@@ -754,7 +836,7 @@ monthlyLastDay:
                           (card) => card.id == _cardId && !card.available,
                         )
                             ? 'Este cartão não aparece mais entre os cartões ativos. O vínculo atual será preservado.'
-                            : 'Esta recorrência continuará vinculada ao cartão selecionado.',
+                            : 'Cada ocorrência será lançada como uma compra 1x neste cartão.',
                         style: AppTypography.body(
                           context,
                           fontSize: 11,
