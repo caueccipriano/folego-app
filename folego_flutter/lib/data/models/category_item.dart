@@ -8,6 +8,7 @@ class CategoryItem {
     this.parentName,
     this.isSystem = false,
     this.isSelectable = true,
+    this.active = true,
     this.colorHex,
     this.systemKey,
     this.categoryRole,
@@ -25,6 +26,7 @@ class CategoryItem {
   final String? parentName;
   final bool isSystem;
   final bool isSelectable;
+  final bool active;
   final String? colorHex;
   final String? systemKey;
   final String? categoryRole;
@@ -73,6 +75,7 @@ class CategoryItem {
       parentName: json['parent_name'] as String?,
       isSystem: json['is_system'] as bool? ?? false,
       isSelectable: json['is_selectable'] as bool? ?? true,
+      active: json['active'] as bool? ?? true,
       colorHex: json['color_hex'] as String?,
       systemKey: json['system_key'] as String?,
       categoryRole: json['category_role'] as String?,
