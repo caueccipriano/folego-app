@@ -25,13 +25,17 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   final _amount = TextEditingController();
 
   List<AccountItem> _accounts = const [];
-  List<CategoryItem> _categories = const [];
+  List<CategoryItem> _expenseCategories = const [];
+  List<CategoryItem> _incomeCategories = const [];
   String? _accountId;
   String? _categoryId;
   String _type = 'expense';
   bool _loading = true;
   bool _saving = false;
   String? _error;
+
+  List<CategoryItem> get _visibleCategories =>
+      _type == 'expense' ? _expenseCategories : _incomeCategories;
 
   @override
   void initState() {
@@ -51,15 +55,18 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       final values = await Future.wait([
         widget.repository.listAccounts(widget.space.id),
         widget.repository.listExpenseCategories(widget.space.id),
+        widget.repository.listIncomeCategories(widget.space.id),
       ]);
       if (!mounted) return;
       final accounts = values[0] as List<AccountItem>;
-      final categories = values[1] as List<CategoryItem>;
+      final expenseCategories = values[1] as List<CategoryItem>;
+      final incomeCategories = values[2] as List<CategoryItem>;
       setState(() {
         _accounts = accounts;
-        _categories = categories;
+        _expenseCategories = expenseCategories;
+        _incomeCategories = incomeCategories;
         _accountId = accounts.isEmpty ? null : accounts.first.id;
-        _categoryId = categories.isEmpty ? null : categories.first.id;
+        _categoryId = expenseCategories.isEmpty ? null : expenseCategories.first.id;
         _loading = false;
       });
     } catch (error) {
@@ -72,10 +79,25 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     }
   }
 
+  void _changeType(String type) {
+    if (_type == type) return;
+    final categories = type == 'expense' ? _expenseCategories : _incomeCategories;
+    setState(() {
+      _type = type;
+      _categoryId = categories.isEmpty ? null : categories.first.id;
+      _error = null;
+    });
+  }
+
   Future<void> _save() async {
     final amount = Formatters.parseMoney(_amount.text);
-    if (_accountId == null || amount <= 0 || _description.text.trim().isEmpty) {
-      setState(() => _error = 'Informe descrição, valor e conta.');
+    if (_accountId == null ||
+        _categoryId == null ||
+        amount <= 0 ||
+        _description.text.trim().isEmpty) {
+      setState(
+        () => _error = 'Informe descrição, valor, conta e categoria.',
+      );
       return;
     }
     setState(() {
@@ -97,6 +119,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           accountId: _accountId!,
           amount: amount,
           description: _description.text.trim(),
+          categoryId: _categoryId,
         );
       }
       if (mounted) {
@@ -115,6 +138,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final categories = _visibleCategories;
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -125,79 +150,134 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
         ),
         child: _loading
-            ? const SizedBox(height: 220, child: Center(child: CircularProgressIndicator()))
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(99),
+            ? const SizedBox(
+                height: 220,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text('Registrar agora', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('Despesa'),
-                        selected: _type == 'expense',
-                        onSelected: (_) => setState(() => _type = 'expense'),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Registrar agora',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Despesa'),
+                          selected: _type == 'expense',
+                          onSelected: (_) => _changeType('expense'),
+                        ),
+                        ChoiceChip(
+                          label: const Text('Receita'),
+                          selected: _type == 'income',
+                          onSelected: (_) => _changeType('income'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _description,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Descrição',
+                        hintText: _type == 'expense'
+                            ? 'Ex.: Restaurante'
+                            : 'Ex.: Trabalho extra',
                       ),
-                      ChoiceChip(
-                        label: const Text('Receita'),
-                        selected: _type == 'income',
-                        onSelected: (_) => setState(() => _type = 'income'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _amount,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Valor',
+                        prefixText: 'R\$ ',
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _description,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Descrição', hintText: 'Ex.: Restaurante'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _amount,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Valor', prefixText: 'R\$ '),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _accountId,
-                    decoration: const InputDecoration(labelText: 'Conta'),
-                    items: _accounts.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
-                    onChanged: (value) => setState(() => _accountId = value),
-                  ),
-                  if (_type == 'expense') ...[
+                    ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+                      initialValue: _accountId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Conta'),
+                      items: _accounts
+                          .map(
+                            (item) => DropdownMenuItem(
+                              value: item.id,
+                              child: Text(
+                                item.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) => setState(() => _accountId = value),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey(_type),
                       initialValue: _categoryId,
-                      decoration: const InputDecoration(labelText: 'Categoria'),
-                      items: _categories.map((item) => DropdownMenuItem(value: item.id, child: Text(item.name))).toList(),
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: _type == 'expense'
+                            ? 'Categoria da despesa'
+                            : 'Categoria da receita',
+                        helperText: 'Categoria principal > subcategoria',
+                      ),
+                      items: categories
+                          .map(
+                            (item) => DropdownMenuItem(
+                              value: item.id,
+                              child: Text(
+                                item.path,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (value) => setState(() => _categoryId = value),
                     ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    FilledButton(
+                      onPressed: _saving ? null : _save,
+                      child: _saving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Registrar'),
+                    ),
                   ],
-                  if (_error != null) ...[
-                    const SizedBox(height: 10),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                  ],
-                  const SizedBox(height: 18),
-                  FilledButton(
-                    onPressed: _saving ? null : _save,
-                    child: _saving
-                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Registrar'),
-                  ),
-                ],
+                ),
               ),
       ),
     );

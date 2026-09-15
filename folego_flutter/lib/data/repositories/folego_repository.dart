@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/account_item.dart';
+import '../models/budget_item.dart';
 import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
@@ -70,17 +71,106 @@ class FolegoRepository {
         .toList();
   }
 
-  Future<List<CategoryItem>> listExpenseCategories(String spaceId) async {
+  Future<List<CategoryItem>> listExpenseCategories(String spaceId) {
+    return _listCategories(spaceId, 'expense');
+  }
+
+  Future<List<CategoryItem>> listIncomeCategories(String spaceId) {
+    return _listCategories(spaceId, 'income');
+  }
+
+  Future<List<CategoryItem>> _listCategories(String spaceId, String kind) async {
     final response = await _client
         .from('categories')
-        .select('id,name,essential')
+        .select(
+          'id,name,essential,parent_id,is_selectable,category_role,sort_order',
+        )
         .eq('space_id', spaceId)
-        .eq('kind', 'expense')
+        .eq('kind', kind)
         .eq('active', true)
+        .eq('category_role', 'economic')
+        .order('sort_order')
         .order('name');
-    return List<Map<String, dynamic>>.from(response)
-        .map(CategoryItem.fromJson)
+
+    final rows = List<Map<String, dynamic>>.from(response);
+    final namesById = <String, String>{
+      for (final row in rows)
+        if (row['id'] != null && row['name'] != null)
+          row['id'] as String: row['name'] as String,
+    };
+
+    return rows
+        .where((row) => row['is_selectable'] as bool? ?? true)
+        .map(
+          (row) => CategoryItem(
+            id: row['id'] as String,
+            name: row['name'] as String,
+            essential: row['essential'] as bool? ?? false,
+            parentId: row['parent_id'] as String?,
+            parentName: namesById[row['parent_id']],
+          ),
+        )
         .toList();
+  }
+
+  Future<List<BudgetItem>> listBudgetItems({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    final month = DateTime(periodMonth.year, periodMonth.month);
+    final budgetResponse = await _client
+        .from('budgets')
+        .select('id')
+        .eq('space_id', spaceId)
+        .eq('period_month', _date(month))
+        .limit(1);
+    final budgetRows = List<Map<String, dynamic>>.from(budgetResponse);
+    if (budgetRows.isEmpty) return const [];
+
+    final categoryResponse = await _client
+        .from('categories')
+        .select('id,name,parent_id')
+        .eq('space_id', spaceId)
+        .eq('active', true);
+    final categoryRows = List<Map<String, dynamic>>.from(categoryResponse);
+    final categoryById = <String, Map<String, dynamic>>{
+      for (final row in categoryRows) row['id'] as String: row,
+    };
+
+    String categoryPath(String id) {
+      final row = categoryById[id];
+      if (row == null) return 'Categoria';
+      final name = row['name'] as String? ?? 'Categoria';
+      final parentId = row['parent_id'] as String?;
+      if (parentId == null) return name;
+      final parent = categoryById[parentId];
+      final parentName = parent?['name'] as String?;
+      if (parentName == null || parentName.isEmpty) return name;
+      return '$parentName > $name';
+    }
+
+    final itemResponse = await _client
+        .from('budget_items')
+        .select(
+          'category_id,planned_amount,warning_threshold,critical_threshold',
+        )
+        .eq('space_id', spaceId)
+        .eq('budget_id', budgetRows.first['id'] as String);
+    final itemRows = List<Map<String, dynamic>>.from(itemResponse);
+
+    final items = itemRows
+        .map(
+          (row) => BudgetItem(
+            categoryId: row['category_id'] as String,
+            categoryPath: categoryPath(row['category_id'] as String),
+            plannedAmount: row['planned_amount'] as num? ?? 0,
+            warningThreshold: row['warning_threshold'] as num? ?? 0.70,
+            criticalThreshold: row['critical_threshold'] as num? ?? 0.90,
+          ),
+        )
+        .toList();
+    items.sort((a, b) => a.categoryPath.compareTo(b.categoryPath));
+    return items;
   }
 
   Future<String> createOnboardingAccount({
@@ -275,7 +365,6 @@ class FolegoRepository {
     );
     return data as String;
   }
-
 
   Future<void> signOut() async {
     await _client.auth.signOut();

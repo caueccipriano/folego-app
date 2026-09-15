@@ -32,7 +32,7 @@ class _HomeShellState extends State<HomeShell> {
     final pages = [
       HomeScreen(space: widget.space, repository: widget.repository),
       const TransactionsScreen(),
-      const PlanScreen(),
+      PlanScreen(space: widget.space, repository: widget.repository),
       const WalletScreen(),
       ProfileScreen(
         client: Supabase.instance.client,
@@ -40,27 +40,26 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
-return ColoredBox(
-  color: Theme.of(context).scaffoldBackgroundColor,
-  child: Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 520),
-      child: Scaffold(
-        extendBody: true,
-        body: IndexedStack(
-          index: _index,
-          children: pages,
-        ),
-        bottomNavigationBar: LiquidGlassNavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (value) {
-            setState(() => _index = value);
-          },
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Scaffold(
+            extendBody: true,
+            body: IndexedStack(
+              index: _index,
+              children: pages,
+            ),
+            bottomNavigationBar: LiquidGlassNavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (value) {
+                setState(() => _index = value);
+              },
+            ),
+          ),
         ),
       ),
-    ),
-  ),
-);
-
+    );
   }
 }
