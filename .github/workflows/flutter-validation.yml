@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           if ! git diff --quiet -- pubspec.lock; then
-            echo "flutter pub get changed pubspec.lock in the runner; it will not be committed automatically."
+            echo "flutter pub get updated the stale lockfile to match declared dependencies."
             git diff -- pubspec.lock
           else
             echo "pubspec.lock unchanged."
@@ -86,6 +86,9 @@ jobs:
           )
           PY
 
+      - name: Apply remaining safe Dart fixes
+        run: dart fix --apply
+
       - name: Format modified Dart files
         run: >-
           dart format
@@ -133,6 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            pubspec.lock
             lib/features/diary/diary_screen.dart
             lib/features/transactions/recurring_form_sheet.dart
             lib/data/models/category_item.dart
@@ -148,8 +152,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- "${files[@]}"
           if git diff --cached --quiet; then
-            echo "No validated Dart cleanup to commit."
+            echo "No validated cleanup to commit."
             exit 0
           fi
-          git commit -m "fix: clear Flutter analyzer issues"
+          git commit -m "fix: stabilize Flutter integration"
           git push origin HEAD:feat/transactions-recurring
