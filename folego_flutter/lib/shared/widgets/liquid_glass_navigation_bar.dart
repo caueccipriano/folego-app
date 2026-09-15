@@ -23,7 +23,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
     final items = <_NavItem>[
       _NavItem(icon: AppIcons.home, label: l10n.home),
-      const _NavItem(icon: AppIcons.journal, label: 'diário'),
+      const _NavItem(icon: AppIcons.transactions, label: 'lançamentos'),
       _NavItem(icon: AppIcons.plan, label: l10n.plan),
       _NavItem(icon: AppIcons.wallet, label: l10n.wallet),
       _NavItem(icon: AppIcons.profile, label: l10n.profile),

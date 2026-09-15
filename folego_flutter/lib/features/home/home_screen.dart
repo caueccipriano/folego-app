@@ -13,6 +13,7 @@ import '../../data/models/folego_snapshot.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
@@ -148,9 +149,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _comingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature entra na próxima etapa do Fôlego.')),
+  Future<void> _openDiary() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DiaryScreen(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+        ),
+      ),
     );
   }
 
@@ -550,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
             background: surface,
             foreground: primaryText,
             borderColor: border,
-            onTap: () => _comingSoon('Diário'),
+            onTap: _openDiary,
           ),
         ),
       ],

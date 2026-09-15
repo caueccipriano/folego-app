@@ -4,10 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/liquid_glass_navigation_bar.dart';
-import '../diary/diary_screen.dart';
 import '../home/home_screen.dart';
 import '../plan/plan_screen.dart';
 import '../profile/profile_screen.dart';
+import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
 
 class HomeShell extends StatefulWidget {
@@ -27,11 +27,7 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(space: widget.space, repository: widget.repository),
-      DiaryScreen(
-        repository: widget.repository,
-        spaceId: widget.space.id,
-        active: _index == 1,
-      ),
+      TransactionsScreen(repository: widget.repository),
       PlanScreen(repository: widget.repository, spaceId: widget.space.id),
       WalletScreen(repository: widget.repository, spaceId: widget.space.id),
       ProfileScreen(
