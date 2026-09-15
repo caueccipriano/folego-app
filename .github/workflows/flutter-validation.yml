@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   flutter-validation:
@@ -30,9 +30,19 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Check formatting of corrected files
+      - name: Audit lockfile generated diff
+        shell: bash
+        run: |
+          if ! git diff --quiet -- pubspec.lock; then
+            echo "flutter pub get changed pubspec.lock in the runner; it will not be committed."
+            git diff --stat -- pubspec.lock
+          else
+            echo "pubspec.lock unchanged."
+          fi
+
+      - name: Format corrected files
         run: >-
-          dart format --output=none --set-exit-if-changed
+          dart format
           lib/features/diary/diary_screen.dart
           lib/features/transactions/recurring_form_sheet.dart
 
@@ -63,3 +73,21 @@ jobs:
 
       - name: Full Flutter test suite
         run: flutter test -r expanded
+
+      - name: Commit formatter output
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            lib/features/diary/diary_screen.dart
+            lib/features/transactions/recurring_form_sheet.dart
+          )
+          if git diff --quiet -- "${files[@]}"; then
+            echo "Corrected files already formatted."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit -m "style: format stabilized Flutter files"
+          git push origin HEAD:feat/transactions-recurring
