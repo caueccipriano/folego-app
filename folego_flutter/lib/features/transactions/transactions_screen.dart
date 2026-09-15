@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
+import '../../core/utils/financial_display_text.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
@@ -16,6 +17,7 @@ import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
+import 'transaction_detail_sheet.dart';
 import 'transaction_edit_sheet.dart';
 
 part 'transactions_recurring_widgets.dart';
@@ -164,19 +166,21 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     }
   }
 
-  Future<void> _editTransaction(TransactionItem item) async {
+  Future<void> _openTransactionDetail(TransactionItem item) async {
     final space = _space;
     if (space == null) return;
-    if (!item.canEditAsSimple) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Esse tipo de lançamento possui um fluxo próprio e ainda não pode ser editado por aqui.',
-          ),
-        ),
-      );
-      return;
-    }
+    final changed = await showTransactionDetail(
+      context: context,
+      space: space,
+      repository: widget.repository,
+      eventId: item.id,
+    );
+    if (changed == true && mounted) await _refresh();
+  }
+
+  Future<void> _editTransaction(TransactionItem item) async {
+    final space = _space;
+    if (space == null || !item.canEditAsSimple) return;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -200,17 +204,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
   Future<void> _deleteTransaction(TransactionItem item) async {
     final space = _space;
-    if (space == null) return;
-    if (!item.canEditAsSimple) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Esse tipo de lançamento possui um fluxo próprio e não pode ser excluído por aqui.',
-          ),
-        ),
-      );
-      return;
-    }
+    if (space == null || !item.canEditAsSimple) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -227,7 +221,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.description,
+                financialDisplayDescription(item.description),
                 style: AppTypography.body(
                   dialogContext,
                   fontSize: 14,
@@ -564,6 +558,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                   loadMoreError: _loadMoreError,
                   onRefresh: _refresh,
                   onLoadMore: _loadMoreTransactions,
+                  onOpen: _openTransactionDetail,
                   onEdit: _editTransaction,
                   onDelete: _deleteTransaction,
                 ),
@@ -668,6 +663,7 @@ class _TransactionsTab extends StatelessWidget {
     required this.loadMoreError,
     required this.onRefresh,
     required this.onLoadMore,
+    required this.onOpen,
     required this.onEdit,
     required this.onDelete,
   });
@@ -678,6 +674,7 @@ class _TransactionsTab extends StatelessWidget {
   final String? loadMoreError;
   final Future<void> Function() onRefresh;
   final Future<void> Function() onLoadMore;
+  final Future<void> Function(TransactionItem) onOpen;
   final Future<void> Function(TransactionItem) onEdit;
   final Future<void> Function(TransactionItem) onDelete;
 
@@ -748,6 +745,7 @@ class _TransactionsTab extends StatelessWidget {
               return _TransactionCard(
                 transaction: transaction,
                 categoryById: categoryById,
+                onOpen: () => onOpen(transaction),
                 onEdit: () => onEdit(transaction),
                 onDelete: () => onDelete(transaction),
               );
@@ -805,11 +803,13 @@ class _TransactionCard extends StatelessWidget {
   const _TransactionCard({
     required this.transaction,
     required this.categoryById,
+    required this.onOpen,
     required this.onEdit,
     required this.onDelete,
   });
   final TransactionItem transaction;
   final Map<String, CategoryItem> categoryById;
+  final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -834,11 +834,12 @@ class _TransactionCard extends StatelessWidget {
         : transaction.isExpense
         ? 'Gasto'
         : _typeLabel(transaction.eventType);
+    final description = financialDisplayDescription(transaction.description);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: transaction.canEditAsSimple ? onEdit : null,
+        onTap: onOpen,
         borderRadius: BorderRadius.circular(22),
         child: Container(
           padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
@@ -863,7 +864,7 @@ class _TransactionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      transaction.description,
+                      description.isEmpty ? _typeLabel(transaction.eventType) : description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.body(
@@ -963,7 +964,7 @@ class _TransactionCard extends StatelessWidget {
       showDragHandle: false,
       backgroundColor: Colors.transparent,
       builder: (_) => _FolegoActionSheet(
-        title: transaction.description,
+        title: financialDisplayDescription(transaction.description),
         actions: const [
           _SheetAction(value: 'edit', label: 'Editar'),
           _SheetAction(value: 'delete', label: 'Excluir', destructive: true),
@@ -1019,20 +1020,15 @@ class _TransactionCard extends StatelessWidget {
 
   static String _typeLabel(String type) {
     switch (type) {
-      case 'transfer':
-        return 'Transferência';
-      case 'card_purchase':
-        return 'Cartão';
-      case 'card_payment':
-        return 'Pagamento';
-      case 'opening_balance':
-        return 'Saldo inicial';
-      case 'benefit_expense':
-        return 'Benefício';
-      case 'debt_payment':
-        return 'Dívida';
-      default:
-        return 'Lançamento';
+      case 'transfer': return 'Transferência';
+      case 'card_purchase': return 'Cartão';
+      case 'card_payment': return 'Pagamento';
+      case 'opening_balance': return 'Saldo inicial';
+      case 'benefit_expense': return 'Benefício';
+      case 'debt_payment': return 'Dívida';
+      case 'refund': return 'Estorno';
+      case 'adjustment': return 'Ajuste';
+      default: return 'Lançamento';
     }
   }
 }
