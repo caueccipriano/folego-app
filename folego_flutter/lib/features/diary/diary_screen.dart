@@ -146,9 +146,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
           child: RefreshIndicator(
             onRefresh: _load,
             child: _loading
-                ? const ListView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    children: [SizedBox(height: 280), Center(child: CircularProgressIndicator())],
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      SizedBox(height: 280),
+                      Center(child: CircularProgressIndicator()),
+                    ],
                   )
                 : ListView(
                     physics: const AlwaysScrollableScrollPhysics(),

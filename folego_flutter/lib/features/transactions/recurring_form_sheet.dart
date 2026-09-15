@@ -210,9 +210,11 @@ _monthlyLastDay = false;
         );
       }
 
-      final expenseCategories = values[3] as List<CategoryItem>;
+      final expenseCategories =
+          List<CategoryItem>.of(values[3] as List<CategoryItem>);
 
-      final incomeCategories = values[4] as List<CategoryItem>;
+      final incomeCategories =
+          List<CategoryItem>.of(values[4] as List<CategoryItem>);
 
       _sortCategories(expenseCategories);
       _sortCategories(incomeCategories);
