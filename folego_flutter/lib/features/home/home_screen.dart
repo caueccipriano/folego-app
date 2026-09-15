@@ -10,11 +10,15 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
+import '../../data/models/home_expense_summary.dart';
 import '../../data/models/transaction_item.dart';
+import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_home.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
+import 'home_expense_card.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 
@@ -31,13 +35,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   FolegoSnapshot? _snapshot;
 
-  List<TransactionItem> _transactions = const [];
+  List<TransactionItem> _expenseTransactions = const [];
+  List<TransactionItem> _recentTransactions = const [];
   List<CategoryItem> _categories = const [];
+  List<UpcomingEvent> _upcomingEvents = const [];
 
   String _name = 'você';
 
   bool _loading = true;
   String? _error;
+  bool _expensesUnavailable = false;
+  bool _recentUnavailable = false;
+  bool _upcomingUnavailable = false;
 
   Map<String, CategoryItem> get _categoryById {
     return {for (final category in _categories) category.id: category};
@@ -46,8 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
     _load();
+  }
+
+  Future<T?> _optional<T>(Future<T> future, String label) async {
+    try {
+      return await future;
+    } catch (error) {
+      debugPrint('Home optional section failed ($label): $error');
+      return null;
+    }
   }
 
   Future<void> _load() async {
@@ -59,22 +76,41 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      final values = await Future.wait([
-        widget.repository.getProfileName(),
+      final values = await Future.wait<dynamic>([
         widget.repository.getSnapshot(widget.space.id),
-        widget.repository.getTransactions(widget.space.id),
-        widget.repository.listExpenseCategories(widget.space.id),
-        widget.repository.listIncomeCategories(widget.space.id),
+        _optional(widget.repository.getProfileName(), 'profile'),
+        _optional(
+          widget.repository.getHomeExpenseTransactions(widget.space.id),
+          'expenses',
+        ),
+        _optional(
+          widget.repository
+              .getTransactionsPage(widget.space.id, pageSize: 12)
+              .then((page) => page.items),
+          'recent transactions',
+        ),
+        _optional(
+          widget.repository.listExpenseCategories(widget.space.id),
+          'expense categories',
+        ),
+        _optional(
+          widget.repository.listIncomeCategories(widget.space.id),
+          'income categories',
+        ),
+        _optional(
+          widget.repository.getUpcomingEvents(widget.space.id, days: 30),
+          'upcoming events',
+        ),
       ]);
 
       if (!mounted) {
         return;
       }
 
-      final expenseCategories = values[3] as List<CategoryItem>;
-
-      final incomeCategories = values[4] as List<CategoryItem>;
-
+      final expenseCategories =
+          values[4] as List<CategoryItem>? ?? const <CategoryItem>[];
+      final incomeCategories =
+          values[5] as List<CategoryItem>? ?? const <CategoryItem>[];
       final categoriesById = <String, CategoryItem>{};
 
       for (final category in [...expenseCategories, ...incomeCategories]) {
@@ -82,14 +118,23 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       setState(() {
-        _name = values[0] as String;
+        _snapshot = values[0] as FolegoSnapshot;
+        _name = (values[1] as String?)?.trim().isNotEmpty == true
+            ? (values[1] as String).trim()
+            : 'você';
 
-        _snapshot = values[1] as FolegoSnapshot;
+        final expenseTransactions = values[2] as List<TransactionItem>?;
+        final recentTransactions = values[3] as List<TransactionItem>?;
+        final upcomingEvents = values[6] as List<UpcomingEvent>?;
 
-        _transactions = values[2] as List<TransactionItem>;
+        _expenseTransactions = expenseTransactions ?? const [];
+        _recentTransactions = recentTransactions ?? const [];
+        _upcomingEvents = upcomingEvents ?? const [];
+        _categories = categoriesById.values.toList(growable: false);
 
-        _categories = categoriesById.values.toList();
-
+        _expensesUnavailable = expenseTransactions == null;
+        _recentUnavailable = recentTransactions == null;
+        _upcomingUnavailable = upcomingEvents == null;
         _loading = false;
       });
     } catch (error) {
@@ -99,7 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _loading = false;
-
         _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
@@ -171,51 +215,62 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final snapshot = _snapshot!;
-
     final brightness = Theme.of(context).brightness;
-
     final background = AppColors.background(brightness);
-
     final surface = AppColors.surface(brightness);
-
     final border = AppColors.border(brightness);
-
     final primaryText = AppColors.primaryText(brightness);
-
     final secondaryText = AppColors.secondaryText(brightness);
-
     final primaryPurple = AppColors.primaryPurple(brightness);
+    final layout = AppBreakpoints.of(context);
 
-    final categories = _topCategories(brightness);
-
+    final breakdown = buildHomeExpenseBreakdown(
+      _expenseTransactions,
+      categoryFor: (transaction) {
+        final path = _categoryPathFor(transaction);
+        return CategoryVisuals.canonicalCategory(path.category);
+      },
+    );
     final latest = _latestTransaction();
 
-    final layout = AppBreakpoints.of(context);
-    final useTwoColumns =
-        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
-
-    // Espaço da bottom nav flutuante +
-    // safe area do aparelho.
     final bottomListPadding = MediaQuery.paddingOf(context).bottom + 180;
 
+    final header = _buildHeader(
+      snapshot: snapshot,
+      surface: surface,
+      border: border,
+      primaryText: primaryText,
+    );
     final hero = _buildHero(
       snapshot: snapshot,
+      brightness: brightness,
       primaryPurple: primaryPurple,
     );
-
     final quickActions = _buildQuickActions(
       surface: surface,
       border: border,
       primaryText: primaryText,
       brightness: brightness,
     );
-
     final upcoming = _buildUpcomingCard(
       surface: surface,
       border: border,
       primaryText: primaryText,
       secondaryText: secondaryText,
       primaryPurple: primaryPurple,
+    );
+    final expenses = _buildExpensesSection(
+      breakdown: breakdown,
+      primaryText: primaryText,
+      secondaryText: secondaryText,
+    );
+    final latestSection = _buildLatestSection(
+      latest: latest,
+      brightness: brightness,
+      surface: surface,
+      border: border,
+      primaryText: primaryText,
+      secondaryText: secondaryText,
     );
 
     return ColoredBox(
@@ -229,106 +284,60 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.fromLTRB(0, 26, 0, bottomListPadding),
               children: [
-                _buildHeader(
-                  snapshot: snapshot,
-                  surface: surface,
-                  border: border,
-                  primaryText: primaryText,
-                ),
-
+                header,
                 const SizedBox(height: 26),
-
-                if (useTwoColumns)
+                if (layout == AppLayoutSize.compact) ...[
+                  hero,
+                  const SizedBox(height: 24),
+                  quickActions,
+                  const SizedBox(height: 24),
+                  upcoming,
+                  const SizedBox(height: 30),
+                  expenses,
+                  const SizedBox(height: 30),
+                  latestSection,
+                ] else if (layout == AppLayoutSize.medium) ...[
+                  hero,
+                  const SizedBox(height: 26),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 6,
-                        child: hero,
-                      ),
+                      Expanded(flex: 5, child: quickActions),
                       const SizedBox(width: 24),
+                      Expanded(flex: 4, child: upcoming),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  expenses,
+                  const SizedBox(height: 30),
+                  latestSection,
+                ] else ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 7, child: hero),
+                      const SizedBox(width: 28),
+                      Expanded(flex: 5, child: quickActions),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 7, child: expenses),
+                      const SizedBox(width: 28),
                       Expanded(
                         flex: 5,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            quickActions,
-                            const SizedBox(height: 24),
                             upcoming,
+                            const SizedBox(height: 28),
+                            latestSection,
                           ],
                         ),
                       ),
                     ],
-                  )
-                else ...[
-                  hero,
-                  const SizedBox(height: 26),
-                  quickActions,
-                  const SizedBox(height: 24),
-                  upcoming,
-                ],
-
-                const SizedBox(height: 32),
-
-                _buildSectionHeader(
-                  title: 'seus gastos',
-                  subtitle: 'onde seu dinheiro passou neste período',
-                  primaryText: primaryText,
-                  secondaryText: secondaryText,
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CategoryCard(
-                        summary: categories[0],
-                        surface: surface,
-                        border: border,
-                        primaryText: primaryText,
-                        secondaryText: secondaryText,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _CategoryCard(
-                        summary: categories[1],
-                        surface: surface,
-                        border: border,
-                        primaryText: primaryText,
-                        secondaryText: secondaryText,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _CategoryCard(
-                        summary: categories[2],
-                        surface: surface,
-                        border: border,
-                        primaryText: primaryText,
-                        secondaryText: secondaryText,
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (latest != null) ...[
-                  const SizedBox(height: 30),
-                  _buildSectionHeader(
-                    title: 'último movimento',
-                    subtitle: 'o que aconteceu por último',
-                    primaryText: primaryText,
-                    secondaryText: secondaryText,
-                  ),
-                  const SizedBox(height: 14),
-                  _buildLatestCard(
-                    latest: latest,
-                    brightness: brightness,
-                    surface: surface,
-                    border: border,
-                    primaryText: primaryText,
-                    secondaryText: secondaryText,
                   ),
                 ],
               ],
@@ -371,8 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final daysChip = snapshot.daysUntilIncome == null
         ? null
         : Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
+            constraints: const BoxConstraints(minHeight: 42),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
             decoration: BoxDecoration(
               color: surface,
               borderRadius: BorderRadius.circular(99),
@@ -383,14 +392,18 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Icon(AppIcons.flame, size: 18, color: AppColors.lime),
                 const SizedBox(width: 6),
-                Text(
-                  '${snapshot.daysUntilIncome} '
-                  'dia${snapshot.daysUntilIncome == 1 ? '' : 's'}',
-                  style: AppTypography.label(
-                    context,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primaryText,
+                Flexible(
+                  child: Text(
+                    '${snapshot.daysUntilIncome} '
+                    'dia${snapshot.daysUntilIncome == 1 ? '' : 's'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: primaryText,
+                    ),
                   ),
                 ),
               ],
@@ -437,8 +450,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHero({
     required FolegoSnapshot snapshot,
+    required Brightness brightness,
     required Color primaryPurple,
   }) {
+    final onPurple = brightness == Brightness.dark
+        ? AppColors.iconOnPurpleDark
+        : AppColors.iconOnPurpleLight;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
@@ -455,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: .78),
+              color: onPurple.withValues(alpha: .80),
             ),
           ),
           const SizedBox(height: 10),
@@ -475,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: .12),
+              color: AppColors.darkBackground.withValues(alpha: .14),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -484,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icon(
                   AppIcons.calendar,
                   size: 17,
-                  color: Colors.white.withValues(alpha: .85),
+                  color: onPurple.withValues(alpha: .88),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
@@ -495,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       context,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: .82),
+                      color: onPurple.withValues(alpha: .84),
                     ),
                   ),
                 ),
@@ -514,6 +532,9 @@ class _HomeScreenState extends State<HomeScreen> {
     required Brightness brightness,
   }) {
     final positive = AppColors.positiveText(brightness);
+    final onPurple = brightness == Brightness.dark
+        ? AppColors.iconOnPurpleDark
+        : AppColors.iconOnPurpleLight;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,7 +565,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'metas',
             icon: AppIcons.goals,
             background: AppColors.primaryPurple(brightness),
-            foreground: Colors.white,
+            foreground: onPurple,
             onTap: _openGoals,
           ),
         ),
@@ -570,6 +591,16 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color secondaryText,
     required Color primaryPurple,
   }) {
+    final sorted = [..._upcomingEvents]
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final next = sorted.isEmpty ? null : sorted.first;
+
+    final detail = _upcomingUnavailable
+        ? 'veja o que entra e sai nos próximos 30 dias'
+        : next == null
+        ? 'nada previsto nos próximos 30 dias'
+        : '${next.name} · ${next.isIncome ? '+' : '-'}${Formatters.money(next.amount.abs())} · ${_futureDate(next.dueDate)}';
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -607,12 +638,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'veja o que entra e sai '
-                      'nos próximos 30 dias',
+                      'veja o que entra e sai nos próximos 30 dias',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTypography.body(
                         context,
                         fontSize: 12,
                         color: secondaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      detail,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
                       ),
                     ),
                   ],
@@ -624,6 +668,76 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildExpensesSection({
+    required HomeExpenseBreakdown breakdown,
+    required Color primaryText,
+    required Color secondaryText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          title: 'seus gastos',
+          subtitle: 'como seus gastos se distribuem neste mês',
+          primaryText: primaryText,
+          secondaryText: secondaryText,
+        ),
+        const SizedBox(height: 16),
+        HomeExpenseCard(
+          breakdown: breakdown,
+          unavailable: _expensesUnavailable,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLatestSection({
+    required TransactionItem? latest,
+    required Brightness brightness,
+    required Color surface,
+    required Color border,
+    required Color primaryText,
+    required Color secondaryText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          title: 'último movimento',
+          subtitle: 'o que aconteceu por último',
+          primaryText: primaryText,
+          secondaryText: secondaryText,
+        ),
+        const SizedBox(height: 14),
+        if (_recentUnavailable)
+          _buildCompactEmptyCard(
+            message: 'não foi possível carregar o último movimento',
+            surface: surface,
+            border: border,
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+          )
+        else if (latest == null)
+          _buildCompactEmptyCard(
+            message: 'nenhum movimento recente',
+            surface: surface,
+            border: border,
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+          )
+        else
+          _buildLatestCard(
+            latest: latest,
+            brightness: brightness,
+            surface: surface,
+            border: border,
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+          ),
+      ],
     );
   }
 
@@ -657,6 +771,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCompactEmptyCard({
+    required String message,
+    required Color surface,
+    required Color border,
+    required Color primaryText,
+    required Color secondaryText,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Icon(AppIcons.transactions, size: 21, color: secondaryText),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.body(
+                context,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: primaryText,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLatestCard({
     required TransactionItem latest,
     required Brightness brightness,
@@ -665,12 +814,9 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    // Tipo + valor são considerados.
-    // Assim, qualquer valor negativo também
-    // recebe obrigatoriamente a semântica
-    // de despesa/alerta.
-    final isNegative = latest.isExpense || latest.amount < 0;
-
+    final isNegative = latest.isExpense ||
+        latest.eventType == 'card_payment' ||
+        latest.amount < 0;
     final isPositive = latest.isIncome && latest.amount >= 0;
 
     final amountColor = isNegative
@@ -680,9 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : AppColors.primaryPurple(brightness);
 
     final categoryPath = _categoryPathFor(latest);
-
     final isTransfer = latest.eventType == 'transfer';
-
     final categoryColor = latest.isIncome
         ? AppColors.positiveText(brightness)
         : isTransfer
@@ -691,7 +835,6 @@ class _HomeScreenState extends State<HomeScreen> {
             category: categoryPath.category,
             brightness: brightness,
           );
-
     final categoryIcon = latest.isIncome
         ? AppIcons.income
         : isTransfer
@@ -700,11 +843,13 @@ class _HomeScreenState extends State<HomeScreen> {
             category: categoryPath.category,
             subcategory: categoryPath.subcategory,
           );
-
     final categoryLabel = latest.categoryName?.trim().isNotEmpty == true
         ? latest.categoryName!.trim()
         : _typeLabel(latest.eventType);
-
+    final cleanedDescription = homeDisplayDescription(latest.description);
+    final description = cleanedDescription.isEmpty
+        ? _typeLabel(latest.eventType)
+        : cleanedDescription;
     final sign = isNegative
         ? '-'
         : isPositive
@@ -734,8 +879,8 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  latest.description,
-                  maxLines: 1,
+                  description,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.body(
                     context,
@@ -745,29 +890,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        categoryLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.label(
-                          context,
-                          fontSize: 11,
-                          color: secondaryText,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      ' · ${_relativeDate(latest.occurredAt)}',
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 11,
-                        color: secondaryText,
-                      ),
-                    ),
-                  ],
+                Text(
+                  '$categoryLabel · ${_relativeDate(latest.occurredAt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 11,
+                    color: secondaryText,
+                  ),
                 ),
               ],
             ),
@@ -789,88 +920,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<_CategorySummary> _topCategories(Brightness brightness) {
-    final totals = <String, double>{};
-
-    for (final transaction in _transactions) {
-      if (!_isExpense(transaction.eventType)) {
-        continue;
-      }
-
-      final path = _categoryPathFor(transaction);
-
-      final canonicalParent = CategoryVisuals.canonicalCategory(path.category);
-
-      totals[canonicalParent] =
-          (totals[canonicalParent] ?? 0) + transaction.amount.abs();
-    }
-
-    final sorted = totals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    final result = <_CategorySummary>[];
-
-    for (var i = 0; i < sorted.length && i < 3; i++) {
-      final entry = sorted[i];
-
-      result.add(
-        _CategorySummary(
-          label: entry.key.toLowerCase(),
-          amount: entry.value,
-          icon: CategoryVisuals.iconFor(category: entry.key),
-          color: CategoryVisuals.colorFor(
-            category: entry.key,
-            brightness: brightness,
-          ),
-        ),
-      );
-    }
-
-    const fallbackNames = ['Alimentação', 'Moradia', 'Transporte'];
-
-    for (final fallbackName in fallbackNames) {
-      if (result.length >= 3) {
-        break;
-      }
-
-      final alreadyExists = result.any(
-        (item) => item.label.toLowerCase() == fallbackName.toLowerCase(),
-      );
-
-      if (alreadyExists) {
-        continue;
-      }
-
-      result.add(
-        _CategorySummary(
-          label: fallbackName.toLowerCase(),
-          amount: 0,
-          icon: CategoryVisuals.iconFor(category: fallbackName),
-          color: CategoryVisuals.colorFor(
-            category: fallbackName,
-            brightness: brightness,
-          ),
-        ),
-      );
-    }
-
-    while (result.length < 3) {
-      result.add(
-        _CategorySummary(
-          label: 'a classificar',
-          amount: 0,
-          icon: CategoryVisuals.iconFor(category: 'A classificar'),
-          color: CategoryVisuals.colorFor(
-            category: 'A classificar',
-            brightness: brightness,
-          ),
-        ),
-      );
-    }
-
-    return result.take(3).toList();
-  }
-
   _CategoryPath _categoryPathFor(TransactionItem transaction) {
     final rawCategory = transaction.categoryName?.trim();
 
@@ -879,10 +928,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final parentId = transaction.categoryParentId;
-
     if (parentId != null) {
       final parent = _categoryById[parentId];
-
       if (parent != null) {
         return _CategoryPath(category: parent.name, subcategory: rawCategory);
       }
@@ -891,42 +938,43 @@ class _HomeScreenState extends State<HomeScreen> {
     return _CategoryPath(category: rawCategory);
   }
 
-  bool _isExpense(String type) {
-    return type == 'expense' ||
-        type == 'card_purchase' ||
-        type == 'benefit_expense' ||
-        type == 'debt_payment';
-  }
-
   TransactionItem? _latestTransaction() {
-    for (final transaction in _transactions) {
+    for (final transaction in _recentTransactions) {
       if (transaction.eventType != 'opening_balance') {
         return transaction;
       }
     }
-
-    if (_transactions.isNotEmpty) {
-      return _transactions.first;
-    }
-
     return null;
   }
 
   String _relativeDate(DateTime date) {
     final now = DateTime.now();
-
     final today = DateTime(now.year, now.month, now.day);
-
     final transactionDay = DateTime(date.year, date.month, date.day);
-
     final difference = today.difference(transactionDay).inDays;
 
     if (difference == 0) {
       return 'hoje';
     }
-
     if (difference == 1) {
       return 'ontem';
+    }
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}';
+  }
+
+  String _futureDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDay = DateTime(date.year, date.month, date.day);
+    final difference = eventDay.difference(today).inDays;
+
+    if (difference == 0) {
+      return 'hoje';
+    }
+    if (difference == 1) {
+      return 'amanhã';
     }
 
     return '${date.day.toString().padLeft(2, '0')}/'
@@ -937,19 +985,20 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (type) {
       case 'income':
         return 'receita';
-
       case 'expense':
         return 'gasto';
-
       case 'card_purchase':
         return 'cartão';
-
+      case 'card_payment':
+        return 'pagamento de fatura';
+      case 'benefit_expense':
+        return 'benefício';
+      case 'debt_payment':
+        return 'dívida';
       case 'transfer':
         return 'transferência';
-
       case 'opening_balance':
         return 'saldo inicial';
-
       default:
         return 'movimento';
     }
@@ -1009,86 +1058,6 @@ class _QuickAction extends StatelessWidget {
       ],
     );
   }
-}
-
-class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({
-    required this.summary,
-    required this.surface,
-    required this.border,
-    required this.primaryText,
-    required this.secondaryText,
-  });
-
-  final _CategorySummary summary;
-
-  final Color surface;
-  final Color border;
-  final Color primaryText;
-  final Color secondaryText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 142,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CategoryIconBadge(
-            icon: summary.icon,
-            color: summary.color,
-            size: 40,
-            iconSize: 21,
-            radius: 13,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            summary.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTypography.label(
-              context,
-              fontSize: 11,
-              color: secondaryText,
-            ),
-          ),
-          const SizedBox(height: 5),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              Formatters.money(summary.amount),
-              style: AppTypography.money(
-                context,
-                fontSize: 14,
-                color: primaryText,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CategorySummary {
-  const _CategorySummary({
-    required this.label,
-    required this.amount,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final double amount;
-  final IconData icon;
-  final Color color;
 }
 
 class _CategoryPath {
