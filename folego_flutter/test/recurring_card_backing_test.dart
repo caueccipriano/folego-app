@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:folego/data/models/account_item.dart';
 import 'package:folego/data/models/category_item.dart';
@@ -46,14 +45,14 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(find.text('Cartão principal'), findsOneWidget);
     expect(find.text('Conta ativa'), findsNothing);
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(repository.savedAccountId, isNull);
     expect(repository.savedCardId, 'card-1');
@@ -83,14 +82,14 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(find.text('Conta ativa'), findsOneWidget);
     expect(repository.walletOverviewCalls, 0);
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(repository.savedAccountId, 'account-1');
     expect(repository.savedCardId, isNull);
@@ -130,16 +129,16 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     await tester.tap(find.text('Cartão principal'));
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
     await tester.tap(find.text('Cartão secundário').last);
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(repository.savedAccountId, isNull);
     expect(repository.savedCardId, 'card-2');
@@ -163,7 +162,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(
       find.text('Cartão atual (inativo ou indisponível)'),
@@ -178,11 +177,17 @@ void main() {
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await tester.pumpAndSettle();
+    await _flushUi(tester);
 
     expect(repository.savedAccountId, isNull);
     expect(repository.savedCardId, 'archived-card');
   });
+}
+
+Future<void> _flushUi(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+  await tester.pump(const Duration(milliseconds: 250));
 }
 
 RecurringItem _item({
@@ -211,16 +216,11 @@ RecurringItem _item({
   );
 }
 
-class _FakeFolegoRepository extends FolegoRepository {
+class _FakeFolegoRepository implements FolegoRepository {
   _FakeFolegoRepository({
     this.accounts = const [],
     this.cards = const [],
-  }) : super(
-         SupabaseClient(
-           'https://example.supabase.co',
-           'test-anon-key',
-         ),
-       );
+  });
 
   final List<AccountItem> accounts;
   final List<WalletCard> cards;
@@ -305,4 +305,7 @@ class _FakeFolegoRepository extends FolegoRepository {
     savedStartsOn = startsOn;
     savedEndsOn = endsOn;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
