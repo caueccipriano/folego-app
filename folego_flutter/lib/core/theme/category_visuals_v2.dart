@@ -432,7 +432,7 @@ abstract final class CategoryVisuals {
         return isDark ? const Color(0xFFB79CFF) : const Color(0xFF7054B8);
       case 'outros':
       case 'outros gastos':
-        return isDark ? const Color(0xFFB5B2C0) : const Color(0xFF6B6656);
+        return isDark ? const Color(0xFFB5B2C0) : const Color(0xFF706B7A);
       case 'transferencia':
       case 'transferencias':
         return isDark ? const Color(0xFF4FEAFF) : const Color(0xFF167D91);
