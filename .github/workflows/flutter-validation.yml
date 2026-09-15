@@ -34,17 +34,71 @@ jobs:
         shell: bash
         run: |
           if ! git diff --quiet -- pubspec.lock; then
-            echo "flutter pub get changed pubspec.lock in the runner; it will not be committed."
-            git diff --stat -- pubspec.lock
+            echo "flutter pub get changed pubspec.lock in the runner; it will not be committed automatically."
+            git diff -- pubspec.lock
           else
             echo "pubspec.lock unchanged."
           fi
 
-      - name: Format corrected files
+      - name: Apply known analyzer cleanup
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              file = Path(path)
+              text = file.read_text()
+              if old not in text:
+                  raise SystemExit(f"Expected text not found in {path}: {old!r}")
+              file.write_text(text.replace(old, new, 1))
+
+          replace(
+              'lib/data/models/category_item.dart',
+              '          if (parentName != null) parentName!,\n',
+              '          ?parentName,\n',
+          )
+          replace(
+              'lib/data/repositories/folego_repository_categories.dart',
+              "      'updated_at': DateTime.now().toUtc().toIso8601String(),\n      if (active != null) 'active': active,\n    };\n",
+              "      'updated_at': DateTime.now().toUtc().toIso8601String(),\n    };\n    if (active != null) {\n      values['active'] = active;\n    }\n",
+          )
+          replace(
+              'lib/data/repositories/folego_repository_transaction_detail.dart',
+              ".eq('card_id', cardId!)",
+              ".eq('card_id', cardId)",
+          )
+          for path in [
+              'lib/features/auth/auth_gate.dart',
+              'lib/features/auth/auth_screen.dart',
+              'lib/features/auth/password_recovery_screen.dart',
+          ]:
+              replace(path, "import 'package:flutter/foundation.dart';\n", '')
+          replace(
+              'lib/features/home/quick_register_sheet_v2.dart',
+              '    final surface = AppColors.surface(brightness);\n',
+              '',
+          )
+          replace(
+              'lib/features/profile/profile_screen_v2.dart',
+              "      final rows = await widget.repository.listProfileExportRows(\n        spaceId: widget.spaceId,\n      );\n",
+              "      final rows = await widget.repository.listProfileExportRows(\n        spaceId: widget.spaceId,\n      );\n      if (!anchorContext.mounted) return;\n",
+          )
+          PY
+
+      - name: Format modified Dart files
         run: >-
           dart format
           lib/features/diary/diary_screen.dart
           lib/features/transactions/recurring_form_sheet.dart
+          lib/data/models/category_item.dart
+          lib/data/repositories/folego_repository_categories.dart
+          lib/data/repositories/folego_repository_transaction_detail.dart
+          lib/features/auth/auth_gate.dart
+          lib/features/auth/auth_screen.dart
+          lib/features/auth/password_recovery_screen.dart
+          lib/features/home/quick_register_sheet_v2.dart
+          lib/features/profile/profile_screen_v2.dart
 
       - name: Flutter analyze
         run: flutter analyze
@@ -74,20 +128,28 @@ jobs:
       - name: Full Flutter test suite
         run: flutter test -r expanded
 
-      - name: Commit formatter output
+      - name: Commit validated cleanup
         shell: bash
         run: |
           set -euo pipefail
           files=(
             lib/features/diary/diary_screen.dart
             lib/features/transactions/recurring_form_sheet.dart
+            lib/data/models/category_item.dart
+            lib/data/repositories/folego_repository_categories.dart
+            lib/data/repositories/folego_repository_transaction_detail.dart
+            lib/features/auth/auth_gate.dart
+            lib/features/auth/auth_screen.dart
+            lib/features/auth/password_recovery_screen.dart
+            lib/features/home/quick_register_sheet_v2.dart
+            lib/features/profile/profile_screen_v2.dart
           )
-          if git diff --quiet -- "${files[@]}"; then
-            echo "Corrected files already formatted."
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- "${files[@]}"
-          git commit -m "style: format stabilized Flutter files"
+          if git diff --cached --quiet; then
+            echo "No validated Dart cleanup to commit."
+            exit 0
+          fi
+          git commit -m "fix: clear Flutter analyzer issues"
           git push origin HEAD:feat/transactions-recurring
