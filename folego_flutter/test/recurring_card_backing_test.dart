@@ -45,14 +45,14 @@ void main() {
         ),
       ),
     );
-    await _flushUi(tester);
+    await _waitFor(tester, find.text('Salvar recorrência'));
 
     expect(find.text('Cartão principal'), findsOneWidget);
     expect(find.text('Conta ativa'), findsNothing);
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await _flushUi(tester);
+    await tester.pump();
 
     expect(repository.savedAccountId, isNull);
     expect(repository.savedCardId, 'card-1');
@@ -82,14 +82,14 @@ void main() {
         ),
       ),
     );
-    await _flushUi(tester);
+    await _waitFor(tester, find.text('Salvar recorrência'));
 
     expect(find.text('Conta ativa'), findsOneWidget);
     expect(repository.walletOverviewCalls, 0);
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await _flushUi(tester);
+    await tester.pump();
 
     expect(repository.savedAccountId, 'account-1');
     expect(repository.savedCardId, isNull);
@@ -129,16 +129,16 @@ void main() {
         ),
       ),
     );
-    await _flushUi(tester);
+    await _waitFor(tester, find.text('Salvar recorrência'));
 
     await tester.tap(find.text('Cartão principal'));
-    await _flushUi(tester);
+    await tester.pump();
     await tester.tap(find.text('Cartão secundário').last);
-    await _flushUi(tester);
+    await tester.pump();
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await _flushUi(tester);
+    await tester.pump();
 
     expect(repository.savedAccountId, isNull);
     expect(repository.savedCardId, 'card-2');
@@ -162,7 +162,7 @@ void main() {
         ),
       ),
     );
-    await _flushUi(tester);
+    await _waitFor(tester, find.text('Salvar recorrência'));
 
     expect(
       find.text('Cartão atual (inativo ou indisponível)'),
@@ -177,17 +177,18 @@ void main() {
 
     await tester.ensureVisible(find.text('Salvar recorrência'));
     await tester.tap(find.text('Salvar recorrência'));
-    await _flushUi(tester);
+    await tester.pump();
 
     expect(repository.savedAccountId, isNull);
     expect(repository.savedCardId, 'archived-card');
   });
 }
 
-Future<void> _flushUi(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
-  await tester.pump(const Duration(milliseconds: 250));
+Future<void> _waitFor(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 20 && finder.evaluate().isEmpty; i += 1) {
+    await tester.pump(const Duration(milliseconds: 10));
+  }
+  expect(finder, findsOneWidget);
 }
 
 RecurringItem _item({
@@ -257,8 +258,8 @@ class _FakeFolegoRepository implements FolegoRepository {
 
   @override
   Future<List<CategoryItem>> listExpenseCategories(String spaceId) async {
-    return const [
-      CategoryItem(
+    return [
+      const CategoryItem(
         id: 'category-1',
         name: 'Moradia',
         essential: true,
@@ -268,8 +269,8 @@ class _FakeFolegoRepository implements FolegoRepository {
 
   @override
   Future<List<CategoryItem>> listIncomeCategories(String spaceId) async {
-    return const [
-      CategoryItem(
+    return [
+      const CategoryItem(
         id: 'income-category-1',
         name: 'Salário',
         essential: true,
