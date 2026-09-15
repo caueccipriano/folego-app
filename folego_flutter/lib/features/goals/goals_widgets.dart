@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -201,10 +200,28 @@ class GoalCard extends StatelessWidget {
 
   static String _deadlineLabel(FinancialGoal goal) {
     if (goal.isCompleted && goal.completedAt != null) {
-      return 'concluída em ${DateFormat('MMM/yyyy', 'pt_BR').format(goal.completedAt!)}';
+      return 'concluída em ${_monthYearLabel(goal.completedAt!)}';
     }
     if (goal.targetDate == null) return 'sem prazo';
-    return 'até ${DateFormat('MMM/yyyy', 'pt_BR').format(goal.targetDate!)}';
+    return 'até ${_monthYearLabel(goal.targetDate!)}';
+  }
+
+  static String _monthYearLabel(DateTime date) {
+    const months = <String>[
+      'jan',
+      'fev',
+      'mar',
+      'abr',
+      'mai',
+      'jun',
+      'jul',
+      'ago',
+      'set',
+      'out',
+      'nov',
+      'dez',
+    ];
+    return '${months[date.month - 1]}/${date.year}';
   }
 }
 
