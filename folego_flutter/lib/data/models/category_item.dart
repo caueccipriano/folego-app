@@ -48,7 +48,7 @@ class CategoryItem {
   String get normalizedSearchText => _normalize(
         <String>[
           name,
-          if (parentName != null) parentName!,
+          ?parentName,
           ...searchAliases,
         ].join(' '),
       );

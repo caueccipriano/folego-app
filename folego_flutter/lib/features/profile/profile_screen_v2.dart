@@ -165,6 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final rows = await widget.repository.listProfileExportRows(
         spaceId: widget.spaceId,
       );
+      if (!anchorContext.mounted) return;
       final csv = buildProfileExportCsv(rows);
       final bytes = Uint8List.fromList(utf8.encode(csv));
       final fileName = 'folego-dados-${_fileDate(DateTime.now())}.csv';

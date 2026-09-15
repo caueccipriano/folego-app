@@ -484,7 +484,6 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final viewport = media.size;
     final layout = AppBreakpoints.of(context);
     final background = AppColors.background(brightness);
-    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -734,7 +733,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           },
         );
       case QuickExpensePaymentType.creditCard:
-        if (_creditCards.isEmpty) return const _EmptyState('Nenhum cartão cadastrado');
+        if (_creditCards.isEmpty) {
+          return const _EmptyState('Nenhum cartão cadastrado');
+        }
         return Column(
           children: [
             DropdownButtonFormField<String>(
@@ -981,8 +982,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     if (text.contains('invalid_installments_count')) {
       return 'a quantidade de parcelas não é válida';
     }
-    if (text.contains('invalid_card')) return 'selecione um cartão válido';
-    if (text.contains('invalid_benefit_account')) return 'selecione um benefício válido';
+    if (text.contains('invalid_card')) {
+      return 'selecione um cartão válido';
+    }
+    if (text.contains('invalid_benefit_account')) {
+      return 'selecione um benefício válido';
+    }
     if (error is TimeoutException) return error.message ?? 'demorou demais para carregar';
     return text
         .replaceFirst('Invalid argument(s): ', '')

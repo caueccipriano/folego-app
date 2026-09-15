@@ -135,7 +135,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
       'tag_type': type,
       'color_hex': colorHex,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
-      if (active != null) 'active': active,
+      'active': ?active,
     };
 
     await _categoryClient

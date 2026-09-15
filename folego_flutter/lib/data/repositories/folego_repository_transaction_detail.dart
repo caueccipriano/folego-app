@@ -196,7 +196,7 @@ extension FolegoRepositoryTransactionDetail on FolegoRepository {
                 .from('card_invoices')
                 .select('id,opening_balance')
                 .eq('space_id', spaceId)
-                .eq('card_id', cardId!)
+                .eq('card_id', cardId)
                 .gt('reference_month', reference)
                 .neq('opening_balance', 0)
                 .limit(1),
