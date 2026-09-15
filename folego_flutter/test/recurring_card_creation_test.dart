@@ -15,39 +15,43 @@ void main() {
   testWidgets('new recurring expense can use a credit card only', (tester) async {
     final repository = _FakeFolegoRepository();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: RecurringFormSheet(
-            space: space,
-            repository: repository,
-            activeCardLoader: (_) async => const [
-              CreditCardItem(
-                id: 'card-1',
-                name: 'Cartão principal',
-                active: true,
-              ),
-            ],
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RecurringFormSheet(
+              space: space,
+              repository: repository,
+              activeCardLoader: (_) async => const [
+                CreditCardItem(
+                  id: 'card-1',
+                  name: 'Cartão principal',
+                  active: true,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).at(0), 'Spotify');
-    await tester.enterText(find.byType(TextField).at(1), '21,90');
-    await tester.tap(find.text('Cartão'));
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(0), 'Spotify');
+      await tester.enterText(find.byType(TextField).at(1), '21,90');
+      await tester.tap(find.text('Cartão'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Cartão principal'), findsOneWidget);
-    expect(find.text('Conta ativa'), findsNothing);
+      expect(find.text('Cartão principal'), findsOneWidget);
+      expect(find.text('Conta ativa'), findsNothing);
 
-    await tester.ensureVisible(find.text('Criar recorrência'));
-    await tester.tap(find.text('Criar recorrência'));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Criar recorrência'));
+      await tester.tap(find.text('Criar recorrência'));
+      await tester.pumpAndSettle();
 
-    expect(repository.createdAccountId, isNull);
-    expect(repository.createdCardId, 'card-1');
+      expect(repository.createdAccountId, isNull);
+      expect(repository.createdCardId, 'card-1');
+    } finally {
+      await _disposeHarness(tester, repository);
+    }
   });
 
   testWidgets('new recurring expense keeps account destination exclusive', (
@@ -55,50 +59,70 @@ void main() {
   ) async {
     final repository = _FakeFolegoRepository();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: RecurringFormSheet(
-            space: space,
-            repository: repository,
-            activeCardLoader: (_) async => const [
-              CreditCardItem(
-                id: 'card-1',
-                name: 'Cartão principal',
-                active: true,
-              ),
-            ],
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RecurringFormSheet(
+              space: space,
+              repository: repository,
+              activeCardLoader: (_) async => const [
+                CreditCardItem(
+                  id: 'card-1',
+                  name: 'Cartão principal',
+                  active: true,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).at(0), 'Academia');
-    await tester.enterText(find.byType(TextField).at(1), '99,90');
+      await tester.enterText(find.byType(TextField).at(0), 'Academia');
+      await tester.enterText(find.byType(TextField).at(1), '99,90');
 
-    expect(find.text('Conta ativa'), findsOneWidget);
+      expect(find.text('Conta ativa'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Criar recorrência'));
-    await tester.tap(find.text('Criar recorrência'));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Criar recorrência'));
+      await tester.tap(find.text('Criar recorrência'));
+      await tester.pumpAndSettle();
 
-    expect(repository.createdAccountId, 'account-1');
-    expect(repository.createdCardId, isNull);
+      expect(repository.createdAccountId, 'account-1');
+      expect(repository.createdCardId, isNull);
+    } finally {
+      await _disposeHarness(tester, repository);
+    }
   });
 }
 
+Future<void> _disposeHarness(
+  WidgetTester tester,
+  _FakeFolegoRepository repository,
+) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
+  await repository.dispose();
+}
+
 class _FakeFolegoRepository extends FolegoRepository {
-  _FakeFolegoRepository()
-      : super(
-          SupabaseClient(
-            'https://example.supabase.co',
-            'test-anon-key',
-          ),
-        );
+  factory _FakeFolegoRepository() {
+    final client = SupabaseClient(
+      'https://example.supabase.co',
+      'test-anon-key',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    );
+    return _FakeFolegoRepository._(client);
+  }
+
+  _FakeFolegoRepository._(this.client) : super(client);
+
+  final SupabaseClient client;
 
   String? createdAccountId;
   String? createdCardId;
+
+  Future<void> dispose() => client.dispose();
 
   @override
   Future<List<AccountItem>> listAccounts(String spaceId) async => const [
