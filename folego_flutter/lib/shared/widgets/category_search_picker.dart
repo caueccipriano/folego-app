@@ -168,6 +168,8 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                           category: parentName ?? category.name,
                           subcategory: parentName == null ? null : category.name,
                           eventType: widget.eventType,
+                          systemKey: category.systemKey,
+                          colorHex: category.isSystem ? null : category.colorHex,
                         );
 
                         return Material(

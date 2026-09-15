@@ -1,1 +1,1 @@
-export 'category_visuals_v2.dart';
+export 'category_visuals_v3.dart';

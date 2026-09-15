@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/category_item.dart';
-import 'package:folego_flutter/data/models/category_search.dart';
+import 'package:folego/data/models/category_item.dart';
+import 'package:folego/data/models/category_search.dart';
 
 void main() {
   CategoryItem item({
@@ -62,8 +62,10 @@ void main() {
       aliases: const ['uber', 'taxi'],
     );
 
-    expect(CategorySearch.search([ride], 'uber').single.breadcrumb,
-        'Transporte > Uber / Táxi');
+    expect(
+      CategorySearch.search([ride], 'uber').single.breadcrumb,
+      'Transporte > Uber / Táxi',
+    );
   });
 
   test('busca por farm ignora acento', () {
@@ -96,6 +98,32 @@ void main() {
     expect(parsed.isSystem, isFalse);
     expect(parsed.isSelectable, isTrue);
     expect(parsed.searchAliases, isEmpty);
+    expect(parsed.colorHex, isNull);
+    expect(parsed.systemKey, isNull);
+    expect(parsed.categoryRole, isNull);
     expect(parsed.breadcrumb, 'Moradia');
+  });
+
+  test('parsing mantém metadados visuais do catálogo', () {
+    final parsed = CategoryItem.fromJson({
+      'id': 'travel',
+      'name': 'Viagens',
+      'kind': 'expense',
+      'essential': false,
+      'is_system': true,
+      'is_selectable': true,
+      'color_hex': '#167D91',
+      'system_key': 'expense.travel',
+      'category_role': 'economic',
+      'search_aliases': ['viagem', 'ferias'],
+      'sort_order': 130,
+      'usage_count': 2,
+    });
+
+    expect(parsed.isSystem, isTrue);
+    expect(parsed.colorHex, '#167D91');
+    expect(parsed.systemKey, 'expense.travel');
+    expect(parsed.categoryRole, 'economic');
+    expect(parsed.searchAliases, contains('ferias'));
   });
 }

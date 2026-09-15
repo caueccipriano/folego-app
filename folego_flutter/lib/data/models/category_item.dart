@@ -8,7 +8,10 @@ class CategoryItem {
     this.parentName,
     this.isSystem = false,
     this.isSelectable = true,
-    this.searchAliases = const <String>[],
+    this.colorHex,
+    this.systemKey,
+    this.categoryRole,
+    this.searchAliases = const [],
     this.sortOrder = 100,
     this.usageCount = 0,
     this.lastUsedAt,
@@ -18,22 +21,21 @@ class CategoryItem {
   final String name;
   final bool essential;
   final String? kind;
-
-  /// Null = categoria principal.
-  /// Preenchido = subcategoria pertencente à categoria desse ID.
   final String? parentId;
   final String? parentName;
-
   final bool isSystem;
   final bool isSelectable;
+  final String? colorHex;
+  final String? systemKey;
+  final String? categoryRole;
   final List<String> searchAliases;
   final int sortOrder;
   final int usageCount;
   final DateTime? lastUsedAt;
 
   bool get isParent => parentId == null;
-
   bool get isSubcategory => parentId != null;
+  bool get isCustom => !isSystem;
 
   String get breadcrumb {
     final parent = parentName?.trim();
@@ -58,9 +60,8 @@ class CategoryItem {
   factory CategoryItem.fromJson(Map<String, dynamic> json) {
     final aliasesRaw = json['search_aliases'];
     final aliases = aliasesRaw is List
-        ? aliasesRaw.whereType<Object>().map((item) => item.toString()).toList()
+        ? aliasesRaw.whereType<String>().toList(growable: false)
         : const <String>[];
-
     final lastUsedRaw = json['last_used_at'];
 
     return CategoryItem(
@@ -72,12 +73,13 @@ class CategoryItem {
       parentName: json['parent_name'] as String?,
       isSystem: json['is_system'] as bool? ?? false,
       isSelectable: json['is_selectable'] as bool? ?? true,
+      colorHex: json['color_hex'] as String?,
+      systemKey: json['system_key'] as String?,
+      categoryRole: json['category_role'] as String?,
       searchAliases: aliases,
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 100,
       usageCount: (json['usage_count'] as num?)?.toInt() ?? 0,
-      lastUsedAt: lastUsedRaw == null
-          ? null
-          : DateTime.tryParse(lastUsedRaw.toString()),
+      lastUsedAt: lastUsedRaw is String ? DateTime.tryParse(lastUsedRaw) : null,
     );
   }
 
@@ -87,8 +89,8 @@ class CategoryItem {
         .toLowerCase()
         .replaceAll('á', 'a')
         .replaceAll('à', 'a')
-        .replaceAll('â', 'a')
         .replaceAll('ã', 'a')
+        .replaceAll('â', 'a')
         .replaceAll('ä', 'a')
         .replaceAll('é', 'e')
         .replaceAll('è', 'e')
