@@ -18,7 +18,6 @@ import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
-import 'category_management_screen.dart';
 import 'financial_organization_screen.dart';
 import 'profile_actions.dart';
 
@@ -42,12 +41,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileLogoutAction _logoutAction;
-
   late ProfileIdentity _identity;
   AppVersionInfo? _versionInfo;
   ThemeMode _themeMode = ThemeMode.system;
   AppLanguagePreference _language = AppLanguagePreference.system;
-
   bool _loadingIdentity = true;
   bool _loadingVersion = true;
   bool _exporting = false;
@@ -58,9 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _identity = ProfileIdentity(
-      email: widget.client.auth.currentUser?.email ?? '',
-    );
+    _identity = ProfileIdentity(email: widget.client.auth.currentUser?.email ?? '');
     _themeMode = AppThemeController.mode.value;
     _language = AppPreferences.languagePreference.value;
     _logoutAction = ProfileLogoutAction(() => widget.client.auth.signOut());
@@ -73,7 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _loadingIdentity = true;
       _identityError = null;
     });
-
     try {
       final identity = await widget.repository.getProfileIdentity();
       if (!mounted) return;
@@ -95,7 +89,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _loadingVersion = true;
       _versionError = null;
     });
-
     try {
       final info = await AppVersionInfo.load();
       if (!mounted) return;
@@ -114,7 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _setTheme(ThemeMode mode) async {
     if (_themeMode == mode) return;
-
     setState(() => _themeMode = mode);
     try {
       await AppPreferences.setThemeMode(mode);
@@ -122,9 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'tema aplicado, mas não consegui salvar essa preferência',
-          ),
+          content: Text('tema aplicado, mas não consegui salvar essa preferência'),
         ),
       );
     }
@@ -132,7 +122,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _setLanguage(AppLanguagePreference language) async {
     if (_language == language) return;
-
     setState(() => _language = language);
     try {
       await AppPreferences.setLanguagePreference(language);
@@ -140,38 +129,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'idioma aplicado, mas não consegui salvar essa preferência',
-          ),
+          content: Text('idioma aplicado, mas não consegui salvar essa preferência'),
         ),
       );
     }
   }
 
-  Future<void> _openCategories() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CategoryManagementScreen(
-          repository: widget.repository,
-          spaceId: widget.spaceId,
-        ),
-      ),
-    );
-  }
-
   Future<void> _openFinancialOrganization() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => FinancialOrganizationScreen(
-          repository: widget.repository,
-        ),
+        builder: (_) => FinancialOrganizationScreen(repository: widget.repository),
       ),
     );
   }
 
   Future<void> _exportData(BuildContext anchorContext) async {
     if (_exporting) return;
-
     setState(() => _exporting = true);
     try {
       final rows = await widget.repository.listProfileExportRows(
@@ -185,28 +158,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final origin = renderBox != null && renderBox.hasSize
           ? renderBox.localToGlobal(Offset.zero) & renderBox.size
           : null;
-
       final result = await SharePlus.instance.share(
         ShareParams(
-          files: [
-            XFile.fromData(
-              bytes,
-              mimeType: 'text/csv;charset=utf-8',
-            ),
-          ],
+          files: [XFile.fromData(bytes, mimeType: 'text/csv;charset=utf-8')],
           fileNameOverrides: [fileName],
           title: 'Exportar dados do Fôlego',
           subject: 'Meus dados do Fôlego',
           sharePositionOrigin: origin,
         ),
       );
-
       if (!mounted) return;
-      final message = result.status == ShareResultStatus.dismissed
-          ? 'exportação cancelada'
-          : 'arquivo CSV preparado';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text(
+            result.status == ShareResultStatus.dismissed
+                ? 'exportação cancelada'
+                : 'arquivo CSV preparado',
+          ),
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -214,48 +183,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SnackBar(content: Text('não consegui exportar seus dados')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _exporting = false);
-      }
+      if (mounted) setState(() => _exporting = false);
     }
   }
 
   Future<void> _confirmSignOut() async {
     if (_signingOut || _logoutAction.isRunning) return;
-
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        final brightness = Theme.of(dialogContext).brightness;
-        return AlertDialog(
-          title: Text(
-            'sair do Fôlego?',
-            style: AppTypography.section(dialogContext, fontSize: 18),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          'sair do Fôlego?',
+          style: AppTypography.section(dialogContext, fontSize: 18),
+        ),
+        content: Text(
+          'isso encerra sua sessão neste dispositivo. seus dados continuam salvos.',
+          style: AppTypography.body(
+            dialogContext,
+            fontSize: 12,
+            color: AppColors.secondaryText(Theme.of(dialogContext).brightness),
           ),
-          content: Text(
-            'isso encerra sua sessão neste dispositivo. seus dados continuam salvos.',
-            style: AppTypography.body(
-              dialogContext,
-              fontSize: 12,
-              color: AppColors.secondaryText(brightness),
-            ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('cancelar'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('cancelar'),
-            ),
-            OutlinedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('sair'),
-            ),
-          ],
-        );
-      },
+          OutlinedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('sair'),
+          ),
+        ],
+      ),
     );
-
     if (confirmed != true || !mounted) return;
-
     setState(() => _signingOut = true);
     try {
       await _logoutAction.run();
@@ -265,9 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SnackBar(content: Text('não consegui encerrar sua sessão')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _signingOut = false);
-      }
+      if (mounted) setState(() => _signingOut = false);
     }
   }
 
@@ -276,58 +235,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '${value.year}${two(value.month)}${two(value.day)}';
   }
 
-  Widget _accountSection() {
-    return _ProfileSection(
-      title: 'sua conta',
-      subtitle: 'sua identidade e preferências do Fôlego',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _AccountHeader(
-            identity: _identity,
-            loading: _loadingIdentity,
-            error: _identityError,
-            onRetry: _loadIdentity,
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            children: [
-              _SettingsRow(
-                icon: AppIcons.categoryUnclassified,
-                title: 'categorias',
-                subtitle: 'crie categorias, subcategorias e escolha seus ícones',
-                onTap: _openCategories,
-              ),
-              _ChoiceDivider(),
-              _SettingsRow(
-                icon: AppIcons.settings,
-                title: 'organização financeira',
-                subtitle: 'tags e classificações pessoais',
-                onTap: _openFinancialOrganization,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _accountSection() => _ProfileSection(
+        title: 'sua conta',
+        subtitle: 'sua identidade e preferências do Fôlego',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _AccountHeader(
+              identity: _identity,
+              loading: _loadingIdentity,
+              error: _identityError,
+              onRetry: _loadIdentity,
+            ),
+            const SizedBox(height: 10),
+            _SettingsCard(
+              children: [
+                _SettingsRow(
+                  icon: AppIcons.categoryUnclassified,
+                  title: 'organização',
+                  subtitle: 'categorias e marcadores em um só lugar',
+                  onTap: _openFinancialOrganization,
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
 
   Widget _appearanceSection() => _ProfileSection(
         title: 'aparência',
         subtitle: 'o tema muda na hora e fica salvo neste dispositivo',
-        child: _AppearanceCard(
-          selected: _themeMode,
-          onSelected: _setTheme,
-        ),
+        child: _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
       );
 
   Widget _languageSection() => _ProfileSection(
         title: 'idioma',
         subtitle: 'use o sistema ou escolha um idioma suportado',
-        child: _LanguageCard(
-          selected: _language,
-          onSelected: _setLanguage,
-        ),
+        child: _LanguageCard(selected: _language, onSelected: _setLanguage),
       );
 
   Widget _notificationsSection() => const _ProfileSection(
@@ -412,7 +356,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final layout = AppBreakpoints.of(context);
     final desktop =
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
-
     final mobileSections = <Widget>[
       _accountSection(),
       const SizedBox(height: 28),
