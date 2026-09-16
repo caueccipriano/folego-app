@@ -102,13 +102,21 @@ Future<void> _driveCsvToReview(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _scrollMobileReviewTo(WidgetTester tester, Finder target) async {
+  final review = find.byKey(const ValueKey('statement-import-review-mobile'));
+  final scrollable = find.descendant(of: review, matching: find.byType(Scrollable)).first;
+  await tester.scrollUntilVisible(target, 300, scrollable: scrollable);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('mobile CSV wizard reaches review, confirms and shows result', (tester) async {
     await _pumpImport(tester, size: const Size(390, 844));
     await _driveCsvToReview(tester);
     expect(find.byKey(const ValueKey('statement-import-review-mobile')), findsOneWidget);
+    await _scrollMobileReviewTo(tester, find.byKey(const ValueKey('statement-import-include-row-1')));
     expect(find.text('MERCADO TESTE'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const ValueKey('statement-import-confirm')));
+    await _scrollMobileReviewTo(tester, find.byKey(const ValueKey('statement-import-confirm')));
     await tester.tap(find.byKey(const ValueKey('statement-import-confirm')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('statement-import-result')), findsOneWidget);
@@ -126,6 +134,7 @@ void main() {
   testWidgets('exact duplicate is ignored by default and clearly labeled', (tester) async {
     await _pumpImport(tester, size: const Size(430, 900), duplicate: StatementImportDuplicateState.exactDuplicate);
     await _driveCsvToReview(tester);
+    await _scrollMobileReviewTo(tester, find.byKey(const ValueKey('statement-import-include-row-1')));
     expect(find.textContaining('duplicata exata'), findsOneWidget);
     final checkbox = tester.widget<Checkbox>(find.byKey(const ValueKey('statement-import-include-row-1')));
     expect(checkbox.value, isFalse);
