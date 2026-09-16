@@ -40,6 +40,7 @@ class SubscriptionsTab extends StatelessWidget {
       0,
       (sum, item) => sum + subscriptionMonthlyEquivalent(item),
     );
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     return AppContentContainer.list(
       fillHeight: true,
@@ -47,23 +48,23 @@ class SubscriptionsTab extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView(
           key: ValueKey(
-            AppBreakpoints.of(context) == AppLayoutSize.compact
+            compact
                 ? 'subscriptions-mobile-layout'
                 : 'subscriptions-desktop-layout',
           ),
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(0, 18, 0, 120),
           children: [
-            _SubscriptionHeader(
+            _Header(
               monthlyEquivalent: monthly,
               activeCount: active.length,
-              canClassify: recurringCandidates.isNotEmpty,
+              canClassify: recurringCandidates.any((item) => item.isExpense),
               onClassify: () => _pickRecurring(context),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             if (items.isEmpty)
-              _EmptySubscriptions(
-                canClassify: recurringCandidates.isNotEmpty,
+              _EmptyState(
+                canClassify: recurringCandidates.any((item) => item.isExpense),
                 onClassify: () => _pickRecurring(context),
               )
             else
@@ -80,7 +81,7 @@ class SubscriptionsTab extends StatelessWidget {
             if (items.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'O total mensal é uma equivalência para comparação. O valor e a frequência originais continuam preservados em cada assinatura.',
+                'O total mensal é uma equivalência para comparação. O valor e a frequência originais continuam preservados.',
                 style: AppTypography.body(
                   context,
                   fontSize: 11,
@@ -106,14 +107,14 @@ class SubscriptionsTab extends StatelessWidget {
             context: context,
             useSafeArea: true,
             isScrollControlled: true,
-            builder: (_) => _RecurringCandidatePicker(items: candidates),
+            builder: (_) => _CandidatePicker(items: candidates),
           )
         : await showDialog<RecurringItem>(
             context: context,
             builder: (_) => Dialog(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520, maxHeight: 620),
-                child: _RecurringCandidatePicker(items: candidates),
+                child: _CandidatePicker(items: candidates),
               ),
             ),
           );
@@ -145,8 +146,8 @@ class SubscriptionsTab extends StatelessWidget {
   }
 }
 
-class _SubscriptionHeader extends StatelessWidget {
-  const _SubscriptionHeader({
+class _Header extends StatelessWidget {
+  const _Header({
     required this.monthlyEquivalent,
     required this.activeCount,
     required this.canClassify,
@@ -168,10 +169,13 @@ class _SubscriptionHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border(brightness)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Wrap(
+        spacing: 18,
+        runSpacing: 14,
+        crossAxisAlignment: WrapCrossAlignment.end,
         children: [
-          Expanded(
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 240, maxWidth: 520),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -196,23 +200,22 @@ class _SubscriptionHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (canClassify) ...[
-            const SizedBox(width: 12),
+          if (canClassify)
             OutlinedButton.icon(
               key: const ValueKey('subscription-classify-action'),
               onPressed: onClassify,
               icon: const Icon(AppIcons.add, size: 17),
               label: const Text('classificar'),
             ),
-          ],
         ],
       ),
     );
   }
 }
 
-class _EmptySubscriptions extends StatelessWidget {
-  const _EmptySubscriptions({required this.canClassify, required this.onClassify});
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.canClassify, required this.onClassify});
+
   final bool canClassify;
   final VoidCallback onClassify;
 
@@ -236,7 +239,7 @@ class _EmptySubscriptions extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Assinaturas são recorrências que você escolheu acompanhar separadamente. Nenhum item antigo é classificado automaticamente.',
+            'Classifique uma recorrência de gasto como assinatura para acompanhá-la aqui. Nada antigo é classificado automaticamente.',
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
@@ -279,10 +282,17 @@ class _SubscriptionCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final next = nextSubscriptionOccurrence(item);
     final source = item.accountName ?? cardName ?? (item.cardId == null ? null : 'cartão');
+    final details = <String>[
+      subscriptionFrequencyLabel(item),
+      if (next != null) 'próxima ${_shortDate(next)}',
+      ?source,
+      ?item.categoryName,
+    ];
 
     return Semantics(
       button: true,
-      label: '${item.name}, ${item.frequencyLabel}, ${item.active ? 'ativa' : 'encerrada'}',
+      label:
+          '${item.name}, ${Formatters.money(item.amount)}, ${item.active ? 'ativa' : 'encerrada'}',
       child: Material(
         color: AppColors.surface(brightness),
         shape: RoundedRectangleBorder(
@@ -338,12 +348,7 @@ class _SubscriptionCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        [
-                          subscriptionFrequencyLabel(item),
-                          if (next != null) 'próxima ${_shortDate(next)}',
-                          if (source != null) source,
-                          if (item.categoryName != null) item.categoryName!,
-                        ].join(' · '),
+                        details.join(' · '),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
@@ -393,25 +398,24 @@ class _SubscriptionCard extends StatelessWidget {
   }
 }
 
-class _RecurringCandidatePicker extends StatelessWidget {
-  const _RecurringCandidatePicker({required this.items});
+class _CandidatePicker extends StatelessWidget {
+  const _CandidatePicker({required this.items});
+
   final List<RecurringItem> items;
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return SafeArea(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 12, 10),
+            padding: const EdgeInsets.fromLTRB(18, 16, 8, 10),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     'classificar como assinatura',
-                    style: AppTypography.section(context, fontSize: 18),
+                    style: AppTypography.section(context, fontSize: 17),
                   ),
                 ),
                 IconButton(
@@ -422,32 +426,20 @@ class _RecurringCandidatePicker extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              'Escolha apenas serviços que você realmente considera assinatura. O Fôlego não classifica pelo nome ou pela categoria.',
-              style: AppTypography.body(
-                context,
-                fontSize: 11,
-                color: AppColors.secondaryText(brightness),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
               itemCount: items.length,
-              itemBuilder: (context, index) {
+              separatorBuilder: (_, _) => const Divider(height: 1),
+              itemBuilder: (_, index) {
                 final item = items[index];
                 return ListTile(
+                  onTap: () => Navigator.of(context).pop(item),
                   title: Text(item.name),
                   subtitle: Text(
-                    '${Formatters.money(item.amount)} · ${subscriptionFrequencyLabel(item)}',
+                    '${Formatters.money(item.amount)} · ${item.frequencyLabel}',
                   ),
-                  trailing: const Icon(AppIcons.chevronRight, size: 18),
-                  onTap: () => Navigator.of(context).pop(item),
+                  trailing: const Icon(Icons.chevron_right),
                 );
               },
             ),
@@ -459,22 +451,16 @@ class _RecurringCandidatePicker extends StatelessWidget {
 }
 
 double subscriptionMonthlyEquivalent(RecurringItem item) {
-  final amount = item.amount.abs();
   switch (item.frequency) {
     case 'weekly':
-      return amount * 52 / 12;
+      return item.amount * 52 / 12;
     case 'biweekly':
-      return amount * 26 / 12;
+      return item.amount * 26 / 12;
     case 'yearly':
-      return amount / 12;
+      return item.amount / 12;
     case 'monthly':
-      final configuredDays = item.monthlyDays.where((day) => day >= 1 && day <= 31).toSet();
-      final occurrences = configuredDays.isEmpty
-          ? 1
-          : configuredDays.length + (item.monthlyLastDay ? 1 : 0);
-      return amount * occurrences;
     default:
-      return amount;
+      return item.amount;
   }
 }
 
@@ -483,46 +469,43 @@ String subscriptionFrequencyLabel(RecurringItem item) {
     case 'weekly':
       return 'semanal';
     case 'biweekly':
-      return 'a cada 2 semanas';
-    case 'monthly':
-      return 'mensal';
+      return 'quinzenal';
     case 'yearly':
       return 'anual';
+    case 'monthly':
+      return 'mensal';
     default:
       return item.frequencyLabel.toLowerCase();
   }
 }
 
-DateTime? nextSubscriptionOccurrence(RecurringItem item, {DateTime? from}) {
-  if (!item.active) return null;
-  final raw = from ?? DateTime.now();
-  final today = DateTime(raw.year, raw.month, raw.day);
+DateTime? nextSubscriptionOccurrence(
+  RecurringItem item, {
+  DateTime? referenceDate,
+}) {
+  final now = referenceDate ?? DateTime.now();
+  final reference = DateTime(now.year, now.month, now.day);
   final start = DateTime(item.startsOn.year, item.startsOn.month, item.startsOn.day);
-  final reference = today.isBefore(start) ? start : today;
   final end = item.endsOn == null
       ? null
       : DateTime(item.endsOn!.year, item.endsOn!.month, item.endsOn!.day);
+  DateTime candidate;
 
-  DateTime? candidate;
   switch (item.frequency) {
     case 'weekly':
-      final weekday = item.weekday ?? (start.weekday % 7);
-      candidate = reference;
-      for (var step = 0; step < 7; step++) {
-        final date = reference.add(Duration(days: step));
-        if (date.weekday % 7 == weekday) {
-          candidate = date;
-          break;
-        }
+      final target = item.weekday ?? start.weekday % 7;
+      candidate = reference.isBefore(start) ? start : reference;
+      while (candidate.weekday % 7 != target) {
+        candidate = candidate.add(const Duration(days: 1));
       }
       break;
     case 'biweekly':
-      if (reference.isBefore(start) || reference == start) {
+      if (reference.isBefore(start)) {
         candidate = start;
       } else {
-        final days = reference.difference(start).inDays;
-        final steps = (days / 14).ceil();
-        candidate = start.add(Duration(days: steps * 14));
+        final elapsed = reference.difference(start).inDays;
+        final periods = (elapsed / 14).ceil();
+        candidate = start.add(Duration(days: periods * 14));
       }
       break;
     case 'yearly':
@@ -534,22 +517,25 @@ DateTime? nextSubscriptionOccurrence(RecurringItem item, {DateTime? from}) {
       }
       break;
     case 'monthly':
+    default:
       final days = <int>{
         ...item.monthlyDays.where((value) => value >= 1 && value <= 31),
         if (item.monthlyDays.isEmpty && item.dayOfMonth != null) item.dayOfMonth!,
-      }.toList()..sort();
-      final possible = <DateTime>[
+      }.toList()
+        ..sort();
+      final candidates = <DateTime>[
         for (final day in days) _safeDate(reference.year, reference.month, day),
         if (item.monthlyLastDay)
           DateTime(reference.year, reference.month + 1, 0),
       ]..sort();
-      for (final date in possible) {
+      DateTime? selected;
+      for (final date in candidates) {
         if (!date.isBefore(reference)) {
-          candidate = date;
+          selected = date;
           break;
         }
       }
-      if (candidate == null) {
+      if (selected == null) {
         final nextMonth = DateTime(reference.year, reference.month + 1, 1);
         final nextPossible = <DateTime>[
           for (final day in days) _safeDate(nextMonth.year, nextMonth.month, day),
@@ -557,10 +543,10 @@ DateTime? nextSubscriptionOccurrence(RecurringItem item, {DateTime? from}) {
             DateTime(nextMonth.year, nextMonth.month + 1, 0),
         ]..sort();
         candidate = nextPossible.isEmpty ? nextMonth : nextPossible.first;
+      } else {
+        candidate = selected;
       }
       break;
-    default:
-      candidate = reference;
   }
 
   if (candidate.isBefore(start)) candidate = start;
@@ -574,9 +560,7 @@ DateTime _safeDate(int year, int month, int day) {
 }
 
 String _shortDate(DateTime value) {
-  const months = [
-    'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-    'jul', 'ago', 'set', 'out', 'nov', 'dez',
-  ];
-  return '${value.day} ${months[value.month - 1]}';
+  final day = value.day.toString().padLeft(2, '0');
+  final month = value.month.toString().padLeft(2, '0');
+  return '$day/$month';
 }
