@@ -10,7 +10,7 @@ import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
-import '../import/transaction_import_screen.dart';
+import 'statement_import_screen.dart';
 import 'transaction_classification_inbox.dart';
 import 'transactions_screen_base.dart' as impl;
 
@@ -100,7 +100,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (space == null || !mounted) return;
     await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => TransactionImportScreen(
+        builder: (_) => StatementImportScreen(
           repository: widget.repository,
           spaceId: space.id,
         ),
