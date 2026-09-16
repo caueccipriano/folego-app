@@ -84,6 +84,9 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Viagens locais');
     await tester.tap(find.byKey(const ValueKey('category-icon-picker-button')));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'viagem');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('category-icon-travel')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('category-icon-travel')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('save-category-button')));
@@ -117,6 +120,9 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Pedágio');
     await tester.tap(find.byKey(const ValueKey('category-icon-picker-button')));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'transporte');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('category-icon-transport')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('category-icon-transport')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('save-category-button')));
@@ -156,11 +162,14 @@ void main() {
     );
     await _pumpCategories(tester, state, const Size(1366, 900));
 
-    await tester.tap(find.byTooltip('editar').last);
+    await tester.tap(find.byKey(const ValueKey('edit-category-child')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'Reparos e serviços');
     await tester.tap(find.byKey(const ValueKey('category-icon-picker-button')));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'serviços');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('category-icon-services')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('category-icon-services')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('save-category-button')));
@@ -193,13 +202,13 @@ void main() {
     );
     await _pumpCategories(tester, state, const Size(1366, 900));
 
-    await tester.tap(find.byType(Switch).first);
+    await tester.tap(find.byKey(const ValueKey('active-category-legacy-custom')));
     await tester.pumpAndSettle();
 
     expect(state.visibility, [const _VisibilityCall('legacy-custom', false)]);
     expect(state.categories.single.active, isFalse);
     expect(find.text('Categoria antiga'), findsOneWidget);
-    expect(find.textContaining('desativada'), findsOneWidget);
+    expect(find.text('gasto · personalizada · desativada'), findsOneWidget);
   });
 
   testWidgets('system category is protected from presentation editing', (
