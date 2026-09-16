@@ -54,7 +54,7 @@ class _RealtimeRefreshViewState extends State<RealtimeRefreshView> {
     final coordinator = AppRealtimeRegistry.coordinator;
     if (coordinator == null) return;
     _binding = coordinator.bind(
-      widget.domain,
+      domain: widget.domain,
       onRefresh: _refresh,
       active: widget.active,
     );
