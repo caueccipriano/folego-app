@@ -176,6 +176,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           bottom: 84,
           child: SafeArea(
             child: FloatingActionButton.small(
+              key: const ValueKey('statement-import-entry'),
               heroTag: 'transaction-import-statement',
               tooltip: 'importar extrato',
               onPressed: _openImport,
