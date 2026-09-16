@@ -7,9 +7,13 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/financial_space.dart';
+import '../../data/models/home_expense_summary.dart';
 import '../../data/models/onboarding_state.dart';
+import '../../data/models/transaction_filters.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_instrument_management.dart';
+import 'home_expense_navigation_scope.dart';
 import 'home_screen_base.dart' as base;
 
 class HomeScreen extends StatelessWidget {
@@ -90,6 +94,27 @@ class _HomeContentState extends State<_HomeContent> {
     }
   }
 
+  void _openExpenseTransactions(String? categoryId) {
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month, 1);
+    final monthEnd = DateTime(now.year, now.month + 1, 0);
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionsScreen(
+          repository: widget.repository,
+          space: widget.space,
+          initialFilters: TransactionFilters(
+            startDate: monthStart,
+            endDate: monthEnd,
+            eventTypes: homeExpenseEventTypes,
+            categoryId: categoryId,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final setup = _setup;
@@ -106,7 +131,13 @@ class _HomeContentState extends State<_HomeContent> {
       return const _HomeLoadingState();
     }
 
-    return base.HomeScreen(space: widget.space, repository: widget.repository);
+    return HomeExpenseNavigationScope(
+      onOpenExpenses: _openExpenseTransactions,
+      child: base.HomeScreen(
+        space: widget.space,
+        repository: widget.repository,
+      ),
+    );
   }
 }
 
@@ -251,19 +282,19 @@ class _FirstUseHome extends StatelessWidget {
               style: AppTypography.section(context, fontSize: 17),
             ),
             const SizedBox(height: 12),
-            _FirstUseTip(
+            const _FirstUseTip(
               icon: AppIcons.transactions,
               title: 'registre quando fizer sentido',
               text: 'gastos e receitas podem entrar aos poucos. nada de preencher uma planilha inteira antes de começar.',
             ),
             const SizedBox(height: 10),
-            _FirstUseTip(
+            const _FirstUseTip(
               icon: AppIcons.plan,
               title: 'o plano cresce com seus dados',
               text: 'quando houver histórico e orçamento, o Fôlego mostra mais contexto sem inventar um número antes da hora.',
             ),
             const SizedBox(height: 10),
-            _FirstUseTip(
+            const _FirstUseTip(
               icon: AppIcons.wallet,
               title: 'explore no seu ritmo',
               text: 'as outras áreas continuam disponíveis pela navegação. você não precisa terminar uma configuração obrigatória.',
