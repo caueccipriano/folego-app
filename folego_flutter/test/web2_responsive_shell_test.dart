@@ -73,7 +73,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('page-2')), findsOneWidget);
 
-    await tester.binding.setSurfaceSize(const Size(1366, 820));
+    tester.view.physicalSize = const Size(1366, 820);
     await tester.pump();
 
     expect(find.byKey(const ValueKey('desktop-sidebar')), findsOneWidget);
@@ -89,11 +89,11 @@ void main() {
     );
     expect(counts, everyElement(1));
 
-    await tester.binding.setSurfaceSize(const Size(1440, 900));
+    tester.view.physicalSize = const Size(1440, 900);
     await tester.pump();
-    await tester.binding.setSurfaceSize(const Size(768, 900));
+    tester.view.physicalSize = const Size(768, 900);
     await tester.pump();
-    await tester.binding.setSurfaceSize(const Size(1920, 1080));
+    tester.view.physicalSize = const Size(1920, 1080);
     await tester.pump();
 
     expect(counts, everyElement(1));
@@ -102,8 +102,7 @@ void main() {
   testWidgets('Home desktop uses dashboard columns instead of a mobile stack', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(1366, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _setViewport(tester, const Size(1366, 900));
     await tester.pumpWidget(
       _app(
         home.HomeScreen(
@@ -129,8 +128,7 @@ void main() {
   testWidgets('desktop snackbar is floating and width constrained', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(1366, 820));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _setViewport(tester, const Size(1366, 820));
     await tester.pumpWidget(
       _app(
         Builder(
@@ -159,12 +157,18 @@ Future<void> _pumpShell(
   Size size, {
   List<int>? initCounts,
 }) async {
-  await tester.binding.setSurfaceSize(size);
-  addTearDown(() => tester.binding.setSurfaceSize(null));
+  _setViewport(tester, size);
   await tester.pumpWidget(
     _app(_ShellHarness(initCounts: initCounts ?? List<int>.filled(5, 0))),
   );
   await tester.pump();
+}
+
+void _setViewport(WidgetTester tester, Size size) {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = size;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 }
 
 Widget _app(Widget home) {

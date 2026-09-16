@@ -5,16 +5,21 @@ void main() {
   group('AppBreakpoints', () {
     test('classifies compact widths', () {
       expect(AppBreakpoints.fromWidth(0), AppLayoutSize.compact);
+      expect(AppBreakpoints.fromWidth(375), AppLayoutSize.compact);
+      expect(AppBreakpoints.fromWidth(390), AppLayoutSize.compact);
+      expect(AppBreakpoints.fromWidth(430), AppLayoutSize.compact);
       expect(AppBreakpoints.fromWidth(599), AppLayoutSize.compact);
     });
 
     test('classifies medium widths', () {
       expect(AppBreakpoints.fromWidth(600), AppLayoutSize.medium);
+      expect(AppBreakpoints.fromWidth(768), AppLayoutSize.medium);
       expect(AppBreakpoints.fromWidth(1023), AppLayoutSize.medium);
     });
 
     test('classifies expanded widths', () {
       expect(AppBreakpoints.fromWidth(1024), AppLayoutSize.expanded);
+      expect(AppBreakpoints.fromWidth(1366), AppLayoutSize.expanded);
       expect(AppBreakpoints.fromWidth(1439), AppLayoutSize.expanded);
     });
 

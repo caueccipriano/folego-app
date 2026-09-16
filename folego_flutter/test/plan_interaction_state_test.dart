@@ -117,8 +117,7 @@ void main() {
       AppRealtimeRegistry.detach(coordinator);
       coordinator.dispose();
     });
-    await tester.binding.setSurfaceSize(const Size(390, 1200));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _setViewport(tester, const Size(390, 1200));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -237,8 +236,7 @@ Future<void> _pumpPlan(
   plan.PlanBudgetSaver? saver,
   Size size = const Size(390, 1200),
 }) async {
-  await tester.binding.setSurfaceSize(size);
-  addTearDown(() => tester.binding.setSurfaceSize(null));
+  _setViewport(tester, size);
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -251,6 +249,13 @@ Future<void> _pumpPlan(
     ),
   );
   await _flush(tester);
+}
+
+void _setViewport(WidgetTester tester, Size size) {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = size;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 }
 
 Future<void> _flush(WidgetTester tester) async {
