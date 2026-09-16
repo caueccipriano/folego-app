@@ -9,7 +9,7 @@ void main() {
     final sql = read('../supabase/migrations/20260916161942_add_transaction_import_staging.sql');
     expect(sql, contains('alter table public.import_batches enable row level security'));
     expect(sql, contains('alter table public.import_rows enable row level security'));
-    expect(sql, contains("v_count > 2000"));
+    expect(sql, contains('v_count > 2000'));
     expect(sql, contains('4194304'));
     expect(sql, isNot(contains('storage.objects')));
     expect(sql, isNot(contains('file_bytes')));
