@@ -13,63 +13,126 @@ bool isHomeExpenseEventType(String eventType) {
 }
 
 class HomeCategoryExpense {
-  const HomeCategoryExpense({required this.category, required this.amount, required this.share});
+  const HomeCategoryExpense({
+    required this.category,
+    required this.amount,
+    required this.share,
+    this.categoryId,
+    this.groupedCategories = const <HomeCategoryExpense>[],
+  });
+
   final String category;
   final double amount;
   final double share;
+  final String? categoryId;
+  final List<HomeCategoryExpense> groupedCategories;
+
   int get percentage => (share * 100).round();
+  bool get isOther => groupedCategories.isNotEmpty;
 }
 
 class HomeExpenseBreakdown {
   const HomeExpenseBreakdown({required this.total, required this.categories});
+
   final double total;
   final List<HomeCategoryExpense> categories;
+
   bool get isEmpty => total <= 0 || categories.isEmpty;
 }
 
 HomeExpenseBreakdown buildHomeExpenseBreakdown(
   Iterable<TransactionItem> transactions, {
   required String Function(TransactionItem transaction) categoryFor,
-  int maxSegments = 4,
+  String? Function(TransactionItem transaction)? categoryIdFor,
+  int maxSegments = 6,
 }) {
   if (maxSegments < 2) {
-    throw ArgumentError.value(maxSegments, 'maxSegments', 'Deve permitir pelo menos duas categorias.');
+    throw ArgumentError.value(
+      maxSegments,
+      'maxSegments',
+      'Deve permitir pelo menos duas categorias.',
+    );
   }
-  final totals = <String, double>{};
+
+  final totals = <String, _HomeExpenseBucket>{};
   for (final transaction in transactions) {
     if (!isHomeExpenseEventType(transaction.eventType)) continue;
     final amount = transaction.amount.abs();
     if (amount <= 0) continue;
+
     final rawCategory = categoryFor(transaction).trim();
     final category = rawCategory.isEmpty ? 'A classificar' : rawCategory;
-    totals[category] = (totals[category] ?? 0) + amount;
+    final categoryId = categoryIdFor?.call(transaction);
+    final key = categoryId ?? 'label:${category.toLowerCase()}';
+    final existing = totals[key];
+    totals[key] = _HomeExpenseBucket(
+      category: existing?.category ?? category,
+      categoryId: existing?.categoryId ?? categoryId,
+      amount: (existing?.amount ?? 0) + amount,
+    );
   }
-  if (totals.isEmpty) return const HomeExpenseBreakdown(total: 0, categories: []);
 
-  final otherKey = totals.keys.cast<String?>().firstWhere(
-    (key) => key?.toLowerCase() == 'outros',
-    orElse: () => null,
-  );
-  final existingOther = otherKey == null ? 0.0 : totals.remove(otherKey) ?? 0.0;
-  final sorted = totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-  final visible = <MapEntry<String, double>>[];
-  final categoryCount = sorted.length + (existingOther > 0 ? 1 : 0);
-  if (categoryCount > maxSegments) {
-    final keepCount = maxSegments - 1;
-    visible.addAll(sorted.take(keepCount));
-    final groupedOther = existingOther + sorted.skip(keepCount).fold<double>(0, (total, entry) => total + entry.value);
-    if (groupedOther > 0) visible.add(MapEntry('Outros', groupedOther));
-  } else {
-    visible.addAll(sorted);
-    if (existingOther > 0) visible.add(MapEntry('Outros', existingOther));
-    visible.sort((a, b) => b.value.compareTo(a.value));
+  if (totals.isEmpty) {
+    return const HomeExpenseBreakdown(total: 0, categories: []);
   }
-  final total = visible.fold<double>(0, (sum, entry) => sum + entry.value);
-  if (total <= 0) return const HomeExpenseBreakdown(total: 0, categories: []);
-  return HomeExpenseBreakdown(
-    total: total,
-    categories: visible.map((entry) => HomeCategoryExpense(category: entry.key, amount: entry.value, share: entry.value / total)).toList(growable: false),
-  );
+
+  final sorted = totals.values.toList()
+    ..sort((a, b) => b.amount.compareTo(a.amount));
+  final total = sorted.fold<double>(0, (sum, item) => sum + item.amount);
+  if (total <= 0) {
+    return const HomeExpenseBreakdown(total: 0, categories: []);
+  }
+
+  final visible = <HomeCategoryExpense>[];
+  if (sorted.length > maxSegments) {
+    final keepCount = maxSegments - 1;
+    for (final item in sorted.take(keepCount)) {
+      visible.add(item.toExpense(total));
+    }
+
+    final grouped = sorted
+        .skip(keepCount)
+        .map((item) => item.toExpense(total))
+        .toList(growable: false);
+    final groupedAmount = grouped.fold<double>(
+      0,
+      (sum, item) => sum + item.amount,
+    );
+    visible.add(
+      HomeCategoryExpense(
+        category: 'Outros',
+        amount: groupedAmount,
+        share: groupedAmount / total,
+        groupedCategories: grouped,
+      ),
+    );
+  } else {
+    visible.addAll(sorted.map((item) => item.toExpense(total)));
+  }
+
+  return HomeExpenseBreakdown(total: total, categories: visible);
 }
 
-String homeDisplayDescription(String description) => financialDisplayDescription(description);
+class _HomeExpenseBucket {
+  const _HomeExpenseBucket({
+    required this.category,
+    required this.categoryId,
+    required this.amount,
+  });
+
+  final String category;
+  final String? categoryId;
+  final double amount;
+
+  HomeCategoryExpense toExpense(double total) {
+    return HomeCategoryExpense(
+      category: category,
+      categoryId: categoryId,
+      amount: amount,
+      share: amount / total,
+    );
+  }
+}
+
+String homeDisplayDescription(String description) =>
+    financialDisplayDescription(description);
