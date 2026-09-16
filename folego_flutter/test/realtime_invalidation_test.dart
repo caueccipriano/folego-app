@@ -5,6 +5,24 @@ import 'package:folego/core/realtime/realtime_invalidation.dart';
 import 'package:folego/core/realtime/realtime_session.dart';
 
 void main() {
+  test('private realtime topic and broadcast payload are space scoped', () {
+    expect(realtimeTopicForSpace('space-a'), 'space:space-a:changes');
+    expect(
+      realtimeTableFromBroadcastPayload({'table': 'financial_events'}),
+      'financial_events',
+    );
+    expect(
+      realtimeTableFromBroadcastPayload({
+        'payload': {'table': 'financial_impacts'},
+      }),
+      'financial_impacts',
+    );
+    expect(
+      realtimeTableFromBroadcastPayload({'table': 'unknown_table'}),
+      isNull,
+    );
+  });
+
   testWidgets('multiple realtime changes collapse into one domain refresh', (
     tester,
   ) async {
@@ -105,7 +123,7 @@ void main() {
     expect(refreshes, 0);
   });
 
-  testWidgets('session switches space, disposes old source and ignores old events', (
+  testWidgets('session does not duplicate a subscription for the same space', (
     tester,
   ) async {
     final source = _FakeRealtimeEventSource();
@@ -114,38 +132,60 @@ void main() {
       coordinator: coordinator,
       eventSource: source,
     );
-    var transactionRefreshes = 0;
-    final binding = coordinator.bind(
-      domain: AppRealtimeDomain.transactions,
-      onRefresh: () async => transactionRefreshes += 1,
-    );
 
     await session.switchSpace('space-a');
-    final old = source.subscriptions.single;
-    old.emit('financial_events');
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.pump();
-    expect(transactionRefreshes, 1);
+    await session.switchSpace('space-a');
 
-    await session.switchSpace('space-b');
-    expect(old.disposed, isTrue);
-    expect(source.subscriptions.length, 2);
-
-    old.emit('financial_events');
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.pump();
-    expect(transactionRefreshes, 1);
-
-    source.subscriptions.last.emit('financial_events');
-    source.subscriptions.last.emit('financial_impacts');
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.pump();
-    expect(transactionRefreshes, 2);
-
-    binding.dispose();
+    expect(source.subscriptions, hasLength(1));
     await session.dispose();
-    expect(source.subscriptions.last.disposed, isTrue);
+    expect(source.subscriptions.single.disposed, isTrue);
   });
+
+  testWidgets(
+    'space switch ignores old broadcast and postgres plus broadcast debounce together',
+    (tester) async {
+      final source = _FakeRealtimeEventSource();
+      final coordinator = RealtimeInvalidationCoordinator();
+      final session = RealtimeSessionController(
+        coordinator: coordinator,
+        eventSource: source,
+      );
+      var transactionRefreshes = 0;
+      final binding = coordinator.bind(
+        domain: AppRealtimeDomain.transactions,
+        onRefresh: () async => transactionRefreshes += 1,
+      );
+
+      await session.switchSpace('space-a');
+      final old = source.subscriptions.single;
+      old.emitPostgres('financial_events');
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump();
+      expect(transactionRefreshes, 1);
+
+      await session.switchSpace('space-b');
+      expect(old.disposed, isTrue);
+      expect(source.subscriptions, hasLength(2));
+
+      old.emitBroadcast('financial_events');
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump();
+      expect(transactionRefreshes, 1);
+
+      final current = source.subscriptions.last;
+      current.emitPostgres('financial_events');
+      current.emitBroadcast('financial_impacts');
+      await tester.pump(const Duration(milliseconds: 249));
+      expect(transactionRefreshes, 1);
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump();
+      expect(transactionRefreshes, 2);
+
+      binding.dispose();
+      await session.dispose();
+      expect(current.disposed, isTrue);
+    },
+  );
 }
 
 class _FakeRealtimeEventSource implements AppRealtimeEventSource {
@@ -175,7 +215,8 @@ class _FakeRealtimeSubscription implements AppRealtimeSubscription {
   final void Function(String table) onTableChanged;
   bool disposed = false;
 
-  void emit(String table) => onTableChanged(table);
+  void emitPostgres(String table) => onTableChanged(table);
+  void emitBroadcast(String table) => onTableChanged(table);
 
   @override
   Future<void> dispose() async {
