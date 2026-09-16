@@ -253,8 +253,8 @@ void main() {
       tester,
     ) async {
       String? paymentAccount;
-      int? closingDay;
-      int? dueDay;
+      int? savedClosingDay;
+      int? savedDueDay;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -271,13 +271,13 @@ void main() {
                 required brand,
                 required lastFour,
                 required personalLimit,
-                required closingDay: closing,
-                required dueDay: due,
+                required closingDay,
+                required dueDay,
                 required paymentAccountId,
               }) async {
                 paymentAccount = paymentAccountId;
-                closingDay = closing;
-                dueDay = due;
+                savedClosingDay = closingDay;
+                savedDueDay = dueDay;
               },
             ),
           ),
@@ -290,8 +290,8 @@ void main() {
       await tester.pump();
 
       expect(paymentAccount, 'checking');
-      expect(closingDay, 5);
-      expect(dueDay, 10);
+      expect(savedClosingDay, 5);
+      expect(savedDueDay, 10);
     });
   });
 
@@ -336,7 +336,7 @@ void main() {
       expect(AppBreakpoints.fromWidth(768), AppLayoutSize.medium);
       expect(AppBreakpoints.fromWidth(1024), AppLayoutSize.expanded);
       expect(AppBreakpoints.fromWidth(1366), AppLayoutSize.expanded);
-      expect(AppBreakpoints.fromWidth(1440), AppLayoutSize.expanded);
+      expect(AppBreakpoints.fromWidth(1440), AppLayoutSize.wide);
       expect(AppBreakpoints.fromWidth(1920), AppLayoutSize.wide);
     });
   });
