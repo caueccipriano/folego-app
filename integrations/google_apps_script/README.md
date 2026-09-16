@@ -2,54 +2,79 @@
 
 Integração bidirecional entre o app Fôlego (Supabase) e a planilha `Controle Financeiro 2026`.
 
-## Arquitetura
+## Arquitetura e regra de propriedade
 
-- O app Flutter continua lendo e gravando no Supabase.
-- A planilha continua usando o Web App/Apps Script V3.3 existente para o atalho do iPhone.
-- `FolegoSync.gs` é adicionado ao mesmo projeto Apps Script, sem substituir `doPost()` e sem trocar a URL do Web App existente.
-- O Apps Script chama a Edge Function `sheet-sync` do Supabase usando um token exclusivo armazenado em Script Properties.
-- `service_role` nunca é exposto no Flutter, na planilha ou no Apps Script; ele existe apenas no ambiente da Edge Function.
+- O app Flutter lê e grava no Supabase.
+- A planilha mantém o Web App/Apps Script V3.3 usado pelo atalho do iPhone.
+- `FolegoSync.gs` entra no MESMO projeto Apps Script e não declara `doPost()`, portanto não troca a URL nem substitui o Web App atual.
+- A planilha é fonte de captura para data, valor, descrição, conta/cartão e origem.
+- O Fôlego é a fonte da classificação econômica.
+- Depois da classificação no app, Categoria + Subcategoria voltam para a mesma linha da planilha.
+- O Apps Script chama a Edge Function `sheet-sync` usando `FOLEGO_SYNC_TOKEN` guardado somente em Script Properties.
+- `service_role` fica somente no ambiente da Edge Function.
 
-## O que sincroniza
+## Planilha → Fôlego
 
-Planilha → Fôlego:
+Entram automaticamente:
 - despesas em conta;
 - receitas;
-- compras em cartão;
+- compras em cartão e quantidade de parcelas;
 - benefícios/Flash;
-- novas transferências quando origem e destino são identificáveis;
-- categoria e descrição de lançamentos econômicos já existentes;
-- IDs estáveis para impedir duplicação.
+- novas transferências e pagamentos de cartão quando identificáveis;
+- data, valor, descrição, conta/cartão e ID estável do lançamento.
 
-Fôlego → planilha:
-- novos lançamentos confirmados originados no app;
-- categoria compatível com a taxonomia plana da planilha;
-- conta/cartão;
-- compras no cartão também entram no bloco `Compras No Cartão`, preservando as fórmulas de parcelas/faturas já existentes.
+Lançamentos econômicos novos entram no Fôlego para classificação pelo usuário. A categoria antiga da planilha é apenas contexto e não sobrescreve a classificação do app.
 
-Eventos cancelados do app não são importados. Movimentações históricas já baselinadas (transferências/pagamentos) não são reclassificadas automaticamente.
+## Fôlego → planilha
+
+O retorno atualiza a MESMA linha quando o ID já existe. São sincronizados:
+- categoria plana em H, para preservar os dashboards atuais;
+- Categoria Fôlego em X;
+- Subcategoria Fôlego em Y;
+- caminho hierárquico em Z (técnico/oculto);
+- compras no cartão completam o número de parcelas no bloco `Compras No Cartão` quando necessário.
+
+Eventos originados diretamente no app que ainda não existem na planilha podem ser acrescentados como novas linhas confirmadas.
+
+## Baseline desta planilha
+
+O histórico até a linha **192** já foi reconstruído e auditado no Fôlego. Por isso o instalador marca apenas as linhas 5:192 como `BASE`.
+
+As linhas **193 em diante não são baselinadas**: no primeiro ciclo elas são enviadas ao app. Isso evita perder lançamentos criados depois da auditoria.
+
+O primeiro pull começa em `2026-06-01`, permitindo preencher Categoria/Subcategoria do histórico existente sem recriar os eventos financeiros.
 
 ## Instalação no Apps Script existente
 
-1. Abra `Controle Financeiro 2026` → Extensões → Apps Script.
-2. Crie um arquivo chamado `FolegoSync.gs` e cole o conteúdo de `FolegoSync.gs` deste diretório.
-3. Em Configurações do projeto → Propriedades do script, crie `FOLEGO_SYNC_TOKEN` com o token fornecido separadamente. Nunca coloque esse token em uma célula ou no GitHub.
-4. Salve e execute `folegoSyncInstall()` uma única vez. Autorize as permissões solicitadas.
-5. Execute `folegoSyncStatus()` para verificar `ok: true` e `triggerCount: 1`.
+1. Abra `Controle Financeiro 2026` → **Extensões → Apps Script**.
+2. No mesmo projeto que contém o V3.3, crie ou substitua o arquivo `FolegoSync.gs` pelo conteúdo deste diretório.
+3. Em **Configurações do projeto → Propriedades do script**, crie `FOLEGO_SYNC_TOKEN` com o token fornecido separadamente. Nunca coloque o token em uma célula ou no GitHub.
+4. Salve e execute `folegoSyncInstall()` **uma única vez**. Autorize as permissões solicitadas.
+5. Depois execute `folegoSyncStatus()` e confira:
+   - `ok: true`
+   - `triggerCount: 1`
+   - `errorRows: 0`
+   - `pendingSheetRows: 0` após o primeiro ciclo bem-sucedido.
 
-O instalador cria um gatilho a cada 5 minutos. Não é necessário substituir nem recriar a implantação do Web App V3.3, porque este arquivo não declara `doPost()`.
+O instalador cria um gatilho a cada 5 minutos. Não é necessário reimplantar o Web App V3.3.
 
-## Colunas técnicas da planilha
+## Colunas da aba Lancamentos
 
-Na aba `Lancamentos`, as colunas U:W são reservadas e podem permanecer ocultas:
-- U: `Sync Fôlego`
-- V: `Sync em`
-- W: `Sync hash`
+Compatibilidade existente:
+- H: categoria plana usada pelas fórmulas e dashboards atuais.
 
-O primeiro `folegoSyncInstall()` marca os lançamentos já existentes como `BASE`. Isso evita reimportar todo o histórico e protege pagamentos de cartão e transferências antigas contra dupla contagem.
+Sincronização técnica:
+- U: `Sync Fôlego` (oculta)
+- V: `Sync em` (oculta)
+- W: `Sync hash` (oculta)
+
+Hierarquia do Fôlego:
+- X: `Categoria Fôlego` (visível)
+- Y: `Subcategoria Fôlego` (visível)
+- Z: `Caminho Fôlego` (oculta)
 
 ## Segurança
 
-A Edge Function valida simultaneamente o ID da planilha e o hash do token. O cadastro de integração no Supabase não é legível por `anon`/`authenticated`. As funções de escrita usadas pela integração são executáveis apenas por `service_role` e não ficam disponíveis para o cliente Flutter.
+A Edge Function valida simultaneamente o ID da planilha e o hash do token. O token não é salvo em células nem no repositório. O cadastro de integração no Supabase permanece interno, e a `service_role` não é exposta ao Flutter ou ao Apps Script.
 
-Se o token for exposto, gere outro, atualize o hash no Supabase e substitua somente a Script Property `FOLEGO_SYNC_TOKEN`.
+Se o token for exposto, gere outro, atualize o hash no Supabase e troque somente a Script Property `FOLEGO_SYNC_TOKEN`.
