@@ -51,6 +51,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
           essential,
           active,
           color_hex,
+          icon_key,
           is_system,
           system_key,
           category_role,
@@ -167,6 +168,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
     String? parentId,
     bool essential = false,
     String colorHex = '#8C8CA8',
+    String? iconKey,
     List<String> searchAliases = const <String>[],
   }) async {
     final data = await _categoryClient.rpc(
@@ -181,7 +183,22 @@ extension FolegoRepositoryCategories on FolegoRepository {
         'p_search_aliases': searchAliases,
       },
     );
-    return data as String;
+    final categoryId = data as String;
+
+    if (iconKey != null) {
+      await _categoryClient
+          .from('categories')
+          .update({
+            'icon_key': iconKey,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('space_id', spaceId)
+          .eq('id', categoryId)
+          .eq('is_system', false)
+          .eq('category_role', 'economic');
+    }
+
+    return categoryId;
   }
 
   Future<void> renameCustomCategory({
@@ -205,6 +222,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
     required String name,
     required bool essential,
     required String colorHex,
+    String? iconKey,
     required List<String> searchAliases,
   }) async {
     if (name.trim().isEmpty) {
@@ -217,6 +235,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
           'name': name.trim(),
           'essential': essential,
           'color_hex': colorHex,
+          if (iconKey != null) 'icon_key': iconKey,
           'search_aliases': searchAliases,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
