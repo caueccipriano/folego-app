@@ -8,8 +8,13 @@ import 'package:folego/data/repositories/folego_repository_debts.dart';
 import 'package:folego/features/wallet/debt_form_sheet.dart';
 import 'package:folego/features/wallet/debt_payment_sheet.dart';
 import 'package:folego/features/wallet/wallet_debt_detail_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('pt_BR');
+  });
+
   tearDown(() {
     debugDebtDetailLoader = null;
     debugArchiveDebtAction = null;
