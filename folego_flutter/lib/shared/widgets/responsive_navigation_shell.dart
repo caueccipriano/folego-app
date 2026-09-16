@@ -134,7 +134,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 160),
                             curve: Curves.easeOutCubic,
-                            minHeight: 48,
+                            constraints: const BoxConstraints(minHeight: 48),
                             padding: const EdgeInsets.symmetric(horizontal: 13),
                             decoration: BoxDecoration(
                               color: selectedIndex == index

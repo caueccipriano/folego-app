@@ -20,7 +20,9 @@ void main() {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
 
-    await tester.tap(find.byKey(const ValueKey('plan-parent-food')));
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await tester.ensureVisible(parent);
+    await tester.tap(parent);
     await tester.pump();
 
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
@@ -31,6 +33,7 @@ void main() {
     await _pumpPlan(tester, repository);
 
     final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await tester.ensureVisible(parent);
     await tester.tap(parent);
     await tester.pump();
     await tester.tap(parent);
@@ -87,16 +90,18 @@ void main() {
   testWidgets('open category survives local refresh', (tester) async {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
-    await tester.tap(find.byKey(const ValueKey('plan-parent-food')));
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await tester.ensureVisible(parent);
+    await tester.tap(parent);
     await tester.pump();
 
     final indicator = tester.widget<RefreshIndicator>(
-      find.byType(RefreshIndicator),
+      find.byType(RefreshIndicator).first,
     );
     final refresh = indicator.onRefresh();
     await tester.pump();
     await refresh;
-    await tester.pump();
+    await _flush(tester);
 
     expect(repository.loads, greaterThanOrEqualTo(2));
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
@@ -112,26 +117,30 @@ void main() {
       AppRealtimeRegistry.detach(coordinator);
       coordinator.dispose();
     });
+    await tester.binding.setSurfaceSize(const Size(390, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
       MaterialApp(
-        home: realtime_plan.PlanScreen(
-          repository: repository,
-          spaceId: 'space',
+        home: Scaffold(
+          body: realtime_plan.PlanScreen(
+            repository: repository,
+            spaceId: 'space',
+          ),
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump();
+    await _flush(tester);
 
-    await tester.tap(find.byKey(const ValueKey('plan-parent-food')));
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await tester.ensureVisible(parent);
+    await tester.tap(parent);
     await tester.pump();
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
 
     coordinator.invalidate(AppRealtimeDomain.plan);
     await tester.pump(const Duration(milliseconds: 250));
-    await tester.pump();
-    await tester.pump();
+    await _flush(tester);
 
     expect(repository.loads, greaterThanOrEqualTo(2));
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
@@ -140,11 +149,15 @@ void main() {
   testWidgets('new Plan instance starts closed again', (tester) async {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
-    await tester.tap(find.byKey(const ValueKey('plan-parent-food')));
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await tester.ensureVisible(parent);
+    await tester.tap(parent);
     await tester.pump();
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
 
-    await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: SizedBox.shrink())),
+    );
     await tester.pump();
     await _pumpPlan(tester, repository);
 
@@ -163,11 +176,12 @@ void main() {
     );
 
     final scroll = find.byKey(const ValueKey('plan-scroll'));
-    await tester.drag(scroll, const Offset(0, -900));
-    await tester.pump();
-
     final parent = find.byKey(const ValueKey('plan-parent-parent-7'));
-    await tester.ensureVisible(parent);
+    await tester.dragUntilVisible(
+      parent,
+      scroll,
+      const Offset(0, -300),
+    );
     await tester.pump();
     await tester.tap(parent);
     await tester.pump();
@@ -175,8 +189,8 @@ void main() {
     final child = find.byKey(const ValueKey('plan-child-child-7'));
     await tester.ensureVisible(child);
     await tester.pump();
-    await tester.drag(scroll, const Offset(0, -120));
-    await tester.pump();
+    final before = _scrollPosition(tester, scroll).pixels;
+    expect(before, greaterThan(0));
 
     await tester.tap(child);
     await tester.pumpAndSettle();
@@ -187,12 +201,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('plan-save-budget')));
     await tester.pumpAndSettle();
 
-    final position = tester
-        .state<ScrollableState>(
-          find.descendant(of: scroll, matching: find.byType(Scrollable)).first,
-        )
-        .position;
-    expect(position.pixels, greaterThan(0));
+    final after = _scrollPosition(tester, scroll).pixels;
+    expect(after, greaterThan(0));
+    expect(after, greaterThan(before * .50));
     expect(find.byKey(const ValueKey('plan-children-parent-7')), findsOneWidget);
   });
 
@@ -224,21 +235,36 @@ Future<void> _pumpPlan(
   WidgetTester tester,
   _FakePlanRepository repository, {
   plan.PlanBudgetSaver? saver,
-  Size size = const Size(390, 844),
+  Size size = const Size(390, 1200),
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
-      home: plan.PlanScreen(
-        repository: repository,
-        spaceId: 'space',
-        saveOverride: saver,
+      home: Scaffold(
+        body: plan.PlanScreen(
+          repository: repository,
+          spaceId: 'space',
+          saveOverride: saver,
+        ),
       ),
     ),
   );
+  await _flush(tester);
+}
+
+Future<void> _flush(WidgetTester tester) async {
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 20));
   await tester.pump();
+}
+
+ScrollPosition _scrollPosition(WidgetTester tester, Finder scroll) {
+  return tester
+      .state<ScrollableState>(
+        find.descendant(of: scroll, matching: find.byType(Scrollable)).first,
+      )
+      .position;
 }
 
 plan.PlanBudgetSaver _captureSaver(List<double> captured) {
@@ -257,9 +283,15 @@ Future<void> _openAndSave(
   WidgetTester tester, {
   required String amount,
 }) async {
-  await tester.tap(find.byKey(const ValueKey('plan-parent-food')));
+  final parent = find.byKey(const ValueKey('plan-parent-food'));
+  await tester.ensureVisible(parent);
+  await tester.tap(parent);
   await tester.pump();
-  await tester.tap(find.byKey(const ValueKey('plan-child-market')));
+
+  final child = find.byKey(const ValueKey('plan-child-market'));
+  await tester.ensureVisible(child);
+  await tester.pump();
+  await tester.tap(child);
   await tester.pumpAndSettle();
   await tester.enterText(
     find.byKey(const ValueKey('plan-budget-amount')),
@@ -297,7 +329,7 @@ List<BudgetOverviewItem> _fixture({double planned = 0, double actual = 0}) {
 
 List<BudgetOverviewItem> _longFixture() {
   final items = <BudgetOverviewItem>[];
-  for (var index = 0; index < 10; index++) {
+  for (var index = 0; index < 18; index++) {
     final parentId = 'parent-$index';
     items
       ..add(

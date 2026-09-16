@@ -282,6 +282,10 @@ class _PlanScreenState extends State<PlanScreen> {
           : '',
     );
 
+    // The modal route can keep painting during its reverse animation after its
+    // Future resolves. Disposing this short-lived controller in `whenComplete`
+    // therefore races that animation. The controller becomes unreachable with
+    // the route and is collected normally after the sheet is removed.
     return showModalBottomSheet<_BudgetEditResult>(
       context: context,
       isScrollControlled: true,
@@ -543,7 +547,7 @@ class _PlanScreenState extends State<PlanScreen> {
           },
         );
       },
-    ).whenComplete(controller.dispose);
+    );
   }
 
   Future<void> _confirmCancelRecurring(
