@@ -126,14 +126,15 @@ void main() {
     ).readAsStringSync();
 
     expect(source, contains('domain: AppRealtimeDomain.categories'));
-    final start = source.indexOf('Future<void> _refreshCategoryCatalog()');
-    final end = source.indexOf('Future<void> _pickCategory()', start);
+    expect(source, contains('onRefresh: _refreshCategories'));
+    final start = source.indexOf('Future<void> _refreshCategories()');
+    final end = source.indexOf('Future<void> _load()', start);
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
 
     final refresh = source.substring(start, end);
     expect(refresh, contains('_categories = selectable'));
-    expect(refresh, contains('_categoryId = nextCategoryId'));
+    expect(refresh, contains('_categoryId = nextId'));
     expect(refresh, isNot(contains('_load()')));
     expect(refresh, isNot(contains('_description.clear()')));
     expect(refresh, isNot(contains('_amount.clear()')));
