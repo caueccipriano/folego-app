@@ -112,7 +112,7 @@ void main() {
     expect(source, contains('showModalBottomSheet<bool>'));
     expect(source, contains('showDialog<bool>'));
     expect(source, contains('maxWidth: 780'));
-    expect(source, contains("height * .86"));
+    expect(source, contains('height * .86'));
   });
 
   test('Transactions wrapper preserves concurrent classification inbox and desktop shell', () {
