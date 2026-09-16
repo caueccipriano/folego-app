@@ -19,11 +19,13 @@ import '../../data/models/transaction_filters.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/models/transaction_page.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_subscriptions.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
+import 'subscriptions_tab.dart';
 import 'transaction_detail_sheet.dart';
 import 'transaction_edit_sheet.dart';
 import 'transaction_filter_sheet.dart';
@@ -74,6 +76,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   TransactionFilterOptions _filterOptions = TransactionFilterOptions.empty();
   List<TransactionItem> _transactions = const [];
   List<RecurringItem> _recurringItems = const [];
+  Set<String> _subscriptionIds = const <String>{};
+  Map<String, String> _recurringCardNames = const <String, String>{};
   List<CategoryItem> _categories = const [];
 
   TransactionCursor? _nextTransactionCursor;
@@ -92,7 +96,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _searchController = TextEditingController();
     _bindRealtime();
     _loadInitial();
@@ -136,6 +140,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         _fetchPage(space.id, cursor: null, filters: _filters),
         widget.repository.listRecurringItems(space.id),
         _loadFilterOptions(space.id),
+        widget.repository.listSubscriptionRecurringIds(space.id),
+        widget.repository.listRecurringCardNames(space.id),
       ]);
       if (!mounted || generation != _transactionLoadGeneration) return;
 
@@ -146,6 +152,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         _transactions = page.items;
         _recurringItems = results[1] as List<RecurringItem>;
         _filterOptions = options;
+        _subscriptionIds = results[3] as Set<String>;
+        _recurringCardNames = results[4] as Map<String, String>;
         _categories = options.categories;
         _nextTransactionCursor = page.nextCursor;
         _hasMoreTransactions = page.hasMore && page.nextCursor != null;
@@ -245,9 +253,17 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     final space = _space;
     if (space == null) return;
     try {
-      final items = await widget.repository.listRecurringItems(space.id);
+      final values = await Future.wait<dynamic>([
+        widget.repository.listRecurringItems(space.id),
+        widget.repository.listSubscriptionRecurringIds(space.id),
+        widget.repository.listRecurringCardNames(space.id),
+      ]);
       if (!mounted || _space?.id != space.id) return;
-      setState(() => _recurringItems = items);
+      setState(() {
+        _recurringItems = values[0] as List<RecurringItem>;
+        _subscriptionIds = values[1] as Set<String>;
+        _recurringCardNames = values[2] as Map<String, String>;
+      });
     } catch (_) {
       // A lista de transações continua utilizável se recorrências falharem.
     }
@@ -498,6 +514,59 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     }
   }
 
+  Future<void> _setSubscriptionKind(
+    RecurringItem item, {
+    required bool subscription,
+  }) async {
+    final space = _space;
+    if (space == null) return;
+    try {
+      await widget.repository.setRecurringSubscriptionKind(
+        spaceId: space.id,
+        itemId: item.id,
+        subscription: subscription,
+      );
+      await _refreshRecurring();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            subscription
+                ? 'Recorrência movida para assinaturas.'
+                : 'Assinatura movida para recorrências.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    }
+  }
+
+  Future<void> _endSubscription(RecurringItem item) async {
+    final space = _space;
+    if (space == null || !item.active) return;
+    try {
+      await widget.repository.setRecurringActive(
+        spaceId: space.id,
+        itemId: item.id,
+        active: false,
+      );
+      await _refreshRecurring();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Acompanhamento encerrado.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    }
+  }
+
   Future<void> _deleteRecurring(RecurringItem item) async {
     final space = _space;
     if (space == null) return;
@@ -636,6 +705,13 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subscriptions = _recurringItems
+        .where((item) => _subscriptionIds.contains(item.id))
+        .toList(growable: false);
+    final regularRecurring = _recurringItems
+        .where((item) => !_subscriptionIds.contains(item.id))
+        .toList(growable: false);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -644,7 +720,11 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [Tab(text: 'Transações'), Tab(text: 'Recorrências')],
+          tabs: const [
+            Tab(text: 'Transações'),
+            Tab(text: 'Assinaturas'),
+            Tab(text: 'Recorrências'),
+          ],
         ),
       ),
       body: _loading
@@ -680,8 +760,24 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                   onEdit: _editTransaction,
                   onDelete: _deleteTransaction,
                 ),
+                SubscriptionsTab(
+                  items: subscriptions,
+                  recurringCandidates: regularRecurring,
+                  cardNames: _recurringCardNames,
+                  onRefresh: _refreshRecurring,
+                  onEdit: _editRecurring,
+                  onEnd: _endSubscription,
+                  onClassify: (item) => _setSubscriptionKind(
+                    item,
+                    subscription: true,
+                  ),
+                  onMoveToRecurring: (item) => _setSubscriptionKind(
+                    item,
+                    subscription: false,
+                  ),
+                ),
                 _RecurringTab(
-                  items: _recurringItems,
+                  items: regularRecurring,
                   categories: _categories,
                   isDark: isDark,
                   onRefresh: _refresh,
@@ -1121,93 +1217,80 @@ class _TransactionCardV3 extends StatelessWidget {
     final amountColor = item.isIncome
         ? AppColors.positiveText(brightness)
         : primary;
+    final hasDetailActions = onEdit != null || onDelete != null;
 
-    return Material(
-      color: surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: border),
-      ),
-      child: InkWell(
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 13, 8, 13),
-          child: Row(
-            children: [
-              CategoryIconBadge(
-                icon: visual.icon,
-                color: visual.color,
-                size: 44,
-                iconSize: 22,
-                radius: 14,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      financialDisplayDescription(item.description),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: primary,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      [
-                        transactionEventTypeLabel(item.eventType),
-                        _formatDate(item.occurredAt),
-                        if (item.accountName != null) item.accountName!,
-                      ].join(' • '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 11,
-                        color: secondary,
-                      ),
-                    ),
-                  ],
+    return Semantics(
+      button: true,
+      label:
+          '${financialDisplayDescription(item.description)}, ${Formatters.money(item.amount.abs())}',
+      hint: hasDetailActions
+          ? 'abrir detalhe e ações do lançamento'
+          : 'abrir detalhe do lançamento',
+      child: Material(
+        color: surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: border),
+        ),
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+            child: Row(
+              children: [
+                CategoryIconBadge(
+                  icon: visual.icon,
+                  color: visual.color,
+                  size: 44,
+                  iconSize: 22,
+                  radius: 14,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${item.isIncome ? '+' : item.isExpense ? '−' : ''}${Formatters.money(item.amount.abs())}',
-                style: AppTypography.money(
-                  context,
-                  fontSize: 13,
-                  color: amountColor,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        financialDisplayDescription(item.description),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: primary,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        [
+                          transactionEventTypeLabel(item.eventType),
+                          _formatDate(item.occurredAt),
+                          if (item.accountName != null) item.accountName!,
+                        ].join(' • '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: secondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (onEdit != null || onDelete != null)
-                PopupMenuButton<String>(
-                  tooltip: 'ações',
-                  onSelected: (value) {
-                    if (value == 'edit') onEdit?.call();
-                    if (value == 'delete') onDelete?.call();
-                  },
-                  itemBuilder: (_) => [
-                    if (onEdit != null)
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Text('Editar'),
-                      ),
-                    if (onDelete != null)
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Excluir'),
-                      ),
-                  ],
-                )
-              else
-                const SizedBox(width: 8),
-            ],
+                const SizedBox(width: 10),
+                Text(
+                  '${item.isIncome ? '+' : item.isExpense ? '−' : ''}${Formatters.money(item.amount.abs())}',
+                  style: AppTypography.money(
+                    context,
+                    fontSize: 13,
+                    color: amountColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
