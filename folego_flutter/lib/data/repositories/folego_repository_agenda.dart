@@ -3,6 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/upcoming_financial_event.dart';
 import 'folego_repository.dart';
 
+typedef FinancialAgendaDebugLoader = Future<List<UpcomingFinancialEvent>> Function({
+  required String spaceId,
+  DateTime? startDate,
+  DateTime? endDate,
+  required int limit,
+});
+
+/// Test seam only. Production always leaves this null and uses the canonical RPC.
+FinancialAgendaDebugLoader? debugFinancialAgendaLoader;
+
 extension FolegoRepositoryAgenda on FolegoRepository {
   Future<List<UpcomingFinancialEvent>> getFinancialAgenda(
     String spaceId, {
@@ -15,6 +25,16 @@ extension FolegoRepositoryAgenda on FolegoRepository {
     }
     if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
       throw ArgumentError('A data final não pode ser anterior à inicial.');
+    }
+
+    final debugLoader = debugFinancialAgendaLoader;
+    if (debugLoader != null) {
+      return debugLoader(
+        spaceId: spaceId,
+        startDate: startDate,
+        endDate: endDate,
+        limit: limit,
+      );
     }
 
     final response = await Supabase.instance.client.rpc(
