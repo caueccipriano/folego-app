@@ -10,6 +10,7 @@ class CategoryItem {
     this.isSelectable = true,
     this.active = true,
     this.colorHex,
+    this.iconKey,
     this.systemKey,
     this.categoryRole,
     this.searchAliases = const [],
@@ -28,6 +29,7 @@ class CategoryItem {
   final bool isSelectable;
   final bool active;
   final String? colorHex;
+  final String? iconKey;
   final String? systemKey;
   final String? categoryRole;
   final List<String> searchAliases;
@@ -77,6 +79,7 @@ class CategoryItem {
       isSelectable: json['is_selectable'] as bool? ?? true,
       active: json['active'] as bool? ?? true,
       colorHex: json['color_hex'] as String?,
+      iconKey: json['icon_key'] as String?,
       systemKey: json['system_key'] as String?,
       categoryRole: json['category_role'] as String?,
       searchAliases: aliases,
