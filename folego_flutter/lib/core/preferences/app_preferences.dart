@@ -37,6 +37,7 @@ final class AppPreferenceRepository {
 
   static const themeKey = 'folego.theme_mode';
   static const languageKey = 'folego.language';
+  static const firstRunIntroKey = 'folego.first_run_intro_seen';
 
   final AppPreferenceStore _store;
 
@@ -57,6 +58,14 @@ final class AppPreferenceRepository {
       languageKey,
       languagePreferenceValue(preference),
     );
+  }
+
+  Future<bool> loadFirstRunIntroSeen() async {
+    return await _store.getString(firstRunIntroKey) == 'true';
+  }
+
+  Future<void> saveFirstRunIntroSeen(bool value) {
+    return _store.setString(firstRunIntroKey, value ? 'true' : 'false');
   }
 }
 
@@ -130,10 +139,12 @@ abstract final class AppPreferences {
 
   static final ValueNotifier<AppLanguagePreference> languagePreference =
       ValueNotifier<AppLanguagePreference>(AppLanguagePreference.system);
+  static final ValueNotifier<bool> firstRunIntroSeen = ValueNotifier<bool>(false);
 
   static Future<void> initialize() async {
     var themeMode = ThemeMode.system;
     var language = AppLanguagePreference.system;
+    var introSeen = false;
 
     try {
       themeMode = await _repository.loadThemeMode();
@@ -147,8 +158,15 @@ abstract final class AppPreferences {
       language = AppLanguagePreference.system;
     }
 
+    try {
+      introSeen = await _repository.loadFirstRunIntroSeen();
+    } catch (_) {
+      introSeen = false;
+    }
+
     _applyTheme(themeMode);
     _applyLanguage(language);
+    firstRunIntroSeen.value = introSeen;
   }
 
   static Future<void> setThemeMode(ThemeMode mode) async {
@@ -161,6 +179,11 @@ abstract final class AppPreferences {
   ) async {
     _applyLanguage(preference);
     await _repository.saveLanguagePreference(preference);
+  }
+
+  static Future<void> markFirstRunIntroSeen() async {
+    firstRunIntroSeen.value = true;
+    await _repository.saveFirstRunIntroSeen(true);
   }
 
   static void _applyTheme(ThemeMode mode) {

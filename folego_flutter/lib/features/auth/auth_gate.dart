@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -39,8 +40,10 @@ class _AuthGateState extends State<AuthGate> {
           }
         });
       },
-      onError: (Object error, StackTrace stackTrace) {
-        debugPrint('Auth state listener failed: $error\n$stackTrace');
+      onError: (Object error, StackTrace _) {
+        if (kDebugMode) {
+          debugPrint('Auth state listener failed (${error.runtimeType})');
+        }
       },
     );
   }
