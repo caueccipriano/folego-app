@@ -3,6 +3,29 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/debt_detail.dart';
 import 'folego_repository.dart';
 
+typedef DebtDetailDebugLoader = Future<DebtDetail> Function({
+  required String spaceId,
+  required String debtId,
+});
+typedef DebtLifecycleDebugAction = Future<void> Function({
+  required String spaceId,
+  required String debtId,
+});
+typedef DebtPaymentDebugAction = Future<String> Function({
+  required String spaceId,
+  required String installmentId,
+  required String accountId,
+  required num amount,
+  required DateTime paidAt,
+});
+
+/// Test seams only. Production leaves these null and uses the canonical RPCs.
+DebtDetailDebugLoader? debugDebtDetailLoader;
+DebtLifecycleDebugAction? debugArchiveDebtAction;
+DebtLifecycleDebugAction? debugReopenDebtAction;
+DebtLifecycleDebugAction? debugCloseDebtAction;
+DebtPaymentDebugAction? debugDebtPaymentAction;
+
 extension FolegoRepositoryDebts on FolegoRepository {
   Future<String> createDebtV2({
     required String spaceId,
@@ -37,6 +60,10 @@ extension FolegoRepositoryDebts on FolegoRepository {
     required String spaceId,
     required String debtId,
   }) async {
+    final debugLoader = debugDebtDetailLoader;
+    if (debugLoader != null) {
+      return debugLoader(spaceId: spaceId, debtId: debtId);
+    }
     final data = await Supabase.instance.client.rpc(
       'get_debt_detail',
       params: {'p_space_id': spaceId, 'p_debt_id': debtId},
@@ -48,6 +75,10 @@ extension FolegoRepositoryDebts on FolegoRepository {
     required String spaceId,
     required String debtId,
   }) async {
+    final debugAction = debugArchiveDebtAction;
+    if (debugAction != null) {
+      return debugAction(spaceId: spaceId, debtId: debtId);
+    }
     await Supabase.instance.client.rpc(
       'archive_debt',
       params: {'p_space_id': spaceId, 'p_debt_id': debtId},
@@ -58,6 +89,10 @@ extension FolegoRepositoryDebts on FolegoRepository {
     required String spaceId,
     required String debtId,
   }) async {
+    final debugAction = debugReopenDebtAction;
+    if (debugAction != null) {
+      return debugAction(spaceId: spaceId, debtId: debtId);
+    }
     await Supabase.instance.client.rpc(
       'reopen_debt',
       params: {'p_space_id': spaceId, 'p_debt_id': debtId},
@@ -68,6 +103,10 @@ extension FolegoRepositoryDebts on FolegoRepository {
     required String spaceId,
     required String debtId,
   }) async {
+    final debugAction = debugCloseDebtAction;
+    if (debugAction != null) {
+      return debugAction(spaceId: spaceId, debtId: debtId);
+    }
     await Supabase.instance.client.rpc(
       'close_debt',
       params: {'p_space_id': spaceId, 'p_debt_id': debtId},
@@ -82,6 +121,16 @@ extension FolegoRepositoryDebts on FolegoRepository {
     required DateTime paidAt,
   }) async {
     if (amount <= 0) throw ArgumentError('O valor deve ser maior que zero.');
+    final debugAction = debugDebtPaymentAction;
+    if (debugAction != null) {
+      return debugAction(
+        spaceId: spaceId,
+        installmentId: installmentId,
+        accountId: accountId,
+        amount: amount,
+        paidAt: paidAt,
+      );
+    }
     final data = await Supabase.instance.client.rpc(
       'pay_debt_installment_v2',
       params: {
