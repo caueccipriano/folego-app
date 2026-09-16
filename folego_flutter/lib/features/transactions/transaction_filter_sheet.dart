@@ -4,7 +4,9 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
+import '../../data/models/category_item.dart';
 import '../../data/models/transaction_filters.dart';
+import '../../shared/widgets/category_search_picker.dart';
 
 const Map<String, String> transactionEventTypeLabels = {
   'income': 'receita',
@@ -72,6 +74,11 @@ class TransactionFilterSheet extends StatefulWidget {
   State<TransactionFilterSheet> createState() => _TransactionFilterSheetState();
 }
 
+class _TransactionsCategoryChoice {
+  const _TransactionsCategoryChoice(this.category);
+  final CategoryItem? category;
+}
+
 class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
   late TransactionFilters _draft;
 
@@ -101,6 +108,59 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
     });
   }
 
+  Future<void> _pickCategory() async {
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
+    final categories = widget.options.categories;
+    if (categories.isEmpty) return;
+
+    _TransactionsCategoryChoice? choice;
+    if (compact) {
+      choice = await showModalBottomSheet<_TransactionsCategoryChoice>(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) => FractionallySizedBox(
+          heightFactor: .86,
+          child: CategorySearchPicker(
+            categories: categories,
+            eventType: 'expense',
+            selectedId: _draft.categoryId,
+            includeAll: true,
+            onSelected: (category) => Navigator.of(sheetContext).pop(
+              _TransactionsCategoryChoice(category),
+            ),
+          ),
+        ),
+      );
+    } else {
+      choice = await showDialog<_TransactionsCategoryChoice>(
+        context: context,
+        builder: (dialogContext) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(24),
+          child: SizedBox(
+            width: 620,
+            height: MediaQuery.sizeOf(dialogContext).height * .72,
+            child: CategorySearchPicker(
+              categories: categories,
+              eventType: 'expense',
+              selectedId: _draft.categoryId,
+              includeAll: true,
+              dialogMode: true,
+              onSelected: (category) => Navigator.of(dialogContext).pop(
+                _TransactionsCategoryChoice(category),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (choice == null || !mounted) return;
+    setState(() => _draft = _draft.copyWith(categoryId: choice!.category?.id));
+  }
+
   void _toggleType(String type, bool selected) {
     final types = Set<String>.from(_draft.eventTypes);
     if (selected) {
@@ -109,6 +169,15 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
       types.remove(type);
     }
     setState(() => _draft = _draft.copyWith(eventTypes: types));
+  }
+
+  String _selectedCategoryLabel() {
+    final id = _draft.categoryId;
+    if (id == null) return 'todas as categorias';
+    for (final category in widget.options.categories) {
+      if (category.id == id) return category.breadcrumb;
+    }
+    return 'categoria selecionada';
   }
 
   @override
@@ -158,7 +227,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SectionLabel('período'),
+                    const _SectionLabel('período'),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       onPressed: _pickPeriod,
@@ -182,7 +251,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
                         ),
                       ),
                     const SizedBox(height: 18),
-                    _SectionLabel('tipo'),
+                    const _SectionLabel('tipo'),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -191,22 +260,34 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
                         return FilterChip(
                           label: Text(entry.value),
                           selected: _draft.eventTypes.contains(entry.key),
-                          onSelected: (selected) =>
-                              _toggleType(entry.key, selected),
+                          onSelected: (selected) => _toggleType(entry.key, selected),
                         );
                       }).toList(growable: false),
                     ),
                     const SizedBox(height: 20),
-                    _FilterDropdown(
-                      label: 'categoria',
-                      value: _draft.categoryId,
-                      allLabel: 'todas as categorias',
-                      items: [
-                        for (final category in widget.options.categories)
-                          _FilterOption(category.id, category.breadcrumb),
-                      ],
-                      onChanged: (value) => setState(
-                        () => _draft = _draft.copyWith(categoryId: value),
+                    Text(
+                      'categoria',
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Semantics(
+                      button: true,
+                      label: 'escolher categoria',
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('transaction-category-filter-picker'),
+                        onPressed: _pickCategory,
+                        icon: const Icon(AppIcons.search, size: 18),
+                        label: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _selectedCategoryLabel(),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -245,9 +326,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
                           _FilterOption(benefit.id, benefit.name),
                       ],
                       onChanged: (value) => setState(
-                        () => _draft = _draft.copyWith(
-                          benefitAccountId: value,
-                        ),
+                        () => _draft = _draft.copyWith(benefitAccountId: value),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -270,9 +349,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(
-                        TransactionFilters.empty(),
-                      ),
+                      onPressed: () => Navigator.of(context).pop(TransactionFilters.empty()),
                       child: const Text('limpar filtros'),
                     ),
                   ),
@@ -356,15 +433,11 @@ class _FilterOption {
 }
 
 String _periodLabel(TransactionFilters filters) {
-  if (filters.startDate == null && filters.endDate == null) {
-    return 'qualquer período';
-  }
+  if (filters.startDate == null && filters.endDate == null) return 'qualquer período';
   if (filters.startDate != null && filters.endDate != null) {
     return '${_date(filters.startDate!)} — ${_date(filters.endDate!)}';
   }
-  if (filters.startDate != null) {
-    return 'a partir de ${_date(filters.startDate!)}';
-  }
+  if (filters.startDate != null) return 'a partir de ${_date(filters.startDate!)}';
   return 'até ${_date(filters.endDate!)}';
 }
 

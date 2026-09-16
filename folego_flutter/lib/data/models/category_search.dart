@@ -6,7 +6,7 @@ abstract final class CategorySearch {
     String query, {
     int limit = 40,
   }) {
-    final normalized = _normalize(query);
+    final normalized = normalize(query);
     final items = categories.where((item) => item.isSelectable).toList();
 
     if (normalized.isEmpty) {
@@ -29,11 +29,41 @@ abstract final class CategorySearch {
     return scored.take(limit).map((entry) => entry.item).toList(growable: false);
   }
 
+  static String normalize(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll('á', 'a')
+        .replaceAll('à', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('ã', 'a')
+        .replaceAll('ä', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('ë', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ì', 'i')
+        .replaceAll('î', 'i')
+        .replaceAll('ï', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ò', 'o')
+        .replaceAll('ô', 'o')
+        .replaceAll('õ', 'o')
+        .replaceAll('ö', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ù', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('ç', 'c');
+  }
+
   static int? _score(CategoryItem item, String query) {
-    final name = _normalize(item.name);
-    final parent = _normalize(item.parentName ?? '');
-    final breadcrumb = _normalize(item.breadcrumb);
-    final aliases = item.searchAliases.map(_normalize).toList();
+    final name = normalize(item.name);
+    final parent = normalize(item.parentName ?? '');
+    final breadcrumb = normalize(item.breadcrumb);
+    final aliases = item.searchAliases.map(normalize).toList();
 
     if (name == query) return 0;
     if (name.startsWith(query)) return 1;
@@ -61,35 +91,6 @@ abstract final class CategorySearch {
 
     final bySort = a.sortOrder.compareTo(b.sortOrder);
     if (bySort != 0) return bySort;
-    return _normalize(a.breadcrumb).compareTo(_normalize(b.breadcrumb));
-  }
-
-  static String _normalize(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll('á', 'a')
-        .replaceAll('à', 'a')
-        .replaceAll('â', 'a')
-        .replaceAll('ã', 'a')
-        .replaceAll('ä', 'a')
-        .replaceAll('é', 'e')
-        .replaceAll('è', 'e')
-        .replaceAll('ê', 'e')
-        .replaceAll('ë', 'e')
-        .replaceAll('í', 'i')
-        .replaceAll('ì', 'i')
-        .replaceAll('î', 'i')
-        .replaceAll('ï', 'i')
-        .replaceAll('ó', 'o')
-        .replaceAll('ò', 'o')
-        .replaceAll('ô', 'o')
-        .replaceAll('õ', 'o')
-        .replaceAll('ö', 'o')
-        .replaceAll('ú', 'u')
-        .replaceAll('ù', 'u')
-        .replaceAll('û', 'u')
-        .replaceAll('ü', 'u')
-        .replaceAll('ç', 'c');
+    return normalize(a.breadcrumb).compareTo(normalize(b.breadcrumb));
   }
 }
