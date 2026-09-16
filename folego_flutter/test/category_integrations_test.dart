@@ -181,10 +181,13 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('transaction-filter-button')));
     await tester.pumpAndSettle();
-    final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
-    await tester.ensureVisible(categoryDropdown);
-    await tester.tap(categoryDropdown);
+    final categoryPicker = find.byKey(
+      const ValueKey('transaction-category-filter-picker'),
+    );
+    await tester.ensureVisible(categoryPicker);
+    await tester.tap(categoryPicker);
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('category-search-field')), findsOneWidget);
     expect(find.text('Nova categoria'), findsOneWidget);
   });
 
