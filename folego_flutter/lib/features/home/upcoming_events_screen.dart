@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../../data/models/upcoming_events.dart';
+import '../../core/layout/app_content_container.dart';
+import '../../core/realtime/realtime_invalidation.dart';
+import '../../core/realtime/realtime_refresh_view.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/utils/formatters.dart';
+import '../../data/models/financial_space.dart';
+import '../../data/models/recurring_item.dart';
+import '../../data/models/upcoming_financial_event.dart';
+import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_agenda.dart';
+import '../transactions/recurring_form_sheet.dart';
+import '../wallet/wallet_detail_screen.dart';
 
-class UpcomingEventsScreen extends StatefulWidget {
+class UpcomingEventsScreen extends StatelessWidget {
   const UpcomingEventsScreen({
     super.key,
     required this.repository,
@@ -14,17 +27,39 @@ class UpcomingEventsScreen extends StatefulWidget {
   final String spaceId;
 
   @override
-  State<UpcomingEventsScreen> createState() => _UpcomingEventsScreenState();
+  Widget build(BuildContext context) {
+    return RealtimeRefreshView(
+      domain: AppRealtimeDomain.home,
+      identity: 'agenda:$spaceId',
+      builder: (key) => _FinancialAgendaBody(
+        key: key,
+        repository: repository,
+        spaceId: spaceId,
+      ),
+    );
+  }
 }
 
-class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
-  static const _purple = Color(0xFF6C3BF0);
-  static const _lime = Color(0xFFC6F135);
+class _FinancialAgendaBody extends StatefulWidget {
+  const _FinancialAgendaBody({
+    super.key,
+    required this.repository,
+    required this.spaceId,
+  });
 
+  final FolegoRepository repository;
+  final String spaceId;
+
+  @override
+  State<_FinancialAgendaBody> createState() => _FinancialAgendaBodyState();
+}
+
+class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
   bool _loading = true;
-  bool _realizing = false;
   String? _error;
-  List<UpcomingEvent> _events = [];
+  String? _realizingKey;
+  AgendaFilter _filter = AgendaFilter.all;
+  List<UpcomingFinancialEvent> _events = const [];
 
   @override
   void initState() {
@@ -33,785 +68,571 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
-      final events = await widget.repository.getUpcomingEvents(
-        widget.spaceId,
-        days: 30,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
+      final events = await widget.repository.getFinancialAgenda(widget.spaceId);
+      if (!mounted) return;
       setState(() {
         _events = events;
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString();
+        _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  double get _totalIncome {
-    return _events
-        .where((event) => event.isIncome)
-        .fold(0, (total, event) => total + event.amount);
-  }
+  List<UpcomingFinancialEvent> get _visibleEvents => _events
+      .where((event) => event.matches(_filter))
+      .toList(growable: false);
 
-  double get _totalExpenses {
-    return _events
-        .where((event) => event.isExpense)
-        .fold(0, (total, event) => total + event.amount);
-  }
-
-  double get _forecastBalance {
-    return _totalIncome - _totalExpenses;
-  }
-
-  String _money(double value) {
-    final negative = value < 0;
-    final absolute = value.abs();
-
-    final parts = absolute.toStringAsFixed(2).split('.');
-    final integer = parts.first;
-    final decimal = parts.last;
-
-    final reversed = integer.split('').reversed.toList();
-    final groups = <String>[];
-
-    for (var i = 0; i < reversed.length; i += 3) {
-      final end = (i + 3 < reversed.length) ? i + 3 : reversed.length;
-
-      groups.add(reversed.sublist(i, end).reversed.join());
-    }
-
-    final formattedInteger = groups.reversed.join('.');
-
-    return '${negative ? '-' : ''}'
-        'R\$ $formattedInteger,$decimal';
-  }
-
-  String _dateLabel(DateTime date) {
-    final today = DateTime.now();
-
-    final normalizedToday = DateTime(today.year, today.month, today.day);
-
-    final normalizedDate = DateTime(date.year, date.month, date.day);
-
-    final difference = normalizedDate.difference(normalizedToday).inDays;
-
-    if (difference == 0) {
-      return 'Hoje';
-    }
-
-    if (difference == 1) {
-      return 'Amanhã';
-    }
-
-    const weekdays = [
-      'segunda',
-      'terça',
-      'quarta',
-      'quinta',
-      'sexta',
-      'sábado',
-      'domingo',
-    ];
-
-    const months = [
-      'jan',
-      'fev',
-      'mar',
-      'abr',
-      'mai',
-      'jun',
-      'jul',
-      'ago',
-      'set',
-      'out',
-      'nov',
-      'dez',
-    ];
-
-    return '${weekdays[date.weekday - 1]}, '
-        '${date.day} ${months[date.month - 1]}';
-  }
-
-  String _compactDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}';
-  }
-
-  IconData _eventIcon(UpcomingEvent event) {
-    if (event.isIncome) {
-      return Icons.payments_rounded;
-    }
-
-    switch (event.source) {
-      case 'invoice':
-        return Icons.credit_card_rounded;
-
-      case 'debt':
-        return Icons.account_balance_wallet_rounded;
-
-      case 'recurring':
-        return Icons.event_repeat_rounded;
-
-      default:
-        return Icons.calendar_today_rounded;
-    }
-  }
-
-  Color _eventColor(UpcomingEvent event) {
-    if (event.isIncome) {
-      return const Color(0xFF368C45);
-    }
-
-    switch (event.source) {
-      case 'invoice':
-        return _purple;
-
-      case 'debt':
-        return const Color(0xFFED7A3B);
-
-      default:
-        return const Color(0xFF6A6A75);
-    }
-  }
-
-  Map<DateTime, List<UpcomingEvent>> get _groupedEvents {
-    final result = <DateTime, List<UpcomingEvent>>{};
-
-    for (final event in _events) {
-      final date = DateTime(
-        event.dueDate.year,
-        event.dueDate.month,
-        event.dueDate.day,
+  Future<void> _openEvent(UpcomingFinancialEvent event) async {
+    if (event.isRecurring) {
+      final items = await widget.repository.listRecurringItems(widget.spaceId);
+      RecurringItem? selected;
+      for (final item in items) {
+        if (item.id == event.sourceId) {
+          selected = item;
+          break;
+        }
+      }
+      if (!mounted || selected == null) return;
+      final saved = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (_) => RecurringFormSheet(
+          space: FinancialSpace(id: widget.spaceId, name: ''),
+          repository: widget.repository,
+          item: selected,
+        ),
       );
-
-      result.putIfAbsent(date, () => []);
-
-      result[date]!.add(event);
-    }
-
-    return result;
-  }
-
-  Future<void> _realizeEvent(UpcomingEvent event) async {
-    if (!event.isRecurring || _realizing) {
+      if (saved == true && mounted) await _load();
       return;
     }
 
-    final action = event.isIncome ? 'recebido' : 'pago';
+    final overview = await widget.repository.getWalletOverview(
+      spaceId: widget.spaceId,
+    );
+    if (!mounted) return;
 
-    final actionTitle = event.isIncome
-        ? 'Marcar como recebido?'
-        : 'Marcar como pago?';
+    if (event.isInvoice && event.cardId != null) {
+      WalletCard? card;
+      for (final item in overview.cards) {
+        if (item.id == event.cardId) {
+          card = item;
+          break;
+        }
+      }
+      if (card == null) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => WalletCardDetailScreen(
+            repository: widget.repository,
+            spaceId: widget.spaceId,
+            card: card!,
+          ),
+        ),
+      );
+    } else if (event.isDebt && event.debtId != null) {
+      WalletDebt? debt;
+      for (final item in overview.debts) {
+        if (item.id == event.debtId) {
+          debt = item;
+          break;
+        }
+      }
+      if (debt == null) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => WalletDebtDetailScreen(
+            repository: widget.repository,
+            spaceId: widget.spaceId,
+            debt: debt!,
+          ),
+        ),
+      );
+    }
 
+    if (mounted) await _load();
+  }
+
+  Future<void> _realize(UpcomingFinancialEvent event) async {
+    if (!event.isRecurring || _realizingKey != null) return;
+    final verb = event.isIncome ? 'recebido' : 'realizado';
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(actionTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                event.name,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _money(event.amount),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Isso vai transformar esta previsão '
-                'em um lançamento real.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+      builder: (dialogContext) => AlertDialog(
+        title: Text(event.isIncome ? 'Marcar como recebido?' : 'Realizar agora?'),
+        content: Text(
+          '${event.title}\n${Formatters.money(event.amount)}\n\n'
+          'A previsão será transformada no lançamento canônico correspondente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('cancelar'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: Text(event.isIncome ? 'Recebi' : 'Paguei'),
-            ),
-          ],
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(event.isIncome ? 'recebi' : 'realizar'),
+          ),
+        ],
+      ),
     );
-
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    setState(() {
-      _realizing = true;
-    });
-
+    if (confirmed != true || !mounted) return;
+    setState(() => _realizingKey = event.eventKey);
     try {
       await widget.repository.realizeRecurring(
         spaceId: widget.spaceId,
-        itemId: event.id,
+        itemId: event.sourceId,
         dueDate: event.dueDate,
         amount: event.amount,
       );
-
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${event.name} marcado como $action.')),
+        SnackBar(content: Text('${event.title} $verb.')),
       );
-
       await _load();
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Não consegui atualizar: $error')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('não consegui atualizar: $error')),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _realizing = false;
-        });
-      }
+      if (mounted) setState(() => _realizingKey = null);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.background(brightness),
       appBar: AppBar(
-        title: const Text(
-          'Agenda financeira',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          'agenda',
+          style: AppTypography.display(
+            context,
+            fontSize: 24,
+            color: AppColors.primaryText(brightness),
+          ),
         ),
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_loading) {
-      return const SafeArea(child: Center(child: CircularProgressIndicator()));
-    }
-
-    if (_error != null) {
-      return SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 44),
-                  const SizedBox(height: 14),
-                  const Text(
-                    'Não consegui carregar sua agenda.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!, textAlign: TextAlign.center),
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: _load,
-                    child: const Text('Tentar novamente'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SafeArea(
-      top: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isPhone = constraints.maxWidth < 600;
-
-          final horizontalPadding = isPhone ? 16.0 : 24.0;
-
-          return RefreshIndicator(
-            onRefresh: _load,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalPadding,
-                          12,
-                          horizontalPadding,
-                          0,
-                        ),
-                        child: _buildSummary(isPhone: isPhone),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalPadding,
-                          26,
-                          horizontalPadding,
-                          14,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Próximos 30 dias',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.w900),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    'O que já está previsto '
-                                    'para entrar e sair.',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: .58),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(99),
-                              ),
-                              child: Text(
-                                '${_events.length} '
-                                '${_events.length == 1 ? 'previsto' : 'previstos'}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                if (_events.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 760),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: horizontalPadding,
-                          ),
-                          child: _buildEmpty(),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  SliverList(
-                    delegate: SliverChildListDelegate(
-                      _buildDateSections(horizontalPadding: horizontalPadding),
-                    ),
-                  ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 40)),
-              ],
-            ),
-          );
-        },
+      body: AppContentContainer.list(
+        fillHeight: true,
+        child: _buildBody(brightness),
       ),
     );
   }
 
-  Widget _buildSummary({required bool isPhone}) {
-    final positive = _forecastBalance >= 0;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isPhone ? 18 : 24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF7444F4), Color(0xFF5A22E8)],
+  Widget _buildBody(Brightness brightness) {
+    if (_loading && _events.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null && _events.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(AppIcons.warning, size: 42),
+            const SizedBox(height: 12),
+            Text(
+              'não consegui carregar sua agenda',
+              style: AppTypography.section(context, fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton(onPressed: _load, child: const Text('tentar novamente')),
+          ],
         ),
-        borderRadius: BorderRadius.circular(isPhone ? 24 : 28),
-        boxShadow: [
-          BoxShadow(
-            color: _purple.withValues(alpha: .18),
-            blurRadius: 26,
-            offset: const Offset(0, 10),
+      );
+    }
+
+    final visible = _visibleEvents;
+    final summary = AgendaSummary.nextDays(_events);
+    final grouped = <AgendaSection, List<UpcomingFinancialEvent>>{};
+    for (final event in visible) {
+      grouped.putIfAbsent(event.section, () => []).add(event);
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(0, 12, 0, 48),
+        children: [
+          _AgendaHero(summary: summary),
+          const SizedBox(height: 22),
+          Text(
+            'o que vem pela frente',
+            style: AppTypography.section(
+              context,
+              fontSize: 20,
+              color: AppColors.primaryText(brightness),
+            ),
           ),
+          const SizedBox(height: 5),
+          Text(
+            'obrigações e entradas reais, sem contar a mesma saída duas vezes',
+            style: AppTypography.body(
+              context,
+              fontSize: 12,
+              color: AppColors.secondaryText(brightness),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: AgendaFilter.values.map((filter) {
+                final selected = _filter == filter;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(agendaFilterLabel(filter)),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _filter = filter),
+                  ),
+                );
+              }).toList(growable: false),
+            ),
+          ),
+          const SizedBox(height: 20),
+          if (visible.isEmpty)
+            const _AgendaEmpty()
+          else
+            for (final section in AgendaSection.values)
+              if (grouped[section]?.isNotEmpty == true) ...[
+                _AgendaSectionHeader(
+                  label: agendaSectionLabel(section),
+                  count: grouped[section]!.length,
+                  overdue: section == AgendaSection.overdue,
+                ),
+                const SizedBox(height: 9),
+                ...grouped[section]!.map(
+                  (event) => Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: _AgendaEventCard(
+                      event: event,
+                      realizing: _realizingKey == event.eventKey,
+                      onTap: () => _openEvent(event),
+                      onRealize: event.isRecurring ? () => _realize(event) : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 13),
+              ],
         ],
+      ),
+    );
+  }
+}
+
+class _AgendaHero extends StatelessWidget {
+  const _AgendaHero({required this.summary});
+
+  final AgendaSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final purple = AppColors.primaryPurple(brightness);
+    final onPurple = brightness == Brightness.dark
+        ? AppColors.iconOnPurpleDark
+        : AppColors.iconOnPurpleLight;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: purple,
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Seu dinheiro nos próximos dias',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: .78),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+            'próximos 7 dias',
+            style: AppTypography.label(
+              context,
+              fontSize: 12,
+              color: onPurple.withValues(alpha: .78),
             ),
           ),
-
           const SizedBox(height: 6),
-
           Text(
-            positive ? 'Previsão positiva' : 'Atenção aos próximos dias',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              height: 1.08,
-              fontWeight: FontWeight.w900,
+            'um mapa curto do que já está previsto',
+            style: AppTypography.section(
+              context,
+              fontSize: 21,
+              color: onPurple,
             ),
           ),
-
-          const SizedBox(height: 22),
-
-          Row(
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              Expanded(
-                child: _summaryValue(label: 'Entram', value: _totalIncome),
+              _AgendaHeroMetric(
+                icon: AppIcons.expense,
+                label: '${summary.outflowCount} saídas',
+                value: Formatters.money(summary.outflowAmount),
               ),
-              SizedBox(width: isPhone ? 12 : 18),
-              Expanded(
-                child: _summaryValue(label: 'Saem', value: _totalExpenses),
+              _AgendaHeroMetric(
+                icon: AppIcons.income,
+                label: '${summary.incomeCount} entradas',
+                value: Formatters.money(summary.incomeAmount),
               ),
             ],
-          ),
-
-          const SizedBox(height: 18),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: .10)),
-            ),
-            child: isPhone
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Saldo previsto',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: .76),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _money(_forecastBalance),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Saldo previsto',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: .76),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _money(_forecastBalance),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _summaryValue({required String label, required double value}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+class _AgendaHeroMetric extends StatelessWidget {
+  const _AgendaHeroMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .12),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 17, color: Colors.white),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AgendaSectionHeader extends StatelessWidget {
+  const _AgendaSectionHeader({
+    required this.label,
+    required this.count,
+    required this.overdue,
+  });
+  final String label;
+  final int count;
+  final bool overdue;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return Row(
       children: [
+        Icon(
+          overdue ? AppIcons.warning : AppIcons.calendar,
+          size: 17,
+          color: overdue
+              ? AppColors.expenseText(brightness)
+              : AppColors.secondaryText(brightness),
+        ),
+        const SizedBox(width: 7),
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: .72),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+          style: AppTypography.label(
+            context,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.primaryText(brightness),
           ),
         ),
-        const SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            _money(value),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
+        const Spacer(),
+        Text(
+          '$count',
+          style: AppTypography.label(
+            context,
+            fontSize: 11,
+            color: AppColors.secondaryText(brightness),
           ),
         ),
       ],
     );
   }
+}
 
-  List<Widget> _buildDateSections({required double horizontalPadding}) {
-    final grouped = _groupedEvents;
-    final dates = grouped.keys.toList()..sort();
+class _AgendaEventCard extends StatelessWidget {
+  const _AgendaEventCard({
+    required this.event,
+    required this.realizing,
+    required this.onTap,
+    this.onRealize,
+  });
+  final UpcomingFinancialEvent event;
+  final bool realizing;
+  final VoidCallback onTap;
+  final VoidCallback? onRealize;
 
-    return dates.map((date) {
-      final events = grouped[date]!;
-
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              0,
-              horizontalPadding,
-              22,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text(
-                        _compactDate(date),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        _dateLabel(date),
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).dividerColor.withValues(alpha: .30),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < events.length; i++) ...[
-                        _buildEvent(events[i]),
-                        if (i < events.length - 1)
-                          Divider(
-                            height: 1,
-                            indent: 70,
-                            color: Theme.of(
-                              context,
-                            ).dividerColor.withValues(alpha: .25),
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }).toList();
-  }
-
-  Widget _buildEvent(UpcomingEvent event) {
-    final color = _eventColor(event);
-    final canRealize = event.isRecurring;
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    final accent = event.isIncome
+        ? AppColors.positiveText(brightness)
+        : event.isInvoice
+        ? AppColors.primaryPurple(brightness)
+        : event.isDebt
+        ? AppColors.expenseText(brightness)
+        : secondary;
+    final icon = event.isIncome
+        ? AppIcons.income
+        : event.isInvoice
+        ? AppIcons.creditCard
+        : event.isDebt
+        ? AppIcons.debt
+        : AppIcons.recurring;
+    final prefix = event.isIncome
+        ? '+'
+        : event.isOutflow && event.cashObligation
+        ? '-'
+        : '';
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: canRealize && !_realizing ? () => _realizeEvent(event) : null,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface(brightness),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border(brightness)),
+          ),
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: .12),
+                  color: accent.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(_eventIcon(event), size: 21, color: color),
+                child: Icon(icon, size: 20, color: accent),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.body(
+                              context,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$prefix${Formatters.money(event.amount)}',
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: event.isInformational ? primary : accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      event.name,
+                      event.subtitle.isEmpty
+                          ? event.sourceLabel
+                          : event.subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondary,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      canRealize
-                          ? '${event.sourceLabel} · toque para confirmar'
-                          : event.sourceLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: .56),
-                      ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Text(
+                          _dateText(event),
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 10,
+                            color: event.overdue
+                                ? AppColors.expenseText(brightness)
+                                : secondary,
+                          ),
+                        ),
+                        if (event.isInformational) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            'compromisso · não soma cash agora',
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 10,
+                              color: secondary,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(width: 10),
-
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${event.isIncome ? '+' : '-'}'
-                  '${_money(event.amount)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: event.isIncome
-                        ? const Color(0xFF368C45)
-                        : Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-
-              if (canRealize) ...[
+              if (onRealize != null) ...[
                 const SizedBox(width: 6),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: .35),
+                IconButton(
+                  tooltip: event.isIncome ? 'marcar recebido' : 'realizar',
+                  onPressed: realizing ? null : onRealize,
+                  icon: realizing
+                      ? const SizedBox(
+                          width: 17,
+                          height: 17,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(AppIcons.check, size: 18),
                 ),
-              ],
+              ] else
+                Icon(AppIcons.chevronRight, size: 18, color: secondary),
             ],
           ),
         ),
@@ -819,44 +640,48 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
     );
   }
 
-  Widget _buildEmpty() {
+  String _dateText(UpcomingFinancialEvent event) {
+    if (event.overdue) return 'atrasado · ${Formatters.shortDate.format(event.dueDate)}';
+    if (event.dayOffset == 0) return 'hoje';
+    if (event.dayOffset == 1) return 'amanhã';
+    return Formatters.shortDate.format(event.dueDate);
+  }
+}
+
+class _AgendaEmpty extends StatelessWidget {
+  const _AgendaEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: .3),
-        ),
+        border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _lime.withValues(alpha: .22),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(Icons.event_available_rounded, size: 28),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Nada previsto por enquanto',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 7),
+          Icon(AppIcons.calendar, size: 34, color: AppColors.secondaryText(brightness)),
+          const SizedBox(height: 12),
           Text(
-            'Suas recorrências, faturas e parcelas '
-            'dos próximos dias vão aparecer aqui.',
+            'nada apertando por enquanto',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: .58),
+            style: AppTypography.section(
+              context,
+              fontSize: 18,
+              color: AppColors.primaryText(brightness),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'quando surgir uma recorrência, fatura ou parcela de dívida, ela aparece aqui',
+            textAlign: TextAlign.center,
+            style: AppTypography.body(
+              context,
+              fontSize: 12,
+              color: AppColors.secondaryText(brightness),
             ),
           ),
         ],
