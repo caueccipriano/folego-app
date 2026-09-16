@@ -170,6 +170,7 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                           eventType: widget.eventType,
                           systemKey: category.systemKey,
                           colorHex: category.isSystem ? null : category.colorHex,
+                          iconKey: category.isSystem ? null : category.iconKey,
                         );
 
                         return Material(
