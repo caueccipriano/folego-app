@@ -15,8 +15,13 @@ import 'package:folego/data/repositories/folego_repository_agenda.dart';
 import 'package:folego/data/repositories/folego_repository_debts.dart';
 import 'package:folego/features/home/home_screen.dart';
 import 'package:folego/features/home/upcoming_events_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('pt_BR');
+  });
+
   tearDown(() {
     debugFinancialAgendaLoader = null;
     debugDebtDetailLoader = null;
