@@ -27,6 +27,12 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
     AppRealtimeDomain.home,
     AppRealtimeDomain.wallet,
   },
+  'categories': {
+    AppRealtimeDomain.home,
+    AppRealtimeDomain.transactions,
+    AppRealtimeDomain.plan,
+    AppRealtimeDomain.diary,
+  },
   'budgets': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.plan,
