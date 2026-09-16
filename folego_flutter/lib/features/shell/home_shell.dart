@@ -74,7 +74,10 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(space: widget.space, repository: widget.repository),
-      TransactionsScreen(repository: widget.repository),
+      TransactionsScreen(
+        repository: widget.repository,
+        space: widget.space,
+      ),
       PlanScreen(repository: widget.repository, spaceId: widget.space.id),
       WalletScreen(repository: widget.repository, spaceId: widget.space.id),
       ProfileScreen(

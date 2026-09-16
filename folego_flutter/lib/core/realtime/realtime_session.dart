@@ -13,6 +13,18 @@ abstract interface class AppRealtimeEventSource {
   });
 }
 
+String realtimeTopicForSpace(String spaceId) => 'space:$spaceId:changes';
+
+String? realtimeTableFromBroadcastPayload(Map<String, dynamic> message) {
+  final nested = message['payload'];
+  final payload = nested is Map
+      ? Map<String, dynamic>.from(nested)
+      : message;
+  final table = payload['table'];
+  if (table is! String || table.isEmpty) return null;
+  return appRealtimeTableDomains.containsKey(table) ? table : null;
+}
+
 class SupabaseRealtimeEventSource implements AppRealtimeEventSource {
   SupabaseRealtimeEventSource(this._client);
 
@@ -23,7 +35,10 @@ class SupabaseRealtimeEventSource implements AppRealtimeEventSource {
     required String spaceId,
     required void Function(String table) onTableChanged,
   }) {
-    final channel = _client.channel('folego:space:$spaceId');
+    final channel = _client.channel(
+      realtimeTopicForSpace(spaceId),
+      opts: const RealtimeChannelConfig(private: true),
+    );
 
     for (final table in appRealtimeTableDomains.keys) {
       channel.onPostgresChanges(
@@ -38,6 +53,14 @@ class SupabaseRealtimeEventSource implements AppRealtimeEventSource {
         callback: (_) => onTableChanged(table),
       );
     }
+
+    channel.onBroadcast(
+      event: 'row_deleted',
+      callback: (payload) {
+        final table = realtimeTableFromBroadcastPayload(payload);
+        if (table != null) onTableChanged(table);
+      },
+    );
 
     channel.subscribe();
 
