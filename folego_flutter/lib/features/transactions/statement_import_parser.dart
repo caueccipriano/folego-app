@@ -186,11 +186,11 @@ class CsvImportDocument {
             confidence: classification.confidence,
             reason: classification.reason,
             originalFields: <String, dynamic>{
-              if (_optionalCell(row, mapping.categoryColumn) case final value?) 'file_category': value,
-              if (_optionalCell(row, mapping.documentColumn) case final value?) 'document': value,
-              if (_optionalCell(row, mapping.balanceColumn) case final value?) 'balance_after': value,
-              if (sourceType != null) 'statement_type': sourceType,
-              if (_optionalCell(row, mapping.noteColumn) case final value?) 'note': value,
+              'file_category': ?_optionalCell(row, mapping.categoryColumn),
+              'document': ?_optionalCell(row, mapping.documentColumn),
+              'balance_after': ?_optionalCell(row, mapping.balanceColumn),
+              'statement_type': ?sourceType,
+              'note': ?_optionalCell(row, mapping.noteColumn),
             },
           ),
         );
@@ -379,8 +379,8 @@ OfxImportDocument parseOfxImport(Uint8List bytes, StatementImportSourceKind sour
         confidence: classification.confidence,
         reason: classification.reason,
         originalFields: <String, dynamic>{
-          if (type != null) 'statement_type': type,
-          if (_tag(block, 'CHECKNUM') case final value?) 'checknum': value,
+          'statement_type': ?type,
+          'checknum': ?_tag(block, 'CHECKNUM'),
         },
       ),
     );
