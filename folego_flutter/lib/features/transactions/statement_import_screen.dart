@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -622,7 +620,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       const SizedBox(height: 10),
       _BulkBar(categories: _expenseCategories, selectedCategoryId: _bulkCategoryId, onChanged: (value) => setState(() => _bulkCategoryId = value), onApply: _applyBulkCategory, onIncludeAll: () => setState(() => _rows = _rows.map((row) => row.copyWith(decision: row.duplicateState == StatementImportDuplicateState.exactDuplicate || row.duplicateState == StatementImportDuplicateState.alreadyImported ? StatementImportDecision.ignore : StatementImportDecision.include)).toList(growable: false)), onIgnoreSelected: () => setState(() => _rows = _rows.map((row) => row.selected ? row.copyWith(decision: StatementImportDecision.ignore) : row).toList(growable: false))),
       const SizedBox(height: 10),
-      Expanded(child: rows.isEmpty ? const Center(child: Text('nenhuma linha neste filtro')) : ListView.separated(key: const ValueKey('statement-import-review-list'), itemCount: rows.length, separatorBuilder: (_, __) => const SizedBox(height: 8), itemBuilder: (_, index) => _ReviewRowCard(row: rows[index], desktop: desktop, sourceKind: _sourceKind, sourceId: _sourceId, paymentAccounts: _paymentAccounts, invoices: _invoices, expenseCategories: _expenseCategories, incomeCategories: _incomeCategories, validationError: _validationError(rows[index]), onChanged: _replaceRow, onCategoryManagement: _openCategoryManagement))),
+      Expanded(child: rows.isEmpty ? const Center(child: Text('nenhuma linha neste filtro')) : ListView.separated(key: const ValueKey('statement-import-review-list'), itemCount: rows.length, separatorBuilder: (_, _) => const SizedBox(height: 8), itemBuilder: (_, index) => _ReviewRowCard(row: rows[index], desktop: desktop, sourceKind: _sourceKind, sourceId: _sourceId, paymentAccounts: _paymentAccounts, invoices: _invoices, expenseCategories: _expenseCategories, incomeCategories: _incomeCategories, validationError: _validationError(rows[index]), onChanged: _replaceRow, onCategoryManagement: _openCategoryManagement))),
       const SizedBox(height: 10),
       Row(children: [
         Expanded(child: OutlinedButton(onPressed: _loading ? null : _cancelImport, child: const Text('cancelar importação'))),
