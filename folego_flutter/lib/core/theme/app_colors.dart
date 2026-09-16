@@ -132,6 +132,11 @@ abstract final class AppColors {
     return brightness == Brightness.dark ? darkPositiveText : lightPositiveText;
   }
 
+  /// Attention states intentionally use the existing Fôlego purple language.
+  static Color warningText(Brightness brightness) {
+    return primaryPurple(brightness);
+  }
+
   static Color expenseText(Brightness brightness) {
     return brightness == Brightness.dark ? darkExpenseText : lightExpenseText;
   }
