@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/account_item.dart';
 import '../models/category_item.dart';
+import '../models/credit_card_item.dart';
 import '../models/transaction_filters.dart';
 import '../models/transaction_item.dart';
 import '../models/transaction_page.dart';
@@ -67,16 +69,18 @@ extension FolegoRepositoryTransactionFilters on FolegoRepository {
       categoriesById[category.id] = category;
     }
 
-    final categories = categoriesById.values.toList(growable: false)
-      ..sort((a, b) => a.breadcrumb.toLowerCase().compareTo(
-            b.breadcrumb.toLowerCase(),
-          ));
+    final categories = categoriesById.values.toList()
+      ..sort(
+        (a, b) => a.breadcrumb.toLowerCase().compareTo(
+          b.breadcrumb.toLowerCase(),
+        ),
+      );
 
     return TransactionFilterOptions(
       categories: categories,
-      accounts: values[2] as List,
-      cards: values[3] as List,
-      benefits: values[4] as List,
+      accounts: values[2] as List<AccountItem>,
+      cards: values[3] as List<CreditCardItem>,
+      benefits: values[4] as List<AccountItem>,
     );
   }
 }

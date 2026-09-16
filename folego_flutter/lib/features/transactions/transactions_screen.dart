@@ -17,6 +17,7 @@ class TransactionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return impl.TransactionsScreenV3(
+      key: ValueKey<String>(space?.id ?? 'primary-space'),
       repository: repository,
       space: space,
     );
