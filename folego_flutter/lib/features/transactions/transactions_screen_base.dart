@@ -51,12 +51,14 @@ class TransactionsScreenV3 extends StatefulWidget {
     this.space,
     this.pageLoader,
     this.optionsLoader,
+    this.initialFilters,
   });
 
   final FolegoRepository repository;
   final FinancialSpace? space;
   final TransactionPageLoader? pageLoader;
   final TransactionFilterOptionsLoader? optionsLoader;
+  final TransactionFilters? initialFilters;
 
   @override
   State<TransactionsScreenV3> createState() => _TransactionsScreenV3State();
@@ -96,8 +98,9 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   @override
   void initState() {
     super.initState();
+    _filters = widget.initialFilters ?? TransactionFilters.empty();
     _tabController = TabController(length: 3, vsync: this);
-    _searchController = TextEditingController();
+    _searchController = TextEditingController(text: _filters.search);
     _bindRealtime();
     _loadInitial();
   }
@@ -730,64 +733,64 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorState(message: _error!, onRetry: _retryInitialLoad)
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _TransactionsTabV3(
-                  transactions: _transactions,
-                  categoryById: _categoryById,
-                  filters: _filters,
-                  filterOptions: _filterOptions,
-                  searchController: _searchController,
-                  loading: _loadingTransactions,
-                  loadingMore: _loadingMore,
-                  hasMore: _hasMoreTransactions,
-                  loadMoreError: _loadMoreError,
-                  onSearchChanged: _onSearchChanged,
-                  onClearSearch: _clearSearch,
-                  onOpenFilters: _openFilters,
-                  onClearFilters: _clearAllFilters,
-                  onRemovePeriod: _removePeriodFilter,
-                  onRemoveTypes: _removeTypeFilter,
-                  onFiltersChanged: (filters) => _applyFilters(
-                    filters,
-                    syncSearchField: false,
-                  ),
-                  onRefresh: _refresh,
-                  onLoadMore: _loadMoreTransactions,
-                  onOpen: _openTransactionDetail,
-                  onEdit: _editTransaction,
-                  onDelete: _deleteTransaction,
+              ? _ErrorState(message: _error!, onRetry: _retryInitialLoad)
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _TransactionsTabV3(
+                      transactions: _transactions,
+                      categoryById: _categoryById,
+                      filters: _filters,
+                      filterOptions: _filterOptions,
+                      searchController: _searchController,
+                      loading: _loadingTransactions,
+                      loadingMore: _loadingMore,
+                      hasMore: _hasMoreTransactions,
+                      loadMoreError: _loadMoreError,
+                      onSearchChanged: _onSearchChanged,
+                      onClearSearch: _clearSearch,
+                      onOpenFilters: _openFilters,
+                      onClearFilters: _clearAllFilters,
+                      onRemovePeriod: _removePeriodFilter,
+                      onRemoveTypes: _removeTypeFilter,
+                      onFiltersChanged: (filters) => _applyFilters(
+                        filters,
+                        syncSearchField: false,
+                      ),
+                      onRefresh: _refresh,
+                      onLoadMore: _loadMoreTransactions,
+                      onOpen: _openTransactionDetail,
+                      onEdit: _editTransaction,
+                      onDelete: _deleteTransaction,
+                    ),
+                    SubscriptionsTab(
+                      items: subscriptions,
+                      recurringCandidates: regularRecurring,
+                      cardNames: _recurringCardNames,
+                      onRefresh: _refreshRecurring,
+                      onEdit: _editRecurring,
+                      onEnd: _endSubscription,
+                      onClassify: (item) => _setSubscriptionKind(
+                        item,
+                        subscription: true,
+                      ),
+                      onMoveToRecurring: (item) => _setSubscriptionKind(
+                        item,
+                        subscription: false,
+                      ),
+                    ),
+                    _RecurringTab(
+                      items: regularRecurring,
+                      categories: _categories,
+                      isDark: isDark,
+                      onRefresh: _refresh,
+                      onEdit: _editRecurring,
+                      onRealize: _realizeRecurring,
+                      onToggle: _toggleRecurring,
+                      onDelete: _deleteRecurring,
+                    ),
+                  ],
                 ),
-                SubscriptionsTab(
-                  items: subscriptions,
-                  recurringCandidates: regularRecurring,
-                  cardNames: _recurringCardNames,
-                  onRefresh: _refreshRecurring,
-                  onEdit: _editRecurring,
-                  onEnd: _endSubscription,
-                  onClassify: (item) => _setSubscriptionKind(
-                    item,
-                    subscription: true,
-                  ),
-                  onMoveToRecurring: (item) => _setSubscriptionKind(
-                    item,
-                    subscription: false,
-                  ),
-                ),
-                _RecurringTab(
-                  items: regularRecurring,
-                  categories: _categories,
-                  isDark: isDark,
-                  onRefresh: _refresh,
-                  onEdit: _editRecurring,
-                  onRealize: _realizeRecurring,
-                  onToggle: _toggleRecurring,
-                  onDelete: _deleteRecurring,
-                ),
-              ],
-            ),
     );
   }
 
