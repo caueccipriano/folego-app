@@ -386,15 +386,23 @@ DebtDetail _detail({
   required double paidOnFirst,
 }) {
   final firstRemaining = 50 - paidOnFirst;
+  final secondIsPaid = payments.isNotEmpty || paidOnFirst > 0;
+  final secondPaid = secondIsPaid ? 50.0 : 0.0;
+  final secondRemaining = secondIsPaid ? 0.0 : 50.0;
   return DebtDetail(
-    debt: _record(remaining: firstRemaining),
+    debt: _record(remaining: firstRemaining + secondRemaining),
     installments: [
       _installment(
         paid: paidOnFirst,
         remaining: firstRemaining,
         status: paidOnFirst == 0 ? 'pending' : 'partially_paid',
       ),
-      _installment(number: 2, paid: 50, remaining: 0, status: 'paid'),
+      _installment(
+        number: 2,
+        paid: secondPaid,
+        remaining: secondRemaining,
+        status: secondIsPaid ? 'paid' : 'pending',
+      ),
     ],
     payments: payments,
     today: DateTime(2026, 9, 16),
