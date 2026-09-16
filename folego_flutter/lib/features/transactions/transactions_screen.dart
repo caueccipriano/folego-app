@@ -7,6 +7,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_icons.dart';
 import '../../data/models/financial_space.dart';
+import '../../data/models/transaction_filters.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
@@ -19,10 +20,12 @@ class TransactionsScreen extends StatefulWidget {
     super.key,
     required this.repository,
     this.space,
+    this.initialFilters,
   });
 
   final FolegoRepository repository;
   final FinancialSpace? space;
+  final TransactionFilters? initialFilters;
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -66,7 +69,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   Future<void> _loadPending() async {
     try {
-      final space = widget.space ?? _space ?? await widget.repository.getPrimarySpace();
+      final space =
+          widget.space ?? _space ?? await widget.repository.getPrimarySpace();
       final pending = await widget.repository.listPendingTransactionClassifications(
         space.id,
       );
@@ -166,6 +170,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       key: ValueKey<String>(widget.space?.id ?? 'primary-space'),
       repository: widget.repository,
       space: widget.space,
+      initialFilters: widget.initialFilters,
     );
 
     final content = Stack(
@@ -200,8 +205,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 _loadingPending
                     ? 'Classificar'
                     : _pending.isEmpty
-                    ? 'Classificar'
-                    : 'Classificar (${_pending.length})',
+                        ? 'Classificar'
+                        : 'Classificar (${_pending.length})',
               ),
             ),
           ),
