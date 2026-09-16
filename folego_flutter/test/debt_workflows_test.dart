@@ -80,12 +80,11 @@ void main() {
       );
 
       expect(find.text('editar dívida'), findsOneWidget);
-      await tester.enterText(_field('nome'), 'Empréstimo atualizado');
-      await tester.pump();
-      await tester.enterText(_field('valor original'), '120,00');
-      await tester.pump();
-      await tester.enterText(_field('observação (opcional)'), 'nota atualizada');
-      await tester.pump();
+      await _enterField(tester, 'nome', 'Empréstimo atualizado');
+      await _enterField(tester, 'credor', 'Novo credor');
+      await _enterField(tester, 'valor original', '120,00');
+      await _enterField(tester, 'parcelas', '4');
+      await _enterField(tester, 'observação (opcional)', 'nota atualizada');
       await tester.ensureVisible(find.text('salvar alterações'));
       await tester.pump();
       await tester.tap(find.text('salvar alterações'));
@@ -93,9 +92,9 @@ void main() {
 
       expect(saved, isNotNull);
       expect(saved!.name, 'Empréstimo atualizado');
-      expect(saved!.creditor, 'Banco teste');
+      expect(saved!.creditor, 'Novo credor');
       expect(saved!.originalAmount, 120);
-      expect(saved!.totalInstallments, 2);
+      expect(saved!.totalInstallments, 4);
       expect(saved!.notes, 'nota atualizada');
     },
   );
@@ -361,6 +360,20 @@ Future<void> _openPayment(
 Finder _field(String label) => find.byWidgetPredicate(
   (widget) => widget is TextField && widget.decoration?.labelText == label,
 );
+
+Future<void> _enterField(
+  WidgetTester tester,
+  String label,
+  String value,
+) async {
+  final finder = _field(label);
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  await tester.tap(finder);
+  await tester.pump();
+  await tester.enterText(finder, value);
+  await tester.pump();
+}
 
 Future<void> _flush(WidgetTester tester) async {
   await tester.pump();
