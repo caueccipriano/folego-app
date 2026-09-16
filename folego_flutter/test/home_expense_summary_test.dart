@@ -8,6 +8,8 @@ void main() {
     required String type,
     required double amount,
     String? category,
+    String? categoryId,
+    String? categoryParentId,
     String description = 'teste',
   }) {
     return TransactionItem(
@@ -18,7 +20,9 @@ void main() {
       occurredAt: DateTime(2026, 9, 15),
       status: 'confirmed',
       source: 'app',
+      categoryId: categoryId,
       categoryName: category,
+      categoryParentId: categoryParentId,
     );
   }
 
@@ -67,23 +71,45 @@ void main() {
     expect(breakdown.categories.single.category, 'Dívidas');
   });
 
-  test('agrupa categorias excedentes em Outros', () {
+  test('mantém Top 5 e agrupa excedentes em Outros com categorias reais', () {
     final breakdown = breakdownOf([
-      transaction(id: '1', type: 'expense', amount: 50, category: 'A'),
-      transaction(id: '2', type: 'expense', amount: 40, category: 'B'),
-      transaction(id: '3', type: 'expense', amount: 30, category: 'C'),
-      transaction(id: '4', type: 'expense', amount: 20, category: 'D'),
-      transaction(id: '5', type: 'expense', amount: 10, category: 'E'),
+      transaction(id: '1', type: 'expense', amount: 70, category: 'A', categoryId: 'a'),
+      transaction(id: '2', type: 'expense', amount: 60, category: 'B', categoryId: 'b'),
+      transaction(id: '3', type: 'expense', amount: 50, category: 'C', categoryId: 'c'),
+      transaction(id: '4', type: 'expense', amount: 40, category: 'D', categoryId: 'd'),
+      transaction(id: '5', type: 'expense', amount: 30, category: 'E', categoryId: 'e'),
+      transaction(id: '6', type: 'expense', amount: 20, category: 'F', categoryId: 'f'),
+      transaction(id: '7', type: 'expense', amount: 10, category: 'G', categoryId: 'g'),
     ]);
 
-    expect(breakdown.categories.length, 4);
+    expect(breakdown.categories.length, 6);
     expect(breakdown.categories.map((item) => item.category), [
       'A',
       'B',
       'C',
+      'D',
+      'E',
       'Outros',
     ]);
-    expect(breakdown.categories.last.amount, 30);
+    final other = breakdown.categories.last;
+    expect(other.categoryId, isNull);
+    expect(other.amount, 30);
+    expect(other.groupedCategories.map((item) => item.categoryId), ['f', 'g']);
+  });
+
+  test('subcategory drills down through its real parent category', () {
+    final breakdown = breakdownOf([
+      transaction(
+        id: '1',
+        type: 'expense',
+        amount: 25,
+        category: 'Delivery',
+        categoryId: 'delivery',
+        categoryParentId: 'alimentacao',
+      ),
+    ]);
+
+    expect(breakdown.categories.single.categoryId, 'alimentacao');
   });
 
   test('mantém categorias ordenadas por valor', () {
@@ -111,10 +137,7 @@ void main() {
       homeDisplayDescription('NUV*MAISONVIEGA [extrato 12]'),
       'NUV*MAISONVIEGA',
     );
-    expect(
-      homeDisplayDescription('Mercado [EXTRATO 3]'),
-      'Mercado',
-    );
+    expect(homeDisplayDescription('Mercado [EXTRATO 3]'), 'Mercado');
     expect(homeDisplayDescription('Mercado normal'), 'Mercado normal');
   });
 }
