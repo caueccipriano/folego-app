@@ -606,7 +606,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     final rows = _visibleRows;
     final selectedCount = _rows.where((row) => row.selected).length;
     final duplicateCount = _rows.where((row) => row.duplicateState != StatementImportDuplicateState.unique).length;
-    return Column(key: ValueKey(desktop ? 'statement-import-review-desktop' : 'statement-import-review-mobile'), children: [
+    final header = Column(mainAxisSize: MainAxisSize.min, children: [
       Wrap(spacing: 8, runSpacing: 8, children: [_MetricChip(label: '${_rows.length} linhas'), _MetricChip(label: '$selectedCount selecionadas'), _MetricChip(label: '$duplicateCount duplicadas/possíveis')]),
       const SizedBox(height: 10),
       TextField(controller: _search, onChanged: (_) => setState(() {}), decoration: const InputDecoration(prefixIcon: Icon(AppIcons.search), labelText: 'buscar neste lote')),
@@ -620,14 +620,36 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       ], selected: <_ReviewFilter>{_reviewFilter}, onSelectionChanged: (value) => setState(() => _reviewFilter = value.first))),
       const SizedBox(height: 10),
       _BulkBar(categories: _expenseCategories, selectedCategoryId: _bulkCategoryId, onChanged: (value) => setState(() => _bulkCategoryId = value), onApply: _applyBulkCategory, onIncludeAll: () => setState(() => _rows = _rows.map((row) => row.copyWith(decision: row.duplicateState == StatementImportDuplicateState.exactDuplicate || row.duplicateState == StatementImportDuplicateState.alreadyImported ? StatementImportDecision.ignore : StatementImportDecision.include)).toList(growable: false)), onIgnoreSelected: () => setState(() => _rows = _rows.map((row) => row.selected ? row.copyWith(decision: StatementImportDecision.ignore) : row).toList(growable: false))),
+    ]);
+    Widget buildRow(StatementImportRow row) => _ReviewRowCard(row: row, desktop: desktop, sourceKind: _sourceKind, sourceId: _sourceId, paymentAccounts: _paymentAccounts, invoices: _invoices, expenseCategories: _expenseCategories, incomeCategories: _incomeCategories, validationError: _validationError(row), onChanged: _replaceRow, onCategoryManagement: _openCategoryManagement);
+    final actions = Row(children: [
+      Expanded(child: OutlinedButton(onPressed: _loading ? null : _cancelImport, child: const Text('cancelar importação'))),
+      const SizedBox(width: 10),
+      Expanded(child: FilledButton.icon(key: const ValueKey('statement-import-confirm'), onPressed: _loading ? null : _confirmImport, icon: _loading ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(AppIcons.check), label: const Text('confirmar importação'))),
+    ]);
+
+    if (!desktop) {
+      final itemCount = rows.isEmpty ? 3 : rows.length + 2;
+      return ListView.separated(
+        key: const ValueKey('statement-import-review-mobile'),
+        padding: const EdgeInsets.only(bottom: 12),
+        itemCount: itemCount,
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, index) {
+          if (index == 0) return header;
+          if (rows.isEmpty && index == 1) return const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: Text('nenhuma linha neste filtro')));
+          if (rows.isNotEmpty && index <= rows.length) return buildRow(rows[index - 1]);
+          return actions;
+        },
+      );
+    }
+
+    return Column(key: const ValueKey('statement-import-review-desktop'), children: [
+      header,
       const SizedBox(height: 10),
-      Expanded(child: rows.isEmpty ? const Center(child: Text('nenhuma linha neste filtro')) : ListView.separated(key: const ValueKey('statement-import-review-list'), itemCount: rows.length, separatorBuilder: (_, _) => const SizedBox(height: 8), itemBuilder: (_, index) => _ReviewRowCard(row: rows[index], desktop: desktop, sourceKind: _sourceKind, sourceId: _sourceId, paymentAccounts: _paymentAccounts, invoices: _invoices, expenseCategories: _expenseCategories, incomeCategories: _incomeCategories, validationError: _validationError(rows[index]), onChanged: _replaceRow, onCategoryManagement: _openCategoryManagement))),
+      Expanded(child: rows.isEmpty ? const Center(child: Text('nenhuma linha neste filtro')) : ListView.separated(key: const ValueKey('statement-import-review-list'), itemCount: rows.length, separatorBuilder: (_, _) => const SizedBox(height: 8), itemBuilder: (_, index) => buildRow(rows[index]))),
       const SizedBox(height: 10),
-      Row(children: [
-        Expanded(child: OutlinedButton(onPressed: _loading ? null : _cancelImport, child: const Text('cancelar importação'))),
-        const SizedBox(width: 10),
-        Expanded(child: FilledButton.icon(key: const ValueKey('statement-import-confirm'), onPressed: _loading ? null : _confirmImport, icon: _loading ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(AppIcons.check), label: const Text('confirmar importação'))),
-      ]),
+      actions,
       const SizedBox(height: 12),
     ]);
   }
