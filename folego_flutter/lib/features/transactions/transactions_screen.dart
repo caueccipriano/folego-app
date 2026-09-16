@@ -10,6 +10,7 @@ import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
+import '../import/transaction_import_screen.dart';
 import 'transaction_classification_inbox.dart';
 import 'transactions_screen_base.dart' as impl;
 
@@ -81,6 +82,32 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
+  Future<FinancialSpace?> _resolveSpace() async {
+    final current = widget.space ?? _space;
+    if (current != null) return current;
+    try {
+      final space = await widget.repository.getPrimarySpace();
+      if (!mounted) return null;
+      setState(() => _space = space);
+      return space;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _openImport() async {
+    final space = await _resolveSpace();
+    if (space == null || !mounted) return;
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => TransactionImportScreen(
+          repository: widget.repository,
+          spaceId: space.id,
+        ),
+      ),
+    );
+  }
+
   Future<void> _openClassificationInbox() async {
     final space = widget.space ?? _space;
     if (space == null) {
@@ -144,6 +171,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final content = Stack(
       children: [
         Positioned.fill(child: screen),
+        Positioned(
+          right: 16,
+          bottom: 84,
+          child: SafeArea(
+            child: FloatingActionButton.small(
+              heroTag: 'transaction-import-statement',
+              tooltip: 'importar extrato',
+              onPressed: _openImport,
+              child: const Icon(AppIcons.receipt),
+            ),
+          ),
+        ),
         Positioned(
           right: 16,
           bottom: 16,
