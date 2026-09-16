@@ -120,6 +120,27 @@ void main() {
     expect(source, contains('VisualDensity.compact'));
   });
 
+  test('Quick Register category realtime preserves in-progress form state', () {
+    final source = File(
+      'lib/features/home/quick_register_sheet_v3.dart',
+    ).readAsStringSync();
+
+    expect(source, contains('domain: AppRealtimeDomain.categories'));
+    final start = source.indexOf('Future<void> _refreshCategoryCatalog()');
+    final end = source.indexOf('Future<void> _pickCategory()', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+
+    final refresh = source.substring(start, end);
+    expect(refresh, contains('_categories = selectable'));
+    expect(refresh, contains('_categoryId = nextCategoryId'));
+    expect(refresh, isNot(contains('_load()')));
+    expect(refresh, isNot(contains('_description.clear()')));
+    expect(refresh, isNot(contains('_amount.clear()')));
+    expect(refresh, isNot(contains('_merchant.clear()')));
+    expect(refresh, isNot(contains('_reflectionNote.clear()')));
+  });
+
   test('category migration version in repo matches applied Dev contract', () {
     final migration = File(
       '../supabase/migrations/20260916142941_add_category_icon_keys_and_realtime.sql',
