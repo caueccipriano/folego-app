@@ -3,10 +3,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'folego_repository.dart';
 
 extension FolegoRepositorySubscriptions on FolegoRepository {
-  SupabaseClient get _subscriptionsClient => Supabase.instance.client;
+  SupabaseClient? get _subscriptionsClientOrNull {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<Set<String>> listSubscriptionRecurringIds(String spaceId) async {
-    final response = await _subscriptionsClient
+    final client = _subscriptionsClientOrNull;
+    if (client == null) return const <String>{};
+
+    final response = await client
         .from('recurring_items')
         .select('id')
         .eq('space_id', spaceId)
@@ -18,7 +27,10 @@ extension FolegoRepositorySubscriptions on FolegoRepository {
   }
 
   Future<Map<String, String>> listRecurringCardNames(String spaceId) async {
-    final response = await _subscriptionsClient
+    final client = _subscriptionsClientOrNull;
+    if (client == null) return const <String, String>{};
+
+    final response = await client
         .from('credit_cards')
         .select('id,name')
         .eq('space_id', spaceId);
@@ -35,7 +47,12 @@ extension FolegoRepositorySubscriptions on FolegoRepository {
     required String itemId,
     required bool subscription,
   }) async {
-    await _subscriptionsClient
+    final client = _subscriptionsClientOrNull;
+    if (client == null) {
+      throw StateError('Supabase não está inicializado.');
+    }
+
+    await client
         .from('recurring_items')
         .update({
           'recurrence_kind': subscription ? 'subscription' : null,
