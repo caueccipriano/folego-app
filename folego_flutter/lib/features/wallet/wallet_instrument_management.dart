@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
-import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';

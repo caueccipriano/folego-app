@@ -50,6 +50,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   final _reflectionNote = TextEditingController();
 
   RealtimeRefreshBinding? _categoryRealtimeBinding;
+  RealtimeRefreshBinding? _instrumentRealtimeBinding;
 
   List<AccountItem> _paymentAccounts = const [];
   List<AccountItem> _benefitAccounts = const [];
@@ -96,12 +97,14 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     _weekday = _postgresWeekday(_date);
     _monthlyDays.add(_date.day);
     _bindCategoryRealtime();
+    _bindInstrumentRealtime();
     _load();
   }
 
   @override
   void dispose() {
     _categoryRealtimeBinding?.dispose();
+    _instrumentRealtimeBinding?.dispose();
     _description.dispose();
     _amount.dispose();
     _merchant.dispose();
@@ -115,6 +118,15 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     _categoryRealtimeBinding = coordinator.bind(
       domain: AppRealtimeDomain.categories,
       onRefresh: _refreshCategories,
+    );
+  }
+
+  void _bindInstrumentRealtime() {
+    final coordinator = AppRealtimeRegistry.coordinator;
+    if (coordinator == null) return;
+    _instrumentRealtimeBinding = coordinator.bind(
+      domain: AppRealtimeDomain.paymentInstruments,
+      onRefresh: _refreshPaymentInstruments,
     );
   }
 
@@ -171,6 +183,82 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       });
     } catch (_) {
       // Uma atualização de taxonomia não deve apagar o lançamento em edição.
+    }
+  }
+
+  Future<void> _refreshPaymentInstruments() async {
+    try {
+      final accountsFuture = _withTimeout(
+        widget.repository.listPaymentAccounts(widget.space.id),
+        'As contas demoraram demais para atualizar.',
+      );
+      final values = _isExpense
+          ? await Future.wait<dynamic>([
+              accountsFuture,
+              _withTimeout(
+                widget.repository.listBenefitAccounts(widget.space.id),
+                'Os benefícios demoraram demais para atualizar.',
+              ),
+              _withTimeout(
+                widget.repository.listActiveCreditCards(widget.space.id),
+                'Os cartões demoraram demais para atualizar.',
+              ),
+            ])
+          : await Future.wait<dynamic>([accountsFuture]);
+      if (!mounted) return;
+
+      final accounts = values[0] as List<AccountItem>;
+      final benefits = _isExpense
+          ? values[1] as List<AccountItem>
+          : const <AccountItem>[];
+      final cards = _isExpense
+          ? values[2] as List<CreditCardItem>
+          : const <CreditCardItem>[];
+      final currentPayment = _expensePayment;
+
+      String? nextId<T>(
+        List<T> items,
+        String? current,
+        String Function(T item) idOf,
+      ) {
+        if (current != null && items.any((item) => idOf(item) == current)) {
+          return current;
+        }
+        return items.isEmpty ? null : idOf(items.first);
+      }
+
+      setState(() {
+        _paymentAccounts = accounts;
+        _benefitAccounts = benefits;
+        _creditCards = cards;
+        _incomeAccountId = nextId(
+          accounts,
+          _incomeAccountId,
+          (item) => item.id,
+        );
+        _expensePayment = QuickExpensePaymentState(
+          type: currentPayment.type,
+          accountId: nextId(
+            accounts,
+            currentPayment.accountId,
+            (item) => item.id,
+          ),
+          cardId: nextId(
+            cards,
+            currentPayment.cardId,
+            (item) => item.id,
+          ),
+          benefitAccountId: nextId(
+            benefits,
+            currentPayment.benefitAccountId,
+            (item) => item.id,
+          ),
+          installmentsCount: currentPayment.installmentsCount,
+        );
+      });
+    } catch (_) {
+      // Atualizar instrumentos nunca limpa valor, descrição, estabelecimento,
+      // reflexão, categoria ou os demais campos do lançamento em edição.
     }
   }
 

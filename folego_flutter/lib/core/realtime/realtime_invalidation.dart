@@ -4,6 +4,7 @@ enum AppRealtimeDomain {
   home,
   transactions,
   categories,
+  paymentInstruments,
   plan,
   wallet,
   diary,
@@ -26,6 +27,7 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
   },
   'accounts': {
     AppRealtimeDomain.home,
+    AppRealtimeDomain.paymentInstruments,
     AppRealtimeDomain.wallet,
   },
   'categories': {
@@ -70,6 +72,7 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
   },
   'credit_cards': {
     AppRealtimeDomain.home,
+    AppRealtimeDomain.paymentInstruments,
     AppRealtimeDomain.wallet,
   },
   'debts': {
