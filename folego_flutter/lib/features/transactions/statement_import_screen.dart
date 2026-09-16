@@ -7,7 +7,6 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
-import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
@@ -17,6 +16,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../data/repositories/folego_repository_statement_import.dart';
+import '../../shared/widgets/category_search_field.dart';
 import '../profile/category_management_screen.dart';
 import 'statement_import_parser.dart';
 
@@ -707,7 +707,22 @@ class _ReviewRowCard extends StatelessWidget {
         const SizedBox(height: 10),
         Wrap(spacing: 10, runSpacing: 10, children: [
           SizedBox(width: desktop ? 210 : 180, child: DropdownButtonFormField<StatementImportFinalType>(initialValue: row.finalType, isExpanded: true, decoration: const InputDecoration(labelText: 'tipo'), items: typeOptions.map((type) => DropdownMenuItem(value: type, child: Text(_typeLabel(type), overflow: TextOverflow.ellipsis))).toList(growable: false), onChanged: (value) => onChanged(row.copyWith(finalType: value, clearFinalType: value == null, clearCategory: _categoryKind(value) == null, clearCounterpart: value != StatementImportFinalType.transfer && value != StatementImportFinalType.cardPayment, clearInvoice: value != StatementImportFinalType.cardPayment)))),
-          if (kind != null) SizedBox(width: desktop ? 280 : 240, child: DropdownButtonFormField<String>(initialValue: categories.any((item) => item.id == row.categoryId) ? row.categoryId : null, isExpanded: true, decoration: const InputDecoration(labelText: 'categoria'), items: [const DropdownMenuItem<String>(value: '', child: Text('sem categoria')), ...categories.map((category) { final visual = CategoryVisuals.resolve(brightness: brightness, category: category.parentName ?? category.name, subcategory: category.parentName == null ? null : category.name, colorHex: category.colorHex, iconKey: category.iconKey, systemKey: category.systemKey); return DropdownMenuItem<String>(value: category.id, child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(visual.icon, size: 16, color: visual.color), const SizedBox(width: 6), Flexible(child: Text(category.breadcrumb, overflow: TextOverflow.ellipsis))])); })], onChanged: (value) => onChanged(value == null || value.isEmpty ? row.copyWith(clearCategory: true) : row.copyWith(categoryId: value)))),
+          if (kind != null) SizedBox(
+            width: desktop ? 280 : 240,
+            child: CategorySearchField(
+              key: ValueKey('statement-import-category-${row.id}'),
+              categories: categories,
+              eventType: kind,
+              label: 'categoria',
+              selectedId: categories.any((item) => item.id == row.categoryId) ? row.categoryId : null,
+              allowClear: true,
+              onChanged: (value) => onChanged(
+                value == null
+                    ? row.copyWith(clearCategory: true)
+                    : row.copyWith(categoryId: value),
+              ),
+            ),
+          ),
           if (row.finalType == StatementImportFinalType.transfer) SizedBox(width: desktop ? 260 : 240, child: DropdownButtonFormField<String>(initialValue: paymentAccounts.any((item) => item.id == row.counterpartAccountId) ? row.counterpartAccountId : null, isExpanded: true, decoration: const InputDecoration(labelText: 'outra conta'), items: paymentAccounts.where((account) => account.id != sourceId).map((account) => DropdownMenuItem(value: account.id, child: Text(account.name, overflow: TextOverflow.ellipsis))).toList(growable: false), onChanged: (value) => onChanged(value == null ? row.copyWith(clearCounterpart: true) : row.copyWith(counterpartAccountId: value)))),
           if (row.finalType == StatementImportFinalType.cardPayment) ...[
             if (sourceKind == StatementImportSourceKind.card) SizedBox(width: desktop ? 260 : 240, child: DropdownButtonFormField<String>(initialValue: paymentAccounts.any((item) => item.id == row.counterpartAccountId) ? row.counterpartAccountId : null, isExpanded: true, decoration: const InputDecoration(labelText: 'conta pagadora'), items: paymentAccounts.map((account) => DropdownMenuItem(value: account.id, child: Text(account.name, overflow: TextOverflow.ellipsis))).toList(growable: false), onChanged: (value) => onChanged(value == null ? row.copyWith(clearCounterpart: true) : row.copyWith(counterpartAccountId: value)))),
@@ -755,7 +770,23 @@ class _BulkBar extends StatelessWidget {
   final VoidCallback onIncludeAll;
   final VoidCallback onIgnoreSelected;
   @override
-  Widget build(BuildContext context) => Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [OutlinedButton.icon(onPressed: onIncludeAll, icon: const Icon(AppIcons.check, size: 16), label: const Text('incluir seguros')), OutlinedButton(onPressed: onIgnoreSelected, child: const Text('ignorar selecionados')), SizedBox(width: 230, child: DropdownButtonFormField<String>(initialValue: selectedCategoryId, isExpanded: true, decoration: const InputDecoration(labelText: 'categoria em lote'), items: categories.map((item) => DropdownMenuItem(value: item.id, child: Text(item.breadcrumb, overflow: TextOverflow.ellipsis))).toList(growable: false), onChanged: onChanged)), FilledButton.tonal(onPressed: selectedCategoryId == null ? null : onApply, child: const Text('aplicar aos compatíveis'))]);
+  Widget build(BuildContext context) => Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+    OutlinedButton.icon(onPressed: onIncludeAll, icon: const Icon(AppIcons.check, size: 16), label: const Text('incluir seguros')),
+    OutlinedButton(onPressed: onIgnoreSelected, child: const Text('ignorar selecionados')),
+    SizedBox(
+      width: 230,
+      child: CategorySearchField(
+        key: const ValueKey('statement-import-bulk-category'),
+        categories: categories,
+        eventType: 'expense',
+        label: 'categoria em lote',
+        selectedId: selectedCategoryId,
+        allowClear: true,
+        onChanged: onChanged,
+      ),
+    ),
+    FilledButton.tonal(onPressed: selectedCategoryId == null ? null : onApply, child: const Text('aplicar aos compatíveis')),
+  ]);
 }
 
 class _DuplicateBadge extends StatelessWidget {
