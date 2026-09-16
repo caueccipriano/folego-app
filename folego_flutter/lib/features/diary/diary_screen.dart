@@ -11,11 +11,15 @@ class DiaryScreen extends StatelessWidget {
     required this.repository,
     required this.spaceId,
     this.active = true,
+    this.loadOverride,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final bool active;
+
+  @visibleForTesting
+  final base.DiaryEntriesLoader? loadOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,7 @@ class DiaryScreen extends StatelessWidget {
           repository: repository,
           spaceId: spaceId,
           active: active,
+          loadOverride: loadOverride,
         ),
       ),
     );

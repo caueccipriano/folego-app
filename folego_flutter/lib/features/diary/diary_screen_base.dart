@@ -17,17 +17,26 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../transactions/transactions_screen.dart';
 import 'reflection_form_sheet.dart';
 
+typedef DiaryEntriesLoader = Future<List<DiaryEntry>> Function({
+  required String spaceId,
+  required DateTime periodMonth,
+});
+
 class DiaryScreen extends StatefulWidget {
   const DiaryScreen({
     super.key,
     required this.repository,
     required this.spaceId,
     this.active = true,
+    this.loadOverride,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final bool active;
+
+  @visibleForTesting
+  final DiaryEntriesLoader? loadOverride;
 
   @override
   State<DiaryScreen> createState() => _DiaryScreenState();
@@ -61,10 +70,13 @@ class _DiaryScreenState extends State<DiaryScreen> {
       });
     }
     try {
-      final entries = await widget.repository.getDiaryEntries(
-        spaceId: widget.spaceId,
-        periodMonth: _month,
-      );
+      final loader = widget.loadOverride;
+      final entries = loader != null
+          ? await loader(spaceId: widget.spaceId, periodMonth: _month)
+          : await widget.repository.getDiaryEntries(
+              spaceId: widget.spaceId,
+              periodMonth: _month,
+            );
       if (!mounted) return;
       setState(() {
         _entries = entries;

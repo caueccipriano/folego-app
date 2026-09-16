@@ -323,8 +323,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   void _invalidateCategoryConsumers() {
     final coordinator = AppRealtimeRegistry.coordinator;
+    coordinator?.invalidate(AppRealtimeDomain.categories);
     coordinator?.invalidate(AppRealtimeDomain.plan);
-    coordinator?.invalidate(AppRealtimeDomain.transactions);
   }
 
   void _message(String text) {
@@ -620,6 +620,7 @@ class _CategoryRow extends StatelessWidget {
     );
 
     return Opacity(
+      key: ValueKey('category-row-${item.id}'),
       opacity: item.active ? 1 : .55,
       child: Padding(
         padding: EdgeInsets.fromLTRB(indented ? 22 : 6, 7, 4, 7),
@@ -665,11 +666,13 @@ class _CategoryRow extends StatelessWidget {
             ),
             if (onEdit != null)
               IconButton(
+                key: ValueKey('edit-category-${item.id}'),
                 tooltip: 'editar',
                 onPressed: disabled ? null : onEdit,
                 icon: const Icon(AppIcons.edit, size: 18),
               ),
             Switch.adaptive(
+              key: ValueKey('active-category-${item.id}'),
               value: item.active,
               onChanged: disabled ? null : onActiveChanged,
             ),

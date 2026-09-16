@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
+import '../../core/realtime/realtime_invalidation.dart';
+import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
@@ -46,6 +48,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   final _amount = TextEditingController();
   final _merchant = TextEditingController();
   final _reflectionNote = TextEditingController();
+
+  RealtimeRefreshBinding? _categoryRealtimeBinding;
 
   List<AccountItem> _paymentAccounts = const [];
   List<AccountItem> _benefitAccounts = const [];
@@ -91,11 +95,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     _monthOfYear = _date.month;
     _weekday = _postgresWeekday(_date);
     _monthlyDays.add(_date.day);
+    _bindCategoryRealtime();
     _load();
   }
 
   @override
   void dispose() {
+    _categoryRealtimeBinding?.dispose();
     _description.dispose();
     _amount.dispose();
     _merchant.dispose();
@@ -103,11 +109,69 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     super.dispose();
   }
 
+  void _bindCategoryRealtime() {
+    final coordinator = AppRealtimeRegistry.coordinator;
+    if (coordinator == null) return;
+    _categoryRealtimeBinding = coordinator.bind(
+      domain: AppRealtimeDomain.categories,
+      onRefresh: _refreshCategories,
+    );
+  }
+
   Future<T> _withTimeout<T>(Future<T> future, String message) {
     return future.timeout(
       const Duration(seconds: 10),
       onTimeout: () => throw TimeoutException(message),
     );
+  }
+
+  Future<List<CategoryItem>> _loadCategoryCatalog() {
+    return _withTimeout(
+      _isExpense
+          ? widget.repository.listExpenseCategoryCatalog(widget.space.id)
+          : widget.repository.listIncomeCategoryCatalog(widget.space.id),
+      'As categorias demoraram demais para carregar.',
+    );
+  }
+
+  List<CategoryItem> _selectableCategories(List<CategoryItem> categories) {
+    return categories.where((category) => category.isSelectable).toList()
+      ..sort((a, b) {
+        final byOrder = a.sortOrder.compareTo(b.sortOrder);
+        return byOrder != 0 ? byOrder : a.name.compareTo(b.name);
+      });
+  }
+
+  String? _defaultCategoryId(List<CategoryItem> categories) {
+    if (_isExpense) {
+      for (final item in categories) {
+        if (item.isParent) return item.id;
+      }
+    }
+    return categories.isEmpty ? null : categories.first.id;
+  }
+
+  Future<void> _refreshCategories() async {
+    try {
+      final selectable = _selectableCategories(await _loadCategoryCatalog());
+      if (!mounted) return;
+
+      final currentId = _categoryId;
+      final currentStillAvailable = currentId != null &&
+          selectable.any((category) => category.id == currentId);
+      final nextId = currentStillAvailable
+          ? currentId
+          : currentId == null
+              ? _defaultCategoryId(selectable)
+              : null;
+
+      setState(() {
+        _categories = selectable;
+        _categoryId = nextId;
+      });
+    } catch (_) {
+      // Uma atualização de taxonomia não deve apagar o lançamento em edição.
+    }
   }
 
   Future<void> _load() async {
@@ -121,12 +185,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         widget.repository.listPaymentAccounts(widget.space.id),
         'As contas demoraram demais para carregar.',
       );
-      final categoryFuture = _withTimeout(
-        _isExpense
-            ? widget.repository.listExpenseCategoryCatalog(widget.space.id)
-            : widget.repository.listIncomeCategoryCatalog(widget.space.id),
-        'As categorias demoraram demais para carregar.',
-      );
+      final categoryFuture = _loadCategoryCatalog();
 
       final values = _isExpense
           ? await Future.wait<dynamic>([
@@ -146,22 +205,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       if (!mounted) return;
       final accounts = values[0] as List<AccountItem>;
       final categories = (_isExpense ? values[3] : values[1]) as List<CategoryItem>;
-      final selectable = categories.where((category) => category.isSelectable).toList()
-        ..sort((a, b) {
-          final byOrder = a.sortOrder.compareTo(b.sortOrder);
-          return byOrder != 0 ? byOrder : a.name.compareTo(b.name);
-        });
-
-      String? defaultCategoryId;
-      if (_isExpense) {
-        for (final item in selectable) {
-          if (item.isParent) {
-            defaultCategoryId = item.id;
-            break;
-          }
-        }
-      }
-      defaultCategoryId ??= selectable.isEmpty ? null : selectable.first.id;
+      final selectable = _selectableCategories(categories);
+      final defaultCategoryId = _defaultCategoryId(selectable);
       final accountId = accounts.isEmpty ? null : accounts.first.id;
 
       setState(() {
@@ -637,13 +682,14 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   Widget _categoryField(Brightness brightness) {
     final selected = _selectedCategory;
     final family = selected?.parentName ?? selected?.name ?? 'A classificar';
-    final icon = CategoryVisuals.iconFor(
-      category: family,
-      subcategory: selected?.name,
-    );
-    final color = CategoryVisuals.colorFor(
-      category: family,
+    final visual = CategoryVisuals.resolve(
       brightness: brightness,
+      category: family,
+      subcategory: selected?.parentName == null ? null : selected?.name,
+      eventType: widget.initialType,
+      systemKey: selected?.systemKey,
+      colorHex: selected?.isSystem == false ? selected?.colorHex : null,
+      iconKey: selected?.isSystem == false ? selected?.iconKey : null,
     );
 
     return InkWell(
@@ -657,7 +703,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         ),
         child: Row(
           children: [
-            CategoryIconBadge(icon: icon, color: color, size: 40, iconSize: 20),
+            CategoryIconBadge(
+              icon: visual.icon,
+              color: visual.color,
+              size: 40,
+              iconSize: 20,
+            ),
             const SizedBox(width: 11),
             Expanded(
               child: Column(

@@ -66,6 +66,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   late final TextEditingController _searchController;
 
   RealtimeRefreshBinding? _realtimeBinding;
+  RealtimeRefreshBinding? _categoryRealtimeBinding;
   Timer? _searchTimer;
 
   FinancialSpace? _space;
@@ -104,12 +105,17 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       domain: AppRealtimeDomain.transactions,
       onRefresh: _handleRealtimeRefresh,
     );
+    _categoryRealtimeBinding = coordinator.bind(
+      domain: AppRealtimeDomain.categories,
+      onRefresh: _refreshFilterOptions,
+    );
   }
 
   @override
   void dispose() {
     _searchTimer?.cancel();
     _realtimeBinding?.dispose();
+    _categoryRealtimeBinding?.dispose();
     _searchController.dispose();
     _tabController.dispose();
     super.dispose();
@@ -161,6 +167,21 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     final loader = widget.optionsLoader;
     if (loader != null) return loader(spaceId);
     return widget.repository.getTransactionFilterOptions(spaceId);
+  }
+
+  Future<void> _refreshFilterOptions() async {
+    final space = _space;
+    if (space == null) return;
+    try {
+      final options = await _loadFilterOptions(space.id);
+      if (!mounted || _space?.id != space.id) return;
+      setState(() {
+        _filterOptions = options;
+        _categories = options.categories;
+      });
+    } catch (_) {
+      // A taxonomia pode ser atualizada sem interromper a lista paginada.
+    }
   }
 
   Future<TransactionPage> _fetchPage(
