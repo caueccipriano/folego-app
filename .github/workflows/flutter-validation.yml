@@ -35,3 +35,6 @@ jobs:
 
       - name: Flutter test
         run: flutter test -r expanded
+
+      - name: Flutter build web
+        run: flutter build web --release
