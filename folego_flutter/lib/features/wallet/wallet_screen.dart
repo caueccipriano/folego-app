@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_icons.dart';
@@ -37,28 +38,41 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final layout = AppBreakpoints.of(context);
+    final desktop =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+
     return RealtimeRefreshView(
       domain: AppRealtimeDomain.wallet,
       identity: (widget.spaceId, _localRevision),
-      builder: (key) => Stack(
-        children: [
-          base.WalletScreen(
-            key: key,
-            repository: widget.repository,
-            spaceId: widget.spaceId,
-          ),
-          Positioned(
-            right: 18,
-            bottom: 104,
-            child: FloatingActionButton.extended(
-              heroTag: 'wallet-new-debt',
-              onPressed: _createDebt,
-              icon: const Icon(AppIcons.debt, size: 19),
-              label: const Text('nova dívida'),
+      builder: (key) {
+        final content = Stack(
+          key: ValueKey(desktop ? 'wallet-desktop-layout' : 'wallet-mobile-layout'),
+          children: [
+            base.WalletScreen(
+              key: key,
+              repository: widget.repository,
+              spaceId: widget.spaceId,
             ),
-          ),
-        ],
-      ),
+            Positioned(
+              right: desktop ? 32 : 18,
+              bottom: desktop ? 32 : 104,
+              child: FloatingActionButton.extended(
+                heroTag: 'wallet-new-debt',
+                onPressed: _createDebt,
+                icon: const Icon(AppIcons.debt, size: 19),
+                label: const Text('nova dívida'),
+              ),
+            ),
+          ],
+        );
+
+        if (!desktop) return content;
+        return Theme(
+          data: Theme.of(context).copyWith(visualDensity: VisualDensity.compact),
+          child: content,
+        );
+      },
     );
   }
 }
