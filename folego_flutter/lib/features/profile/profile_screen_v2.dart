@@ -18,6 +18,7 @@ import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
+import 'category_management_screen.dart';
 import 'financial_organization_screen.dart';
 import 'profile_actions.dart';
 
@@ -145,6 +146,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _openCategories() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CategoryManagementScreen(
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
+      ),
+    );
   }
 
   Future<void> _openFinancialOrganization() async {
@@ -282,8 +294,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               _SettingsRow(
                 icon: AppIcons.categoryUnclassified,
+                title: 'categorias',
+                subtitle: 'crie categorias, subcategorias e escolha seus ícones',
+                onTap: _openCategories,
+              ),
+              const _ChoiceDivider(),
+              _SettingsRow(
+                icon: AppIcons.settings,
                 title: 'organização financeira',
-                subtitle: 'categorias, tags e classificações pessoais',
+                subtitle: 'tags e classificações pessoais',
                 onTap: _openFinancialOrganization,
               ),
             ],
