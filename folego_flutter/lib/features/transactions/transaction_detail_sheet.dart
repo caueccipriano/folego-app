@@ -835,6 +835,7 @@ String _reflectionLabel(String value) => switch (value) {
 String _sourceLabel(String value) => switch (value) {
       'app' => 'Fôlego',
       'sheet-sync' => 'importação histórica',
+      'statement-import' => 'importado de extrato',
       'onboarding' => 'configuração inicial',
       _ => value,
     };
