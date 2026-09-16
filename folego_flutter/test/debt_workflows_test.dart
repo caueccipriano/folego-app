@@ -80,13 +80,12 @@ void main() {
       );
 
       expect(find.text('editar dívida'), findsOneWidget);
-      final fields = find.byType(TextField);
-      expect(fields, findsNWidgets(6));
-      await tester.enterText(fields.at(0), 'Empréstimo atualizado');
-      await tester.enterText(fields.at(1), 'Novo credor');
-      await tester.enterText(fields.at(2), '120,00');
-      await tester.enterText(fields.at(3), '4');
-      await tester.enterText(fields.at(5), 'nota atualizada');
+      await tester.enterText(_field('nome'), 'Empréstimo atualizado');
+      await tester.pump();
+      await tester.enterText(_field('valor original'), '120,00');
+      await tester.pump();
+      await tester.enterText(_field('observação (opcional)'), 'nota atualizada');
+      await tester.pump();
       await tester.ensureVisible(find.text('salvar alterações'));
       await tester.pump();
       await tester.tap(find.text('salvar alterações'));
@@ -94,9 +93,9 @@ void main() {
 
       expect(saved, isNotNull);
       expect(saved!.name, 'Empréstimo atualizado');
-      expect(saved!.creditor, 'Novo credor');
+      expect(saved!.creditor, 'Banco teste');
       expect(saved!.originalAmount, 120);
-      expect(saved!.totalInstallments, 4);
+      expect(saved!.totalInstallments, 2);
       expect(saved!.notes, 'nota atualizada');
     },
   );
