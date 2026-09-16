@@ -148,13 +148,13 @@ void main() {
   });
 
   testWidgets('payment flow sends account and partial value through canonical action', (tester) async {
-    String? accountId;
-    num? amount;
-    String? installmentId;
-    debugDebtPaymentAction = ({required spaceId, required String installmentId: incomingInstallmentId, required String accountId: incomingAccountId, required num amount: incomingAmount, required paidAt}) async {
-      installmentId = incomingInstallmentId;
-      accountId = incomingAccountId;
-      amount = incomingAmount;
+    String? capturedAccountId;
+    num? capturedAmount;
+    String? capturedInstallmentId;
+    debugDebtPaymentAction = ({required spaceId, required installmentId, required accountId, required amount, required paidAt}) async {
+      capturedInstallmentId = installmentId;
+      capturedAccountId = accountId;
+      capturedAmount = amount;
       return 'event-1';
     };
 
@@ -164,9 +164,9 @@ void main() {
     await tester.tap(find.text('registrar pagamento'));
     await _flush(tester);
 
-    expect(installmentId, 'installment-1');
-    expect(accountId, 'account-1');
-    expect(amount, 10);
+    expect(capturedInstallmentId, 'installment-1');
+    expect(capturedAccountId, 'account-1');
+    expect(capturedAmount, 10);
   });
 
   test('flutter state represents partial, paid, archived, reopened and closed debts', () {
