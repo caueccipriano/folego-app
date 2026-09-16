@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
-import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
@@ -168,7 +167,7 @@ class _TransactionClassificationInboxState
         builder: (_) => Dialog(
           backgroundColor: Colors.transparent,
           child: SizedBox(
-            width: AppContentWidths.form,
+            width: 520,
             height: MediaQuery.sizeOf(context).height * .8,
             child: CategorySearchPicker(
               categories: categories,
