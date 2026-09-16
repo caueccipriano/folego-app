@@ -3,6 +3,7 @@ import 'dart:async';
 enum AppRealtimeDomain {
   home,
   transactions,
+  categories,
   plan,
   wallet,
   diary,
@@ -29,7 +30,7 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
   },
   'categories': {
     AppRealtimeDomain.home,
-    AppRealtimeDomain.transactions,
+    AppRealtimeDomain.categories,
     AppRealtimeDomain.plan,
     AppRealtimeDomain.diary,
   },
