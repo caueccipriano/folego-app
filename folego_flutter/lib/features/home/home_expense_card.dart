@@ -9,6 +9,7 @@ import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/home_expense_summary.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import 'home_expense_navigation_scope.dart';
 
 class HomeExpenseCard extends StatefulWidget {
   const HomeExpenseCard({
@@ -31,9 +32,30 @@ class HomeExpenseCard extends StatefulWidget {
 class _HomeExpenseCardState extends State<HomeExpenseCard> {
   int? _highlightedIndex;
 
+  void _openCategory(HomeCategoryExpense item) {
+    final callback = widget.onCategoryTap;
+    if (callback != null) {
+      callback(item);
+      return;
+    }
+    if (item.categoryId != null) {
+      HomeExpenseNavigationScope.maybeOf(context)
+          ?.onOpenExpenses(item.categoryId);
+    }
+  }
+
+  void _openTotal() {
+    final callback = widget.onTotalTap;
+    if (callback != null) {
+      callback();
+      return;
+    }
+    HomeExpenseNavigationScope.maybeOf(context)?.onOpenExpenses(null);
+  }
+
   Future<void> _activateCategory(HomeCategoryExpense item) async {
     if (!item.isOther) {
-      widget.onCategoryTap?.call(item);
+      _openCategory(item);
       return;
     }
 
@@ -42,7 +64,7 @@ class _HomeExpenseCardState extends State<HomeExpenseCard> {
       item: item,
       onCategoryTap: (category) {
         Navigator.of(context).pop();
-        widget.onCategoryTap?.call(category);
+        _openCategory(category);
       },
     );
 
@@ -110,7 +132,7 @@ class _HomeExpenseCardState extends State<HomeExpenseCard> {
                       },
                       onCategoryTap: (index) =>
                           _activateCategory(widget.breakdown.categories[index]),
-                      onTotalTap: widget.onTotalTap,
+                      onTotalTap: _openTotal,
                     );
                     final legend = _ExpenseLegend(
                       breakdown: widget.breakdown,
@@ -122,7 +144,7 @@ class _HomeExpenseCardState extends State<HomeExpenseCard> {
                         if (_highlightedIndex == index) return;
                         setState(() => _highlightedIndex = index);
                       },
-                      onTap: (item) => _activateCategory(item),
+                      onTap: _activateCategory,
                     );
 
                     if (horizontal) {
@@ -224,7 +246,7 @@ class _ExpenseDonut extends StatelessWidget {
   final int? highlightedIndex;
   final ValueChanged<int?> onHoverIndex;
   final ValueChanged<int> onCategoryTap;
-  final VoidCallback? onTotalTap;
+  final VoidCallback onTotalTap;
 
   int? _sliceIndex(Offset position) {
     const center = Offset(89, 89);
@@ -275,7 +297,7 @@ class _ExpenseDonut extends StatelessWidget {
           onTapUp: (details) {
             final index = _sliceIndex(details.localPosition);
             if (index == null) {
-              onTotalTap?.call();
+              onTotalTap();
             } else {
               onCategoryTap(index);
             }
