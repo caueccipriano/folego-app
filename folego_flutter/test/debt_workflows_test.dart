@@ -48,6 +48,8 @@ void main() {
     await tester.enterText(_field('parcelas'), '3');
     await tester.enterText(_field('juros ao mês (opcional)'), '1,5');
     await tester.enterText(_field('observação (opcional)'), 'contrato atual');
+    await tester.ensureVisible(find.text('criar dívida'));
+    await tester.pump();
     await tester.tap(find.text('criar dívida'));
     await _flush(tester);
 
@@ -77,6 +79,8 @@ void main() {
     await tester.enterText(_field('valor original'), '120,00');
     await tester.enterText(_field('parcelas'), '4');
     await tester.enterText(_field('observação (opcional)'), 'nota atualizada');
+    await tester.ensureVisible(find.text('salvar alterações'));
+    await tester.pump();
     await tester.tap(find.text('salvar alterações'));
     await _flush(tester);
 
@@ -97,6 +101,8 @@ void main() {
       onSave: (_) async => throw Exception('debt_restructure_after_payment'),
     );
     await tester.enterText(_field('valor original'), '120,00');
+    await tester.ensureVisible(find.text('salvar alterações'));
+    await tester.pump();
     await tester.tap(find.text('salvar alterações'));
     await _flush(tester);
     expect(
@@ -125,8 +131,22 @@ void main() {
     expect(find.text('2.50% a.m.'), findsOneWidget);
     expect(find.text('nota da dívida'), findsOneWidget);
     expect(find.textContaining('já pagos'), findsOneWidget);
+
+    await tester.dragUntilVisible(
+      find.text('pagamentos'),
+      find.byType(ListView),
+      const Offset(0, -250),
+    );
+    await tester.pump();
     expect(find.text('pagamentos'), findsOneWidget);
     expect(find.textContaining('Conta teste'), findsOneWidget);
+
+    await tester.dragUntilVisible(
+      find.text('parcelas concluídas'),
+      find.byType(ListView),
+      const Offset(0, -250),
+    );
+    await tester.pump();
     expect(find.text('parcelas concluídas'), findsOneWidget);
   });
 
@@ -166,6 +186,8 @@ void main() {
     final detail = _detail(payments: const [], paidOnFirst: 0);
     await _openPayment(tester, _FakeRepository(), detail.debt, detail.installments.first);
     await tester.enterText(_field('valor pago'), '10,00');
+    await tester.ensureVisible(find.text('registrar pagamento'));
+    await tester.pump();
     await tester.tap(find.text('registrar pagamento'));
     await _flush(tester);
 
@@ -246,7 +268,6 @@ DebtRecord _record({required double remaining, String status = 'active', DateTim
   remainingBalance: remaining,
   interestRateMonthly: 2.5,
   totalInstallments: 2,
-  paymentAccountId: 'account-1',
   status: status,
   firstDueDate: DateTime(2026, 9, 20),
   archivedAt: archivedAt,

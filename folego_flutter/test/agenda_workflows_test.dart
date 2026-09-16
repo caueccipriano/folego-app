@@ -96,6 +96,8 @@ void main() {
     expect(find.text('todos'), findsOneWidget);
     expect(find.text('dívidas'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('dívidas'));
+    await tester.pump();
     await tester.tap(find.text('dívidas'));
     await tester.pump();
     expect(find.text('Parcela semana'), findsOneWidget);
@@ -146,7 +148,7 @@ void main() {
     debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => [
       _event('Fatura teste', 2, source: UpcomingEventSource.cardInvoice, cardId: 'card-1', sourceId: 'invoice-1'),
     ];
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(repository: repository, spaceId: 'space')));
+    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(key: UniqueKey(), repository: repository, spaceId: 'space')));
     await _flush(tester);
     await tester.tap(find.text('Fatura teste'));
     await _flush(tester);
@@ -155,7 +157,7 @@ void main() {
     debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => [
       _event('Dívida teste', 2, source: UpcomingEventSource.debt, debtId: 'debt-1', sourceId: 'installment-1'),
     ];
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(repository: repository, spaceId: 'space')));
+    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(key: UniqueKey(), repository: repository, spaceId: 'space')));
     await _flush(tester);
     await tester.tap(find.text('Dívida teste'));
     await _flush(tester);
