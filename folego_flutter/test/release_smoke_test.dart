@@ -147,7 +147,7 @@ void main() {
     expect(shell, contains('TransactionsScreen('));
     expect(shell, contains('PlanScreen('));
     expect(shell, contains('WalletScreen('));
-    expect(shell, contains('ProfileScreenV2('));
+    expect(shell, contains('ProfileScreen('));
 
     expect(transactions, contains('statement-import-entry'));
     expect(wallet, contains('showWalletAddAction'));
