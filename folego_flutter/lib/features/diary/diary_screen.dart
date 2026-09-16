@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
@@ -19,15 +19,18 @@ class DiaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RealtimeRefreshView(
-      domain: AppRealtimeDomain.diary,
-      identity: spaceId,
-      active: active,
-      builder: (key) => base.DiaryScreen(
-        key: key,
-        repository: repository,
-        spaceId: spaceId,
+    return Material(
+      type: MaterialType.transparency,
+      child: RealtimeRefreshView(
+        domain: AppRealtimeDomain.diary,
+        identity: spaceId,
         active: active,
+        builder: (key) => base.DiaryScreen(
+          key: key,
+          repository: repository,
+          spaceId: spaceId,
+          active: active,
+        ),
       ),
     );
   }
