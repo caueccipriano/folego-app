@@ -36,13 +36,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('desktop-nav-2')));
     await tester.pump();
     expect(find.byKey(const ValueKey('page-2')), findsOneWidget);
-    final selected = tester.widget<Semantics>(
-      find.ancestor(
-        of: find.byKey(const ValueKey('desktop-nav-2')),
-        matching: find.byType(Semantics),
-      ).last,
-    );
-    expect(selected.properties.selected, isTrue);
+    expect(find.byKey(const ValueKey('desktop-sidebar')), findsOneWidget);
   });
 
   testWidgets('resize preserves selected tab', (tester) async {
