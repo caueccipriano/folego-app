@@ -264,16 +264,157 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '${value.year}${two(value.month)}${two(value.day)}';
   }
 
+  Widget _accountSection() {
+    return _ProfileSection(
+      title: 'sua conta',
+      subtitle: 'sua identidade e preferências do Fôlego',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _AccountHeader(
+            identity: _identity,
+            loading: _loadingIdentity,
+            error: _identityError,
+            onRetry: _loadIdentity,
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            children: [
+              _SettingsRow(
+                icon: AppIcons.categoryUnclassified,
+                title: 'organização financeira',
+                subtitle: 'categorias, tags e classificações pessoais',
+                onTap: _openFinancialOrganization,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _appearanceSection() => _ProfileSection(
+        title: 'aparência',
+        subtitle: 'o tema muda na hora e fica salvo neste dispositivo',
+        child: _AppearanceCard(
+          selected: _themeMode,
+          onSelected: _setTheme,
+        ),
+      );
+
+  Widget _languageSection() => _ProfileSection(
+        title: 'idioma',
+        subtitle: 'use o sistema ou escolha um idioma suportado',
+        child: _LanguageCard(
+          selected: _language,
+          onSelected: _setLanguage,
+        ),
+      );
+
+  Widget _notificationsSection() => const _ProfileSection(
+        title: 'notificações',
+        subtitle: 'avisos do Fôlego no momento certo',
+        child: _SettingsCard(
+          children: [
+            _SettingsRow(
+              icon: AppIcons.notifications,
+              title: 'notificações',
+              subtitle: 'a infraestrutura de avisos ainda não está ativa',
+              trailingLabel: 'em breve',
+              enabled: false,
+            ),
+          ],
+        ),
+      );
+
+  Widget _privacySection() => _ProfileSection(
+        title: 'privacidade e dados',
+        subtitle: 'leve uma cópia legível dos dados do seu espaço',
+        child: _SettingsCard(
+          children: [
+            Builder(
+              builder: (exportContext) => _SettingsRow(
+                icon: AppIcons.exportData,
+                title: 'exportar dados',
+                subtitle: 'CSV com lançamentos do espaço financeiro atual',
+                trailing: _exporting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+                enabled: !_exporting,
+                onTap: () => _exportData(exportContext),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _aboutSection() => _ProfileSection(
+        title: 'sobre o Fôlego',
+        subtitle: 'informações desta instalação',
+        child: _AboutCard(
+          versionInfo: _versionInfo,
+          loading: _loadingVersion,
+          error: _versionError,
+          onRetry: _loadVersion,
+        ),
+      );
+
+  Widget _logoutSection() => _ProfileSection(
+        title: 'sair',
+        subtitle: 'encerre somente a sessão deste dispositivo',
+        child: _SettingsCard(
+          children: [
+            _SettingsRow(
+              icon: AppIcons.logout,
+              title: _signingOut ? 'saindo…' : 'sair do Fôlego',
+              subtitle: 'seus dados e seu onboarding não são apagados',
+              destructive: true,
+              enabled: !_signingOut,
+              trailing: _signingOut
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: _confirmSignOut,
+            ),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
     final primaryText = AppColors.primaryText(brightness);
+    final layout = AppBreakpoints.of(context);
+    final desktop =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+
+    final mobileSections = <Widget>[
+      _accountSection(),
+      const SizedBox(height: 28),
+      _appearanceSection(),
+      const SizedBox(height: 28),
+      _languageSection(),
+      const SizedBox(height: 28),
+      _notificationsSection(),
+      const SizedBox(height: 28),
+      _privacySection(),
+      const SizedBox(height: 28),
+      _aboutSection(),
+      const SizedBox(height: 28),
+      _logoutSection(),
+    ];
 
     return ColoredBox(
       color: background,
       child: SafeArea(
-        child: AppContentContainer.form(
+        child: AppContentContainer(
+          maxWidth: desktop ? AppContentWidths.dashboard : AppContentWidths.form,
           fillHeight: true,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -288,125 +429,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              _ProfileSection(
-                title: 'sua conta',
-                subtitle: 'sua identidade e preferências do Fôlego',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              if (!desktop)
+                ...mobileSections
+              else
+                Row(
+                  key: const ValueKey('profile-desktop-layout'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _AccountHeader(
-                      identity: _identity,
-                      loading: _loadingIdentity,
-                      error: _identityError,
-                      onRetry: _loadIdentity,
+                    SizedBox(
+                      key: const ValueKey('profile-identity-column'),
+                      width: layout == AppLayoutSize.wide ? 350 : 320,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _accountSection(),
+                          const SizedBox(height: 28),
+                          _logoutSection(),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    _SettingsCard(
-                      children: [
-                        _SettingsRow(
-                          icon: AppIcons.categoryUnclassified,
-                          title: 'organização financeira',
-                          subtitle: 'categorias, tags e classificações pessoais',
-                          onTap: _openFinancialOrganization,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              _ProfileSection(
-                title: 'aparência',
-                subtitle: 'o tema muda na hora e fica salvo neste dispositivo',
-                child: _AppearanceCard(
-                  selected: _themeMode,
-                  onSelected: _setTheme,
-                ),
-              ),
-              const SizedBox(height: 28),
-              _ProfileSection(
-                title: 'idioma',
-                subtitle: 'use o sistema ou escolha um idioma suportado',
-                child: _LanguageCard(
-                  selected: _language,
-                  onSelected: _setLanguage,
-                ),
-              ),
-              const SizedBox(height: 28),
-              _ProfileSection(
-                title: 'notificações',
-                subtitle: 'avisos do Fôlego no momento certo',
-                child: const _SettingsCard(
-                  children: [
-                    _SettingsRow(
-                      icon: AppIcons.notifications,
-                      title: 'notificações',
-                      subtitle: 'a infraestrutura de avisos ainda não está ativa',
-                      trailingLabel: 'em breve',
-                      enabled: false,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              _ProfileSection(
-                title: 'privacidade e dados',
-                subtitle: 'leve uma cópia legível dos dados do seu espaço',
-                child: _SettingsCard(
-                  children: [
-                    Builder(
-                      builder: (exportContext) => _SettingsRow(
-                        icon: AppIcons.exportData,
-                        title: 'exportar dados',
-                        subtitle:
-                            'CSV com lançamentos do espaço financeiro atual',
-                        trailing: _exporting
-                            ? const SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : null,
-                        enabled: !_exporting,
-                        onTap: () => _exportData(exportContext),
+                    const SizedBox(width: 28),
+                    Expanded(
+                      key: const ValueKey('profile-settings-column'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _appearanceSection(),
+                          const SizedBox(height: 28),
+                          _languageSection(),
+                          const SizedBox(height: 28),
+                          _privacySection(),
+                          const SizedBox(height: 28),
+                          _notificationsSection(),
+                          const SizedBox(height: 28),
+                          _aboutSection(),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 28),
-              _ProfileSection(
-                title: 'sobre o Fôlego',
-                subtitle: 'informações desta instalação',
-                child: _AboutCard(
-                  versionInfo: _versionInfo,
-                  loading: _loadingVersion,
-                  error: _versionError,
-                  onRetry: _loadVersion,
-                ),
-              ),
-              const SizedBox(height: 28),
-              _ProfileSection(
-                title: 'sair',
-                subtitle: 'encerre somente a sessão deste dispositivo',
-                child: _SettingsCard(
-                  children: [
-                    _SettingsRow(
-                      icon: AppIcons.logout,
-                      title: _signingOut ? 'saindo…' : 'sair do Fôlego',
-                      subtitle: 'seus dados e seu onboarding não são apagados',
-                      destructive: true,
-                      enabled: !_signingOut,
-                      trailing: _signingOut
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : null,
-                      onTap: _confirmSignOut,
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
