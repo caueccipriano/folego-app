@@ -37,7 +37,12 @@ void main() {
   });
 
   test('agenda filters and summary do not count card information as cash', () {
-    final recurring = _event('conta', 2, source: UpcomingEventSource.recurring, cash: true);
+    final recurring = _event(
+      'conta',
+      2,
+      source: UpcomingEventSource.recurring,
+      cash: true,
+    );
     final cardInfo = _event(
       'cartão recorrente',
       2,
@@ -53,7 +58,13 @@ void main() {
       cash: true,
       amount: 100,
     );
-    final debt = _event('dívida', 4, source: UpcomingEventSource.debt, cash: true, amount: 30);
+    final debt = _event(
+      'dívida',
+      4,
+      source: UpcomingEventSource.debt,
+      cash: true,
+      amount: 30,
+    );
     final income = _event(
       'salário',
       1,
@@ -62,7 +73,13 @@ void main() {
       cash: false,
       amount: 500,
     );
-    final summary = AgendaSummary.nextDays([recurring, cardInfo, invoice, debt, income]);
+    final summary = AgendaSummary.nextDays([
+      recurring,
+      cardInfo,
+      invoice,
+      debt,
+      income,
+    ]);
 
     expect(summary.outflowCount, 3);
     expect(summary.outflowAmount, 150);
@@ -84,9 +101,22 @@ void main() {
       _event('Parcela semana', 4, source: UpcomingEventSource.debt),
       _event('Fatura adiante', 12, source: UpcomingEventSource.cardInvoice),
     ];
-    debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => events;
+    debugFinancialAgendaLoader = (
+      {
+      required spaceId,
+      startDate,
+      endDate,
+      required limit,
+    }) async => events;
 
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(repository: _FakeRepository(), spaceId: 'space')));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: UpcomingEventsScreen(
+          repository: _FakeRepository(),
+          spaceId: 'space',
+        ),
+      ),
+    );
     await _flush(tester);
 
     expect(find.text('agenda'), findsOneWidget);
@@ -105,13 +135,28 @@ void main() {
   });
 
   testWidgets('agenda empty state is friendly', (tester) async {
-    debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => const [];
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(repository: _FakeRepository(), spaceId: 'space')));
+    debugFinancialAgendaLoader = (
+      {
+      required spaceId,
+      startDate,
+      endDate,
+      required limit,
+    }) async => const [];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: UpcomingEventsScreen(
+          repository: _FakeRepository(),
+          spaceId: 'space',
+        ),
+      ),
+    );
     await _flush(tester);
     expect(find.text('nada apertando por enquanto'), findsOneWidget);
   });
 
-  testWidgets('tapping recurring item opens canonical recurring editor', (tester) async {
+  testWidgets('tapping recurring item opens canonical recurring editor', (
+    tester,
+  ) async {
     final repository = _FakeRepository(
       recurringItems: [
         RecurringItem(
@@ -131,33 +176,90 @@ void main() {
         ),
       ],
     );
-    debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => [
-      _event('Internet', 2, sourceId: 'rec-1'),
-    ];
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(repository: repository, spaceId: 'space')));
+    debugFinancialAgendaLoader = (
+      {
+      required spaceId,
+      startDate,
+      endDate,
+      required limit,
+    }) async => [_event('Internet', 2, sourceId: 'rec-1')];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: UpcomingEventsScreen(
+          repository: repository,
+          spaceId: 'space',
+        ),
+      ),
+    );
     await _flush(tester);
     await tester.tap(find.text('Internet'));
     await _flush(tester);
     expect(find.text('editar recorrência'), findsOneWidget);
   });
 
-  testWidgets('tapping invoice and debt use canonical wallet destinations', (tester) async {
+  testWidgets('tapping invoice uses canonical wallet destination', (
+    tester,
+  ) async {
     final repository = _FakeRepository(overview: _overview());
-    debugDebtDetailLoader = ({required spaceId, required debtId}) async => _debtDetail();
-
-    debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => [
-      _event('Fatura teste', 2, source: UpcomingEventSource.cardInvoice, cardId: 'card-1', sourceId: 'invoice-1'),
+    debugFinancialAgendaLoader = (
+      {
+      required spaceId,
+      startDate,
+      endDate,
+      required limit,
+    }) async => [
+      _event(
+        'Fatura teste',
+        2,
+        source: UpcomingEventSource.cardInvoice,
+        cardId: 'card-1',
+        sourceId: 'invoice-1',
+      ),
     ];
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(key: UniqueKey(), repository: repository, spaceId: 'space')));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: UpcomingEventsScreen(
+          repository: repository,
+          spaceId: 'space',
+        ),
+      ),
+    );
     await _flush(tester);
     await tester.tap(find.text('Fatura teste'));
     await _flush(tester);
     expect(find.text('Cartão teste'), findsWidgets);
+  });
 
-    debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => [
-      _event('Dívida teste', 2, source: UpcomingEventSource.debt, debtId: 'debt-1', sourceId: 'installment-1'),
+  testWidgets('tapping debt uses canonical wallet destination', (tester) async {
+    final repository = _FakeRepository(overview: _overview());
+    debugDebtDetailLoader = (
+      {required spaceId, required debtId}
+    ) async => _debtDetail();
+    debugFinancialAgendaLoader = (
+      {
+      required spaceId,
+      startDate,
+      endDate,
+      required limit,
+    }) async => [
+      _event(
+        'Dívida teste',
+        2,
+        source: UpcomingEventSource.debt,
+        debtId: 'debt-1',
+        sourceId: 'installment-1',
+      ),
     ];
-    await tester.pumpWidget(MaterialApp(home: UpcomingEventsScreen(key: UniqueKey(), repository: repository, spaceId: 'space')));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: UpcomingEventsScreen(
+          repository: repository,
+          spaceId: 'space',
+        ),
+      ),
+    );
     await _flush(tester);
     await tester.tap(find.text('Dívida teste'));
     await _flush(tester);
@@ -165,7 +267,9 @@ void main() {
     expect(find.text('Dívida teste'), findsWidgets);
   });
 
-  testWidgets('home próximos dias uses upcoming source and CTA opens agenda', (tester) async {
+  testWidgets('home próximos dias uses upcoming source and CTA opens agenda', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _FakeRepository(
@@ -181,11 +285,22 @@ void main() {
         ),
       ],
     );
-    debugFinancialAgendaLoader = ({required spaceId, startDate, endDate, required limit}) async => [
-      _event('Internet', 2, sourceId: 'rec-1'),
-    ];
+    debugFinancialAgendaLoader = (
+      {
+      required spaceId,
+      startDate,
+      endDate,
+      required limit,
+    }) async => [_event('Internet', 2, sourceId: 'rec-1')];
 
-    await tester.pumpWidget(MaterialApp(home: HomeScreen(space: const FinancialSpace(id: 'space', name: 'Casa'), repository: repository)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          space: const FinancialSpace(id: 'space', name: 'Casa'),
+          repository: repository,
+        ),
+      ),
+    );
     await _flush(tester);
     expect(find.text('próximos dias'), findsOneWidget);
     expect(find.textContaining('Internet'), findsOneWidget);
@@ -235,54 +350,115 @@ UpcomingFinancialEvent _event(
 }
 
 WalletOverview _overview() => WalletOverview(
-  summary: const WalletSummary(totalCash: 0, availableCash: 0, totalCardInvoice: 100, totalDebtRemaining: 70),
+  summary: const WalletSummary(
+    totalCash: 0,
+    availableCash: 0,
+    totalCardInvoice: 100,
+    totalDebtRemaining: 70,
+  ),
   accounts: const [],
   cards: [
-    WalletCard(id: 'card-1', name: 'Cartão teste', closingDay: 20, dueDay: 27, invoiceBalance: 100, invoiceId: 'invoice-1'),
+    WalletCard(
+      id: 'card-1',
+      name: 'Cartão teste',
+      closingDay: 20,
+      dueDay: 27,
+      invoiceBalance: 100,
+      invoiceId: 'invoice-1',
+    ),
   ],
   debts: const [
-    WalletDebt(id: 'debt-1', name: 'Dívida teste', openingBalance: 100, remainingBalance: 70, nextAmount: 30, paidInstallments: 1, creditor: 'Banco', originalAmount: 100, totalInstallments: 3),
+    WalletDebt(
+      id: 'debt-1',
+      name: 'Dívida teste',
+      openingBalance: 100,
+      remainingBalance: 70,
+      nextAmount: 30,
+      paidInstallments: 1,
+      creditor: 'Banco',
+      originalAmount: 100,
+      totalInstallments: 3,
+    ),
   ],
   installments: const [],
 );
 
 DebtDetail _debtDetail() => DebtDetail(
-  debt: const DebtRecord(id: 'debt-1', name: 'Dívida teste', creditor: 'Banco', debtType: 'loan', originalAmount: 100, openingBalance: 100, remainingBalance: 70, totalInstallments: 3, status: 'active'),
+  debt: const DebtRecord(
+    id: 'debt-1',
+    name: 'Dívida teste',
+    creditor: 'Banco',
+    debtType: 'loan',
+    originalAmount: 100,
+    openingBalance: 100,
+    remainingBalance: 70,
+    totalInstallments: 3,
+    status: 'active',
+  ),
   installments: const [],
   payments: const [],
   today: DateTime(2026, 9, 16),
 );
 
 class _FakeRepository implements FolegoRepository {
-  _FakeRepository({this.recurringItems = const [], WalletOverview? overview, this.homeUpcoming = const []}) : overview = overview ?? _overview();
+  _FakeRepository({
+    this.recurringItems = const [],
+    WalletOverview? overview,
+    this.homeUpcoming = const [],
+  }) : overview = overview ?? _overview();
 
   final List<RecurringItem> recurringItems;
   final WalletOverview overview;
   final List<UpcomingEvent> homeUpcoming;
 
   @override
-  Future<List<RecurringItem>> listRecurringItems(String spaceId) async => List<RecurringItem>.from(recurringItems);
+  Future<List<RecurringItem>> listRecurringItems(String spaceId) async =>
+      List<RecurringItem>.from(recurringItems);
 
   @override
-  Future<WalletOverview> getWalletOverview({required String spaceId}) async => overview;
+  Future<WalletOverview> getWalletOverview({required String spaceId}) async =>
+      overview;
 
   @override
-  Future<List<AccountItem>> listAccounts(String spaceId) async => [const AccountItem(id: 'account-1', name: 'Conta teste', type: 'checking')];
+  Future<List<AccountItem>> listAccounts(String spaceId) async => [
+    const AccountItem(id: 'account-1', name: 'Conta teste', type: 'checking'),
+  ];
 
   @override
-  Future<List<CategoryItem>> listExpenseCategories(String spaceId) async => [const CategoryItem(id: 'category-1', name: 'Casa', essential: true, kind: 'expense')];
+  Future<List<CategoryItem>> listExpenseCategories(String spaceId) async => [
+    const CategoryItem(
+      id: 'category-1',
+      name: 'Casa',
+      essential: true,
+      kind: 'expense',
+    ),
+  ];
 
   @override
-  Future<List<CategoryItem>> listIncomeCategories(String spaceId) async => [const CategoryItem(id: 'income-1', name: 'Salário', essential: true, kind: 'income')];
+  Future<List<CategoryItem>> listIncomeCategories(String spaceId) async => [
+    const CategoryItem(
+      id: 'income-1',
+      name: 'Salário',
+      essential: true,
+      kind: 'income',
+    ),
+  ];
 
   @override
-  Future<List<UpcomingEvent>> getUpcomingEvents(String spaceId, {DateTime? from, int days = 30}) async => List<UpcomingEvent>.from(homeUpcoming);
+  Future<List<UpcomingEvent>> getUpcomingEvents(
+    String spaceId, {
+    DateTime? from,
+    int days = 30,
+  }) async => List<UpcomingEvent>.from(homeUpcoming);
 
   @override
   Future<String> getProfileName() async => 'Caue';
 
   @override
-  Future<FolegoSnapshot> getSnapshot(String spaceId, {DateTime? asOfDate}) async => FolegoSnapshot(
+  Future<FolegoSnapshot> getSnapshot(
+    String spaceId, {
+    DateTime? asOfDate,
+  }) async => FolegoSnapshot(
     asOfDate: DateTime(2026, 9, 16),
     nextIncomeDate: DateTime(2026, 9, 20),
     nextIncomeAmount: 1000,
@@ -304,7 +480,15 @@ class _FakeRepository implements FolegoRepository {
   );
 
   @override
-  Future<TransactionPage> getTransactionsPage(String spaceId, {TransactionCursor? cursor, int pageSize = transactionPageSize}) async => const TransactionPage(items: [], hasMore: false, nextCursor: null);
+  Future<TransactionPage> getTransactionsPage(
+    String spaceId, {
+    TransactionCursor? cursor,
+    int pageSize = transactionPageSize,
+  }) async => const TransactionPage(
+    items: [],
+    hasMore: false,
+    nextCursor: null,
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
