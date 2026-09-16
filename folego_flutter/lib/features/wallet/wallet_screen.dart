@@ -6,6 +6,7 @@ import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_icons.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'debt_form_sheet.dart';
+import 'wallet_instrument_management.dart';
 import 'wallet_screen_base.dart' as base;
 
 class WalletScreen extends StatefulWidget {
@@ -25,13 +26,35 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   int _localRevision = 0;
 
-  Future<void> _createDebt() async {
-    final created = await showDebtFormSheet(
-      context: context,
-      repository: widget.repository,
-      spaceId: widget.spaceId,
-    );
-    if (created == true && mounted) {
+  Future<void> _addInstrument() async {
+    final action = await showWalletAddAction(context);
+    if (action == null || !mounted) return;
+
+    final changed = switch (action) {
+      WalletAddAction.account => showWalletAccountEditor(
+          context: context,
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
+      WalletAddAction.card => showWalletCardEditor(
+          context: context,
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
+      WalletAddAction.benefit => showWalletAccountEditor(
+          context: context,
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+          benefitMode: true,
+        ),
+      WalletAddAction.debt => showDebtFormSheet(
+          context: context,
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
+    };
+
+    if (await changed == true && mounted) {
       setState(() => _localRevision += 1);
     }
   }
@@ -58,10 +81,11 @@ class _WalletScreenState extends State<WalletScreen> {
               right: desktop ? 32 : 18,
               bottom: desktop ? 32 : 104,
               child: FloatingActionButton.extended(
-                heroTag: 'wallet-new-debt',
-                onPressed: _createDebt,
-                icon: const Icon(AppIcons.debt, size: 19),
-                label: const Text('nova dívida'),
+                key: const ValueKey('wallet-add-action'),
+                heroTag: 'wallet-add-instrument',
+                onPressed: _addInstrument,
+                icon: const Icon(AppIcons.add, size: 19),
+                label: const Text('adicionar'),
               ),
             ),
           ],
