@@ -298,7 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: 'crie categorias, subcategorias e escolha seus ícones',
                 onTap: _openCategories,
               ),
-              const _ChoiceDivider(),
+              _ChoiceDivider(),
               _SettingsRow(
                 icon: AppIcons.settings,
                 title: 'organização financeira',
