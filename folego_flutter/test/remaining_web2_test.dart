@@ -82,7 +82,7 @@ void main() {
     expect(route, isNot(contains('getFinancialAgenda(')));
   });
 
-  test('Profile desktop keeps two columns and existing settings actions', () {
+  test('Profile desktop keeps two columns and consolidated organization action', () {
     final source = File(
       'lib/features/profile/profile_screen_v2.dart',
     ).readAsStringSync();
@@ -95,18 +95,24 @@ void main() {
     expect(source, contains('_privacySection()'));
     expect(source, contains('_aboutSection()'));
     expect(source, contains('_logoutSection()'));
-    expect(source, contains('_openCategories'));
+    expect(source, contains('_openFinancialOrganization'));
+    expect(source, isNot(contains('_openCategories')));
   });
 
-  test('Transaction detail remains adaptive instead of being reimplemented', () {
-    final source = File(
+  test('Transaction detail remains adaptive through canonical v2 implementation', () {
+    final route = File(
       'lib/features/transactions/transaction_detail_sheet.dart',
     ).readAsStringSync();
+    final source = File(
+      'lib/features/transactions/transaction_detail_sheet_v2.dart',
+    ).readAsStringSync();
 
+    expect(route, contains("export 'transaction_detail_sheet_v2.dart';"));
     expect(source, contains('AppBreakpoints.of(context) == AppLayoutSize.compact'));
     expect(source, contains('showModalBottomSheet<bool>'));
     expect(source, contains('showDialog<bool>'));
-    expect(source, contains('BoxConstraints(maxWidth: 820, maxHeight: 900)'));
+    expect(source, contains('maxWidth: 780'));
+    expect(source, contains("height * .86"));
   });
 
   test('Transactions wrapper preserves concurrent classification inbox and desktop shell', () {
