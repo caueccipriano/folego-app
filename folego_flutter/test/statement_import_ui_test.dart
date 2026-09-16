@@ -92,9 +92,13 @@ Future<void> _driveCsvToReview(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const ValueKey('statement-import-destination-continue')));
   await tester.pumpAndSettle();
-  expect(find.byKey(const ValueKey('statement-import-csv-mapping')), findsOneWidget);
-  await tester.ensureVisible(find.byKey(const ValueKey('statement-import-stage-csv')));
-  await tester.tap(find.byKey(const ValueKey('statement-import-stage-csv')));
+  final mapping = find.byKey(const ValueKey('statement-import-csv-mapping'));
+  expect(mapping, findsOneWidget);
+  await tester.drag(mapping, const Offset(0, -900));
+  await tester.pumpAndSettle();
+  final stage = find.byKey(const ValueKey('statement-import-stage-csv'));
+  expect(stage, findsOneWidget);
+  await tester.tap(stage);
   await tester.pumpAndSettle();
 }
 
@@ -116,6 +120,7 @@ void main() {
     await _pumpImport(tester, size: const Size(1366, 900));
     await _driveCsvToReview(tester);
     expect(find.byKey(const ValueKey('statement-import-review-desktop')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('exact duplicate is ignored by default and clearly labeled', (tester) async {
@@ -124,6 +129,7 @@ void main() {
     expect(find.textContaining('duplicata exata'), findsOneWidget);
     final checkbox = tester.widget<Checkbox>(find.byKey(const ValueKey('statement-import-include-row-1')));
     expect(checkbox.value, isFalse);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('responsive scaffold renders requested widths without exception', (tester) async {
