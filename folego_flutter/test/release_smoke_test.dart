@@ -103,7 +103,7 @@ void main() {
     expect(completed, 1);
   });
 
-  testWidgets('first-use Home explains missing account instead of showing R$ 0,00', (tester) async {
+  testWidgets('first-use Home explains missing account instead of showing zero money', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: HomeScreen(
