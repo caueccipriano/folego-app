@@ -43,6 +43,9 @@ void main() {
     final scroll = find.byKey(const ValueKey('plan-scroll'));
     final openParent = find.byKey(const ValueKey('plan-parent-parent-7'));
     await tester.dragUntilVisible(openParent, scroll, const Offset(0, -300));
+    await tester.pump();
+    await tester.ensureVisible(openParent);
+    await tester.pump();
     await tester.tap(openParent);
     await tester.pump();
     expect(find.byKey(const ValueKey('plan-children-parent-7')), findsOneWidget);
@@ -177,6 +180,10 @@ void main() {
     expect(pageLoads, 1);
 
     await tester.tap(find.byKey(const ValueKey('transaction-filter-button')));
+    await tester.pumpAndSettle();
+    final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
+    await tester.ensureVisible(categoryDropdown);
+    await tester.tap(categoryDropdown);
     await tester.pumpAndSettle();
     expect(find.text('Nova categoria'), findsOneWidget);
   });
