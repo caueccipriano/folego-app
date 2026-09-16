@@ -11,7 +11,7 @@ void main() {
     final coordinator = RealtimeInvalidationCoordinator();
     var refreshes = 0;
     final binding = coordinator.bind(
-      AppRealtimeDomain.transactions,
+      domain: AppRealtimeDomain.transactions,
       onRefresh: () async => refreshes += 1,
     );
 
@@ -36,7 +36,7 @@ void main() {
     final firstRefresh = Completer<void>();
     var refreshes = 0;
     final binding = coordinator.bind(
-      AppRealtimeDomain.wallet,
+      domain: AppRealtimeDomain.wallet,
       onRefresh: () async {
         refreshes += 1;
         if (refreshes == 1) await firstRefresh.future;
@@ -69,7 +69,7 @@ void main() {
     final coordinator = RealtimeInvalidationCoordinator();
     var refreshes = 0;
     final binding = coordinator.bind(
-      AppRealtimeDomain.plan,
+      domain: AppRealtimeDomain.plan,
       active: false,
       onRefresh: () async => refreshes += 1,
     );
@@ -93,7 +93,7 @@ void main() {
     final coordinator = RealtimeInvalidationCoordinator();
     var refreshes = 0;
     final binding = coordinator.bind(
-      AppRealtimeDomain.diary,
+      domain: AppRealtimeDomain.diary,
       onRefresh: () async => refreshes += 1,
     );
 
@@ -116,7 +116,7 @@ void main() {
     );
     var transactionRefreshes = 0;
     final binding = coordinator.bind(
-      AppRealtimeDomain.transactions,
+      domain: AppRealtimeDomain.transactions,
       onRefresh: () async => transactionRefreshes += 1,
     );
 
