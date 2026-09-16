@@ -1,4 +1,4 @@
-part of 'transactions_screen.dart';
+part of 'transactions_screen_base.dart';
 
 class _RecurringTab extends StatelessWidget {
   const _RecurringTab({

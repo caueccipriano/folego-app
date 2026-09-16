@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/realtime/realtime_invalidation.dart';
+import '../../core/realtime/realtime_session.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/liquid_glass_navigation_bar.dart';
@@ -11,10 +15,16 @@ import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key, required this.space, required this.repository});
+  const HomeShell({
+    super.key,
+    required this.space,
+    required this.repository,
+    this.realtimeEventSource,
+  });
 
   final FinancialSpace space;
   final FolegoRepository repository;
+  final AppRealtimeEventSource? realtimeEventSource;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -22,6 +32,43 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  late final RealtimeInvalidationCoordinator _realtimeCoordinator;
+  late final RealtimeSessionController _realtimeSession;
+
+  @override
+  void initState() {
+    super.initState();
+    _realtimeCoordinator = RealtimeInvalidationCoordinator();
+    _realtimeSession = RealtimeSessionController(
+      coordinator: _realtimeCoordinator,
+      eventSource:
+          widget.realtimeEventSource ??
+          SupabaseRealtimeEventSource(Supabase.instance.client),
+    );
+    AppRealtimeRegistry.attach(_realtimeCoordinator);
+    unawaited(_realtimeSession.switchSpace(widget.space.id));
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.space.id != widget.space.id) {
+      unawaited(_switchSpace(widget.space.id));
+    }
+  }
+
+  Future<void> _switchSpace(String spaceId) async {
+    await _realtimeSession.switchSpace(spaceId);
+    if (!mounted) return;
+    _realtimeCoordinator.invalidateAll();
+  }
+
+  @override
+  void dispose() {
+    AppRealtimeRegistry.detach(_realtimeCoordinator);
+    unawaited(_realtimeSession.dispose());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
