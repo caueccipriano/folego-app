@@ -62,7 +62,9 @@ HomeExpenseBreakdown buildHomeExpenseBreakdown(
 
     final rawCategory = categoryFor(transaction).trim();
     final category = rawCategory.isEmpty ? 'A classificar' : rawCategory;
-    final categoryId = categoryIdFor?.call(transaction);
+    final categoryId = categoryIdFor?.call(transaction) ??
+        transaction.categoryParentId ??
+        transaction.categoryId;
     final key = categoryId ?? 'label:${category.toLowerCase()}';
     final existing = totals[key];
     totals[key] = _HomeExpenseBucket(
