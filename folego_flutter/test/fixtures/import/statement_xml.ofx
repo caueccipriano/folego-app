@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OFX>
+  <CREDITCARDMSGSRSV1>
+    <CCSTMTTRNRS>
+      <CCSTMTRS>
+        <CURDEF>BRL</CURDEF>
+        <CCACCTFROM><ACCTID>9999</ACCTID></CCACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20260901000000[-3:BRT]</DTSTART>
+          <DTEND>20260930235959[-3:BRT]</DTEND>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260915184500[-3:BRT]</DTPOSTED>
+            <TRNAMT>-127.33</TRNAMT>
+            <FITID>FIT-XML-001</FITID>
+            <NAME>LOJA FICTICIA</NAME>
+            <MEMO>Compra de teste</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260916101500[-3:BRT]</DTPOSTED>
+            <TRNAMT>25.00</TRNAMT>
+            <FITID>FIT-XML-002</FITID>
+            <NAME>ESTORNO FICTICIO</NAME>
+            <MEMO>Refund de teste</MEMO>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </CCSTMTRS>
+    </CCSTMTTRNRS>
+  </CREDITCARDMSGSRSV1>
+</OFX>
