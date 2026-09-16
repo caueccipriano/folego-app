@@ -1,24 +1,24 @@
 import 'package:flutter/widgets.dart';
 
-import '../../core/realtime/realtime_invalidation.dart';
-import '../../core/realtime/realtime_refresh_view.dart';
+import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
-import 'transactions_screen_base.dart' as base;
+import 'transactions_screen_base.dart' as impl;
 
 class TransactionsScreen extends StatelessWidget {
-  const TransactionsScreen({super.key, required this.repository});
+  const TransactionsScreen({
+    super.key,
+    required this.repository,
+    this.space,
+  });
 
   final FolegoRepository repository;
+  final FinancialSpace? space;
 
   @override
   Widget build(BuildContext context) {
-    return RealtimeRefreshView(
-      domain: AppRealtimeDomain.transactions,
-      identity: 'transactions',
-      builder: (key) => base.TransactionsScreen(
-        key: key,
-        repository: repository,
-      ),
+    return impl.TransactionsScreenV3(
+      repository: repository,
+      space: space,
     );
   }
 }

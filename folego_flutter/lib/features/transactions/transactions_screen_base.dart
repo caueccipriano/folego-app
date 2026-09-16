@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_content_container.dart';
+import '../../core/realtime/realtime_invalidation.dart';
+import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
@@ -10,36 +15,69 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/recurring_item.dart';
+import '../../data/models/transaction_filters.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/models/transaction_page.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
+import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'transaction_detail_sheet.dart';
 import 'transaction_edit_sheet.dart';
+import 'transaction_filter_sheet.dart';
 
-part 'transactions_recurring_widgets.dart';
+part 'transactions_recurring_widgets_v3.dart';
 
-class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key, required this.repository});
+const Duration transactionSearchDebounce = Duration(milliseconds: 350);
+
+typedef TransactionPageLoader = Future<TransactionPage> Function({
+  required String spaceId,
+  required TransactionFilters filters,
+  required TransactionCursor? cursor,
+  required int pageSize,
+});
+
+typedef TransactionFilterOptionsLoader = Future<TransactionFilterOptions>
+    Function(String spaceId);
+
+class TransactionsScreenV3 extends StatefulWidget {
+  const TransactionsScreenV3({
+    super.key,
+    required this.repository,
+    this.space,
+    this.pageLoader,
+    this.optionsLoader,
+  });
+
   final FolegoRepository repository;
+  final FinancialSpace? space;
+  final TransactionPageLoader? pageLoader;
+  final TransactionFilterOptionsLoader? optionsLoader;
+
   @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
+  State<TransactionsScreenV3> createState() => _TransactionsScreenV3State();
 }
 
-class _TransactionsScreenState extends State<TransactionsScreen>
+class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  late final TextEditingController _searchController;
+
+  RealtimeRefreshBinding? _realtimeBinding;
+  Timer? _searchTimer;
+
   FinancialSpace? _space;
+  TransactionFilters _filters = TransactionFilters.empty();
+  TransactionFilterOptions _filterOptions = TransactionFilterOptions.empty();
   List<TransactionItem> _transactions = const [];
   List<RecurringItem> _recurringItems = const [];
   List<CategoryItem> _categories = const [];
-  final Map<String, _PendingTransactionDeletion> _pendingDeletions = {};
-  final Set<String> _hiddenTransactionIds = <String>{};
+
   TransactionCursor? _nextTransactionCursor;
   bool _loading = true;
+  bool _loadingTransactions = false;
   bool _loadingMore = false;
   bool _hasMoreTransactions = true;
   String? _error;
@@ -54,104 +92,188 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _load(initial: true);
+    _searchController = TextEditingController();
+    _bindRealtime();
+    _loadInitial();
+  }
+
+  void _bindRealtime() {
+    final coordinator = AppRealtimeRegistry.coordinator;
+    if (coordinator == null) return;
+    _realtimeBinding = coordinator.bind(
+      domain: AppRealtimeDomain.transactions,
+      onRefresh: _handleRealtimeRefresh,
+    );
   }
 
   @override
   void dispose() {
+    _searchTimer?.cancel();
+    _realtimeBinding?.dispose();
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _load({bool initial = false}) async {
-    final generation = ++_transactionLoadGeneration;
+  Future<void> _loadInitial() async {
     if (mounted) {
       setState(() {
-        if (initial) {
-          _loading = true;
-          _error = null;
-        }
-        _loadingMore = false;
-        _loadMoreError = null;
+        _loading = true;
+        _error = null;
       });
     }
 
+    final generation = ++_transactionLoadGeneration;
     try {
-      final space = await widget.repository.getPrimarySpace();
-      final results = await Future.wait([
-        widget.repository.getTransactionsPage(space.id),
+      final space = widget.space ?? await widget.repository.getPrimarySpace();
+      final results = await Future.wait<dynamic>([
+        _fetchPage(space.id, cursor: null, filters: _filters),
         widget.repository.listRecurringItems(space.id),
-        widget.repository.listExpenseCategories(space.id),
-        widget.repository.listIncomeCategories(space.id),
+        _loadFilterOptions(space.id),
       ]);
       if (!mounted || generation != _transactionLoadGeneration) return;
 
       final page = results[0] as TransactionPage;
-      final expenseCategories = results[2] as List<CategoryItem>;
-      final incomeCategories = results[3] as List<CategoryItem>;
-      final categoriesById = <String, CategoryItem>{};
-      for (final category in [...expenseCategories, ...incomeCategories]) {
-        categoriesById[category.id] = category;
-      }
-      final visibleTransactions = mergeTransactionPages(
-        existing: const <TransactionItem>[],
-        incoming: page.items,
-        hiddenIds: _hiddenTransactionIds,
-      );
-
+      final options = results[2] as TransactionFilterOptions;
       setState(() {
         _space = space;
-        _transactions = visibleTransactions;
+        _transactions = page.items;
         _recurringItems = results[1] as List<RecurringItem>;
-        _categories = categoriesById.values.toList();
+        _filterOptions = options;
+        _categories = options.categories;
         _nextTransactionCursor = page.nextCursor;
         _hasMoreTransactions = page.hasMore && page.nextCursor != null;
         _loading = false;
+        _loadingTransactions = false;
         _error = null;
       });
     } catch (error) {
       if (!mounted || generation != _transactionLoadGeneration) return;
-      if (initial || _space == null) {
-        setState(() {
-          _loading = false;
-          _error = _friendlyError(error);
-        });
-        return;
-      }
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _loadingTransactions = false;
+        _error = _friendlyError(error);
+      });
+    }
+  }
+
+  Future<TransactionFilterOptions> _loadFilterOptions(String spaceId) {
+    final loader = widget.optionsLoader;
+    if (loader != null) return loader(spaceId);
+    return widget.repository.getTransactionFilterOptions(spaceId);
+  }
+
+  Future<TransactionPage> _fetchPage(
+    String spaceId, {
+    required TransactionCursor? cursor,
+    required TransactionFilters filters,
+  }) {
+    final loader = widget.pageLoader;
+    if (loader != null) {
+      return loader(
+        spaceId: spaceId,
+        filters: filters,
+        cursor: cursor,
+        pageSize: transactionPageSize,
+      );
+    }
+    return widget.repository.getTransactionsFilteredPage(
+      spaceId,
+      filters: filters,
+      cursor: cursor,
+      pageSize: transactionPageSize,
+    );
+  }
+
+  Future<void> _refreshTransactions({required bool clearVisible}) async {
+    final space = _space;
+    if (space == null) return;
+    final generation = ++_transactionLoadGeneration;
+    final filters = _filters;
+
+    if (mounted) {
+      setState(() {
+        _loadingTransactions = true;
+        _loadingMore = false;
+        _loadMoreError = null;
+        _nextTransactionCursor = null;
+        _hasMoreTransactions = false;
+        if (clearVisible) _transactions = const [];
+      });
+    }
+
+    try {
+      final page = await _fetchPage(space.id, cursor: null, filters: filters);
+      if (!mounted || generation != _transactionLoadGeneration) return;
+      setState(() {
+        _transactions = page.items;
+        _nextTransactionCursor = page.nextCursor;
+        _hasMoreTransactions = page.hasMore && page.nextCursor != null;
+        _loadingTransactions = false;
+      });
+    } catch (error) {
+      if (!mounted || generation != _transactionLoadGeneration) return;
+      setState(() => _loadingTransactions = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_friendlyError(error))),
       );
     }
   }
 
-  Future<void> _refresh() => _load();
-  Future<void> _retryInitialLoad() => _load(initial: true);
+  Future<void> _refreshRecurring() async {
+    final space = _space;
+    if (space == null) return;
+    try {
+      final items = await widget.repository.listRecurringItems(space.id);
+      if (!mounted || _space?.id != space.id) return;
+      setState(() => _recurringItems = items);
+    } catch (_) {
+      // A lista de transações continua utilizável se recorrências falharem.
+    }
+  }
+
+  Future<void> _handleRealtimeRefresh() async {
+    if (!mounted || _space == null) return;
+    await Future.wait<void>([
+      _refreshTransactions(clearVisible: false),
+      _refreshRecurring(),
+    ]);
+  }
+
+  Future<void> _refresh() async {
+    await Future.wait<void>([
+      _refreshTransactions(clearVisible: false),
+      _refreshRecurring(),
+    ]);
+  }
+
+  Future<void> _retryInitialLoad() => _loadInitial();
 
   Future<void> _loadMoreTransactions() async {
     final space = _space;
     final cursor = _nextTransactionCursor;
-    if (space == null || cursor == null || _loadingMore || !_hasMoreTransactions) {
+    if (space == null ||
+        cursor == null ||
+        _loadingMore ||
+        !_hasMoreTransactions ||
+        _loadingTransactions) {
       return;
     }
 
     final generation = _transactionLoadGeneration;
+    final filters = _filters;
     setState(() {
       _loadingMore = true;
       _loadMoreError = null;
     });
 
     try {
-      final page = await widget.repository.getTransactionsPage(
-        space.id,
-        cursor: cursor,
-      );
+      final page = await _fetchPage(space.id, cursor: cursor, filters: filters);
       if (!mounted || generation != _transactionLoadGeneration) return;
       setState(() {
         _transactions = mergeTransactionPages(
           existing: _transactions,
           incoming: page.items,
-          hiddenIds: _hiddenTransactionIds,
         );
         _nextTransactionCursor = page.nextCursor;
         _hasMoreTransactions = page.hasMore && page.nextCursor != null;
@@ -166,6 +288,65 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     }
   }
 
+  void _onSearchChanged(String value) {
+    _searchTimer?.cancel();
+    _searchTimer = Timer(transactionSearchDebounce, () {
+      if (!mounted) return;
+      _applyFilters(_filters.copyWith(search: value), syncSearchField: false);
+    });
+  }
+
+  void _clearSearch() {
+    _searchTimer?.cancel();
+    _searchController.clear();
+    _applyFilters(_filters.copyWith(search: ''), syncSearchField: false);
+  }
+
+  Future<void> _openFilters() async {
+    final result = await showTransactionFilters(
+      context: context,
+      initial: _filters,
+      options: _filterOptions,
+    );
+    if (result == null || !mounted) return;
+    _applyFilters(result, syncSearchField: true);
+  }
+
+  void _applyFilters(
+    TransactionFilters next, {
+    required bool syncSearchField,
+  }) {
+    _searchTimer?.cancel();
+    if (syncSearchField && _searchController.text != next.search) {
+      _searchController.text = next.search;
+      _searchController.selection = TextSelection.collapsed(
+        offset: _searchController.text.length,
+      );
+    }
+    if (_filters == next) return;
+    setState(() => _filters = next);
+    unawaited(_refreshTransactions(clearVisible: true));
+  }
+
+  void _removePeriodFilter() {
+    _applyFilters(
+      _filters.copyWith(startDate: null, endDate: null),
+      syncSearchField: false,
+    );
+  }
+
+  void _removeTypeFilter() {
+    _applyFilters(
+      _filters.copyWith(eventTypes: const <String>{}),
+      syncSearchField: false,
+    );
+  }
+
+  void _clearAllFilters() {
+    _searchController.clear();
+    _applyFilters(TransactionFilters.empty(), syncSearchField: false);
+  }
+
   Future<void> _openTransactionDetail(TransactionItem item) async {
     final space = _space;
     if (space == null) return;
@@ -175,7 +356,9 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       repository: widget.repository,
       eventId: item.id,
     );
-    if (changed == true && mounted) await _refresh();
+    if (changed == true && mounted) {
+      await _refreshTransactions(clearVisible: false);
+    }
   }
 
   Future<void> _editTransaction(TransactionItem item) async {
@@ -193,8 +376,8 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         transaction: item,
       ),
     );
-    if (saved == true) {
-      await _refresh();
+    if (saved == true && mounted) {
+      await _refreshTransactions(clearVisible: false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lançamento atualizado.')),
@@ -208,147 +391,47 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        final brightness = Theme.of(dialogContext).brightness;
-        final secondaryText = AppColors.secondaryText(brightness);
-        return AlertDialog(
-          title: Text(
-            'Excluir lançamento?',
-            style: AppTypography.section(dialogContext, fontSize: 18),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                financialDisplayDescription(item.description),
-                style: AppTypography.body(
-                  dialogContext,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${Formatters.money(item.amount.abs())} • ${_formatDate(item.occurredAt)}',
-                style: AppTypography.body(
-                  dialogContext,
-                  fontSize: 12,
-                  color: secondaryText,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'O impacto deste lançamento será removido do saldo, do orçamento e do Fôlego.',
-                style: AppTypography.body(
-                  dialogContext,
-                  fontSize: 12,
-                  color: secondaryText,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Se ele estiver ligado a uma recorrência, a previsão voltará a ficar pendente.',
-                style: AppTypography.body(
-                  dialogContext,
-                  fontSize: 12,
-                  color: secondaryText,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Excluir'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true || !mounted) return;
-    if (_pendingDeletions.containsKey(item.id) ||
-        !_transactions.any((transaction) => transaction.id == item.id)) {
-      return;
-    }
-
-    final pending = _PendingTransactionDeletion(
-      eventId: item.id,
-      item: item,
-      spaceId: space.id,
-    );
-    setState(() {
-      _pendingDeletions[item.id] = pending;
-      _hiddenTransactionIds.add(item.id);
-      _transactions = _transactions
-          .where((transaction) => transaction.id != item.id)
-          .toList();
-    });
-
-    final controller = ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Lançamento excluído.'),
-        action: SnackBarAction(
-          label: 'Desfazer',
-          onPressed: () => _undoPendingDeletion(item.id),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          'Excluir lançamento?',
+          style: AppTypography.section(dialogContext, fontSize: 18),
         ),
+        content: Text(
+          '${financialDisplayDescription(item.description)}\n\n'
+          '${Formatters.money(item.amount.abs())} • ${_formatDate(item.occurredAt)}',
+          style: AppTypography.body(dialogContext, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Excluir'),
+          ),
+        ],
       ),
     );
-    await controller.closed;
-    await _commitPendingDeletion(item.id);
-  }
+    if (confirmed != true || !mounted) return;
 
-  void _undoPendingDeletion(String eventId) {
-    final pending = _pendingDeletions[eventId];
-    if (pending == null || pending.committing) return;
-    _pendingDeletions.remove(eventId);
-    _hiddenTransactionIds.remove(eventId);
-    _restorePendingDeletion(pending);
-  }
-
-  Future<void> _commitPendingDeletion(String eventId) async {
-    final pending = _pendingDeletions[eventId];
-    if (pending == null || pending.committing) return;
-    pending.committing = true;
     try {
       await widget.repository.cancelSimpleTransaction(
-        spaceId: pending.spaceId,
-        eventId: pending.eventId,
+        spaceId: space.id,
+        eventId: item.id,
       );
-      if (identical(_pendingDeletions[eventId], pending)) {
-        _pendingDeletions.remove(eventId);
-      }
-    } catch (error) {
-      if (identical(_pendingDeletions[eventId], pending)) {
-        _pendingDeletions.remove(eventId);
-      }
-      _hiddenTransactionIds.remove(eventId);
       if (!mounted) return;
-      _restorePendingDeletion(pending);
+      await _refreshTransactions(clearVisible: false);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Não foi possível excluir o lançamento. ${_friendlyError(error)}',
-          ),
-        ),
+        const SnackBar(content: Text('Lançamento excluído.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
       );
     }
-  }
-
-  void _restorePendingDeletion(_PendingTransactionDeletion pending) {
-    if (!mounted) return;
-    setState(() {
-      _transactions = mergeTransactionPages(
-        existing: _transactions,
-        incoming: [pending.item],
-        hiddenIds: _hiddenTransactionIds,
-      );
-    });
   }
 
   Future<void> _editRecurring(RecurringItem item) async {
@@ -550,12 +633,26 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           : TabBarView(
               controller: _tabController,
               children: [
-                _TransactionsTab(
+                _TransactionsTabV3(
                   transactions: _transactions,
                   categoryById: _categoryById,
+                  filters: _filters,
+                  filterOptions: _filterOptions,
+                  searchController: _searchController,
+                  loading: _loadingTransactions,
                   loadingMore: _loadingMore,
                   hasMore: _hasMoreTransactions,
                   loadMoreError: _loadMoreError,
+                  onSearchChanged: _onSearchChanged,
+                  onClearSearch: _clearSearch,
+                  onOpenFilters: _openFilters,
+                  onClearFilters: _clearAllFilters,
+                  onRemovePeriod: _removePeriodFilter,
+                  onRemoveTypes: _removeTypeFilter,
+                  onFiltersChanged: (filters) => _applyFilters(
+                    filters,
+                    syncSearchField: false,
+                  ),
                   onRefresh: _refresh,
                   onLoadMore: _loadMoreTransactions,
                   onOpen: _openTransactionDetail,
@@ -624,7 +721,8 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     if (text.contains('invalid_recurring_item')) {
       return 'Essa recorrência não está ativa.';
     }
-    if (text.contains('write_access_denied')) {
+    if (text.contains('space_access_denied') ||
+        text.contains('write_access_denied')) {
       return 'Você não tem permissão para alterar esse espaço.';
     }
     if (text.contains('transaction_type_not_deletable')) {
@@ -642,36 +740,47 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   }
 }
 
-class _PendingTransactionDeletion {
-  _PendingTransactionDeletion({
-    required this.eventId,
-    required this.item,
-    required this.spaceId,
-  });
-  final String eventId;
-  final TransactionItem item;
-  final String spaceId;
-  bool committing = false;
-}
-
-class _TransactionsTab extends StatelessWidget {
-  const _TransactionsTab({
+class _TransactionsTabV3 extends StatelessWidget {
+  const _TransactionsTabV3({
     required this.transactions,
     required this.categoryById,
+    required this.filters,
+    required this.filterOptions,
+    required this.searchController,
+    required this.loading,
     required this.loadingMore,
     required this.hasMore,
     required this.loadMoreError,
+    required this.onSearchChanged,
+    required this.onClearSearch,
+    required this.onOpenFilters,
+    required this.onClearFilters,
+    required this.onRemovePeriod,
+    required this.onRemoveTypes,
+    required this.onFiltersChanged,
     required this.onRefresh,
     required this.onLoadMore,
     required this.onOpen,
     required this.onEdit,
     required this.onDelete,
   });
+
   final List<TransactionItem> transactions;
   final Map<String, CategoryItem> categoryById;
+  final TransactionFilters filters;
+  final TransactionFilterOptions filterOptions;
+  final TextEditingController searchController;
+  final bool loading;
   final bool loadingMore;
   final bool hasMore;
   final String? loadMoreError;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
+  final VoidCallback onOpenFilters;
+  final VoidCallback onClearFilters;
+  final VoidCallback onRemovePeriod;
+  final VoidCallback onRemoveTypes;
+  final ValueChanged<TransactionFilters> onFiltersChanged;
   final Future<void> Function() onRefresh;
   final Future<void> Function() onLoadMore;
   final Future<void> Function(TransactionItem) onOpen;
@@ -680,315 +789,261 @@ class _TransactionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (transactions.isEmpty) {
-      return AppContentContainer.list(
-        fillHeight: true,
-        child: RefreshIndicator(
-          onRefresh: onRefresh,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(0, 24, 0, 120),
+    final chips = _activeChips();
+    return AppContentContainer.list(
+      fillHeight: true,
+      child: Column(
+        children: [
+          const SizedBox(height: 14),
+          Row(
             children: [
-              const SizedBox(height: 86),
-              Icon(
-                CategoryVisuals.iconFor(category: 'A classificar'),
-                size: 46,
-                color: CategoryVisuals.colorFor(
-                  category: 'A classificar',
-                  brightness: Theme.of(context).brightness,
+              Expanded(
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: searchController,
+                  builder: (context, value, _) {
+                    return TextField(
+                      controller: searchController,
+                      textInputAction: TextInputAction.search,
+                      onChanged: onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'buscar lançamento',
+                        prefixIcon: const Icon(AppIcons.search, size: 19),
+                        suffixIcon: value.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'limpar busca',
+                                onPressed: onClearSearch,
+                                icon: const Icon(AppIcons.close, size: 18),
+                              ),
+                      ),
+                    );
+                  },
                 ),
               ),
-              const SizedBox(height: 14),
-              Text(
-                'Nenhum lançamento ainda.',
-                textAlign: TextAlign.center,
-                style: AppTypography.body(
-                  context,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                key: const ValueKey('transaction-filter-button'),
+                onPressed: onOpenFilters,
+                icon: const Icon(AppIcons.filter, size: 18),
+                label: Text(
+                  filters.activeFilterCount == 0
+                      ? 'filtros'
+                      : 'filtros · ${filters.activeFilterCount}',
                 ),
               ),
             ],
           ),
+          if (chips.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  ...chips.map(
+                    (chip) => InputChip(
+                      label: Text(chip.label),
+                      onDeleted: chip.onRemove,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onClearFilters,
+                    child: const Text('limpar filtros'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          if (loading) const LinearProgressIndicator(minHeight: 2),
+          Expanded(child: _buildList(context)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
+    if (loading && transactions.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (transactions.isEmpty) {
+      final filtered = filters.hasQuery;
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(0, 70, 0, 120),
+          children: [
+            Icon(
+              filtered ? AppIcons.search : AppIcons.transactions,
+              size: 44,
+              color: AppColors.secondaryText(Theme.of(context).brightness),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              filtered ? 'nenhum lançamento por aqui' : 'Nenhum lançamento ainda.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body(
+                context,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (filtered) ...[
+              const SizedBox(height: 7),
+              Text(
+                'tente ajustar os filtros ou a busca',
+                textAlign: TextAlign.center,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 12,
+                  color: AppColors.secondaryText(
+                    Theme.of(context).brightness,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       );
     }
 
     final showFooter = loadingMore || loadMoreError != null;
-    return AppContentContainer.list(
-      fillHeight: true,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (hasMore &&
-              !loadingMore &&
-              notification.metrics.extentAfter < 360) {
-            onLoadMore();
-          }
-          return false;
-        },
-        child: RefreshIndicator(
-          onRefresh: onRefresh,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(0, 16, 0, 120),
-            itemCount: transactions.length + (showFooter ? 1 : 0),
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              if (index >= transactions.length) {
-                return _TransactionLoadMoreFooter(
-                  loading: loadingMore,
-                  error: loadMoreError,
-                  onRetry: () => onLoadMore(),
-                );
-              }
-              final transaction = transactions[index];
-              return _TransactionCard(
-                transaction: transaction,
-                categoryById: categoryById,
-                onOpen: () => onOpen(transaction),
-                onEdit: () => onEdit(transaction),
-                onDelete: () => onDelete(transaction),
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (hasMore &&
+            !loadingMore &&
+            !loading &&
+            notification.metrics.extentAfter < 360) {
+          onLoadMore();
+        }
+        return false;
+      },
+      child: RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 120),
+          itemCount: transactions.length + (showFooter ? 1 : 0),
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            if (index >= transactions.length) {
+              return _TransactionLoadMoreFooterV3(
+                loading: loadingMore,
+                error: loadMoreError,
+                onRetry: onLoadMore,
               );
-            },
-          ),
+            }
+            final item = transactions[index];
+            return _TransactionCardV3(
+              item: item,
+              visual: _visualFor(item, context),
+              onOpen: () => onOpen(item),
+              onEdit: item.canEditAsSimple ? () => onEdit(item) : null,
+              onDelete: item.canEditAsSimple ? () => onDelete(item) : null,
+            );
+          },
         ),
       ),
     );
   }
-}
 
-class _TransactionLoadMoreFooter extends StatelessWidget {
-  const _TransactionLoadMoreFooter({
-    required this.loading,
-    required this.error,
-    required this.onRetry,
-  });
-  final bool loading;
-  final String? error;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 18),
-        child: Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
+  List<_ActiveFilterChip> _activeChips() {
+    final chips = <_ActiveFilterChip>[];
+    if (filters.hasPeriod) {
+      chips.add(
+        _ActiveFilterChip(
+          _periodChipLabel(filters),
+          onRemovePeriod,
         ),
       );
     }
-    if (error == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        children: [
-          Text(
-            error!,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(context, fontSize: 12),
-          ),
-          const SizedBox(height: 6),
-          TextButton(onPressed: onRetry, child: const Text('Tentar novamente')),
-        ],
-      ),
-    );
-  }
-}
-
-class _TransactionCard extends StatelessWidget {
-  const _TransactionCard({
-    required this.transaction,
-    required this.categoryById,
-    required this.onOpen,
-    required this.onEdit,
-    required this.onDelete,
-  });
-  final TransactionItem transaction;
-  final Map<String, CategoryItem> categoryById;
-  final VoidCallback onOpen;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
-    final primaryText = AppColors.primaryText(brightness);
-    final secondaryText = AppColors.secondaryText(brightness);
-    final border = AppColors.border(brightness);
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final visual = _visualForTransaction(context);
-    final amountColor = transaction.isIncome
-        ? isDark
-              ? AppPalette.lime
-              : AppPalette.green
-        : transaction.isExpense
-        ? AppPalette.pink
-        : primaryText;
-    final typeLabel = transaction.isIncome
-        ? 'Receita'
-        : transaction.isExpense
-        ? 'Gasto'
-        : _typeLabel(transaction.eventType);
-    final description = financialDisplayDescription(transaction.description);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: border),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CategoryIconBadge(
-                icon: visual.icon,
-                color: visual.color,
-                size: 48,
-                iconSize: 24,
-                radius: 15,
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      description.isEmpty ? _typeLabel(transaction.eventType) : description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: primaryText,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _MetaPill(
-                          label: typeLabel,
-                          foreground: visual.color,
-                          background: visual.color.withValues(alpha: .11),
-                        ),
-                        if (transaction.categoryName != null)
-                          _MetaPill(
-                            label: transaction.categoryName!,
-                            foreground: secondaryText,
-                            background: secondaryText.withValues(alpha: .08),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 9),
-                    Text(
-                      [
-                        if (transaction.accountName != null)
-                          transaction.accountName!,
-                        _formatDate(transaction.occurredAt),
-                      ].join('  •  '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 11,
-                        color: secondaryText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    Formatters.money(transaction.amount.abs()),
-                    style: AppTypography.money(
-                      context,
-                      fontSize: 14,
-                      color: amountColor,
-                    ),
-                  ),
-                  if (transaction.canEditAsSimple) ...[
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () => _showTransactionActions(context),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: secondaryText.withValues(alpha: .07),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: border),
-                        ),
-                        child: Text(
-                          '⋮',
-                          style: TextStyle(
-                            color: secondaryText,
-                            fontSize: 22,
-                            height: 1,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showTransactionActions(BuildContext context) async {
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      useSafeArea: true,
-      showDragHandle: false,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _FolegoActionSheet(
-        title: financialDisplayDescription(transaction.description),
-        actions: const [
-          _SheetAction(value: 'edit', label: 'Editar'),
-          _SheetAction(value: 'delete', label: 'Excluir', destructive: true),
-        ],
-      ),
-    );
-    if (action == 'edit') onEdit();
-    if (action == 'delete') onDelete();
-  }
-
-  _TransactionVisual _visualForTransaction(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final categoryName = transaction.categoryName;
-    final parentId = transaction.categoryParentId;
-    String? category = categoryName;
-    String? subcategory;
-    if (parentId != null) {
-      final parent = categoryById[parentId];
-      if (parent != null) {
-        category = parent.name;
-        subcategory = categoryName;
-      }
+    if (filters.eventTypes.isNotEmpty) {
+      final label = filters.eventTypes.length == 1
+          ? transactionEventTypeLabel(filters.eventTypes.first)
+          : '${filters.eventTypes.length} tipos';
+      chips.add(_ActiveFilterChip(label, onRemoveTypes));
     }
-    if (transaction.isIncome && categoryName == null) {
+    if (filters.categoryId != null) {
+      chips.add(
+        _ActiveFilterChip(
+          _categoryLabel(filters.categoryId!),
+          () => onFiltersChanged(filters.copyWith(categoryId: null)),
+        ),
+      );
+    }
+    if (filters.accountId != null) {
+      chips.add(
+        _ActiveFilterChip(
+          _accountLabel(filters.accountId!),
+          () => onFiltersChanged(filters.copyWith(accountId: null)),
+        ),
+      );
+    }
+    if (filters.cardId != null) {
+      chips.add(
+        _ActiveFilterChip(
+          _cardLabel(filters.cardId!),
+          () => onFiltersChanged(filters.copyWith(cardId: null)),
+        ),
+      );
+    }
+    if (filters.benefitAccountId != null) {
+      chips.add(
+        _ActiveFilterChip(
+          _benefitLabel(filters.benefitAccountId!),
+          () => onFiltersChanged(filters.copyWith(benefitAccountId: null)),
+        ),
+      );
+    }
+    return chips;
+  }
+
+  String _categoryLabel(String id) {
+    for (final item in filterOptions.categories) {
+      if (item.id == id) return item.breadcrumb;
+    }
+    return 'categoria';
+  }
+
+  String _accountLabel(String id) {
+    for (final item in filterOptions.accounts) {
+      if (item.id == id) return item.name;
+    }
+    return 'conta';
+  }
+
+  String _cardLabel(String id) {
+    for (final item in filterOptions.cards) {
+      if (item.id == id) return item.name;
+    }
+    return 'cartão';
+  }
+
+  String _benefitLabel(String id) {
+    for (final item in filterOptions.benefits) {
+      if (item.id == id) return item.name;
+    }
+    return 'benefício';
+  }
+
+  _TransactionVisual _visualFor(TransactionItem item, BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    if (item.eventType == 'transfer' || item.eventType == 'reserve_transfer') {
+      return _TransactionVisual(
+        icon: AppIcons.transfer,
+        color: AppColors.primaryPurple(brightness),
+      );
+    }
+    if (item.eventType == 'card_payment') {
+      return _TransactionVisual(
+        icon: AppIcons.creditCard,
+        color: AppColors.primaryPurple(brightness),
+      );
+    }
+    if (item.isIncome || item.eventType == 'benefit_credit') {
       return _TransactionVisual(
         icon: CategoryVisuals.iconFor(category: 'Receitas'),
         color: CategoryVisuals.colorFor(
@@ -997,40 +1052,187 @@ class _TransactionCard extends StatelessWidget {
         ),
       );
     }
-    if (category != null && category.trim().isNotEmpty) {
-      return _TransactionVisual(
-        icon: CategoryVisuals.iconFor(
-          category: category,
-          subcategory: subcategory,
-        ),
-        color: CategoryVisuals.colorFor(
-          category: category,
-          brightness: brightness,
-        ),
-      );
+
+    var categoryName = item.categoryName ?? 'A classificar';
+    String? subcategory;
+    if (item.categoryParentId != null) {
+      final parent = categoryById[item.categoryParentId!];
+      if (parent != null) {
+        subcategory = categoryName;
+        categoryName = parent.name;
+      }
     }
     return _TransactionVisual(
-      icon: CategoryVisuals.iconFor(category: 'A classificar'),
+      icon: CategoryVisuals.iconFor(
+        category: categoryName,
+        subcategory: subcategory,
+      ),
       color: CategoryVisuals.colorFor(
-        category: 'A classificar',
+        category: categoryName,
         brightness: brightness,
       ),
     );
   }
+}
 
-  static String _typeLabel(String type) {
-    switch (type) {
-      case 'transfer': return 'Transferência';
-      case 'card_purchase': return 'Cartão';
-      case 'card_payment': return 'Pagamento';
-      case 'opening_balance': return 'Saldo inicial';
-      case 'benefit_expense': return 'Benefício';
-      case 'debt_payment': return 'Dívida';
-      case 'refund': return 'Estorno';
-      case 'adjustment': return 'Ajuste';
-      default: return 'Lançamento';
-    }
+class _TransactionCardV3 extends StatelessWidget {
+  const _TransactionCardV3({
+    required this.item,
+    required this.visual,
+    required this.onOpen,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  final TransactionItem item;
+  final _TransactionVisual visual;
+  final VoidCallback onOpen;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    final amountColor = item.isIncome
+        ? AppColors.positiveText(brightness)
+        : primary;
+
+    return Material(
+      color: surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: border),
+      ),
+      child: InkWell(
+        onTap: onOpen,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 13, 8, 13),
+          child: Row(
+            children: [
+              CategoryIconBadge(
+                icon: visual.icon,
+                color: visual.color,
+                size: 44,
+                iconSize: 22,
+                radius: 14,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      financialDisplayDescription(item.description),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: primary,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      [
+                        transactionEventTypeLabel(item.eventType),
+                        _formatDate(item.occurredAt),
+                        if (item.accountName != null) item.accountName!,
+                      ].join(' • '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${item.isIncome ? '+' : item.isExpense ? '−' : ''}${Formatters.money(item.amount.abs())}',
+                style: AppTypography.money(
+                  context,
+                  fontSize: 13,
+                  color: amountColor,
+                ),
+              ),
+              if (onEdit != null || onDelete != null)
+                PopupMenuButton<String>(
+                  tooltip: 'ações',
+                  onSelected: (value) {
+                    if (value == 'edit') onEdit?.call();
+                    if (value == 'delete') onDelete?.call();
+                  },
+                  itemBuilder: (_) => [
+                    if (onEdit != null)
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text('Editar'),
+                      ),
+                    if (onDelete != null)
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Excluir'),
+                      ),
+                  ],
+                )
+              else
+                const SizedBox(width: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
+}
+
+class _TransactionLoadMoreFooterV3 extends StatelessWidget {
+  const _TransactionLoadMoreFooterV3({
+    required this.loading,
+    required this.error,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final String? error;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (error == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        children: [
+          Text(
+            'não consegui carregar mais lançamentos',
+            style: AppTypography.body(context, fontSize: 12),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('tentar de novo')),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveFilterChip {
+  const _ActiveFilterChip(this.label, this.onRemove);
+  final String label;
+  final VoidCallback onRemove;
 }
 
 class _TransactionVisual {
@@ -1039,30 +1241,12 @@ class _TransactionVisual {
   final Color color;
 }
 
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({
-    required this.label,
-    required this.foreground,
-    required this.background,
-  });
-  final String label;
-  final Color foreground;
-  final Color background;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(99),
-    ),
-    child: Text(
-      label,
-      style: AppTypography.label(
-        context,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: foreground,
-      ),
-    ),
-  );
+String _periodChipLabel(TransactionFilters filters) {
+  if (filters.startDate != null && filters.endDate != null) {
+    return '${_formatDate(filters.startDate!)} — ${_formatDate(filters.endDate!)}';
+  }
+  if (filters.startDate != null) {
+    return 'desde ${_formatDate(filters.startDate!)}';
+  }
+  return 'até ${_formatDate(filters.endDate!)}';
 }
