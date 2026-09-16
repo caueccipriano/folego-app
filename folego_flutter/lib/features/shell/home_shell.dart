@@ -7,7 +7,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
-import '../../shared/widgets/liquid_glass_navigation_bar.dart';
+import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
 import '../plan/plan_screen.dart';
 import '../profile/profile_screen.dart';
@@ -87,15 +87,13 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
-    return Scaffold(
-      extendBody: true,
-      body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: LiquidGlassNavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (value) {
-          setState(() => _index = value);
-        },
-      ),
+    return ResponsiveNavigationShell(
+      selectedIndex: _index,
+      onDestinationSelected: (value) {
+        if (_index == value) return;
+        setState(() => _index = value);
+      },
+      pages: pages,
     );
   }
 }
