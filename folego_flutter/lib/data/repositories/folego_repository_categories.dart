@@ -235,7 +235,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
           'name': name.trim(),
           'essential': essential,
           'color_hex': colorHex,
-          if (iconKey != null) 'icon_key': iconKey,
+          'icon_key': ?iconKey,
           'search_aliases': searchAliases,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
