@@ -27,14 +27,14 @@ void main() {
       final source = _OrganizationFake(markersLoader: () => markers.future);
 
       await tester.pumpWidget(_organizationApp(source));
-      await _pumpAsync(tester);
+      await _drainAsync(tester);
 
       expect(find.text('mercado'), findsOneWidget);
       expect(source.categoryLoads, 1);
       expect(source.markerLoads, 1);
 
       markers.complete(source.markers);
-      await _pumpAsync(tester);
+      await _drainAsync(tester);
     });
 
     testWidgets('markers render while categories are delayed', (tester) async {
@@ -44,16 +44,15 @@ void main() {
       );
 
       await tester.pumpWidget(_organizationApp(source));
-      await _pumpAsync(tester);
-      await tester.tap(find.text('Marcadores'));
-      await _pumpAsync(tester);
+      await _drainAsync(tester);
+      await _switchOrganizationTab(tester, 'Marcadores');
 
       expect(find.text('viagem'), findsOneWidget);
       expect(source.categoryLoads, 1);
       expect(source.markerLoads, 1);
 
       categories.complete(source.categories);
-      await _pumpAsync(tester);
+      await _drainAsync(tester);
     });
 
     testWidgets('marker error stays local and categories keep working', (
@@ -64,11 +63,10 @@ void main() {
       );
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
 
       expect(find.text('mercado'), findsOneWidget);
-      await tester.tap(find.text('Marcadores'));
-      await tester.pumpAndSettle();
+      await _switchOrganizationTab(tester, 'Marcadores');
       expect(find.text('não consegui carregar seus marcadores'), findsOneWidget);
       expect(find.text('tentar novamente'), findsOneWidget);
     });
@@ -81,11 +79,10 @@ void main() {
       );
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pumpAndSettle();
-      expect(find.text('não consegui carregar suas categorias'), findsOneWidget);
+      await _drainAsync(tester);
 
-      await tester.tap(find.text('Marcadores'));
-      await tester.pumpAndSettle();
+      expect(find.text('não consegui carregar suas categorias'), findsOneWidget);
+      await _switchOrganizationTab(tester, 'Marcadores');
       expect(find.text('viagem'), findsOneWidget);
     });
 
@@ -100,11 +97,10 @@ void main() {
       );
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Marcadores'));
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
+      await _switchOrganizationTab(tester, 'Marcadores');
       await tester.tap(find.text('tentar novamente'));
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
 
       expect(find.text('viagem'), findsOneWidget);
       expect(source.markerLoads, 2);
@@ -115,13 +111,10 @@ void main() {
       final source = _OrganizationFake();
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Marcadores'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Categorias'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Marcadores'));
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
+      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'Categorias');
+      await _switchOrganizationTab(tester, 'Marcadores');
 
       expect(source.categoryLoads, 1);
       expect(source.markerLoads, 1);
@@ -131,9 +124,9 @@ void main() {
       final source = _OrganizationFake();
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
       await tester.tap(find.byType(Switch).first);
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
 
       expect(source.categoryMutations, 1);
       expect(source.categoryLoads, 2);
@@ -144,11 +137,10 @@ void main() {
       final source = _OrganizationFake();
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Marcadores'));
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
+      await _switchOrganizationTab(tester, 'Marcadores');
       await tester.tap(find.byType(Switch).first);
-      await tester.pumpAndSettle();
+      await _drainAsync(tester);
 
       expect(source.markerMutations, 1);
       expect(source.markerLoads, 2);
@@ -162,13 +154,14 @@ void main() {
       final source = _OrganizationFake(markersLoader: () => markers.future);
 
       await tester.pumpWidget(_organizationApp(source));
-      await _pumpAsync(tester);
+      await _drainAsync(tester);
 
       expect(find.text('mercado'), findsOneWidget);
       expect(find.text('nova categoria'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
 
       markers.complete(source.markers);
-      await _pumpAsync(tester);
+      await _drainAsync(tester);
     });
   });
 
@@ -194,7 +187,7 @@ void main() {
       expect(find.text('recebe em 10 dias · 27 set'), findsOneWidget);
     });
 
-    test('income timing always carries context', () {
+    test('income timing carries context for today tomorrow N days and no income', () {
       expect(
         homeIncomeTimingLabel(
           _snapshot(daysUntilIncome: 0, nextIncomeDate: DateTime(2026, 9, 17)),
@@ -221,7 +214,7 @@ void main() {
       );
     });
 
-    testWidgets('zero spendable state is explanatory and non punitive', (
+    testWidgets('zero spendable state is explanatory and keeps benefit context', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -362,7 +355,7 @@ void main() {
       );
     });
 
-    testWidgets('categories and offset remain editable with master off', (
+    testWidgets('types and offset remain editable with master off', (
       tester,
     ) async {
       final data = _NotificationDataFake();
@@ -379,7 +372,6 @@ void main() {
       expect(data.current.financialRemindersEnabled, isFalse);
 
       await _scrollNotifications(tester, -700);
-      expect(find.text('3 dias antes'), findsOneWidget);
       await tester.tap(find.text('3 dias antes'));
       await tester.pumpAndSettle();
       expect(data.current.reminderOffsetDays, 3);
@@ -408,7 +400,7 @@ void main() {
       expect(find.text('09:45'), findsOneWidget);
     });
 
-    testWidgets('supported target requests permission and granted enables', (
+    testWidgets('supported target asks permission and granted enables', (
       tester,
     ) async {
       final data = _NotificationDataFake();
@@ -455,10 +447,17 @@ void main() {
   });
 }
 
-Future<void> _pumpAsync(WidgetTester tester, [int frames = 6]) async {
-  for (var index = 0; index < frames; index += 1) {
-    await tester.pump();
-  }
+Future<void> _drainAsync(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 20));
+  await tester.pump();
+}
+
+Future<void> _switchOrganizationTab(WidgetTester tester, String label) async {
+  await tester.tap(find.text(label));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump();
 }
 
 Future<void> _scrollNotifications(WidgetTester tester, double dy) async {
