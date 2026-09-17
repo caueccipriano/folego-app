@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/notifications/notification_runtime.dart';
+import '../../core/notifications/notification_service.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
 import '../plan/plan_screen.dart';
@@ -30,10 +33,13 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 0;
   late final RealtimeInvalidationCoordinator _realtimeCoordinator;
   late final RealtimeSessionController _realtimeSession;
+  late final NotificationService _notificationService;
+  late final NotificationRuntimeController _notificationRuntime;
+  late final RealtimeRefreshBinding _notificationRealtimeBinding;
 
   @override
   void initState() {
@@ -45,8 +51,25 @@ class _HomeShellState extends State<HomeShell> {
           widget.realtimeEventSource ??
           SupabaseRealtimeEventSource(Supabase.instance.client),
     );
+    _notificationService = NotificationService(
+      adapter: const WebSafeNoopNotificationAdapter(),
+      loadPreferences: widget.repository.getNotificationPreferences,
+      loadUpcoming: (spaceId, preferences, horizonDays) =>
+          widget.repository.getNotificationUpcomingEvents(
+        spaceId,
+        preferences: preferences,
+        horizonDays: horizonDays,
+      ),
+    );
+    _notificationRuntime = NotificationRuntimeController(_notificationService);
+    _notificationRealtimeBinding = _realtimeCoordinator.bind(
+      domain: AppRealtimeDomain.notifications,
+      onRefresh: _syncActiveNotifications,
+    );
     AppRealtimeRegistry.attach(_realtimeCoordinator);
-    unawaited(_realtimeSession.switchSpace(widget.space.id));
+    NotificationServiceRegistry.attach(_notificationService);
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_activateSpace(widget.space.id));
   }
 
   @override
@@ -57,14 +80,43 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
-  Future<void> _switchSpace(String spaceId) async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_syncActiveNotifications());
+    }
+  }
+
+  Future<void> _activateSpace(String spaceId) async {
     await _realtimeSession.switchSpace(spaceId);
+    try {
+      await _notificationRuntime.activateSpace(spaceId);
+    } catch (_) {
+      // Notification scheduling is additive. Agenda and the rest of the app
+      // remain usable if the adapter/backend is temporarily unavailable.
+    }
+  }
+
+  Future<void> _switchSpace(String spaceId) async {
+    await _activateSpace(spaceId);
     if (!mounted) return;
     _realtimeCoordinator.invalidateAll();
   }
 
+  Future<void> _syncActiveNotifications() async {
+    try {
+      await _notificationRuntime.onAppResumed();
+    } catch (_) {
+      // Best-effort sync; never block app resume or financial navigation.
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _notificationRealtimeBinding.dispose();
+    NotificationServiceRegistry.detach(_notificationService);
+    _notificationRuntime.dispose();
     AppRealtimeRegistry.detach(_realtimeCoordinator);
     unawaited(_realtimeSession.dispose());
     super.dispose();
