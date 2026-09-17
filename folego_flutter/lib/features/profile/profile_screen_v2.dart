@@ -130,10 +130,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _setLanguage(AppLanguagePreference language) async {
-    if (_language == language) return;
-    setState(() => _language = language);
+    final normalized = normalizeLanguagePreference(language);
+    if (_language == normalized) return;
+    setState(() => _language = normalized);
     try {
-      await AppPreferences.setLanguagePreference(language);
+      await AppPreferences.setLanguagePreference(normalized);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -301,7 +302,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _languageSection() => _ProfileSection(
         title: 'idioma',
-        subtitle: 'use o sistema ou escolha um idioma suportado',
+        subtitle:
+            'português está completo; inglês e espanhol voltam quando a tradução chegar a 100%',
         child: _LanguageCard(selected: _language, onSelected: _setLanguage),
       );
 

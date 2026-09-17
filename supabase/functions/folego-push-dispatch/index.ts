@@ -34,6 +34,37 @@ function json(status: number, body: unknown) {
   });
 }
 
+async function recordDelivery(candidate: Candidate) {
+  const { error: markError } = await supabase.rpc("mark_web_push_delivered", {
+    p_user_id: candidate.user_id,
+    p_space_id: candidate.space_id,
+    p_stable_key: candidate.stable_key,
+    p_kind: candidate.kind,
+  });
+  if (markError) {
+    console.error("push delivery dedupe mark failed", markError.code);
+  }
+
+  const { error: historyError } = await supabase
+    .from("notification_history")
+    .upsert(
+      {
+        user_id: candidate.user_id,
+        space_id: candidate.space_id,
+        stable_key: candidate.stable_key,
+        kind: candidate.kind,
+        title: candidate.title,
+        body: candidate.body,
+        route: candidate.route,
+        delivered_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,stable_key", ignoreDuplicates: true },
+    );
+  if (historyError) {
+    console.error("notification history write failed", historyError.code);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
@@ -81,10 +112,30 @@ Deno.serve(async (req: Request) => {
 
   const candidates = (candidatesData ?? []) as Candidate[];
   let sent = 0;
+  let skippedQuiet = 0;
   let disabled = 0;
   let failed = 0;
 
   for (const candidate of candidates) {
+    const { data: shouldDeliver, error: quietError } = await supabase.rpc(
+      "web_push_should_deliver",
+      {
+        p_user_id: candidate.user_id,
+        p_space_id: candidate.space_id,
+        p_kind: candidate.kind,
+        p_stable_key: candidate.stable_key,
+        p_now: new Date().toISOString(),
+      },
+    );
+    if (quietError) {
+      failed += 1;
+      continue;
+    }
+    if (shouldDeliver !== true) {
+      skippedQuiet += 1;
+      continue;
+    }
+
     const { data: subscriptionsData, error: subscriptionsError } = await supabase
       .from("web_push_subscriptions")
       .select("id,endpoint,p256dh,auth_secret")
@@ -160,23 +211,14 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (delivered) {
-      const { error: markError } = await supabase.rpc("mark_web_push_delivered", {
-        p_user_id: candidate.user_id,
-        p_space_id: candidate.space_id,
-        p_stable_key: candidate.stable_key,
-        p_kind: candidate.kind,
-      });
-      if (markError) {
-        console.error("push delivery dedupe mark failed", markError.code);
-      }
-    }
+    if (delivered) await recordDelivery(candidate);
   }
 
   return json(200, {
     ok: true,
     candidates: candidates.length,
     sent,
+    skipped_quiet: skippedQuiet,
     disabled,
     failed,
   });

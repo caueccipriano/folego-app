@@ -15,6 +15,7 @@ enum FinancialNotificationKind {
   planThreshold,
   cardLimitThreshold,
   largeExpense,
+  dailySummary,
 }
 
 class NotificationPreferences {
@@ -31,6 +32,14 @@ class NotificationPreferences {
     this.cardLimitThresholdsEnabled = true,
     this.largeExpensesEnabled = false,
     this.largeExpenseThreshold = 200,
+    this.dailySummaryEnabled = true,
+    this.dailySummaryHour = 9,
+    this.dailySummaryMinute = 0,
+    this.quietHoursEnabled = true,
+    this.quietStartHour = 22,
+    this.quietStartMinute = 0,
+    this.quietEndHour = 8,
+    this.quietEndMinute = 0,
     this.reminderOffsetDays = 1,
     this.preferredHour = 9,
     this.preferredMinute = 0,
@@ -48,12 +57,22 @@ class NotificationPreferences {
   final bool cardLimitThresholdsEnabled;
   final bool largeExpensesEnabled;
   final double largeExpenseThreshold;
+  final bool dailySummaryEnabled;
+  final int dailySummaryHour;
+  final int dailySummaryMinute;
+  final bool quietHoursEnabled;
+  final int quietStartHour;
+  final int quietStartMinute;
+  final int quietEndHour;
+  final int quietEndMinute;
   final int reminderOffsetDays;
   final int preferredHour;
   final int preferredMinute;
 
-  String get preferredTimeDb =>
-      '${preferredHour.toString().padLeft(2, '0')}:${preferredMinute.toString().padLeft(2, '0')}:00';
+  String get preferredTimeDb => _dbTime(preferredHour, preferredMinute);
+  String get dailySummaryTimeDb => _dbTime(dailySummaryHour, dailySummaryMinute);
+  String get quietStartTimeDb => _dbTime(quietStartHour, quietStartMinute);
+  String get quietEndTimeDb => _dbTime(quietEndHour, quietEndMinute);
 
   NotificationPreferences copyWith({
     bool? financialRemindersEnabled,
@@ -67,6 +86,14 @@ class NotificationPreferences {
     bool? cardLimitThresholdsEnabled,
     bool? largeExpensesEnabled,
     double? largeExpenseThreshold,
+    bool? dailySummaryEnabled,
+    int? dailySummaryHour,
+    int? dailySummaryMinute,
+    bool? quietHoursEnabled,
+    int? quietStartHour,
+    int? quietStartMinute,
+    int? quietEndHour,
+    int? quietEndMinute,
     int? reminderOffsetDays,
     int? preferredHour,
     int? preferredMinute,
@@ -90,6 +117,14 @@ class NotificationPreferences {
             largeExpensesEnabled ?? this.largeExpensesEnabled,
         largeExpenseThreshold:
             largeExpenseThreshold ?? this.largeExpenseThreshold,
+        dailySummaryEnabled: dailySummaryEnabled ?? this.dailySummaryEnabled,
+        dailySummaryHour: dailySummaryHour ?? this.dailySummaryHour,
+        dailySummaryMinute: dailySummaryMinute ?? this.dailySummaryMinute,
+        quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
+        quietStartHour: quietStartHour ?? this.quietStartHour,
+        quietStartMinute: quietStartMinute ?? this.quietStartMinute,
+        quietEndHour: quietEndHour ?? this.quietEndHour,
+        quietEndMinute: quietEndMinute ?? this.quietEndMinute,
         reminderOffsetDays: reminderOffsetDays ?? this.reminderOffsetDays,
         preferredHour: preferredHour ?? this.preferredHour,
         preferredMinute: preferredMinute ?? this.preferredMinute,
@@ -100,6 +135,18 @@ class NotificationPreferences {
     required String fallbackSpaceId,
   }) {
     final preferred = _parseTime(json['preferred_time'] as String?);
+    final daily = _parseTime(
+      json['daily_summary_time'] as String?,
+      fallbackHour: 9,
+    );
+    final quietStart = _parseTime(
+      json['quiet_hours_start'] as String?,
+      fallbackHour: 22,
+    );
+    final quietEnd = _parseTime(
+      json['quiet_hours_end'] as String?,
+      fallbackHour: 8,
+    );
     final offset = (json['reminder_offset_days'] as num?)?.toInt() ?? 1;
     return NotificationPreferences(
       spaceId: json['space_id'] as String? ?? fallbackSpaceId,
@@ -117,6 +164,14 @@ class NotificationPreferences {
       largeExpensesEnabled: json['large_expenses_enabled'] as bool? ?? false,
       largeExpenseThreshold:
           (json['large_expense_threshold'] as num?)?.toDouble() ?? 200,
+      dailySummaryEnabled: json['daily_summary_enabled'] as bool? ?? true,
+      dailySummaryHour: daily.$1,
+      dailySummaryMinute: daily.$2,
+      quietHoursEnabled: json['quiet_hours_enabled'] as bool? ?? true,
+      quietStartHour: quietStart.$1,
+      quietStartMinute: quietStart.$2,
+      quietEndHour: quietEnd.$1,
+      quietEndMinute: quietEnd.$2,
       reminderOffsetDays: const {0, 1, 3}.contains(offset) ? offset : 1,
       preferredHour: preferred.$1,
       preferredMinute: preferred.$2,
@@ -137,9 +192,42 @@ class NotificationPreferences {
         'card_limit_thresholds_enabled': cardLimitThresholdsEnabled,
         'large_expenses_enabled': largeExpensesEnabled,
         'large_expense_threshold': largeExpenseThreshold,
+        'daily_summary_enabled': dailySummaryEnabled,
+        'daily_summary_time': dailySummaryTimeDb,
+        'quiet_hours_enabled': quietHoursEnabled,
+        'quiet_hours_start': quietStartTimeDb,
+        'quiet_hours_end': quietEndTimeDb,
         'reminder_offset_days': reminderOffsetDays,
         'preferred_time': preferredTimeDb,
       };
+}
+
+class NotificationHistoryItem {
+  const NotificationHistoryItem({
+    required this.id,
+    required this.kind,
+    required this.title,
+    required this.body,
+    required this.route,
+    required this.deliveredAt,
+  });
+
+  final int id;
+  final String kind;
+  final String title;
+  final String body;
+  final String route;
+  final DateTime deliveredAt;
+
+  factory NotificationHistoryItem.fromJson(Map<String, dynamic> json) =>
+      NotificationHistoryItem(
+        id: (json['id'] as num).toInt(),
+        kind: json['kind'] as String? ?? 'notification',
+        title: json['title'] as String? ?? 'Fôlego',
+        body: json['body'] as String? ?? '',
+        route: json['route'] as String? ?? '/',
+        deliveredAt: DateTime.parse(json['delivered_at'] as String),
+      );
 }
 
 class NotificationUpcomingEvent {
@@ -178,6 +266,7 @@ class NotificationUpcomingEvent {
   final String navigationTarget;
   final int dayOffset;
   final String? recurrenceKind;
+
   final DateTime scheduledAt;
   final String spaceTimezone;
 
@@ -307,10 +396,6 @@ String notificationBody(
   int reminderOffsetDays = 0,
 }) {
   if (event.overdue || event.dayOffset < 0) return '${event.title} está atrasado';
-
-  // The copy is prepared now but delivered later. Use the smaller of the
-  // configured lead time and the current distance to the due date so a reminder
-  // scheduled for tomorrow does not still say “vence em 3 dias”.
   final leadDays = event.dayOffset < reminderOffsetDays
       ? event.dayOffset
       : reminderOffsetDays;
@@ -339,9 +424,13 @@ String notificationRoute(NotificationUpcomingEvent event) {
   return '/agenda';
 }
 
-(int, int) _parseTime(String? value) {
+(int, int) _parseTime(
+  String? value, {
+  int fallbackHour = 9,
+  int fallbackMinute = 0,
+}) {
   final parts = value?.split(':') ?? const <String>[];
-  if (parts.length < 2) return (9, 0);
+  if (parts.length < 2) return (fallbackHour, fallbackMinute);
   final hour = int.tryParse(parts[0]);
   final minute = int.tryParse(parts[1]);
   if (hour == null ||
@@ -350,10 +439,13 @@ String notificationRoute(NotificationUpcomingEvent event) {
       hour > 23 ||
       minute < 0 ||
       minute > 59) {
-    return (9, 0);
+    return (fallbackHour, fallbackMinute);
   }
   return (hour, minute);
 }
+
+String _dbTime(int hour, int minute) =>
+    '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}:00';
 
 String _dateOnly(DateTime value) =>
     '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';

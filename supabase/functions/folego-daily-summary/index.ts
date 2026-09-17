@@ -34,6 +34,37 @@ function json(status: number, body: unknown) {
   });
 }
 
+async function recordDelivery(candidate: Candidate) {
+  const { error: markError } = await supabase.rpc("mark_web_push_delivered", {
+    p_user_id: candidate.user_id,
+    p_space_id: candidate.space_id,
+    p_stable_key: candidate.stable_key,
+    p_kind: candidate.kind,
+  });
+  if (markError) {
+    console.error("daily summary dedupe mark failed", markError.code);
+  }
+
+  const { error: historyError } = await supabase
+    .from("notification_history")
+    .upsert(
+      {
+        user_id: candidate.user_id,
+        space_id: candidate.space_id,
+        stable_key: candidate.stable_key,
+        kind: candidate.kind,
+        title: candidate.title,
+        body: candidate.body,
+        route: candidate.route,
+        delivered_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,stable_key", ignoreDuplicates: true },
+    );
+  if (historyError) {
+    console.error("notification history write failed", historyError.code);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
@@ -119,10 +150,7 @@ Deno.serve(async (req: Request) => {
             },
           },
           pushPayload,
-          {
-            TTL: 60 * 60 * 18,
-            urgency: "normal",
-          },
+          { TTL: 60 * 60 * 18, urgency: "normal" },
         );
 
         delivered = true;
@@ -160,17 +188,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (delivered) {
-      const { error: markError } = await supabase.rpc("mark_web_push_delivered", {
-        p_user_id: candidate.user_id,
-        p_space_id: candidate.space_id,
-        p_stable_key: candidate.stable_key,
-        p_kind: candidate.kind,
-      });
-      if (markError) {
-        console.error("daily summary dedupe mark failed", markError.code);
-      }
-    }
+    if (delivered) await recordDelivery(candidate);
   }
 
   return json(200, {

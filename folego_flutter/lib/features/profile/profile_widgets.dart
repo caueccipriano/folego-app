@@ -454,7 +454,7 @@ class _LanguageCard extends StatelessWidget {
       children: [
         _LanguageOption(
           label: 'Sistema',
-          subtitle: 'idioma do dispositivo',
+          subtitle: 'usa português enquanto outros idiomas não estão completos',
           icon: AppIcons.systemTheme,
           selected: selected == AppLanguagePreference.system,
           onTap: () => onSelected(AppLanguagePreference.system),
@@ -462,26 +462,28 @@ class _LanguageCard extends StatelessWidget {
         _ChoiceDivider(),
         _LanguageOption(
           label: 'Português (Brasil)',
-          subtitle: 'pt_BR',
+          subtitle: 'idioma completo',
           icon: AppIcons.language,
           selected: selected == AppLanguagePreference.portugueseBrazil,
           onTap: () => onSelected(AppLanguagePreference.portugueseBrazil),
         ),
         _ChoiceDivider(),
-        _LanguageOption(
+        const _LanguageOption(
           label: 'English',
-          subtitle: 'en',
+          subtitle: 'tradução completa em preparação',
           icon: AppIcons.language,
-          selected: selected == AppLanguagePreference.english,
-          onTap: () => onSelected(AppLanguagePreference.english),
+          selected: false,
+          enabled: false,
+          badge: 'em breve',
         ),
         _ChoiceDivider(),
-        _LanguageOption(
+        const _LanguageOption(
           label: 'Español',
-          subtitle: 'es',
+          subtitle: 'traducción completa en preparación',
           icon: AppIcons.language,
-          selected: selected == AppLanguagePreference.spanish,
-          onTap: () => onSelected(AppLanguagePreference.spanish),
+          selected: false,
+          enabled: false,
+          badge: 'em breve',
         ),
       ],
     );
@@ -494,14 +496,18 @@ class _LanguageOption extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.selected,
-    required this.onTap,
+    this.onTap,
+    this.enabled = true,
+    this.badge,
   });
 
   final String label;
   final String subtitle;
   final IconData icon;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool enabled;
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +517,8 @@ class _LanguageOption extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
 
     return Semantics(
-      button: true,
+      button: enabled && onTap != null,
+      enabled: enabled,
       selected: selected,
       label: label,
       child: Material(
@@ -519,14 +526,18 @@ class _LanguageOption extends StatelessWidget {
             ? purple.withValues(alpha: .07)
             : AppColors.surface(brightness),
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 62),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
-                  Icon(icon, size: 20, color: selected ? purple : secondary),
+                  Icon(
+                    icon,
+                    size: 20,
+                    color: enabled && selected ? purple : secondary,
+                  ),
                   const SizedBox(width: 11),
                   Expanded(
                     child: Column(
@@ -538,7 +549,11 @@ class _LanguageOption extends StatelessWidget {
                             context,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: selected ? purple : primary,
+                            color: !enabled
+                                ? secondary
+                                : selected
+                                    ? purple
+                                    : primary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -553,7 +568,23 @@ class _LanguageOption extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (selected)
+                  if (badge != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.border(brightness).withValues(alpha: .35),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        badge!,
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 9,
+                          color: secondary,
+                        ),
+                      ),
+                    )
+                  else if (selected)
                     Container(
                       width: 28,
                       height: 28,

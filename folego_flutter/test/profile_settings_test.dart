@@ -45,7 +45,7 @@ void main() {
   });
 
   group('Profile language preferences', () {
-    test('defaults to system and maps every supported locale', () async {
+    test('only exposes locales with complete product coverage', () async {
       final repository = AppPreferenceRepository(_MemoryPreferenceStore());
       expect(
         await repository.loadLanguagePreference(),
@@ -56,24 +56,60 @@ void main() {
         localeForLanguagePreference(AppLanguagePreference.portugueseBrazil),
         const Locale('pt', 'BR'),
       );
+      expect(productionSupportedLocales, const <Locale>[Locale('pt', 'BR')]);
       expect(
-        localeForLanguagePreference(AppLanguagePreference.english),
-        const Locale('en'),
+        isProductionReadyLanguage(AppLanguagePreference.portugueseBrazil),
+        isTrue,
       );
       expect(
-        localeForLanguagePreference(AppLanguagePreference.spanish),
-        const Locale('es'),
+        isProductionReadyLanguage(AppLanguagePreference.english),
+        isFalse,
+      );
+      expect(
+        isProductionReadyLanguage(AppLanguagePreference.spanish),
+        isFalse,
       );
     });
 
-    test('persists pt_BR, en, es and system', () async {
+    test('normalizes legacy partial EN and ES preferences to pt_BR', () async {
       final store = _MemoryPreferenceStore();
       final repository = AppPreferenceRepository(store);
 
-      for (final preference in AppLanguagePreference.values) {
-        await repository.saveLanguagePreference(preference);
-        expect(await repository.loadLanguagePreference(), preference);
-      }
+      store.values[AppPreferenceRepository.languageKey] = 'en';
+      expect(
+        await repository.loadLanguagePreference(),
+        AppLanguagePreference.portugueseBrazil,
+      );
+
+      store.values[AppPreferenceRepository.languageKey] = 'es';
+      expect(
+        await repository.loadLanguagePreference(),
+        AppLanguagePreference.portugueseBrazil,
+      );
+
+      expect(
+        localeForLanguagePreference(AppLanguagePreference.english),
+        const Locale('pt', 'BR'),
+      );
+      expect(
+        localeForLanguagePreference(AppLanguagePreference.spanish),
+        const Locale('pt', 'BR'),
+      );
+    });
+
+    test('does not persist a partially translated locale', () async {
+      final store = _MemoryPreferenceStore();
+      final repository = AppPreferenceRepository(store);
+
+      await repository.saveLanguagePreference(AppLanguagePreference.english);
+      expect(
+        store.values[AppPreferenceRepository.languageKey],
+        'pt_BR',
+      );
+      expect(
+        await repository.loadLanguagePreference(),
+        AppLanguagePreference.portugueseBrazil,
+      );
     });
   });
 

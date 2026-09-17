@@ -11,6 +11,24 @@ enum AppLanguagePreference {
   spanish,
 }
 
+/// Idiomas expostos como completos no produto.
+///
+/// Inglês e espanhol já têm a infraestrutura/arquivos-base preparados, mas a
+/// interface ainda contém textos legados hardcoded em português. Até a
+/// cobertura chegar a 100%, o app não deve oferecer uma experiência híbrida.
+const productionSupportedLocales = <Locale>[Locale('pt', 'BR')];
+
+bool isProductionReadyLanguage(AppLanguagePreference preference) =>
+    preference == AppLanguagePreference.system ||
+    preference == AppLanguagePreference.portugueseBrazil;
+
+AppLanguagePreference normalizeLanguagePreference(
+  AppLanguagePreference preference,
+) {
+  if (isProductionReadyLanguage(preference)) return preference;
+  return AppLanguagePreference.portugueseBrazil;
+}
+
 abstract interface class AppPreferenceStore {
   Future<String?> getString(String key);
 
@@ -54,9 +72,10 @@ final class AppPreferenceRepository {
   }
 
   Future<void> saveLanguagePreference(AppLanguagePreference preference) {
+    final normalized = normalizeLanguagePreference(preference);
     return _store.setString(
       languageKey,
-      languagePreferenceValue(preference),
+      languagePreferenceValue(normalized),
     );
   }
 
@@ -96,10 +115,11 @@ AppLanguagePreference languageFromPreference(String? value) {
   switch (value) {
     case 'pt_BR':
       return AppLanguagePreference.portugueseBrazil;
+    // Builds anteriores permitiam selecionar EN/ES com cobertura parcial.
+    // Normalize silenciosamente para PT-BR para impedir uma UI misturada.
     case 'en':
-      return AppLanguagePreference.english;
     case 'es':
-      return AppLanguagePreference.spanish;
+      return AppLanguagePreference.portugueseBrazil;
     case 'system':
     default:
       return AppLanguagePreference.system;
@@ -107,28 +127,26 @@ AppLanguagePreference languageFromPreference(String? value) {
 }
 
 String languagePreferenceValue(AppLanguagePreference preference) {
-  switch (preference) {
+  switch (normalizeLanguagePreference(preference)) {
     case AppLanguagePreference.system:
       return 'system';
     case AppLanguagePreference.portugueseBrazil:
       return 'pt_BR';
     case AppLanguagePreference.english:
-      return 'en';
     case AppLanguagePreference.spanish:
-      return 'es';
+      return 'pt_BR';
   }
 }
 
 Locale? localeForLanguagePreference(AppLanguagePreference preference) {
-  switch (preference) {
+  switch (normalizeLanguagePreference(preference)) {
     case AppLanguagePreference.system:
       return null;
     case AppLanguagePreference.portugueseBrazil:
       return const Locale('pt', 'BR');
     case AppLanguagePreference.english:
-      return const Locale('en');
     case AppLanguagePreference.spanish:
-      return const Locale('es');
+      return const Locale('pt', 'BR');
   }
 }
 
@@ -177,8 +195,9 @@ abstract final class AppPreferences {
   static Future<void> setLanguagePreference(
     AppLanguagePreference preference,
   ) async {
-    _applyLanguage(preference);
-    await _repository.saveLanguagePreference(preference);
+    final normalized = normalizeLanguagePreference(preference);
+    _applyLanguage(normalized);
+    await _repository.saveLanguagePreference(normalized);
   }
 
   static Future<void> markFirstRunIntroSeen() async {
@@ -201,9 +220,10 @@ abstract final class AppPreferences {
   }
 
   static void _applyLanguage(AppLanguagePreference preference) {
-    languagePreference.value = preference;
+    final normalized = normalizeLanguagePreference(preference);
+    languagePreference.value = normalized;
 
-    switch (preference) {
+    switch (normalized) {
       case AppLanguagePreference.system:
         LocaleController.useSystem();
         break;
@@ -211,10 +231,8 @@ abstract final class AppPreferences {
         LocaleController.usePortuguese();
         break;
       case AppLanguagePreference.english:
-        LocaleController.useEnglish();
-        break;
       case AppLanguagePreference.spanish:
-        LocaleController.useSpanish();
+        LocaleController.usePortuguese();
         break;
     }
   }

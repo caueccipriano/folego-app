@@ -4,6 +4,16 @@ import '../../core/notifications/notification_models.dart';
 import 'folego_repository.dart';
 
 extension FolegoRepositoryNotifications on FolegoRepository {
+  static const _preferenceColumns = '''
+    space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
+    recurrences_enabled,subscriptions_enabled,expected_income_enabled,
+    overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,
+    large_expenses_enabled,large_expense_threshold,
+    daily_summary_enabled,daily_summary_time,
+    quiet_hours_enabled,quiet_hours_start,quiet_hours_end,
+    reminder_offset_days,preferred_time
+  ''';
+
   Future<NotificationPreferences> getNotificationPreferences(
     String spaceId,
   ) async {
@@ -14,13 +24,7 @@ extension FolegoRepositoryNotifications on FolegoRepository {
 
     final data = await Supabase.instance.client
         .from('notification_preferences')
-        .select('''
-          space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
-          recurrences_enabled,subscriptions_enabled,expected_income_enabled,
-          overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,
-          large_expenses_enabled,large_expense_threshold,
-          reminder_offset_days,preferred_time
-        ''')
+        .select(_preferenceColumns)
         .eq('user_id', userId)
         .eq('space_id', spaceId)
         .limit(1);
@@ -46,13 +50,7 @@ extension FolegoRepositoryNotifications on FolegoRepository {
           preferences.toUpsertJson(userId),
           onConflict: 'user_id,space_id',
         )
-        .select('''
-          space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
-          recurrences_enabled,subscriptions_enabled,expected_income_enabled,
-          overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,
-          large_expenses_enabled,large_expense_threshold,
-          reminder_offset_days,preferred_time
-        ''')
+        .select(_preferenceColumns)
         .single();
     return NotificationPreferences.fromJson(
       data,
@@ -90,6 +88,31 @@ extension FolegoRepositoryNotifications on FolegoRepository {
 
     return List<Map<String, dynamic>>.from(data as List)
         .map(NotificationUpcomingEvent.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<List<NotificationHistoryItem>> getNotificationHistory(
+    String spaceId, {
+    int limit = 100,
+  }) async {
+    if (limit <= 0 || limit > 200) {
+      throw ArgumentError.value(limit, 'limit', 'Deve estar entre 1 e 200.');
+    }
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Sessão necessária para carregar o histórico.');
+    }
+
+    final data = await Supabase.instance.client
+        .from('notification_history')
+        .select('id,kind,title,body,route,delivered_at')
+        .eq('user_id', userId)
+        .eq('space_id', spaceId)
+        .order('delivered_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(data)
+        .map(NotificationHistoryItem.fromJson)
         .toList(growable: false);
   }
 }
