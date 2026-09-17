@@ -98,7 +98,8 @@ class NotificationService {
     required String spaceId,
     required String entityType,
     required String entityId,
-  }) => _adapter.cancelForEntity(
+  }) =>
+      _adapter.cancelForEntity(
         spaceId: spaceId,
         entityType: entityType,
         entityId: entityId,
@@ -139,14 +140,17 @@ class NotificationService {
   }
 
   Future<void> _syncOnce(String spaceId) async {
-    final preferences = await _loadPreferences(spaceId);
-    if (!preferences.financialRemindersEnabled) {
+    // Check the platform adapter first. This keeps web/no-op builds side-effect
+    // free and avoids unnecessary financial reads when OS notifications cannot
+    // be scheduled on the current target.
+    final permission = await _adapter.getPermissionStatus();
+    if (permission != NotificationPermissionStatus.granted) {
       await _adapter.clearForSpace(spaceId);
       return;
     }
 
-    final permission = await _adapter.getPermissionStatus();
-    if (permission != NotificationPermissionStatus.granted) {
+    final preferences = await _loadPreferences(spaceId);
+    if (!preferences.financialRemindersEnabled) {
       await _adapter.clearForSpace(spaceId);
       return;
     }
