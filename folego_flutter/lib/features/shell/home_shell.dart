@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/notifications/notification_adapter_factory.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/realtime/realtime_invalidation.dart';
@@ -52,7 +53,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           SupabaseRealtimeEventSource(Supabase.instance.client),
     );
     _notificationService = NotificationService(
-      adapter: const WebSafeNoopNotificationAdapter(),
+      adapter: createNotificationSchedulerAdapter(Supabase.instance.client),
       loadPreferences: widget.repository.getNotificationPreferences,
       loadUpcoming: (spaceId, preferences, horizonDays) =>
           widget.repository.getNotificationUpcomingEvents(
