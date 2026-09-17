@@ -4,6 +4,63 @@ import '../models/budget_overview_item.dart';
 import 'folego_repository.dart';
 
 extension FolegoRepositoryBudget on FolegoRepository {
+  Future<FlexibleBudgetOverview> getFlexibleBudgetOverview({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    final month = DateTime(periodMonth.year, periodMonth.month);
+    final result = await Supabase.instance.client.rpc(
+      'get_flexible_budget_overview',
+      params: {
+        'p_space_id': spaceId,
+        'p_period_month': _date(month),
+      },
+    );
+
+    final rows = List<Map<String, dynamic>>.from(result as List<dynamic>);
+    if (rows.isEmpty) {
+      return FlexibleBudgetOverview(
+        periodMonth: month,
+        configured: false,
+        explicitLimit: false,
+        limitAmount: 0,
+        usedAmount: 0,
+        remainingAmount: 0,
+        exceededAmount: 0,
+        categoryLimitsTotal: 0,
+      );
+    }
+    return FlexibleBudgetOverview.fromJson(rows.first);
+  }
+
+  Future<void> setFlexibleBudgetLimit({
+    required String spaceId,
+    required DateTime periodMonth,
+    required num limitAmount,
+  }) async {
+    if (limitAmount < 0) {
+      throw ArgumentError.value(
+        limitAmount,
+        'limitAmount',
+        'O teto flexível não pode ser negativo.',
+      );
+    }
+
+    final month = DateTime(periodMonth.year, periodMonth.month);
+    final result = await Supabase.instance.client.rpc(
+      'set_flexible_budget_limit',
+      params: {
+        'p_space_id': spaceId,
+        'p_period_month': _date(month),
+        'p_limit': limitAmount,
+      },
+    );
+
+    if (result != true) {
+      throw StateError('Não foi possível atualizar o orçamento flexível.');
+    }
+  }
+
   Future<void> setBudgetLimit({
     required String spaceId,
     required DateTime periodMonth,
