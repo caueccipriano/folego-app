@@ -56,7 +56,8 @@ class NotificationPreferences {
     int? reminderOffsetDays,
     int? preferredHour,
     int? preferredMinute,
-  }) => NotificationPreferences(
+  }) =>
+      NotificationPreferences(
         spaceId: spaceId,
         financialRemindersEnabled:
             financialRemindersEnabled ?? this.financialRemindersEnabled,
@@ -250,7 +251,10 @@ class FinancialNotificationIntent {
       entityType: entityType,
       entityId: event.sourceId,
       title: event.title,
-      body: notificationBody(event),
+      body: notificationBody(
+        event,
+        reminderOffsetDays: preferences.reminderOffsetDays,
+      ),
       scheduledAt: event.scheduledAt,
       route: notificationRoute(event),
       spaceId: preferences.spaceId,
@@ -266,21 +270,31 @@ String financialNotificationStableKey({
   required FinancialNotificationKind kind,
 }) => '$entityType:$entityId:${_dateOnly(dueDate)}:$reminderOffsetDays:${kind.name}';
 
-String notificationBody(NotificationUpcomingEvent event) {
+String notificationBody(
+  NotificationUpcomingEvent event, {
+  int reminderOffsetDays = 0,
+}) {
   if (event.overdue || event.dayOffset < 0) return '${event.title} está atrasado';
-  if (event.dayOffset == 0) {
+
+  // The copy is prepared now but delivered later. Use the smaller of the
+  // configured lead time and the current distance to the due date so a reminder
+  // scheduled for tomorrow does not still say “vence em 3 dias”.
+  final leadDays = event.dayOffset < reminderOffsetDays
+      ? event.dayOffset
+      : reminderOffsetDays;
+  if (leadDays <= 0) {
     return event.isRecurringIncome
         ? '${event.title} está previsto para hoje'
         : '${event.title} vence hoje';
   }
-  if (event.dayOffset == 1) {
+  if (leadDays == 1) {
     return event.isRecurringIncome
         ? '${event.title} está previsto para amanhã'
         : '${event.title} vence amanhã';
   }
   return event.isRecurringIncome
-      ? '${event.title} está previsto em ${event.dayOffset} dias'
-      : '${event.title} vence em ${event.dayOffset} dias';
+      ? '${event.title} está previsto em $leadDays dias'
+      : '${event.title} vence em $leadDays dias';
 }
 
 String notificationRoute(NotificationUpcomingEvent event) {
@@ -298,7 +312,12 @@ String notificationRoute(NotificationUpcomingEvent event) {
   if (parts.length < 2) return (9, 0);
   final hour = int.tryParse(parts[0]);
   final minute = int.tryParse(parts[1]);
-  if (hour == null || minute == null || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+  if (hour == null ||
+      minute == null ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59) {
     return (9, 0);
   }
   return (hour, minute);
