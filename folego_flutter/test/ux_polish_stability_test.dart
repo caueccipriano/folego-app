@@ -395,7 +395,7 @@ void main() {
         _notificationApp(
           data,
           adapter,
-          timePicker: (_, __) async => const TimeOfDay(hour: 9, minute: 45),
+          timePicker: (_, _) async => const TimeOfDay(hour: 9, minute: 45),
         ),
       );
       await tester.pumpAndSettle();
