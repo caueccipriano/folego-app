@@ -25,6 +25,36 @@ String? homeIncomeTimingLabel(FolegoSnapshot snapshot) {
   return null;
 }
 
+String homeFolegoContextLabel(FolegoSnapshot snapshot) {
+  final spendable = snapshot.spendablePool;
+  final daily = snapshot.dailyFolego;
+  final showDaily = spendable > 0 && daily != null && daily > 0;
+  final hasIncomeTiming =
+      snapshot.nextIncomeDate != null || snapshot.daysUntilIncome != null;
+
+  if (spendable <= 0) {
+    return switch (snapshot.limitingFactor.trim().toLowerCase()) {
+      'budget' || 'economic' =>
+        'o espaço do seu orçamento para gastos flexíveis já foi usado',
+      'both' || 'cash_and_budget' =>
+        'seu dinheiro disponível e o orçamento para gastos flexíveis chegaram ao limite',
+      _ => hasIncomeTiming
+          ? 'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento'
+          : 'seus compromissos já ocupam o dinheiro disponível',
+    };
+  }
+
+  if (showDaily) {
+    return '${Formatters.money(daily)} por dia até o próximo recebimento';
+  }
+
+  if (!hasIncomeTiming) {
+    return 'adicione um próximo recebimento no Plano para visualizar o prazo';
+  }
+
+  return 'valor disponível até o próximo recebimento';
+}
+
 class HomeFinancialHero extends StatelessWidget {
   const HomeFinancialHero({super.key, required this.snapshot});
 
@@ -48,18 +78,7 @@ class HomeFinancialHero extends StatelessWidget {
         : AppColors.iconOnPurpleLight;
     final timing = homeIncomeTimingLabel(snapshot);
     final spendable = snapshot.spendablePool;
-    final daily = snapshot.dailyFolego;
-    final showDaily = spendable > 0 && daily != null && daily > 0;
-
-    final contextCopy = spendable <= 0
-        ? snapshot.nextIncomeDate == null && snapshot.daysUntilIncome == null
-            ? 'seus compromissos já ocupam o dinheiro disponível'
-            : 'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento'
-        : showDaily
-            ? '${Formatters.money(daily)} por dia até o próximo recebimento'
-            : snapshot.nextIncomeDate == null && snapshot.daysUntilIncome == null
-                ? 'adicione um próximo recebimento no Plano para visualizar o prazo'
-                : 'valor disponível até o próximo recebimento';
+    final contextCopy = homeFolegoContextLabel(snapshot);
 
     return Semantics(
       container: true,
@@ -310,15 +329,15 @@ class _FolegoExplanation extends StatelessWidget {
             ),
             if (snapshot.budgetConfigured) ...[
               _ExplanationRow(
-                label: 'limite de orçamento do mês',
+                label: 'orçamento para gastos flexíveis',
                 value: Formatters.money(snapshot.monthlyBudgetPlanned),
               ),
               _ExplanationRow(
-                label: 'já usado no orçamento',
+                label: 'gastos flexíveis no mês',
                 value: Formatters.money(snapshot.monthlyBudgetUsed),
               ),
               _ExplanationRow(
-                label: 'espaço disponível no orçamento',
+                label: 'ainda disponível para gastos flexíveis',
                 value: Formatters.money(snapshot.economicHeadroom),
               ),
             ],
@@ -408,9 +427,10 @@ class _ExplanationRow extends StatelessWidget {
 }
 
 String _limitingFactorLabel(String factor) => switch (factor.trim().toLowerCase()) {
-      'budget' || 'economic' => 'orçamento',
+      'budget' || 'economic' => 'orçamento para gastos flexíveis',
       'cash' => 'dinheiro disponível',
-      'both' || 'cash_and_budget' => 'dinheiro disponível e orçamento',
+      'both' || 'cash_and_budget' =>
+        'dinheiro disponível e orçamento para gastos flexíveis',
       _ => 'seu resumo financeiro',
     };
 
