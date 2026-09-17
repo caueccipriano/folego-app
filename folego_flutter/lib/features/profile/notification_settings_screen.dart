@@ -573,6 +573,7 @@ class _NotificationSettingsScreenState
                         ),
               ),
             ),
+            const SizedBox(height: 24),
             const Divider(height: 18),
             ListTile(
               key: const ValueKey('notification-time'),
