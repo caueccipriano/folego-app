@@ -45,25 +45,25 @@ void main() {
       );
     });
 
-    test('senha de cadastro respeita mínimo real de 6 caracteres', () {
+    test('senha de cadastro exige pelo menos 8 caracteres', () {
       expect(
-        AuthValidation.password('12345', enforceMinimum: true),
-        contains('6 caracteres'),
+        AuthValidation.password('1234567', enforceMinimum: true),
+        contains('8 caracteres'),
       );
       expect(
-        AuthValidation.password('123456', enforceMinimum: true),
+        AuthValidation.password('12345678', enforceMinimum: true),
         isNull,
       );
     });
 
     test('confirmação de senha é obrigatória e precisa ser igual', () {
-      expect(AuthValidation.passwordConfirmation('', '123456'), isNotNull);
+      expect(AuthValidation.passwordConfirmation('', '12345678'), isNotNull);
       expect(
-        AuthValidation.passwordConfirmation('654321', '123456'),
+        AuthValidation.passwordConfirmation('87654321', '12345678'),
         'As senhas precisam ser iguais.',
       );
       expect(
-        AuthValidation.passwordConfirmation('123456', '123456'),
+        AuthValidation.passwordConfirmation('12345678', '12345678'),
         isNull,
       );
     });
