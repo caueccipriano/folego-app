@@ -12,6 +12,11 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import 'notification_settings_data_source.dart';
 
+typedef NotificationTimePicker = Future<TimeOfDay?> Function(
+  BuildContext context,
+  TimeOfDay initialTime,
+);
+
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({
     super.key,
@@ -19,12 +24,14 @@ class NotificationSettingsScreen extends StatefulWidget {
     required this.spaceId,
     this.service,
     this.dataSource,
+    this.timePicker,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final NotificationService? service;
   final NotificationSettingsDataSource? dataSource;
+  final NotificationTimePicker? timePicker;
 
   @override
   State<NotificationSettingsScreen> createState() =>
@@ -44,6 +51,7 @@ class _NotificationSettingsScreenState
   late final NotificationSettingsDataSource _dataSource;
 
   bool get _saving => _savingKey != null;
+  bool _savingThis(String key) => _savingKey == key;
 
   @override
   void initState() {
@@ -159,13 +167,13 @@ class _NotificationSettingsScreenState
   Future<void> _pickTime() async {
     final current = _preferences;
     if (current == null || _saving) return;
-    final value = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(
-        hour: current.preferredHour,
-        minute: current.preferredMinute,
-      ),
+    final initial = TimeOfDay(
+      hour: current.preferredHour,
+      minute: current.preferredMinute,
     );
+    final value = widget.timePicker == null
+        ? await showTimePicker(context: context, initialTime: initial)
+        : await widget.timePicker!(context, initial);
     if (value == null || !mounted) return;
     await _save(
       current.copyWith(
@@ -213,16 +221,21 @@ class _NotificationSettingsScreenState
                         subtitle: _preferences!.financialRemindersEnabled
                             ? 'suas preferências gerais estão ativas'
                             : 'pausados — suas escolhas continuam salvas',
-                        child: SwitchListTile.adaptive(
-                          key: const ValueKey('notifications-master-toggle'),
-                          contentPadding: EdgeInsets.zero,
-                          secondary: const Icon(AppIcons.notifications),
-                          title: const Text('lembretes financeiros'),
-                          subtitle: const Text(
-                            'controle geral para os lembretes que você escolher abaixo',
+                        child: Semantics(
+                          label: 'ativar lembretes financeiros',
+                          toggled: _preferences!.financialRemindersEnabled,
+                          child: SwitchListTile.adaptive(
+                            key: const ValueKey('notifications-master-toggle'),
+                            contentPadding: EdgeInsets.zero,
+                            secondary: const Icon(AppIcons.notifications),
+                            title: const Text('lembretes financeiros'),
+                            subtitle: const Text(
+                              'controle geral para os lembretes que você escolher abaixo',
+                            ),
+                            value: _preferences!.financialRemindersEnabled,
+                            onChanged:
+                                _savingThis('master') ? null : _toggleMaster,
                           ),
-                          value: _preferences!.financialRemindersEnabled,
-                          onChanged: _saving ? null : _toggleMaster,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -316,7 +329,7 @@ class _NotificationSettingsScreenState
                               ButtonSegment(value: 3, label: Text('3 dias antes')),
                             ],
                             selected: <int>{_preferences!.reminderOffsetDays},
-                            onSelectionChanged: _saving
+                            onSelectionChanged: _savingThis('offset')
                                 ? null
                                 : (value) => _save(
                                       _preferences!.copyWith(
@@ -331,7 +344,8 @@ class _NotificationSettingsScreenState
                       const SizedBox(height: 16),
                       _SettingsSection(
                         title: 'horário',
-                        subtitle: 'defina quando você prefere receber seus lembretes',
+                        subtitle:
+                            'defina quando você prefere receber seus lembretes',
                         child: ListTile(
                           key: const ValueKey('notification-time'),
                           contentPadding: EdgeInsets.zero,
@@ -341,8 +355,8 @@ class _NotificationSettingsScreenState
                             '${_preferences!.preferredHour.toString().padLeft(2, '0')}:${_preferences!.preferredMinute.toString().padLeft(2, '0')}',
                           ),
                           trailing: const Icon(AppIcons.chevronRight),
-                          enabled: !_saving,
-                          onTap: _saving ? null : _pickTime,
+                          enabled: !_savingThis('time'),
+                          onTap: _savingThis('time') ? null : _pickTime,
                         ),
                       ),
                     ],
@@ -369,7 +383,7 @@ class _NotificationSettingsScreenState
               secondary: Icon(icon, size: 20),
               title: Text(title),
               value: value,
-              onChanged: _saving ? null : onChanged,
+              onChanged: _savingThis(keyName) ? null : onChanged,
             ),
           ),
           if (showDivider) const Divider(height: 1),
@@ -406,11 +420,11 @@ class _NotificationSettingsScreenState
       badge = null;
     }
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
+    return Material(
+      color: AppColors.surface(brightness),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(brightness)),
+        side: BorderSide(color: AppColors.border(brightness)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -503,12 +517,13 @@ class _SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
+    return Material(
+      color: AppColors.surface(brightness),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(brightness)),
+        side: BorderSide(color: AppColors.border(brightness)),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         child: Column(
