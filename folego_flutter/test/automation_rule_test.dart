@@ -3,7 +3,7 @@ import 'package:folego/data/models/automation_rule.dart';
 import 'package:folego/data/models/statement_import.dart';
 
 void main() {
-  const candidate = StatementImportCandidate(
+  final candidate = StatementImportCandidate(
     rowNumber: 1,
     occurredAt: DateTime(2026, 9, 17),
     dateOnly: true,
