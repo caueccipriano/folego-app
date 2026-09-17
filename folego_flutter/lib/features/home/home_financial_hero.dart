@@ -40,17 +40,19 @@ class HomeFinancialHero extends StatelessWidget {
     final timing = homeIncomeTimingLabel(snapshot);
     final spendable = snapshot.spendablePool;
     final daily = snapshot.dailyFolego;
-    final showDaily = spendable > 0 && daily != null && daily! > 0;
+    final showDaily = spendable > 0 && daily != null && daily > 0;
 
     final contextCopy = spendable <= 0
         ? snapshot.nextIncomeDate == null && snapshot.daysUntilIncome == null
             ? 'seus compromissos já ocupam o dinheiro disponível'
             : 'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento'
         : showDaily
-            ? '${Formatters.money(daily!)} por dia até o próximo recebimento'
+            ? '${Formatters.money(daily)} por dia até o próximo recebimento'
             : snapshot.nextIncomeDate == null && snapshot.daysUntilIncome == null
                 ? 'adicione um próximo recebimento no Plano para visualizar o prazo'
                 : 'valor disponível até o próximo recebimento';
+
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     return Semantics(
       container: true,
@@ -58,10 +60,15 @@ class HomeFinancialHero extends StatelessWidget {
           'valor disponível para gastar até o próximo recebimento: ${Formatters.money(spendable)}',
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+        padding: EdgeInsets.fromLTRB(
+          compact ? 18 : 22,
+          compact ? 20 : 24,
+          compact ? 18 : 22,
+          compact ? 18 : 22,
+        ),
         decoration: BoxDecoration(
           color: primaryPurple,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(compact ? 24 : 28),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,12 +77,12 @@ class HomeFinancialHero extends StatelessWidget {
               'te sobra pra gastar',
               style: AppTypography.body(
                 context,
-                fontSize: 14,
+                fontSize: compact ? 13 : 14,
                 fontWeight: FontWeight.w600,
                 color: onPurple.withValues(alpha: .84),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: compact ? 6 : 8),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -84,58 +91,99 @@ class HomeFinancialHero extends StatelessWidget {
                 key: const ValueKey('home-spendable-pool'),
                 style: AppTypography.money(
                   context,
-                  fontSize: 52,
+                  fontSize: compact ? 44 : 52,
                   color: AppColors.lime,
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: compact ? 8 : 10),
             Text(
               contextCopy,
               key: const ValueKey('home-daily-folego-context'),
               style: AppTypography.body(
                 context,
-                fontSize: 13,
+                fontSize: compact ? 12 : 13,
                 fontWeight: FontWeight.w600,
                 color: onPurple.withValues(alpha: .94),
               ),
             ),
             if (timing != null) ...[
-              const SizedBox(height: 14),
+              SizedBox(height: compact ? 12 : 14),
               _TimingPill(label: timing, foreground: onPurple),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(
-                  AppIcons.benefit,
-                  size: 16,
-                  color: onPurple.withValues(alpha: .74),
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    'benefícios ficam separados',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: onPurple.withValues(alpha: .78),
+            SizedBox(height: compact ? 14 : 16),
+            if (compact)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        AppIcons.benefit,
+                        size: 16,
+                        color: onPurple.withValues(alpha: .74),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          'benefícios ficam separados',
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: onPurple.withValues(alpha: .78),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton.icon(
+                    key: const ValueKey('home-folego-explainer'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: onPurple,
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => _showExplanation(context),
+                    icon: const Icon(AppIcons.info, size: 16),
+                    label: const Text('como chegamos nisso?'),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Icon(
+                    AppIcons.benefit,
+                    size: 16,
+                    color: onPurple.withValues(alpha: .74),
+                  ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      'benefícios ficam separados',
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: onPurple.withValues(alpha: .78),
+                      ),
                     ),
                   ),
-                ),
-                TextButton.icon(
-                  key: const ValueKey('home-folego-explainer'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: onPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  TextButton.icon(
+                    key: const ValueKey('home-folego-explainer'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: onPurple,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onPressed: () => _showExplanation(context),
+                    icon: const Icon(AppIcons.info, size: 16),
+                    label: const Text('como chegamos nisso?'),
                   ),
-                  onPressed: () => _showExplanation(context),
-                  icon: const Icon(AppIcons.info, size: 16),
-                  label: const Text('como chegamos nisso?'),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
