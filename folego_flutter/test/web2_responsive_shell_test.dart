@@ -5,6 +5,7 @@ import 'package:folego/core/ui/app_snackbars.dart';
 import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
+import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/data/models/transaction_page.dart';
 import 'package:folego/data/models/upcoming_events.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
@@ -74,7 +75,7 @@ void main() {
     await tester.pump();
     final hero = tester.getTopLeft(find.text('te sobra pra gastar'));
     final action = tester.getTopLeft(find.text('gasto'));
-    final expenses = tester.getTopLeft(find.text('seus gastos'));
+    final expenses = tester.getTopLeft(find.text('seu mês até agora'));
     final upcoming = tester.getTopLeft(find.text('próximos dias'));
     expect(action.dx, greaterThan(hero.dx));
     expect((action.dy - hero.dy).abs(), lessThan(140));
@@ -183,6 +184,40 @@ class _HomeRepository implements FolegoRepository {
   );
   @override
   Future<String> getProfileName() async => 'Cauê';
+
+  @override
+  Future<MonthlyMoneySummary> getMonthlyMoneySummary({
+    required String spaceId,
+    DateTime? periodMonth,
+  }) async => MonthlyMoneySummary(
+    periodMonth: DateTime(2026, 9),
+    incomeAmount: 5000,
+    spendingAccount: 900,
+    spendingCards: 500,
+    spendingBenefits: 100,
+    refundsAmount: 50,
+    spendingNet: 1450,
+    incomeMinusSpending: 3550,
+    competenceCardsTotal: 250,
+    competenceDirect: 900,
+    competenceBenefits: 100,
+    competenceRefunds: 50,
+    competenceNet: 1200,
+    competenceCards: const [
+      MonthlyCardCompetence(
+        cardId: 'card',
+        name: 'Cartão',
+        amount: 250,
+      ),
+    ],
+    cashInflow: 5000,
+    cashOutflow: 1800,
+    cashNet: 3200,
+    movementCardPayments: 300,
+    movementTransfers: 100,
+    movementReserveInvestment: 50,
+    movementReconciliation: 0,
+  );
   @override
   Future<TransactionPage> getTransactionsPage(String spaceId, {TransactionCursor? cursor, int pageSize = transactionPageSize}) async => const TransactionPage(items: [], hasMore: false, nextCursor: null);
   @override
