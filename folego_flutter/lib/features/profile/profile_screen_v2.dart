@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_info/app_version_info.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
+import '../../core/notifications/notification_runtime.dart';
 import '../../core/preferences/app_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -18,7 +19,9 @@ import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
+import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
+import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 
 part 'profile_widgets.dart';
@@ -58,7 +61,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _identity = ProfileIdentity(email: widget.client.auth.currentUser?.email ?? '');
     _themeMode = AppThemeController.mode.value;
     _language = AppPreferences.languagePreference.value;
-    _logoutAction = ProfileLogoutAction(() => widget.client.auth.signOut());
+    _logoutAction = ProfileLogoutAction(() async {
+      final notificationService = NotificationServiceRegistry.current;
+      if (notificationService != null) {
+        await notificationService.clearForLogout();
+      }
+      await widget.client.auth.signOut();
+    });
     _loadIdentity();
     _loadVersion();
   }
@@ -139,6 +148,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => FinancialOrganizationScreen(repository: widget.repository),
+      ),
+    );
+  }
+
+  Future<void> _openNotificationSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NotificationSettingsScreen(
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAutomationRules() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AutomationRulesScreen(
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
       ),
     );
   }
@@ -274,17 +305,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: _LanguageCard(selected: _language, onSelected: _setLanguage),
       );
 
-  Widget _notificationsSection() => const _ProfileSection(
-        title: 'notificações',
-        subtitle: 'avisos do Fôlego no momento certo',
+  Widget _notificationsSection() => _ProfileSection(
+        title: 'notificações e automações',
+        subtitle: 'lembretes essenciais são Free; automações ficam preparadas para o Premium futuro',
         child: _SettingsCard(
           children: [
             _SettingsRow(
               icon: AppIcons.notifications,
               title: 'notificações',
-              subtitle: 'a infraestrutura de avisos ainda não está ativa',
-              trailingLabel: 'em breve',
-              enabled: false,
+              subtitle: 'faturas, dívidas, recorrências, assinaturas e entradas previstas',
+              onTap: _openNotificationSettings,
+            ),
+            _SettingsRow(
+              icon: AppIcons.recurring,
+              title: 'automações',
+              subtitle: 'quando algo parecido aparecer, sugerir ou preparar a classificação',
+              trailingLabel: 'Premium em breve',
+              onTap: _openAutomationRules,
             ),
           ],
         ),
