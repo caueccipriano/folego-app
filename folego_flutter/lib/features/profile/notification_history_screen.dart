@@ -139,7 +139,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                               bottom: 48,
                             ),
                             itemCount: _items.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            separatorBuilder: (_, _) => const SizedBox(height: 10),
                             itemBuilder: (context, index) {
                               final item = _items[index];
                               return Material(
