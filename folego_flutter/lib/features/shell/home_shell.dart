@@ -18,6 +18,17 @@ import '../profile/profile_screen.dart';
 import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
 
+int homeIndexForPushRoute(String? route) {
+  if (route == null || route.isEmpty || route == '/' || route == '/agenda') {
+    return 0;
+  }
+  if (route.startsWith('/transactions')) return 1;
+  if (route.startsWith('/plan')) return 2;
+  if (route.startsWith('/wallet')) return 3;
+  if (route.startsWith('/profile')) return 4;
+  return 0;
+}
+
 class HomeShell extends StatefulWidget {
   const HomeShell({
     super.key,
@@ -45,6 +56,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    _index = homeIndexForPushRoute(Uri.base.queryParameters['push_route']);
     _realtimeCoordinator = RealtimeInvalidationCoordinator();
     _realtimeSession = RealtimeSessionController(
       coordinator: _realtimeCoordinator,
