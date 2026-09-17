@@ -266,6 +266,15 @@ begin
   ) <> 6 then
     raise exception 'card_purchase_impacts_were_duplicated_or_lost';
   end if;
+
+  -- Read model is space-scoped: an unrelated authenticated user cannot read it.
+  perform set_config('request.jwt.claim.sub', gen_random_uuid()::text, true);
+  begin
+    perform public.get_monthly_money_summary(v_space, '2026-09-01');
+    raise exception 'unauthorized_monthly_summary_read_was_not_blocked';
+  exception
+    when insufficient_privilege then null;
+  end;
 end;
 $test$;
 
