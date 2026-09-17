@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
@@ -9,12 +11,17 @@ import '../../data/models/category_item.dart';
 import '../../data/models/category_tag.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
-import '../../data/repositories/folego_repository_categories.dart';
+import 'financial_organization_data_source.dart';
 
 class FinancialOrganizationScreen extends StatefulWidget {
-  const FinancialOrganizationScreen({super.key, required this.repository});
+  const FinancialOrganizationScreen({
+    super.key,
+    required this.repository,
+    this.dataSource,
+  });
 
   final FolegoRepository repository;
+  final FinancialOrganizationDataSource? dataSource;
 
   @override
   State<FinancialOrganizationScreen> createState() =>
@@ -23,77 +30,147 @@ class FinancialOrganizationScreen extends StatefulWidget {
 
 class _FinancialOrganizationScreenState
     extends State<FinancialOrganizationScreen> {
+  static const Duration _uxTimeout = Duration(seconds: 15);
+
+  late final FinancialOrganizationDataSource _dataSource;
+
   FinancialSpace? _space;
   List<CategoryItem> _categories = const [];
   List<CategoryTag> _markers = const [];
   String _categoryKind = 'expense';
   String _markerType = 'all';
-  bool _loading = true;
-  bool _mutating = false;
-  String? _error;
+
+  bool _spaceLoading = true;
+  bool _categoriesLoading = false;
+  bool _markersLoading = false;
+  bool _categoryMutating = false;
+  bool _markerMutating = false;
+
+  String? _spaceError;
+  String? _categoriesError;
+  String? _markersError;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _dataSource = widget.dataSource ??
+        RepositoryFinancialOrganizationDataSource(widget.repository);
+    _loadSpaceAndSections();
   }
 
-  Future<void> _load() async {
+  Future<T> _withUxTimeout<T>(Future<T> future) => future.timeout(_uxTimeout);
+
+  Future<void> _loadSpaceAndSections() async {
     if (mounted) {
       setState(() {
-        _loading = true;
-        _error = null;
+        _spaceLoading = true;
+        _spaceError = null;
       });
     }
+
     try {
-      final space = _space ?? await widget.repository.getPrimarySpace();
-      final values = await Future.wait<dynamic>([
-        widget.repository.listManageableCategories(space.id),
-        widget.repository.listAllCategoryTags(space.id),
-      ]);
+      final space = _space ?? await _withUxTimeout(_dataSource.getPrimarySpace());
       if (!mounted) return;
+
       setState(() {
         _space = space;
-        _categories = values[0] as List<CategoryItem>;
-        _markers = values[1] as List<CategoryTag>;
-        _loading = false;
+        _spaceLoading = false;
       });
+
+      // As duas seções são intencionalmente independentes. Uma chamada lenta ou
+      // com erro nunca impede a outra de renderizar.
+      unawaited(_loadCategories());
+      unawaited(_loadMarkers());
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _loading = false;
-        _error = _friendlyError(error);
+        _spaceLoading = false;
+        _spaceError = _spaceLoadError(error);
       });
     }
   }
 
-  Future<void> _reload() async {
+  Future<void> _loadCategories({bool showLoading = true}) async {
     final space = _space;
     if (space == null) return;
+
+    if (mounted) {
+      setState(() {
+        _categoriesLoading = showLoading || _categories.isEmpty;
+        _categoriesError = null;
+      });
+    }
+
     try {
-      final values = await Future.wait<dynamic>([
-        widget.repository.listManageableCategories(space.id),
-        widget.repository.listAllCategoryTags(space.id),
-      ]);
+      final categories = await _withUxTimeout(
+        _dataSource.listCategories(space.id),
+      );
       if (!mounted) return;
       setState(() {
-        _categories = values[0] as List<CategoryItem>;
-        _markers = values[1] as List<CategoryTag>;
+        _categories = categories;
+        _categoriesLoading = false;
+        _categoriesError = null;
       });
     } catch (error) {
-      if (mounted) _message(_friendlyError(error));
+      if (!mounted) return;
+      setState(() {
+        _categoriesLoading = false;
+        _categoriesError = _sectionLoadError(error, 'categorias');
+      });
     }
   }
 
-  Future<void> _runMutation(Future<void> Function() action) async {
-    if (_mutating) return;
-    setState(() => _mutating = true);
+  Future<void> _loadMarkers({bool showLoading = true}) async {
+    final space = _space;
+    if (space == null) return;
+
+    if (mounted) {
+      setState(() {
+        _markersLoading = showLoading || _markers.isEmpty;
+        _markersError = null;
+      });
+    }
+
+    try {
+      final markers = await _withUxTimeout(
+        _dataSource.listMarkers(space.id),
+      );
+      if (!mounted) return;
+      setState(() {
+        _markers = markers;
+        _markersLoading = false;
+        _markersError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _markersLoading = false;
+        _markersError = _sectionLoadError(error, 'marcadores');
+      });
+    }
+  }
+
+  Future<void> _runCategoryMutation(Future<void> Function() action) async {
+    if (_categoryMutating) return;
+    setState(() => _categoryMutating = true);
     try {
       await action();
     } catch (error) {
       if (mounted) _message(_friendlyError(error));
     } finally {
-      if (mounted) setState(() => _mutating = false);
+      if (mounted) setState(() => _categoryMutating = false);
+    }
+  }
+
+  Future<void> _runMarkerMutation(Future<void> Function() action) async {
+    if (_markerMutating) return;
+    setState(() => _markerMutating = true);
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) _message(_friendlyError(error));
+    } finally {
+      if (mounted) setState(() => _markerMutating = false);
     }
   }
 
@@ -159,14 +236,14 @@ class _FinancialOrganizationScreenState
       _CategoryEditor(kind: _categoryKind, parents: _activeParents),
     );
     if (draft == null || _space == null) return;
-    await _runMutation(() async {
-      await widget.repository.createCustomCategory(
+    await _runCategoryMutation(() async {
+      await _dataSource.createCategory(
         spaceId: _space!.id,
         name: draft.name,
         kind: _categoryKind,
         parentId: draft.parentId,
       );
-      await _reload();
+      await _loadCategories(showLoading: false);
       _message('categoria criada');
     });
   }
@@ -181,30 +258,26 @@ class _FinancialOrganizationScreenState
       ),
     );
     if (draft == null) return;
-    await _runMutation(() async {
-      await widget.repository.updateCustomCategoryPresentation(
+    await _runCategoryMutation(() async {
+      await _dataSource.updateCategory(
         spaceId: _space!.id,
-        categoryId: category.id,
+        category: category,
         name: draft.name,
-        essential: category.essential,
-        colorHex: category.colorHex ?? '#8C8CA8',
-        iconKey: category.iconKey,
-        searchAliases: category.searchAliases,
       );
-      await _reload();
+      await _loadCategories(showLoading: false);
       _message('categoria atualizada');
     });
   }
 
   Future<void> _setCategoryActive(CategoryItem category, bool active) async {
     if (_space == null) return;
-    await _runMutation(() async {
-      await widget.repository.setCategoryVisibility(
+    await _runCategoryMutation(() async {
+      await _dataSource.setCategoryActive(
         spaceId: _space!.id,
         categoryId: category.id,
         active: active,
       );
-      await _reload();
+      await _loadCategories(showLoading: false);
       _message(active ? 'categoria reativada' : 'categoria desativada');
     });
   }
@@ -212,13 +285,13 @@ class _FinancialOrganizationScreenState
   Future<void> _createMarker() async {
     final draft = await _showAdaptive<_MarkerDraft>(const _MarkerEditor());
     if (draft == null || _space == null) return;
-    await _runMutation(() async {
-      await widget.repository.createCategoryTag(
+    await _runMarkerMutation(() async {
+      await _dataSource.createMarker(
         spaceId: _space!.id,
         name: draft.name,
         type: draft.type,
       );
-      await _reload();
+      await _loadMarkers(showLoading: false);
       _message('marcador criado');
     });
   }
@@ -229,29 +302,27 @@ class _FinancialOrganizationScreenState
       _MarkerEditor(current: marker),
     );
     if (draft == null) return;
-    await _runMutation(() async {
-      await widget.repository.updateCategoryTag(
+    await _runMarkerMutation(() async {
+      await _dataSource.updateMarker(
         spaceId: _space!.id,
-        tagId: marker.id,
+        marker: marker,
         name: draft.name,
         type: draft.type,
-        colorHex: marker.colorHex,
-        active: marker.active,
       );
-      await _reload();
+      await _loadMarkers(showLoading: false);
       _message('marcador atualizado');
     });
   }
 
   Future<void> _setMarkerActive(CategoryTag marker, bool active) async {
     if (_space == null) return;
-    await _runMutation(() async {
-      await widget.repository.setCategoryTagActive(
+    await _runMarkerMutation(() async {
+      await _dataSource.setMarkerActive(
         spaceId: _space!.id,
-        tagId: marker.id,
+        markerId: marker.id,
         active: active,
       );
-      await _reload();
+      await _loadMarkers(showLoading: false);
       _message(active ? 'marcador reativado' : 'marcador desativado');
     });
   }
@@ -281,16 +352,29 @@ class _FinancialOrganizationScreenState
             tabs: [Tab(text: 'Categorias'), Tab(text: 'Marcadores')],
           ),
         ),
-        body: _loading
+        body: _spaceLoading && _space == null
             ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? _ErrorState(message: _error!, onRetry: _load)
+            : _spaceError != null && _space == null
+                ? _ErrorState(
+                    message: _spaceError!,
+                    onRetry: _loadSpaceAndSections,
+                  )
                 : TabBarView(children: [_categoriesTab(), _markersTab()]),
       ),
     );
   }
 
   Widget _categoriesTab() {
+    if (_categoriesLoading && _categories.isEmpty) {
+      return const _SectionLoading(label: 'carregando categorias');
+    }
+    if (_categoriesError != null && _categories.isEmpty) {
+      return _ErrorState(
+        message: _categoriesError!,
+        onRetry: _loadCategories,
+      );
+    }
+
     final brightness = Theme.of(context).brightness;
     final items = _visibleCategories;
     final ids = items.map((item) => item.id).toSet();
@@ -305,7 +389,7 @@ class _FinancialOrganizationScreenState
       maxWidth: 1040,
       fillHeight: true,
       child: RefreshIndicator(
-        onRefresh: _reload,
+        onRefresh: _loadCategories,
         child: ListView(
           key: ValueKey(
             desktop
@@ -315,12 +399,23 @@ class _FinancialOrganizationScreenState
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(0, 22, 0, 110),
           children: [
+            if (_categoriesError != null) ...[
+              _InlineSectionError(
+                message: _categoriesError!,
+                onRetry: _loadCategories,
+              ),
+              const SizedBox(height: 14),
+            ],
+            if (_categoriesLoading) ...[
+              const LinearProgressIndicator(minHeight: 2),
+              const SizedBox(height: 14),
+            ],
             _Toolbar(
               title: 'categorias',
               subtitle: 'organize gastos e receitas sem perder o histórico',
               actionLabel: 'nova categoria',
               actionKey: const ValueKey('organization-new-category'),
-              onAction: _mutating ? null : _createCategory,
+              onAction: _categoryMutating ? null : _createCategory,
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -353,7 +448,7 @@ class _FinancialOrganizationScreenState
                       .where((item) => item.parentId == root.id)
                       .toList(),
                   desktop: desktop,
-                  busy: _mutating,
+                  busy: _categoryMutating,
                   onEdit: _editCategory,
                   onActiveChanged: _setCategoryActive,
                 ),
@@ -375,23 +470,44 @@ class _FinancialOrganizationScreenState
   }
 
   Widget _markersTab() {
+    if (_markersLoading && _markers.isEmpty) {
+      return const _SectionLoading(label: 'carregando marcadores');
+    }
+    if (_markersError != null && _markers.isEmpty) {
+      return _ErrorState(
+        message: _markersError!,
+        onRetry: _loadMarkers,
+      );
+    }
+
     final items = _visibleMarkers;
     return AppContentContainer(
       maxWidth: 1040,
       fillHeight: true,
       child: RefreshIndicator(
-        onRefresh: _reload,
+        onRefresh: _loadMarkers,
         child: ListView(
           key: const ValueKey('organization-markers-list'),
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(0, 22, 0, 110),
           children: [
+            if (_markersError != null) ...[
+              _InlineSectionError(
+                message: _markersError!,
+                onRetry: _loadMarkers,
+              ),
+              const SizedBox(height: 14),
+            ],
+            if (_markersLoading) ...[
+              const LinearProgressIndicator(minHeight: 2),
+              const SizedBox(height: 14),
+            ],
             _Toolbar(
               title: 'marcadores',
               subtitle: 'junte lançamentos por contexto sem mexer nas categorias',
               actionLabel: 'novo marcador',
               actionKey: const ValueKey('organization-new-marker'),
-              onAction: _mutating ? null : _createMarker,
+              onAction: _markerMutating ? null : _createMarker,
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -413,18 +529,67 @@ class _FinancialOrganizationScreenState
             ),
             const SizedBox(height: 18),
             if (items.isEmpty)
-              _MarkerEmpty(onCreate: _mutating ? null : _createMarker)
+              _MarkerEmpty(onCreate: _markerMutating ? null : _createMarker)
             else
               for (final marker in items) ...[
                 _MarkerRow(
                   marker: marker,
-                  busy: _mutating,
+                  busy: _markerMutating,
                   onEdit: () => _editMarker(marker),
                   onActiveChanged: (active) =>
                       _setMarkerActive(marker, active),
                 ),
                 const SizedBox(height: 8),
               ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionLoading extends StatelessWidget {
+  const _SectionLoading({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Semantics(
+          label: label,
+          child: const CircularProgressIndicator(),
+        ),
+      );
+}
+
+class _InlineSectionError extends StatelessWidget {
+  const _InlineSectionError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surface(brightness),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(brightness)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+        child: Row(
+          children: [
+            const Icon(AppIcons.warning, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTypography.body(context, fontSize: 12),
+              ),
+            ),
+            TextButton(onPressed: onRetry, child: const Text('tentar novamente')),
           ],
         ),
       ),
@@ -949,6 +1114,20 @@ String _markerLabel(String type) => switch (type) {
       'person' => 'Pessoa',
       _ => 'Tag',
     };
+
+String _spaceLoadError(Object error) {
+  if (error is TimeoutException) {
+    return 'a organização demorou mais que o esperado para responder';
+  }
+  return 'não consegui abrir sua organização agora';
+}
+
+String _sectionLoadError(Object error, String section) {
+  if (error is TimeoutException) {
+    return 'não consegui carregar seus $section agora';
+  }
+  return 'não consegui carregar seus $section';
+}
 
 String _friendlyError(Object error) {
   final text = error.toString();
