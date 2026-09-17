@@ -24,6 +24,56 @@ enum BudgetProgressState {
   exceeded,
 }
 
+class FlexibleBudgetOverview {
+  const FlexibleBudgetOverview({
+    required this.periodMonth,
+    required this.configured,
+    required this.explicitLimit,
+    required this.limitAmount,
+    required this.usedAmount,
+    required this.remainingAmount,
+    required this.exceededAmount,
+    required this.categoryLimitsTotal,
+  });
+
+  final DateTime periodMonth;
+  final bool configured;
+
+  /// True when the user has set a global flexible-spending ceiling for this
+  /// month. False means the backend is using the legacy category-limit sum as
+  /// a backwards-compatible fallback.
+  final bool explicitLimit;
+  final double limitAmount;
+  final double usedAmount;
+  final double remainingAmount;
+  final double exceededAmount;
+  final double categoryLimitsTotal;
+
+  bool get isExceeded => exceededAmount > 0;
+  bool get hasRemaining => remainingAmount > 0;
+  double get usageRatio => limitAmount > 0 ? usedAmount / limitAmount : 0;
+
+  BudgetProgressState get progressState {
+    if (!configured) return BudgetProgressState.noLimit;
+    if (isExceeded || usageRatio > 1) return BudgetProgressState.exceeded;
+    if (usageRatio >= .70) return BudgetProgressState.attention;
+    return BudgetProgressState.comfortable;
+  }
+
+  factory FlexibleBudgetOverview.fromJson(Map<String, dynamic> json) {
+    return FlexibleBudgetOverview(
+      periodMonth: DateTime.parse(json['period_month'] as String),
+      configured: json['configured'] as bool? ?? false,
+      explicitLimit: json['explicit_limit'] as bool? ?? false,
+      limitAmount: _budgetDouble(json['limit_amount']),
+      usedAmount: _budgetDouble(json['used_amount']),
+      remainingAmount: _budgetDouble(json['remaining_amount']),
+      exceededAmount: _budgetDouble(json['exceeded_amount']),
+      categoryLimitsTotal: _budgetDouble(json['category_limits_total']),
+    );
+  }
+}
+
 class BudgetMonthSummary {
   const BudgetMonthSummary({
     required this.plannedAmount,
@@ -161,9 +211,11 @@ class BudgetOverviewItem {
     );
   }
 
-  static double _asDouble(dynamic value) {
-    if (value == null) return 0;
-    if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0;
-  }
+  static double _asDouble(dynamic value) => _budgetDouble(value);
+}
+
+double _budgetDouble(dynamic value) {
+  if (value == null) return 0;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString()) ?? 0;
 }
