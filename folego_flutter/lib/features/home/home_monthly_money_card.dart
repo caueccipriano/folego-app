@@ -421,8 +421,8 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _CompositionSection(
-              title: 'faturas e parcelas',
-              subtitle: 'o que pertence economicamente a ${_monthName(summary.periodMonth.month)}',
+              title: 'competência do mês',
+              subtitle: 'faturas e parcelas, despesas diretas e benefícios que pertencem a ${_monthName(summary.periodMonth.month)}',
               rows: [
                 for (final card in summary.competenceCards)
                   _CompositionRow(
