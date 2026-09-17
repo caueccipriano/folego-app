@@ -38,6 +38,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test -r expanded
+
       - name: Build web app
         run: flutter build web --release --base-href "/folego-app/"
 
