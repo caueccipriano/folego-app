@@ -112,9 +112,6 @@ class _NotificationSettingsScreenState
       if (!mounted) return;
       setState(() => _preferences = saved);
 
-      // A preferência persistida é a fonte de verdade. A atualização dos
-      // lembretes do dispositivo não deve transformar um save bem-sucedido em
-      // falha visual; em ambientes sem entrega local, syncUpcoming é seguro.
       try {
         await _service.syncUpcoming(widget.spaceId);
       } catch (error) {
@@ -543,7 +540,6 @@ class _InlineSaveError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.errorContainer,
