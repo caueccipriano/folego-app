@@ -6,6 +6,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
+import '../plan/flexible_budget_navigation_scope.dart';
 
 String? homeIncomeTimingLabel(FolegoSnapshot snapshot) {
   final days = snapshot.daysUntilIncome;
@@ -25,17 +26,33 @@ String? homeIncomeTimingLabel(FolegoSnapshot snapshot) {
   return null;
 }
 
+double homeFlexibleBudgetExceeded(FolegoSnapshot snapshot) {
+  final difference =
+      snapshot.monthlyBudgetUsed - snapshot.monthlyBudgetPlanned;
+  return difference > 0 ? difference.toDouble() : 0;
+}
+
+bool homeIsBudgetLimited(FolegoSnapshot snapshot) {
+  final factor = snapshot.limitingFactor.trim().toLowerCase();
+  return factor == 'budget' ||
+      factor == 'economic' ||
+      factor == 'both' ||
+      factor == 'cash_and_budget';
+}
+
 String homeFolegoContextLabel(FolegoSnapshot snapshot) {
   final spendable = snapshot.spendablePool;
   final daily = snapshot.dailyFolego;
   final showDaily = spendable > 0 && daily != null && daily > 0;
   final hasIncomeTiming =
       snapshot.nextIncomeDate != null || snapshot.daysUntilIncome != null;
+  final exceeded = homeFlexibleBudgetExceeded(snapshot);
 
   if (spendable <= 0) {
     return switch (snapshot.limitingFactor.trim().toLowerCase()) {
-      'budget' || 'economic' =>
-        'o espaço do seu orçamento para gastos flexíveis já foi usado',
+      'budget' || 'economic' => exceeded > 0
+          ? 'seu orçamento flexível passou ${Formatters.money(exceeded)} · ${Formatters.money(snapshot.liquidBalance)} ainda estão em conta'
+          : 'o espaço do seu orçamento para gastos flexíveis já foi usado',
       'both' || 'cash_and_budget' =>
         'seu dinheiro disponível e o orçamento para gastos flexíveis chegaram ao limite',
       _ => hasIncomeTiming
@@ -79,6 +96,9 @@ class HomeFinancialHero extends StatelessWidget {
     final timing = homeIncomeTimingLabel(snapshot);
     final spendable = snapshot.spendablePool;
     final contextCopy = homeFolegoContextLabel(snapshot);
+    final budgetNavigation = FlexibleBudgetNavigationScope.maybeOf(context);
+    final showBudgetAction =
+        spendable <= 0 && homeIsBudgetLimited(snapshot) && budgetNavigation != null;
 
     return Semantics(
       container: true,
@@ -133,6 +153,22 @@ class HomeFinancialHero extends StatelessWidget {
                 color: onPurple.withValues(alpha: .94),
               ),
             ),
+            if (showBudgetAction) ...[
+              const SizedBox(height: 4),
+              TextButton.icon(
+                key: const ValueKey('home-open-flex-budget'),
+                style: TextButton.styleFrom(
+                  foregroundColor: onPurple,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 34),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: budgetNavigation.open,
+                icon: const Icon(AppIcons.chevronRight, size: 16),
+                iconAlignment: IconAlignment.end,
+                label: const Text('ver onde passei do limite'),
+              ),
+            ],
             if (timing != null) ...[
               SizedBox(height: compact ? 12 : 14),
               _TimingPill(label: timing, foreground: onPurple),
@@ -217,7 +253,11 @@ class HomeFinancialHero extends StatelessWidget {
   }
 
   Future<void> _showExplanation(BuildContext context) async {
-    final content = _FolegoExplanation(snapshot: snapshot);
+    final budgetNavigation = FlexibleBudgetNavigationScope.maybeOf(context);
+    final content = _FolegoExplanation(
+      snapshot: snapshot,
+      onOpenBudget: budgetNavigation?.onOpen,
+    );
     if (AppBreakpoints.of(context) == AppLayoutSize.compact) {
       await showModalBottomSheet<void>(
         context: context,
@@ -281,15 +321,20 @@ class _TimingPill extends StatelessWidget {
 }
 
 class _FolegoExplanation extends StatelessWidget {
-  const _FolegoExplanation({required this.snapshot});
+  const _FolegoExplanation({
+    required this.snapshot,
+    this.onOpenBudget,
+  });
 
   final FolegoSnapshot snapshot;
+  final VoidCallback? onOpenBudget;
 
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final secondary = AppColors.secondaryText(brightness);
     final timing = homeIncomeTimingLabel(snapshot);
+    final exceeded = homeFlexibleBudgetExceeded(snapshot);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -323,6 +368,11 @@ class _FolegoExplanation extends StatelessWidget {
               label: 'dinheiro disponível',
               value: Formatters.money(snapshot.liquidBalance),
             ),
+            if (snapshot.protectedBalance > 0)
+              _ExplanationRow(
+                label: 'dinheiro protegido',
+                value: Formatters.money(snapshot.protectedBalance),
+              ),
             _ExplanationRow(
               label: 'compromissos até receber',
               value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome),
@@ -340,6 +390,12 @@ class _FolegoExplanation extends StatelessWidget {
                 label: 'ainda disponível para gastos flexíveis',
                 value: Formatters.money(snapshot.economicHeadroom),
               ),
+              if (exceeded > 0)
+                _ExplanationRow(
+                  label: 'orçamento flexível excedido',
+                  value: Formatters.money(exceeded),
+                  emphasized: true,
+                ),
             ],
             _ExplanationRow(
               label: 'o que limita seu Fôlego agora',
@@ -364,9 +420,23 @@ class _FolegoExplanation extends StatelessWidget {
                 value: Formatters.money(snapshot.dailyFolego!),
                 emphasized: true,
               ),
+            if (snapshot.budgetConfigured && onOpenBudget != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                key: const ValueKey('home-explainer-open-flex-budget'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onOpenBudget!();
+                },
+                icon: const Icon(AppIcons.plan, size: 18),
+                label: Text(exceeded > 0
+                    ? 'ver onde passei do limite'
+                    : 'abrir orçamento flexível'),
+              ),
+            ],
             const SizedBox(height: 12),
             Text(
-              'Benefícios ficam separados deste valor.',
+              'Reservas, investimentos protegidos e benefícios ficam separados do valor para gastar.',
               style: AppTypography.label(
                 context,
                 fontSize: 11,
