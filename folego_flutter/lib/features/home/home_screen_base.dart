@@ -507,7 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    'depois dos compromissos '
+                    'dinheiro disponível, sem benefícios, depois dos compromissos '
                     'até o próximo recebimento',
                     style: AppTypography.body(
                       context,
@@ -681,7 +681,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildSectionHeader(
           title: 'seus gastos',
-          subtitle: 'como seus gastos se distribuem neste mês',
+          subtitle: 'gastos do bolso neste mês; benefícios ficam separados',
           primaryText: primaryText,
           secondaryText: secondaryText,
         ),

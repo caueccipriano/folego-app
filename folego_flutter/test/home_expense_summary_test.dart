@@ -33,20 +33,40 @@ void main() {
     );
   }
 
-  test('agrega gastos e calcula percentuais', () {
+  test('agrega gastos do bolso e calcula percentuais', () {
     final breakdown = breakdownOf([
       transaction(id: '1', type: 'expense', amount: 50, category: 'Alimentação'),
       transaction(id: '2', type: 'card_purchase', amount: 30, category: 'Compras'),
-      transaction(id: '3', type: 'benefit_expense', amount: 20, category: 'Transporte'),
+      transaction(id: '3', type: 'debt_payment', amount: 20, category: 'Dívidas'),
     ]);
 
     expect(breakdown.total, 100);
     expect(breakdown.categories.map((item) => item.category), [
       'Alimentação',
       'Compras',
-      'Transporte',
+      'Dívidas',
     ]);
     expect(breakdown.categories.map((item) => item.percentage), [50, 30, 20]);
+  });
+
+  test('benefício fica fora do total e do gráfico principal da Home', () {
+    final breakdown = breakdownOf([
+      transaction(id: '1', type: 'expense', amount: 50, category: 'Alimentação'),
+      transaction(id: '2', type: 'card_purchase', amount: 30, category: 'Compras'),
+      transaction(id: '3', type: 'benefit_expense', amount: 20, category: 'Transporte'),
+    ]);
+
+    expect(homeExpenseEventTypes, isNot(contains('benefit_expense')));
+    expect(isHomeExpenseEventType('benefit_expense'), isFalse);
+    expect(breakdown.total, 80);
+    expect(breakdown.categories.map((item) => item.category), [
+      'Alimentação',
+      'Compras',
+    ]);
+    expect(
+      breakdown.categories.any((item) => item.category == 'Transporte'),
+      isFalse,
+    );
   });
 
   test('não conta income, transfer, card_payment nem opening_balance', () {

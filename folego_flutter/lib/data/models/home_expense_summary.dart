@@ -4,7 +4,6 @@ import 'transaction_item.dart';
 const Set<String> homeExpenseEventTypes = {
   'expense',
   'card_purchase',
-  'benefit_expense',
   'debt_payment',
 };
 

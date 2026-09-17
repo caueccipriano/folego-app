@@ -237,7 +237,7 @@ class TransactionDetail {
       case 'card_payment':
         return 'pagamento de fatura';
       case 'benefit_expense':
-        return 'gasto com benefício';
+        return 'benefício · não afeta saldo disponível';
       case 'benefit_credit':
         return 'crédito de benefício';
       case 'transfer':
