@@ -43,8 +43,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Almoço no Flash'), findsOneWidget);
-    expect(find.textContaining('gasto de benefício'), findsOneWidget);
-    expect(find.textContaining('Flash'), findsOneWidget);
+    expect(
+      find.text('gasto de benefício • 17/09/2026 • Flash'),
+      findsOneWidget,
+    );
   });
 
   test('detalhe de benefício explica que não afeta saldo disponível', () {
