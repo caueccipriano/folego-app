@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:folego/core/notifications/notification_models.dart';
 import 'package:folego/core/notifications/notification_service.dart';
+import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/category_tag.dart';
 import 'package:folego/data/models/financial_space.dart';
@@ -26,15 +27,14 @@ void main() {
       final source = _OrganizationFake(markersLoader: () => markers.future);
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pump();
-      await tester.pump();
+      await _pumpAsync(tester);
 
       expect(find.text('mercado'), findsOneWidget);
       expect(source.categoryLoads, 1);
       expect(source.markerLoads, 1);
 
       markers.complete(source.markers);
-      await tester.pump();
+      await _pumpAsync(tester);
     });
 
     testWidgets('markers render while categories are delayed', (tester) async {
@@ -44,17 +44,16 @@ void main() {
       );
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pump();
+      await _pumpAsync(tester);
       await tester.tap(find.text('Marcadores'));
-      await tester.pump();
-      await tester.pump();
+      await _pumpAsync(tester);
 
       expect(find.text('viagem'), findsOneWidget);
       expect(source.categoryLoads, 1);
       expect(source.markerLoads, 1);
 
       categories.complete(source.categories);
-      await tester.pump();
+      await _pumpAsync(tester);
     });
 
     testWidgets('marker error stays local and categories keep working', (
@@ -163,14 +162,13 @@ void main() {
       final source = _OrganizationFake(markersLoader: () => markers.future);
 
       await tester.pumpWidget(_organizationApp(source));
-      await tester.pump();
-      await tester.pump();
+      await _pumpAsync(tester);
 
       expect(find.text('mercado'), findsOneWidget);
       expect(find.text('nova categoria'), findsOneWidget);
 
       markers.complete(source.markers);
-      await tester.pump();
+      await _pumpAsync(tester);
     });
   });
 
@@ -187,12 +185,12 @@ void main() {
 
       await tester.pumpWidget(_heroApp(snapshot));
 
-      expect(find.text('R\$ 600,00'), findsOneWidget);
+      expect(find.text(Formatters.money(600)), findsOneWidget);
       expect(
-        find.text('R\$ 47,00 por dia até o próximo recebimento'),
+        find.text('${Formatters.money(47)} por dia até o próximo recebimento'),
         findsOneWidget,
       );
-      expect(find.textContaining('R\$ 60,00 por dia'), findsNothing);
+      expect(find.textContaining('${Formatters.money(60)} por dia'), findsNothing);
       expect(find.text('recebe em 10 dias · 27 set'), findsOneWidget);
     });
 
@@ -243,7 +241,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.textContaining('R\$ 0,00 por dia'), findsNothing);
+      expect(find.textContaining('${Formatters.money(0)} por dia'), findsNothing);
       expect(find.textContaining('benefícios'), findsOneWidget);
     });
 
@@ -268,10 +266,10 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
       await tester.pumpAndSettle();
 
-      expect(find.text('R\$ 1.250,00'), findsOneWidget);
-      expect(find.text('R\$ 650,00'), findsOneWidget);
-      expect(find.text('R\$ 600,00'), findsWidgets);
-      expect(find.text('R\$ 47,00'), findsOneWidget);
+      expect(find.text(Formatters.money(1250)), findsOneWidget);
+      expect(find.text(Formatters.money(650)), findsOneWidget);
+      expect(find.text(Formatters.money(600)), findsWidgets);
+      expect(find.text(Formatters.money(47)), findsOneWidget);
     });
 
     test('spending palette is deterministic and benefit stays excluded', () {
@@ -333,7 +331,10 @@ void main() {
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
 
-      expect(find.text('seus lembretes podem ser configurados agora'), findsOneWidget);
+      expect(
+        find.text('seus lembretes podem ser configurados agora'),
+        findsOneWidget,
+      );
       expect(find.text('notificações no celular: em breve'), findsOneWidget);
       for (final forbidden in ['adapter', 'backend', 'build', 'no-op']) {
         expect(find.textContaining(forbidden), findsNothing);
@@ -355,7 +356,10 @@ void main() {
 
       expect(adapter.requestCalls, 0);
       expect(data.current.financialRemindersEnabled, isTrue);
-      expect(find.text('pronto — seus lembretes ficaram configurados'), findsOneWidget);
+      expect(
+        find.text('pronto — seus lembretes ficaram configurados'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('categories and offset remain editable with master off', (
@@ -374,9 +378,34 @@ void main() {
       expect(data.current.invoicesEnabled, isFalse);
       expect(data.current.financialRemindersEnabled, isFalse);
 
+      await _scrollNotifications(tester, -700);
+      expect(find.text('3 dias antes'), findsOneWidget);
       await tester.tap(find.text('3 dias antes'));
       await tester.pumpAndSettle();
       expect(data.current.reminderOffsetDays, 3);
+    });
+
+    testWidgets('preferred time can be saved now', (tester) async {
+      final data = _NotificationDataFake();
+      final adapter = _NotificationAdapterFake(
+        status: NotificationPermissionStatus.unsupported,
+      );
+
+      await tester.pumpWidget(
+        _notificationApp(
+          data,
+          adapter,
+          timePicker: (_, __) async => const TimeOfDay(hour: 9, minute: 45),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _scrollNotifications(tester, -1200);
+      await tester.tap(find.byKey(const ValueKey('notification-time')));
+      await tester.pumpAndSettle();
+
+      expect(data.current.preferredHour, 9);
+      expect(data.current.preferredMinute, 45);
+      expect(find.text('09:45'), findsOneWidget);
     });
 
     testWidgets('supported target requests permission and granted enables', (
@@ -426,9 +455,23 @@ void main() {
   });
 }
 
+Future<void> _pumpAsync(WidgetTester tester, [int frames = 6]) async {
+  for (var index = 0; index < frames; index += 1) {
+    await tester.pump();
+  }
+}
+
+Future<void> _scrollNotifications(WidgetTester tester, double dy) async {
+  await tester.drag(
+    find.byKey(const ValueKey('notification-settings-list')),
+    Offset(0, dy),
+  );
+  await tester.pumpAndSettle();
+}
+
 Widget _organizationApp(FinancialOrganizationDataSource source) => MaterialApp(
       home: FinancialOrganizationScreen(
-        repository: _dummyRepository(),
+        repository: _TestRepositoryHolder.repository,
         dataSource: source,
       ),
     );
@@ -448,8 +491,9 @@ Widget _heroApp(FolegoSnapshot snapshot) => MaterialApp(
 
 Widget _notificationApp(
   _NotificationDataFake data,
-  _NotificationAdapterFake adapter,
-) {
+  _NotificationAdapterFake adapter, {
+  NotificationTimePicker? timePicker,
+}) {
   final service = NotificationService(
     adapter: adapter,
     loadPreferences: (_) async => data.current,
@@ -457,17 +501,24 @@ Widget _notificationApp(
   );
   return MaterialApp(
     home: NotificationSettingsScreen(
-      repository: _dummyRepository(),
+      repository: _TestRepositoryHolder.repository,
       spaceId: 'space-1',
       service: service,
       dataSource: data,
+      timePicker: timePicker,
     ),
   );
 }
 
-FolegoRepository _dummyRepository() => FolegoRepository(
-      SupabaseClient('https://example.supabase.co', 'test-anon-key'),
-    );
+abstract final class _TestRepositoryHolder {
+  static final FolegoRepository repository = FolegoRepository(
+    SupabaseClient(
+      'https://example.supabase.co',
+      'test-anon-key',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    ),
+  );
+}
 
 FolegoSnapshot _snapshot({
   double spendablePool = 600,
