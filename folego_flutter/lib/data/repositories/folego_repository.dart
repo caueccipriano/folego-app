@@ -5,6 +5,7 @@ import '../models/budget_overview_item.dart';
 import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
+import '../models/monthly_money_summary.dart';
 import '../models/onboarding_state.dart';
 import '../models/recurring_item.dart';
 import '../models/transaction_item.dart';
@@ -541,6 +542,25 @@ class FolegoRepository {
     final data = await _client.rpc('get_folego_snapshot', params: params);
 
     return FolegoSnapshot.fromJson(_firstMap(data));
+  }
+
+
+  Future<MonthlyMoneySummary> getMonthlyMoneySummary({
+    required String spaceId,
+    DateTime? periodMonth,
+  }) async {
+    final reference = periodMonth ?? DateTime.now();
+    final month = DateTime(reference.year, reference.month);
+
+    final data = await _client.rpc(
+      'get_monthly_money_summary',
+      params: {
+        'p_space_id': spaceId,
+        'p_period_month': _date(month),
+      },
+    );
+
+    return MonthlyMoneySummary.fromJson(_firstMap(data));
   }
 
   // ---------------------------------------------------------------------------
