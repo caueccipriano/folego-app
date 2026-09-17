@@ -81,7 +81,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('gastos feitos no mês'), findsOneWidget);
-    expect(find.text('faturas e parcelas'), findsOneWidget);
+    expect(find.text('competência do mês'), findsOneWidget);
     expect(find.text('fatura AMEX Gold / parcelas'), findsOneWidget);
     expect(find.text('despesa por competência'), findsOneWidget);
     expect(find.text('movimentações que não são gasto'), findsOneWidget);
