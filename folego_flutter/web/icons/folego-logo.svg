@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#34206F"/>
+    <stop offset="55%" stop-color="#22164F"/>
+    <stop offset="100%" stop-color="#15122D"/>
+  </linearGradient>
+  <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#D8C7FF"/>
+    <stop offset="100%" stop-color="#A780FF"/>
+  </linearGradient>
+  <linearGradient id="bottom" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#6F55F8"/>
+    <stop offset="100%" stop-color="#9C6CFF"/>
+  </linearGradient>
+  <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#C8FF31"/>
+    <stop offset="100%" stop-color="#86E95E"/>
+  </linearGradient>
+</defs>
+<rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+<rect x="20" y="20" width="984" height="984" rx="214" fill="none" stroke="#805CFF" stroke-width="12" opacity=".55"/>
+<path d="M300 285 C300 240 336 204 381 204 H705 C745 204 775 234 775 274 C775 319 739 355 694 355 H470 C388 355 325 406 300 474 Z" fill="url(#top)"/>
+<path d="M300 474 C333 397 400 356 484 356 H627 C666 356 696 386 696 425 C696 464 666 494 627 494 H509 C444 494 403 537 403 603 V711 C403 757 366 794 320 794 H300 Z" fill="url(#bottom)"/>
+<path d="M510 496 C554 463 610 449 676 455 C669 518 642 566 594 597 C554 623 511 626 467 608 C471 561 486 524 510 496Z" fill="url(#lime)"/>
+</svg>
