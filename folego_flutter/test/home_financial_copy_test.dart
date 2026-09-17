@@ -13,6 +13,21 @@ void main() {
       );
     });
 
+    test('shows exceeded amount and cash still in account', () {
+      final snapshot = _snapshot(
+        limitingFactor: 'budget',
+        budgetConfigured: true,
+        monthlyBudgetPlanned: 1652.80,
+        monthlyBudgetUsed: 2945,
+      );
+
+      expect(homeFlexibleBudgetExceeded(snapshot), closeTo(1292.20, .001));
+      final label = homeFolegoContextLabel(snapshot);
+      expect(label, contains('R\$ 1.292,20'));
+      expect(label, contains('R\$ 179,76'));
+      expect(label, contains('ainda estão em conta'));
+    });
+
     test('keeps commitment copy when cash is the active constraint', () {
       expect(
         homeFolegoContextLabel(_snapshot(limitingFactor: 'cash')),
@@ -27,7 +42,9 @@ void main() {
       );
     });
 
-    testWidgets('explainer names the discretionary budget clearly', (tester) async {
+    testWidgets('explainer names flexible and protected money clearly', (
+      tester,
+    ) async {
       final snapshot = _snapshot(
         limitingFactor: 'budget',
         budgetConfigured: true,
@@ -47,9 +64,11 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
       await tester.pumpAndSettle();
 
+      expect(find.text('dinheiro protegido'), findsOneWidget);
       expect(find.text('orçamento para gastos flexíveis'), findsWidgets);
       expect(find.text('gastos flexíveis no mês'), findsOneWidget);
       expect(find.text('ainda disponível para gastos flexíveis'), findsOneWidget);
+      expect(find.text('orçamento flexível excedido'), findsOneWidget);
       expect(find.text('limite de orçamento do mês'), findsNothing);
       expect(find.text('já usado no orçamento'), findsNothing);
     });
