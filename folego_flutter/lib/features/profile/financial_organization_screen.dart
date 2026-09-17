@@ -1123,10 +1123,11 @@ String _spaceLoadError(Object error) {
 }
 
 String _sectionLoadError(Object error, String section) {
+  final article = section == 'categorias' ? 'suas' : 'seus';
   if (error is TimeoutException) {
-    return 'não consegui carregar seus $section agora';
+    return 'não consegui carregar $article $section agora';
   }
-  return 'não consegui carregar seus $section';
+  return 'não consegui carregar $article $section';
 }
 
 String _friendlyError(Object error) {
