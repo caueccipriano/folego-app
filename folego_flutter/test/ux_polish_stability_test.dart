@@ -1,0 +1,659 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:folego_flutter/core/notifications/notification_models.dart';
+import 'package:folego_flutter/core/notifications/notification_service.dart';
+import 'package:folego_flutter/data/models/category_item.dart';
+import 'package:folego_flutter/data/models/category_tag.dart';
+import 'package:folego_flutter/data/models/financial_space.dart';
+import 'package:folego_flutter/data/models/folego_snapshot.dart';
+import 'package:folego_flutter/data/repositories/folego_repository.dart';
+import 'package:folego_flutter/data/repositories/folego_repository_home.dart';
+import 'package:folego_flutter/features/home/home_financial_hero.dart';
+import 'package:folego_flutter/features/home/home_spending_palette.dart';
+import 'package:folego_flutter/features/profile/financial_organization_data_source.dart';
+import 'package:folego_flutter/features/profile/financial_organization_screen.dart';
+import 'package:folego_flutter/features/profile/notification_settings_data_source.dart';
+import 'package:folego_flutter/features/profile/notification_settings_screen.dart';
+
+void main() {
+  group('Financial Organization stability', () {
+    testWidgets('categories render while markers are delayed', (tester) async {
+      final markers = Completer<List<CategoryTag>>();
+      final source = _OrganizationFake(markersLoader: () => markers.future);
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('mercado'), findsOneWidget);
+      expect(source.categoryLoads, 1);
+      expect(source.markerLoads, 1);
+
+      markers.complete(source.markers);
+      await tester.pump();
+    });
+
+    testWidgets('markers render while categories are delayed', (tester) async {
+      final categories = Completer<List<CategoryItem>>();
+      final source = _OrganizationFake(categoriesLoader: () => categories.future);
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pump();
+      await tester.tap(find.text('Marcadores'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('viagem'), findsOneWidget);
+      expect(source.categoryLoads, 1);
+      expect(source.markerLoads, 1);
+
+      categories.complete(source.categories);
+      await tester.pump();
+    });
+
+    testWidgets('marker error stays local and categories keep working', (
+      tester,
+    ) async {
+      final source = _OrganizationFake(
+        markersLoader: () async => throw StateError('marker failure'),
+      );
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pumpAndSettle();
+
+      expect(find.text('mercado'), findsOneWidget);
+      await tester.tap(find.text('Marcadores'));
+      await tester.pumpAndSettle();
+      expect(find.text('não consegui carregar seus marcadores'), findsOneWidget);
+      expect(find.text('tentar novamente'), findsOneWidget);
+    });
+
+    testWidgets('category error stays local and markers keep working', (
+      tester,
+    ) async {
+      final source = _OrganizationFake(
+        categoriesLoader: () async => throw StateError('category failure'),
+      );
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pumpAndSettle();
+      expect(find.text('não consegui carregar suas categorias'), findsOneWidget);
+
+      await tester.tap(find.text('Marcadores'));
+      await tester.pumpAndSettle();
+      expect(find.text('viagem'), findsOneWidget);
+    });
+
+    testWidgets('marker retry is isolated', (tester) async {
+      var attempt = 0;
+      final source = _OrganizationFake(
+        markersLoader: () async {
+          attempt += 1;
+          if (attempt == 1) throw StateError('first failure');
+          return const [CategoryTag(id: 'm1', name: 'viagem', type: 'tag')];
+        },
+      );
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Marcadores'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('viagem'), findsOneWidget);
+      expect(source.markerLoads, 2);
+      expect(source.categoryLoads, 1);
+    });
+
+    testWidgets('tab switching does not refetch either section', (tester) async {
+      final source = _OrganizationFake();
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Marcadores'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Categorias'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Marcadores'));
+      await tester.pumpAndSettle();
+
+      expect(source.categoryLoads, 1);
+      expect(source.markerLoads, 1);
+    });
+
+    testWidgets('category mutation reloads categories only', (tester) async {
+      final source = _OrganizationFake();
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pumpAndSettle();
+      expect(find.text('mercado'), findsOneWidget);
+
+      await tester.tap(find.byType(Switch).first);
+      await tester.pumpAndSettle();
+
+      expect(source.categoryMutations, 1);
+      expect(source.categoryLoads, 2);
+      expect(source.markerLoads, 1);
+    });
+
+    testWidgets('marker mutation reloads markers only', (tester) async {
+      final source = _OrganizationFake();
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Marcadores'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Switch).first);
+      await tester.pumpAndSettle();
+
+      expect(source.markerMutations, 1);
+      expect(source.markerLoads, 2);
+      expect(source.categoryLoads, 1);
+    });
+
+    testWidgets('one delayed section never restores a global loading lock', (
+      tester,
+    ) async {
+      final markers = Completer<List<CategoryTag>>();
+      final source = _OrganizationFake(markersLoader: () => markers.future);
+
+      await tester.pumpWidget(_organizationApp(source));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('mercado'), findsOneWidget);
+      expect(find.text('nova categoria'), findsOneWidget);
+
+      markers.complete(source.markers);
+      await tester.pump();
+    });
+  });
+
+  group('Home hero canonical presentation', () {
+    testWidgets('uses canonical spendablePool and dailyFolego directly', (
+      tester,
+    ) async {
+      final snapshot = _snapshot(
+        spendablePool: 600,
+        dailyFolego: 47,
+        daysUntilIncome: 10,
+        nextIncomeDate: DateTime(2026, 9, 27),
+      );
+
+      await tester.pumpWidget(_heroApp(snapshot));
+
+      expect(find.text('R\$ 600,00'), findsOneWidget);
+      expect(
+        find.text('R\$ 47,00 por dia até o próximo recebimento'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('R\$ 60,00 por dia'), findsNothing);
+      expect(find.text('recebe em 10 dias · 27 set'), findsOneWidget);
+    });
+
+    test('income timing always carries context', () {
+      expect(
+        homeIncomeTimingLabel(
+          _snapshot(daysUntilIncome: 0, nextIncomeDate: DateTime(2026, 9, 17)),
+        ),
+        'recebimento previsto hoje',
+      );
+      expect(
+        homeIncomeTimingLabel(
+          _snapshot(daysUntilIncome: 1, nextIncomeDate: DateTime(2026, 9, 18)),
+        ),
+        'recebe amanhã · 18 set',
+      );
+      expect(
+        homeIncomeTimingLabel(
+          _snapshot(daysUntilIncome: 13, nextIncomeDate: DateTime(2026, 9, 30)),
+        ),
+        'recebe em 13 dias · 30 set',
+      );
+      expect(
+        homeIncomeTimingLabel(
+          _snapshot(daysUntilIncome: null, nextIncomeDate: null),
+        ),
+        isNull,
+      );
+    });
+
+    testWidgets('zero spendable state is explanatory and non punitive', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _heroApp(
+          _snapshot(
+            spendablePool: 0,
+            dailyFolego: 0,
+            daysUntilIncome: 10,
+            nextIncomeDate: DateTime(2026, 9, 27),
+          ),
+        ),
+      );
+
+      expect(
+        find.text(
+          'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('R\$ 0,00 por dia'), findsNothing);
+      expect(find.text('benefícios ficam separados'), findsOneWidget);
+    });
+
+    testWidgets('explainer displays snapshot values without deriving new ones', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _heroApp(
+          _snapshot(
+            spendablePool: 600,
+            dailyFolego: 47,
+            liquidBalance: 1250,
+            mandatoryOutflows: 650,
+            budgetConfigured: true,
+            monthlyBudgetPlanned: 1800,
+            monthlyBudgetUsed: 700,
+            economicHeadroom: 1100,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('R\$ 1.250,00'), findsOneWidget);
+      expect(find.text('R\$ 650,00'), findsOneWidget);
+      expect(find.text('R\$ 600,00'), findsWidgets);
+      expect(find.text('R\$ 47,00'), findsOneWidget);
+    });
+
+    test('spending palette is deterministic and benefit expenses stay excluded', () {
+      final first = HomeSpendingPalette.colorFor(
+        category: 'Mercado',
+        categoryId: 'cat-123',
+        brightness: Brightness.light,
+      );
+      final second = HomeSpendingPalette.colorFor(
+        category: 'Nome alterado',
+        categoryId: 'cat-123',
+        brightness: Brightness.light,
+      );
+      final dark = HomeSpendingPalette.colorFor(
+        category: 'Mercado',
+        categoryId: 'cat-123',
+        brightness: Brightness.dark,
+      );
+
+      expect(first, second);
+      expect(dark, first);
+      expect(homeExpenseEventTypes, isNot(contains('benefit_expense')));
+      expect(homeExpenseEventTypes, containsAll(['expense', 'card_purchase', 'debt_payment']));
+    });
+
+    testWidgets('hero lays out across the required responsive widths', (
+      tester,
+    ) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      for (final width in const [375.0, 390, 430, 768, 1024, 1366, 1440, 1920]) {
+        await tester.binding.setSurfaceSize(Size(width, 1000));
+        await tester.pumpWidget(_heroApp(_snapshot()));
+        await tester.pump();
+        expect(tester.takeException(), isNull, reason: 'width $width');
+        expect(find.byKey(const ValueKey('home-spendable-pool')), findsOneWidget);
+      }
+    });
+  });
+
+  group('Notification settings product contract', () {
+    testWidgets('unsupported loads honest copy without technical UI terms', (
+      tester,
+    ) async {
+      final data = _NotificationDataFake();
+      final adapter = _NotificationAdapterFake(
+        status: NotificationPermissionStatus.unsupported,
+      );
+
+      await tester.pumpWidget(_notificationApp(data, adapter));
+      await tester.pumpAndSettle();
+
+      expect(find.text('seus lembretes podem ser configurados agora'), findsOneWidget);
+      expect(find.text('notificações no celular: em breve'), findsOneWidget);
+      for (final forbidden in ['adapter', 'backend', 'build', 'no-op']) {
+        expect(find.textContaining(forbidden), findsNothing);
+      }
+    });
+
+    testWidgets('unsupported master saves intent without requesting permission', (
+      tester,
+    ) async {
+      final data = _NotificationDataFake();
+      final adapter = _NotificationAdapterFake(
+        status: NotificationPermissionStatus.unsupported,
+      );
+
+      await tester.pumpWidget(_notificationApp(data, adapter));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('notifications-master-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(adapter.requestCalls, 0);
+      expect(data.current.financialRemindersEnabled, isTrue);
+      expect(find.text('pronto — seus lembretes ficaram configurados'), findsOneWidget);
+    });
+
+    testWidgets('individual categories and offset remain editable with master off', (
+      tester,
+    ) async {
+      final data = _NotificationDataFake();
+      final adapter = _NotificationAdapterFake(
+        status: NotificationPermissionStatus.unsupported,
+      );
+
+      await tester.pumpWidget(_notificationApp(data, adapter));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('notification-toggle-invoices')));
+      await tester.pumpAndSettle();
+      expect(data.current.invoicesEnabled, isFalse);
+      expect(data.current.financialRemindersEnabled, isFalse);
+
+      await tester.tap(find.text('3 dias antes'));
+      await tester.pumpAndSettle();
+      expect(data.current.reminderOffsetDays, 3);
+    });
+
+    testWidgets('supported target requests permission and granted enables master', (
+      tester,
+    ) async {
+      final data = _NotificationDataFake();
+      final adapter = _NotificationAdapterFake(
+        status: NotificationPermissionStatus.notDetermined,
+        requestResult: NotificationPermissionStatus.granted,
+      );
+
+      await tester.pumpWidget(_notificationApp(data, adapter));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('notifications-master-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(adapter.requestCalls, 1);
+      expect(data.current.financialRemindersEnabled, isTrue);
+    });
+
+    testWidgets('permission denied does not falsely enable and preserves choices', (
+      tester,
+    ) async {
+      final initial = const NotificationPreferences(
+        spaceId: 'space-1',
+        invoicesEnabled: false,
+        debtsEnabled: true,
+        reminderOffsetDays: 3,
+      );
+      final data = _NotificationDataFake(initial: initial);
+      final adapter = _NotificationAdapterFake(
+        status: NotificationPermissionStatus.notDetermined,
+        requestResult: NotificationPermissionStatus.denied,
+      );
+
+      await tester.pumpWidget(_notificationApp(data, adapter));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('notifications-master-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(adapter.requestCalls, 1);
+      expect(data.saveCalls, 0);
+      expect(data.current.financialRemindersEnabled, isFalse);
+      expect(data.current.invoicesEnabled, isFalse);
+      expect(data.current.reminderOffsetDays, 3);
+    });
+  });
+}
+
+Widget _organizationApp(FinancialOrganizationDataSource source) => MaterialApp(
+      home: FinancialOrganizationScreen(
+        repository: _dummyRepository(),
+        dataSource: source,
+      ),
+    );
+
+Widget _heroApp(FolegoSnapshot snapshot) => MaterialApp(
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HomeFinancialHero(snapshot: snapshot),
+          ),
+        ),
+      ),
+    );
+
+Widget _notificationApp(
+  _NotificationDataFake data,
+  _NotificationAdapterFake adapter,
+) {
+  final service = NotificationService(
+    adapter: adapter,
+    loadPreferences: (_) async => data.current,
+    loadUpcoming: (_, _, _) async => const <NotificationUpcomingEvent>[],
+  );
+  return MaterialApp(
+    home: NotificationSettingsScreen(
+      repository: _dummyRepository(),
+      spaceId: 'space-1',
+      service: service,
+      dataSource: data,
+    ),
+  );
+}
+
+FolegoRepository _dummyRepository() => FolegoRepository(
+      SupabaseClient('https://example.supabase.co', 'test-anon-key'),
+    );
+
+FolegoSnapshot _snapshot({
+  num spendablePool = 600,
+  num? dailyFolego = 60,
+  int? daysUntilIncome = 10,
+  DateTime? nextIncomeDate,
+  num liquidBalance = 1200,
+  num mandatoryOutflows = 600,
+  bool budgetConfigured = false,
+  num monthlyBudgetPlanned = 0,
+  num monthlyBudgetUsed = 0,
+  num economicHeadroom = 999,
+}) =>
+    FolegoSnapshot(
+      asOfDate: DateTime(2026, 9, 17),
+      nextIncomeDate: nextIncomeDate ??
+          (daysUntilIncome == null ? null : DateTime(2026, 9, 27)),
+      nextIncomeAmount: 6000,
+      daysUntilIncome: daysUntilIncome,
+      liquidBalance: liquidBalance,
+      protectedBalance: 0,
+      mandatoryOutflowsUntilIncome: mandatoryOutflows,
+      cashHeadroom: liquidBalance - mandatoryOutflows,
+      monthlyBudgetPlanned: monthlyBudgetPlanned,
+      monthlyBudgetUsed: monthlyBudgetUsed,
+      economicHeadroom: economicHeadroom,
+      spendablePool: spendablePool,
+      dailyFolego: dailyFolego,
+      shortfall: 0,
+      limitingFactor: 'cash',
+      status: 'ok',
+      budgetConfigured: budgetConfigured,
+      needsIncomeSetup: daysUntilIncome == null,
+    );
+
+class _OrganizationFake implements FinancialOrganizationDataSource {
+  _OrganizationFake({this.categoriesLoader, this.markersLoader});
+
+  final Future<List<CategoryItem>> Function()? categoriesLoader;
+  final Future<List<CategoryTag>> Function()? markersLoader;
+
+  int categoryLoads = 0;
+  int markerLoads = 0;
+  int categoryMutations = 0;
+  int markerMutations = 0;
+
+  final categories = const <CategoryItem>[
+    CategoryItem(
+      id: 'c1',
+      name: 'mercado',
+      essential: false,
+      kind: 'expense',
+      isSystem: false,
+      active: true,
+      sortOrder: 1,
+    ),
+  ];
+
+  final markers = const <CategoryTag>[
+    CategoryTag(id: 'm1', name: 'viagem', type: 'tag'),
+  ];
+
+  @override
+  Future<FinancialSpace> getPrimarySpace() async =>
+      const FinancialSpace(id: 'space-1', name: 'Fôlego');
+
+  @override
+  Future<List<CategoryItem>> listCategories(String spaceId) async {
+    categoryLoads += 1;
+    final loader = categoriesLoader;
+    return loader == null ? categories : loader();
+  }
+
+  @override
+  Future<List<CategoryTag>> listMarkers(String spaceId) async {
+    markerLoads += 1;
+    final loader = markersLoader;
+    return loader == null ? markers : loader();
+  }
+
+  @override
+  Future<void> createCategory({
+    required String spaceId,
+    required String name,
+    required String kind,
+    String? parentId,
+  }) async {
+    categoryMutations += 1;
+  }
+
+  @override
+  Future<void> updateCategory({
+    required String spaceId,
+    required CategoryItem category,
+    required String name,
+  }) async {
+    categoryMutations += 1;
+  }
+
+  @override
+  Future<void> setCategoryActive({
+    required String spaceId,
+    required String categoryId,
+    required bool active,
+  }) async {
+    categoryMutations += 1;
+  }
+
+  @override
+  Future<void> createMarker({
+    required String spaceId,
+    required String name,
+    required String type,
+  }) async {
+    markerMutations += 1;
+  }
+
+  @override
+  Future<void> updateMarker({
+    required String spaceId,
+    required CategoryTag marker,
+    required String name,
+    required String type,
+  }) async {
+    markerMutations += 1;
+  }
+
+  @override
+  Future<void> setMarkerActive({
+    required String spaceId,
+    required String markerId,
+    required bool active,
+  }) async {
+    markerMutations += 1;
+  }
+}
+
+class _NotificationDataFake implements NotificationSettingsDataSource {
+  _NotificationDataFake({NotificationPreferences? initial})
+      : current = initial ?? const NotificationPreferences(spaceId: 'space-1');
+
+  NotificationPreferences current;
+  int saveCalls = 0;
+
+  @override
+  Future<NotificationPreferences> load(String spaceId) async => current;
+
+  @override
+  Future<NotificationPreferences> save(NotificationPreferences preferences) async {
+    saveCalls += 1;
+    current = preferences;
+    return current;
+  }
+}
+
+class _NotificationAdapterFake implements NotificationSchedulerAdapter {
+  _NotificationAdapterFake({
+    required this.status,
+    NotificationPermissionStatus? requestResult,
+  }) : requestResult = requestResult ?? status;
+
+  NotificationPermissionStatus status;
+  final NotificationPermissionStatus requestResult;
+  int requestCalls = 0;
+
+  @override
+  Future<NotificationPermissionStatus> getPermissionStatus() async => status;
+
+  @override
+  Future<NotificationPermissionStatus> requestPermission() async {
+    requestCalls += 1;
+    status = requestResult;
+    return requestResult;
+  }
+
+  @override
+  Future<List<FinancialNotificationIntent>> pendingForSpace(String spaceId) async =>
+      const <FinancialNotificationIntent>[];
+
+  @override
+  Future<void> schedule(FinancialNotificationIntent intent) async {}
+
+  @override
+  Future<void> cancel(String stableKey) async {}
+
+  @override
+  Future<void> cancelForEntity({
+    required String spaceId,
+    required String entityType,
+    required String entityId,
+  }) async {}
+
+  @override
+  Future<void> clearForSpace(String spaceId) async {}
+
+  @override
+  Future<void> clearAll() async {}
+}
