@@ -17,7 +17,9 @@ extension FolegoRepositoryNotifications on FolegoRepository {
         .select('''
           space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
           recurrences_enabled,subscriptions_enabled,expected_income_enabled,
-          overdue_enabled,reminder_offset_days,preferred_time
+          overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,
+          large_expenses_enabled,large_expense_threshold,
+          reminder_offset_days,preferred_time
         ''')
         .eq('user_id', userId)
         .eq('space_id', spaceId)
@@ -47,7 +49,9 @@ extension FolegoRepositoryNotifications on FolegoRepository {
         .select('''
           space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
           recurrences_enabled,subscriptions_enabled,expected_income_enabled,
-          overdue_enabled,reminder_offset_days,preferred_time
+          overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,
+          large_expenses_enabled,large_expense_threshold,
+          reminder_offset_days,preferred_time
         ''')
         .single();
     return NotificationPreferences.fromJson(
