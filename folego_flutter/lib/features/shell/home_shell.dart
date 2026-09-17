@@ -13,6 +13,8 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
+import '../plan/flexible_budget_navigation_scope.dart';
+import '../plan/flexible_budget_screen.dart';
 import '../plan/plan_screen.dart';
 import '../profile/profile_screen.dart';
 import '../transactions/transactions_screen.dart';
@@ -124,6 +126,22 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _openFlexibleBudget() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => FlexibleBudgetScreen(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    _realtimeCoordinator.invalidateDomains({
+      AppRealtimeDomain.home,
+      AppRealtimeDomain.plan,
+    });
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -152,13 +170,16 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       ),
     ];
 
-    return ResponsiveNavigationShell(
-      selectedIndex: _index,
-      onDestinationSelected: (value) {
-        if (_index == value) return;
-        setState(() => _index = value);
-      },
-      pages: pages,
+    return FlexibleBudgetNavigationScope(
+      onOpen: () => unawaited(_openFlexibleBudget()),
+      child: ResponsiveNavigationShell(
+        selectedIndex: _index,
+        onDestinationSelected: (value) {
+          if (_index == value) return;
+          setState(() => _index = value);
+        },
+        pages: pages,
+      ),
     );
   }
 }
