@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/features/home/home_financial_hero.dart';
 
@@ -23,8 +24,8 @@ void main() {
 
       expect(homeFlexibleBudgetExceeded(snapshot), closeTo(1292.20, .001));
       final label = homeFolegoContextLabel(snapshot);
-      expect(label, contains('R\$ 1.292,20'));
-      expect(label, contains('R\$ 179,76'));
+      expect(label, contains(Formatters.money(1292.20)));
+      expect(label, contains(Formatters.money(179.76)));
       expect(label, contains('ainda estão em conta'));
     });
 
