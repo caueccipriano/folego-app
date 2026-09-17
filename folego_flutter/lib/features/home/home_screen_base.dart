@@ -16,7 +16,6 @@ import '../../data/models/monthly_money_summary.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
-import '../../data/repositories/folego_repository_monthly_money.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
