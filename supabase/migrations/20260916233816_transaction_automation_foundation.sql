@@ -1,0 +1,13 @@
+-- Historical alignment marker.
+--
+-- Supabase Dev already recorded version 20260916233816 as the transaction
+-- automation foundation. During concurrent QA work, commit b93f81a consolidated
+-- the replayable automation DDL into the preceding
+-- 20260916233716_financial_notification_foundation.sql file in the repository.
+--
+-- This marker intentionally contains no duplicate CREATE TABLE statements.
+-- Missing hardening/index details are applied idempotently by the later
+-- reconcile_notification_automation_foundation migration.
+--
+-- Do not rewrite or remove this version: it keeps local migration history
+-- aligned with the already-applied Supabase Dev history.
