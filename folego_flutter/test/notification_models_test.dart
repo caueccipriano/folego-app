@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/core/notifications/notification_models.dart';
+import 'package:folego/core/notifications/notification_models.dart';
 
 void main() {
   NotificationUpcomingEvent event({

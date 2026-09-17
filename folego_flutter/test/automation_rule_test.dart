@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/automation_rule.dart';
-import 'package:folego_flutter/data/models/statement_import.dart';
+import 'package:folego/data/models/automation_rule.dart';
+import 'package:folego/data/models/statement_import.dart';
 
 void main() {
   const candidate = StatementImportCandidate(

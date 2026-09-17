@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/core/notifications/notification_models.dart';
-import 'package:folego_flutter/core/notifications/notification_runtime.dart';
-import 'package:folego_flutter/core/notifications/notification_service.dart';
+import 'package:folego/core/notifications/notification_models.dart';
+import 'package:folego/core/notifications/notification_runtime.dart';
+import 'package:folego/core/notifications/notification_service.dart';
 
 class _RuntimeAdapter implements NotificationSchedulerAdapter {
   final List<String> clearedSpaces = <String>[];
@@ -45,7 +45,7 @@ void main() {
           financialRemindersEnabled: true,
         );
       },
-      loadUpcoming: (_, __, ___) async => const <NotificationUpcomingEvent>[],
+      loadUpcoming: (_, _, _) async => const <NotificationUpcomingEvent>[],
     );
     final runtime = NotificationRuntimeController(service);
 
@@ -65,7 +65,7 @@ void main() {
         spaceId: spaceId,
         financialRemindersEnabled: true,
       ),
-      loadUpcoming: (_, __, ___) async => const <NotificationUpcomingEvent>[],
+      loadUpcoming: (_, _, _) async => const <NotificationUpcomingEvent>[],
     );
     final runtime = NotificationRuntimeController(service);
 

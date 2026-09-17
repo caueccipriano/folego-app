@@ -12,27 +12,51 @@ enum AutomationActionType {
 }
 enum AutomationExecutionMode { suggest, review, automatic }
 
-extension AutomationEnumKey on Enum {
+extension AutomationMatchFieldKey on AutomationMatchField {
   String get dbKey => switch (this) {
         AutomationMatchField.description => 'description',
         AutomationMatchField.merchant => 'merchant',
+      };
+}
+
+extension AutomationMatchTypeKey on AutomationMatchType {
+  String get dbKey => switch (this) {
         AutomationMatchType.equals => 'equals',
         AutomationMatchType.contains => 'contains',
+      };
+}
+
+extension AutomationSourceScopeKey on AutomationSourceScope {
+  String get dbKey => switch (this) {
         AutomationSourceScope.any => 'any',
         AutomationSourceScope.account => 'account',
         AutomationSourceScope.card => 'card',
         AutomationSourceScope.benefit => 'benefit',
+      };
+}
+
+extension AutomationDirectionKey on AutomationDirection {
+  String get dbKey => switch (this) {
         AutomationDirection.any => 'any',
         AutomationDirection.debit => 'debit',
         AutomationDirection.credit => 'credit',
+      };
+}
+
+extension AutomationActionTypeKey on AutomationActionType {
+  String get dbKey => switch (this) {
         AutomationActionType.suggestCategory => 'suggest_category',
         AutomationActionType.reviewCategory => 'review_category',
         AutomationActionType.suggestClassification => 'suggest_classification',
         AutomationActionType.markRecognized => 'mark_recognized',
+      };
+}
+
+extension AutomationExecutionModeKey on AutomationExecutionMode {
+  String get dbKey => switch (this) {
         AutomationExecutionMode.suggest => 'suggest',
         AutomationExecutionMode.review => 'review',
         AutomationExecutionMode.automatic => 'automatic',
-        _ => name,
       };
 }
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/core/entitlements/feature_entitlements.dart';
+import 'package:folego/core/entitlements/feature_entitlements.dart';
 
 void main() {
   test('free keeps essential notifications and premium-only capabilities closed', () {

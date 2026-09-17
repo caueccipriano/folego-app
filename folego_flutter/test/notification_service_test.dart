@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/core/notifications/notification_models.dart';
-import 'package:folego_flutter/core/notifications/notification_service.dart';
+import 'package:folego/core/notifications/notification_models.dart';
+import 'package:folego/core/notifications/notification_service.dart';
 
 class _FakeAdapter implements NotificationSchedulerAdapter {
   NotificationPermissionStatus permission = NotificationPermissionStatus.granted;
@@ -81,7 +81,7 @@ void main() {
     final service = NotificationService(
       adapter: adapter,
       loadPreferences: (_) async => preferences,
-      loadUpcoming: (_, __, ___) async => <NotificationUpcomingEvent>[upcoming],
+      loadUpcoming: (_, _, _) async => <NotificationUpcomingEvent>[upcoming],
     );
 
     await service.syncUpcoming('space-1');
@@ -96,7 +96,7 @@ void main() {
       adapter: adapter,
       loadPreferences: (_) async =>
           const NotificationPreferences(spaceId: 'space-1'),
-      loadUpcoming: (_, __, ___) async => <NotificationUpcomingEvent>[upcoming],
+      loadUpcoming: (_, _, _) async => <NotificationUpcomingEvent>[upcoming],
     );
 
     await service.syncUpcoming('space-1');
@@ -110,7 +110,7 @@ void main() {
     final service = NotificationService(
       adapter: adapter,
       loadPreferences: (_) async => preferences,
-      loadUpcoming: (_, __, ___) async => <NotificationUpcomingEvent>[upcoming],
+      loadUpcoming: (_, _, _) async => <NotificationUpcomingEvent>[upcoming],
     );
 
     await service.syncUpcoming('space-1');
