@@ -12,14 +12,15 @@ import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
 import '../../data/models/home_expense_summary.dart';
+import '../../data/models/monthly_money_summary.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
-import '../../data/repositories/folego_repository_home.dart';
+import '../../data/repositories/folego_repository_monthly_money.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
-import 'home_expense_card.dart';
+import 'home_monthly_money_card.dart';
 import 'home_financial_hero.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
@@ -37,7 +38,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   FolegoSnapshot? _snapshot;
 
-  List<TransactionItem> _expenseTransactions = const [];
+  MonthlyMoneySummary? _monthlyMoney;
   List<TransactionItem> _recentTransactions = const [];
   List<CategoryItem> _categories = const [];
   List<UpcomingEvent> _upcomingEvents = const [];
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _loading = true;
   String? _error;
-  bool _expensesUnavailable = false;
+  bool _monthlyMoneyUnavailable = false;
   bool _recentUnavailable = false;
   bool _upcomingUnavailable = false;
 
@@ -82,8 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
         widget.repository.getSnapshot(widget.space.id),
         _optional(widget.repository.getProfileName(), 'profile'),
         _optional(
-          widget.repository.getHomeExpenseTransactions(widget.space.id),
-          'expenses',
+          widget.repository.getMonthlyMoneySummary(spaceId: widget.space.id),
+          'monthly money',
         ),
         _optional(
           widget.repository
@@ -125,16 +126,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ? (values[1] as String).trim()
             : 'você';
 
-        final expenseTransactions = values[2] as List<TransactionItem>?;
+        final monthlyMoney = values[2] as MonthlyMoneySummary?;
         final recentTransactions = values[3] as List<TransactionItem>?;
         final upcomingEvents = values[6] as List<UpcomingEvent>?;
 
-        _expenseTransactions = expenseTransactions ?? const [];
+        _monthlyMoney = monthlyMoney;
         _recentTransactions = recentTransactions ?? const [];
         _upcomingEvents = upcomingEvents ?? const [];
         _categories = categoriesById.values.toList(growable: false);
 
-        _expensesUnavailable = expenseTransactions == null;
+        _monthlyMoneyUnavailable = monthlyMoney == null;
         _recentUnavailable = recentTransactions == null;
         _upcomingUnavailable = upcomingEvents == null;
         _loading = false;
@@ -226,13 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final primaryPurple = AppColors.primaryPurple(brightness);
     final layout = AppBreakpoints.of(context);
 
-    final breakdown = buildHomeExpenseBreakdown(
-      _expenseTransactions,
-      categoryFor: (transaction) {
-        final path = _categoryPathFor(transaction);
-        return CategoryVisuals.canonicalCategory(path.category);
-      },
-    );
     final latest = _latestTransaction();
 
     final bottomListPadding = MediaQuery.paddingOf(context).bottom + 180;
@@ -252,10 +246,9 @@ class _HomeScreenState extends State<HomeScreen> {
       secondaryText: secondaryText,
       primaryPurple: primaryPurple,
     );
-    final expenses = _buildExpensesSection(
-      breakdown: breakdown,
-      primaryText: primaryText,
-      secondaryText: secondaryText,
+    final monthlyMoney = HomeMonthlyMoneyCard(
+      summary: _monthlyMoney,
+      unavailable: _monthlyMoneyUnavailable,
     );
     final latestSection = _buildLatestSection(
       latest: latest,
@@ -290,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 24),
                   upcoming,
                   const SizedBox(height: 30),
-                  expenses,
+                  monthlyMoney,
                   const SizedBox(height: 30),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
@@ -305,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  expenses,
+                  monthlyMoney,
                   const SizedBox(height: 30),
                   latestSection,
                 ] else ...[
@@ -321,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 7, child: expenses),
+                      Expanded(flex: 7, child: monthlyMoney),
                       const SizedBox(width: 28),
                       Expanded(
                         flex: 5,
@@ -528,29 +521,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildExpensesSection({
-    required HomeExpenseBreakdown breakdown,
-    required Color primaryText,
-    required Color secondaryText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          title: 'seus gastos',
-          subtitle: 'gastos do bolso neste mês; benefícios ficam separados',
-          primaryText: primaryText,
-          secondaryText: secondaryText,
-        ),
-        const SizedBox(height: 16),
-        HomeExpenseCard(
-          breakdown: breakdown,
-          unavailable: _expensesUnavailable,
-        ),
-      ],
     );
   }
 
