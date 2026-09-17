@@ -32,6 +32,15 @@ class HomeFinancialHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < AppBreakpoints.medium;
+        return _buildHero(context, compact: compact);
+      },
+    );
+  }
+
+  Widget _buildHero(BuildContext context, {required bool compact}) {
     final brightness = Theme.of(context).brightness;
     final primaryPurple = AppColors.primaryPurple(brightness);
     final onPurple = brightness == Brightness.dark
@@ -51,8 +60,6 @@ class HomeFinancialHero extends StatelessWidget {
             : snapshot.nextIncomeDate == null && snapshot.daysUntilIncome == null
                 ? 'adicione um próximo recebimento no Plano para visualizar o prazo'
                 : 'valor disponível até o próximo recebimento';
-
-    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     return Semantics(
       container: true,
@@ -126,7 +133,7 @@ class HomeFinancialHero extends StatelessWidget {
                       const SizedBox(width: 7),
                       Expanded(
                         child: Text(
-                          'benefícios ficam separados',
+                          'dinheiro disponível, sem benefícios',
                           style: AppTypography.label(
                             context,
                             fontSize: 11,
@@ -163,7 +170,7 @@ class HomeFinancialHero extends StatelessWidget {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      'benefícios ficam separados',
+                      'dinheiro disponível, sem benefícios',
                       style: AppTypography.label(
                         context,
                         fontSize: 11,
