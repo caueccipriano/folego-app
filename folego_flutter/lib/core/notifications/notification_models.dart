@@ -13,6 +13,8 @@ enum FinancialNotificationKind {
   automationApplied,
   automationNeedsReview,
   planThreshold,
+  cardLimitThreshold,
+  largeExpense,
 }
 
 class NotificationPreferences {
@@ -25,6 +27,10 @@ class NotificationPreferences {
     this.subscriptionsEnabled = true,
     this.expectedIncomeEnabled = true,
     this.overdueEnabled = true,
+    this.planThresholdsEnabled = true,
+    this.cardLimitThresholdsEnabled = true,
+    this.largeExpensesEnabled = false,
+    this.largeExpenseThreshold = 200,
     this.reminderOffsetDays = 1,
     this.preferredHour = 9,
     this.preferredMinute = 0,
@@ -38,6 +44,10 @@ class NotificationPreferences {
   final bool subscriptionsEnabled;
   final bool expectedIncomeEnabled;
   final bool overdueEnabled;
+  final bool planThresholdsEnabled;
+  final bool cardLimitThresholdsEnabled;
+  final bool largeExpensesEnabled;
+  final double largeExpenseThreshold;
   final int reminderOffsetDays;
   final int preferredHour;
   final int preferredMinute;
@@ -53,6 +63,10 @@ class NotificationPreferences {
     bool? subscriptionsEnabled,
     bool? expectedIncomeEnabled,
     bool? overdueEnabled,
+    bool? planThresholdsEnabled,
+    bool? cardLimitThresholdsEnabled,
+    bool? largeExpensesEnabled,
+    double? largeExpenseThreshold,
     int? reminderOffsetDays,
     int? preferredHour,
     int? preferredMinute,
@@ -68,6 +82,14 @@ class NotificationPreferences {
         expectedIncomeEnabled:
             expectedIncomeEnabled ?? this.expectedIncomeEnabled,
         overdueEnabled: overdueEnabled ?? this.overdueEnabled,
+        planThresholdsEnabled:
+            planThresholdsEnabled ?? this.planThresholdsEnabled,
+        cardLimitThresholdsEnabled:
+            cardLimitThresholdsEnabled ?? this.cardLimitThresholdsEnabled,
+        largeExpensesEnabled:
+            largeExpensesEnabled ?? this.largeExpensesEnabled,
+        largeExpenseThreshold:
+            largeExpenseThreshold ?? this.largeExpenseThreshold,
         reminderOffsetDays: reminderOffsetDays ?? this.reminderOffsetDays,
         preferredHour: preferredHour ?? this.preferredHour,
         preferredMinute: preferredMinute ?? this.preferredMinute,
@@ -89,6 +111,12 @@ class NotificationPreferences {
       subscriptionsEnabled: json['subscriptions_enabled'] as bool? ?? true,
       expectedIncomeEnabled: json['expected_income_enabled'] as bool? ?? true,
       overdueEnabled: json['overdue_enabled'] as bool? ?? true,
+      planThresholdsEnabled: json['plan_thresholds_enabled'] as bool? ?? true,
+      cardLimitThresholdsEnabled:
+          json['card_limit_thresholds_enabled'] as bool? ?? true,
+      largeExpensesEnabled: json['large_expenses_enabled'] as bool? ?? false,
+      largeExpenseThreshold:
+          (json['large_expense_threshold'] as num?)?.toDouble() ?? 200,
       reminderOffsetDays: const {0, 1, 3}.contains(offset) ? offset : 1,
       preferredHour: preferred.$1,
       preferredMinute: preferred.$2,
@@ -105,6 +133,10 @@ class NotificationPreferences {
         'subscriptions_enabled': subscriptionsEnabled,
         'expected_income_enabled': expectedIncomeEnabled,
         'overdue_enabled': overdueEnabled,
+        'plan_thresholds_enabled': planThresholdsEnabled,
+        'card_limit_thresholds_enabled': cardLimitThresholdsEnabled,
+        'large_expenses_enabled': largeExpensesEnabled,
+        'large_expense_threshold': largeExpenseThreshold,
         'reminder_offset_days': reminderOffsetDays,
         'preferred_time': preferredTimeDb,
       };
