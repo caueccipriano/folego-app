@@ -152,9 +152,10 @@ Deno.serve(async (req: Request) => {
             .eq("id", subscription.id);
         } else {
           failed += 1;
-          await supabase.rpc("increment_web_push_failure", {
-            p_subscription_id: subscription.id,
-          });
+          await supabase
+            .from("web_push_subscriptions")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", subscription.id);
         }
       }
     }
