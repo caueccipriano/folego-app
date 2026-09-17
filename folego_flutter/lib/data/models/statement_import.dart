@@ -212,6 +212,10 @@ class StatementImportRow {
     this.reason,
     this.errorText,
     this.importedEventId,
+    this.automationRuleId,
+    this.automationSuggestedCategoryId,
+    this.automationSuggestedFinalType,
+    this.automationRecognized = false,
   });
 
   final String id;
@@ -234,10 +238,21 @@ class StatementImportRow {
   final String? reason;
   final String? errorText;
   final String? importedEventId;
+  final String? automationRuleId;
+  final String? automationSuggestedCategoryId;
+  final StatementImportFinalType? automationSuggestedFinalType;
+  final bool automationRecognized;
 
   bool get selected => decision == StatementImportDecision.include;
+  bool get hasAutomationSuggestion =>
+      automationRuleId != null &&
+      (automationSuggestedCategoryId != null ||
+          automationSuggestedFinalType != null ||
+          automationRecognized);
   bool get needsReview =>
-      decision == StatementImportDecision.review || finalType == null || status == StatementImportRowStatus.error;
+      decision == StatementImportDecision.review ||
+      finalType == null ||
+      status == StatementImportRowStatus.error;
 
   StatementImportRow copyWith({
     StatementImportFinalType? finalType,
@@ -265,12 +280,17 @@ class StatementImportRow {
       externalId: externalId,
       finalType: clearFinalType ? null : finalType ?? this.finalType,
       categoryId: clearCategory ? null : categoryId ?? this.categoryId,
-      counterpartAccountId: clearCounterpart ? null : counterpartAccountId ?? this.counterpartAccountId,
+      counterpartAccountId:
+          clearCounterpart ? null : counterpartAccountId ?? this.counterpartAccountId,
       invoiceId: clearInvoice ? null : invoiceId ?? this.invoiceId,
       decision: decision ?? this.decision,
       reason: reason,
       errorText: errorText,
       importedEventId: importedEventId,
+      automationRuleId: automationRuleId,
+      automationSuggestedCategoryId: automationSuggestedCategoryId,
+      automationSuggestedFinalType: automationSuggestedFinalType,
+      automationRecognized: automationRecognized,
     );
   }
 
@@ -305,6 +325,12 @@ class StatementImportRow {
       reason: json['reason'] as String?,
       errorText: json['error_text'] as String?,
       importedEventId: json['imported_event_id'] as String?,
+      automationRuleId: json['automation_rule_id'] as String?,
+      automationSuggestedCategoryId:
+          json['automation_suggested_category_id'] as String?,
+      automationSuggestedFinalType:
+          _finalType(json['automation_suggested_final_type'] as String?),
+      automationRecognized: json['automation_recognized'] as bool? ?? false,
     );
   }
 }
@@ -365,7 +391,9 @@ class StatementImportInvoiceOption {
       id: json['id'] as String,
       cardId: json['card_id'] as String,
       cardName: card?['name'] as String? ?? 'cartão',
-      dueDate: json['due_date'] == null ? null : DateTime.parse(json['due_date'] as String),
+      dueDate: json['due_date'] == null
+          ? null
+          : DateTime.parse(json['due_date'] as String),
       status: json['status'] as String? ?? 'open',
     );
   }
@@ -379,7 +407,9 @@ StatementImportSourceKind _sourceKind(String? value) => switch (value) {
       _ => StatementImportSourceKind.account,
     };
 StatementImportDirection _direction(String? value) =>
-    value == 'credit' ? StatementImportDirection.credit : StatementImportDirection.debit;
+    value == 'credit'
+        ? StatementImportDirection.credit
+        : StatementImportDirection.debit;
 StatementImportCandidateType _candidateType(String? value) => switch (value) {
       'expense' => StatementImportCandidateType.expense,
       'income' => StatementImportCandidateType.income,
