@@ -41,14 +41,27 @@ self.addEventListener('notificationclick', (event) => {
   target.searchParams.set('push_route', route);
 
   event.waitUntil((async () => {
-    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const windows = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
+
     for (const client of windows) {
-      if (client.url.startsWith(self.registration.scope)) {
+      if (!client.url.startsWith(self.registration.scope)) continue;
+
+      // Reload the existing PWA with the route in the URL. Flutter consumes
+      // push_route on startup and selects the related app tab. This works for
+      // an already-open PWA as well as a cold launch, without relying on a
+      // message listener that might not exist yet.
+      const navigated = await client.navigate(target.href);
+      if (navigated) {
+        await navigated.focus();
+      } else {
         await client.focus();
-        client.postMessage({ type: 'FOLEGO_PUSH_OPEN', route });
-        return;
       }
+      return;
     }
+
     await self.clients.openWindow(target.href);
   })());
 });
