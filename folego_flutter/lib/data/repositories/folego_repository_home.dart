@@ -4,6 +4,8 @@ import '../models/home_expense_summary.dart';
 import '../models/transaction_item.dart';
 import 'folego_repository.dart';
 
+export '../models/home_expense_summary.dart' show homeExpenseEventTypes;
+
 extension FolegoRepositoryHome on FolegoRepository {
   Future<List<TransactionItem>> getHomeExpenseTransactions(
     String spaceId, {
