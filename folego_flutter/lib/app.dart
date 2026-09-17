@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/layout/app_scroll_gutter.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/folego_repository.dart';
 import 'features/auth/auth_gate.dart';
@@ -27,6 +28,8 @@ class FolegoApp extends StatelessWidget {
               },
 
               debugShowCheckedModeBanner: false,
+
+              scrollBehavior: const AppScrollBehavior(),
 
               locale: locale,
 
