@@ -4,7 +4,7 @@
   "start_url": ".",
   "display": "standalone",
   "background_color": "#101014",
-  "theme_color": "#6C3CE9",
+  "theme_color": "#101014",
   "description": "Entenda quanto do seu dinheiro está realmente livre hoje, sem apertar amanhã.",
   "prefer_related_applications": false,
   "icons": [
