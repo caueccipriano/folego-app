@@ -215,6 +215,61 @@ class AutomationRuleDraft {
   }
 }
 
+AutomationRuleDraft? automationRuleDraftFromReviewedImportRow({
+  required StatementImportRow row,
+  required StatementImportSourceKind sourceKind,
+  required String sourceId,
+}) {
+  final categoryId = row.categoryId;
+  if (categoryId == null || row.finalType == null) return null;
+  final merchant = row.merchant?.trim();
+  final useMerchant = merchant != null && merchant.isNotEmpty;
+  final matchValue = useMerchant ? merchant : row.description.trim();
+  if (matchValue.isEmpty) return null;
+
+  final sourceScope = switch (sourceKind) {
+    StatementImportSourceKind.account => AutomationSourceScope.account,
+    StatementImportSourceKind.card => AutomationSourceScope.card,
+    StatementImportSourceKind.benefit => AutomationSourceScope.benefit,
+  };
+  final direction = row.direction == StatementImportDirection.credit
+      ? AutomationDirection.credit
+      : AutomationDirection.debit;
+
+  return AutomationRuleDraft(
+    name: 'Sempre: $matchValue',
+    matchField: useMerchant
+        ? AutomationMatchField.merchant
+        : AutomationMatchField.description,
+    matchType: AutomationMatchType.contains,
+    matchValue: matchValue,
+    sourceScope: sourceScope,
+    sourceAccountId:
+        sourceScope == AutomationSourceScope.account ? sourceId : null,
+    sourceCardId: sourceScope == AutomationSourceScope.card ? sourceId : null,
+    sourceBenefitId:
+        sourceScope == AutomationSourceScope.benefit ? sourceId : null,
+    direction: direction,
+    categoryId: categoryId,
+    actionType: AutomationActionType.suggestCategory,
+    executionMode: AutomationExecutionMode.review,
+  );
+}
+
+int compareAutomationRulesForPreview(AutomationRule a, AutomationRule b) {
+  final source = _boolRank(b.sourceScope != AutomationSourceScope.any)
+      .compareTo(_boolRank(a.sourceScope != AutomationSourceScope.any));
+  if (source != 0) return source;
+  final exact = _boolRank(b.matchType == AutomationMatchType.equals)
+      .compareTo(_boolRank(a.matchType == AutomationMatchType.equals));
+  if (exact != 0) return exact;
+  final priority = b.priority.compareTo(a.priority);
+  if (priority != 0) return priority;
+  return a.id.compareTo(b.id);
+}
+
+int _boolRank(bool value) => value ? 1 : 0;
+
 String normalizeAutomationText(String value) {
   var normalized = value.trim().toLowerCase();
   const accents = <String, String>{
