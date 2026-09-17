@@ -5,7 +5,7 @@ import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/features/home/home_monthly_money_card.dart';
 
 void main() {
-  const summary = MonthlyMoneySummary(
+  final summary = MonthlyMoneySummary(
     periodMonth: DateTime(2026, 9),
     incomeAmount: 5000,
     spendingAccount: 2165.96,
@@ -39,7 +39,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
             child: HomeMonthlyMoneyCard(
@@ -67,7 +67,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
           body: HomeMonthlyMoneyCard(
             summary: summary,
