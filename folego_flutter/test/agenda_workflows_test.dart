@@ -5,6 +5,7 @@ import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/debt_detail.dart';
 import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
+import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/data/models/recurring_item.dart';
 import 'package:folego/data/models/transaction_page.dart';
 import 'package:folego/data/models/upcoming_events.dart';
@@ -453,6 +454,34 @@ class _FakeRepository implements FolegoRepository {
 
   @override
   Future<String> getProfileName() async => 'Caue';
+
+  @override
+  Future<MonthlyMoneySummary> getMonthlyMoneySummary({
+    required String spaceId,
+    DateTime? periodMonth,
+  }) async => MonthlyMoneySummary(
+    periodMonth: DateTime(2026, 9),
+    incomeAmount: 1000,
+    spendingAccount: 100,
+    spendingCards: 0,
+    spendingBenefits: 0,
+    refundsAmount: 0,
+    spendingNet: 100,
+    incomeMinusSpending: 900,
+    competenceCardsTotal: 0,
+    competenceDirect: 100,
+    competenceBenefits: 0,
+    competenceRefunds: 0,
+    competenceNet: 100,
+    competenceCards: const [],
+    cashInflow: 1000,
+    cashOutflow: 100,
+    cashNet: 900,
+    movementCardPayments: 0,
+    movementTransfers: 0,
+    movementReserveInvestment: 0,
+    movementReconciliation: 0,
+  );
 
   @override
   Future<FolegoSnapshot> getSnapshot(
