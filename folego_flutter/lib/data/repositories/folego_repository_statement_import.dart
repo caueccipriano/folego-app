@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/statement_import.dart';
 import 'folego_repository.dart';
+import 'folego_repository_automation.dart';
 
 extension FolegoRepositoryStatementImport on FolegoRepository {
   Future<String> stageStatementImport({
@@ -32,7 +33,15 @@ extension FolegoRepositoryStatementImport on FolegoRepository {
         'p_rows': candidates.map((item) => item.toStageJson()).toList(growable: false),
       },
     );
-    return data as String;
+    final batchId = data as String;
+
+    // Rules run only after canonical staging/dedupe has been created. The RPC
+    // is restricted to suggestion/review modes and never posts to the ledger.
+    await applyAutomationRulesToImportBatch(
+      spaceId: spaceId,
+      batchId: batchId,
+    );
+    return batchId;
   }
 
   Future<StatementImportBatch> getStatementImportBatch({
@@ -60,7 +69,8 @@ extension FolegoRepositoryStatementImport on FolegoRepository {
         .select('''
           id,batch_id,row_number,occurred_at,description,merchant,amount,direction,external_id,
           candidate_type,final_type,category_id,counterpart_account_id,invoice_id,duplicate_state,
-          user_decision,status,reason,error_text,imported_event_id
+          user_decision,status,reason,error_text,imported_event_id,automation_rule_id,
+          automation_suggested_category_id,automation_suggested_final_type,automation_recognized
         ''')
         .eq('space_id', spaceId)
         .eq('batch_id', batchId)
