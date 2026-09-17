@@ -9,6 +9,8 @@ enum AppRealtimeDomain {
   wallet,
   diary,
   goals,
+  notifications,
+  automationRules,
 }
 
 const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
@@ -35,6 +37,7 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
     AppRealtimeDomain.categories,
     AppRealtimeDomain.plan,
     AppRealtimeDomain.diary,
+    AppRealtimeDomain.automationRules,
   },
   'budgets': {
     AppRealtimeDomain.home,
@@ -50,22 +53,27 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
   'recurring_items': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.transactions,
+    AppRealtimeDomain.notifications,
   },
   'recurring_occurrences': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.transactions,
+    AppRealtimeDomain.notifications,
   },
   'card_installments': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.wallet,
+    AppRealtimeDomain.notifications,
   },
   'card_invoices': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.wallet,
+    AppRealtimeDomain.notifications,
   },
   'card_payments': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.wallet,
+    AppRealtimeDomain.notifications,
   },
   'card_purchases': {
     AppRealtimeDomain.wallet,
@@ -74,14 +82,17 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
     AppRealtimeDomain.home,
     AppRealtimeDomain.paymentInstruments,
     AppRealtimeDomain.wallet,
+    AppRealtimeDomain.automationRules,
   },
   'debts': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.wallet,
+    AppRealtimeDomain.notifications,
   },
   'debt_installments': {
     AppRealtimeDomain.home,
     AppRealtimeDomain.wallet,
+    AppRealtimeDomain.notifications,
   },
   'transaction_reflections': {
     AppRealtimeDomain.diary,
@@ -91,6 +102,9 @@ const Map<String, Set<AppRealtimeDomain>> appRealtimeTableDomains = {
   },
   'goal_contributions': {
     AppRealtimeDomain.goals,
+  },
+  'automation_rules': {
+    AppRealtimeDomain.automationRules,
   },
 };
 
