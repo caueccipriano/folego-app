@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
+import '../../core/layout/app_scroll_gutter.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
@@ -19,6 +20,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'home_expense_card.dart';
+import 'home_financial_hero.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 
@@ -235,17 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final bottomListPadding = MediaQuery.paddingOf(context).bottom + 180;
 
-    final header = _buildHeader(
-      snapshot: snapshot,
-      surface: surface,
-      border: border,
-      primaryText: primaryText,
-    );
-    final hero = _buildHero(
-      snapshot: snapshot,
-      brightness: brightness,
-      primaryPurple: primaryPurple,
-    );
+    final header = _buildHeader(primaryText: primaryText);
+    final hero = _buildHero(snapshot: snapshot);
     final quickActions = _buildQuickActions(
       surface: surface,
       border: border,
@@ -282,7 +275,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(0, 26, 0, bottomListPadding),
+              padding: AppScrollGutter.padding(
+                context,
+                top: 26,
+                bottom: bottomListPadding,
+              ),
               children: [
                 header,
                 const SizedBox(height: 26),
@@ -371,158 +368,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader({
-    required FolegoSnapshot snapshot,
-    required Color surface,
-    required Color border,
-    required Color primaryText,
-  }) {
-    final daysChip = snapshot.daysUntilIncome == null
-        ? null
-        : Container(
-            constraints: const BoxConstraints(minHeight: 42),
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(99),
-              border: Border.all(color: border),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(AppIcons.flame, size: 18, color: AppColors.lime),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    '${snapshot.daysUntilIncome} '
-                    'dia${snapshot.daysUntilIncome == 1 ? '' : 's'}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: primaryText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-
-    if (AppBreakpoints.of(context) == AppLayoutSize.compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'e aí, ${_name.toLowerCase()}',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.display(
-              context,
-              fontSize: 28,
-              color: primaryText,
-            ),
-          ),
-          if (daysChip != null) ...[const SizedBox(height: 12), daysChip],
-        ],
-      );
-    }
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'e aí, ${_name.toLowerCase()}',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.display(
-              context,
-              fontSize: 30,
-              color: primaryText,
-            ),
-          ),
-        ),
-        if (daysChip != null) ...[const SizedBox(width: 12), daysChip],
-      ],
+  Widget _buildHeader({required Color primaryText}) {
+    return Text(
+      'e aí, ${_name.toLowerCase()}',
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: AppTypography.display(
+        context,
+        fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact ? 28 : 30,
+        color: primaryText,
+      ),
     );
   }
 
-  Widget _buildHero({
-    required FolegoSnapshot snapshot,
-    required Brightness brightness,
-    required Color primaryPurple,
-  }) {
-    final onPurple = brightness == Brightness.dark
-        ? AppColors.iconOnPurpleDark
-        : AppColors.iconOnPurpleLight;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
-      decoration: BoxDecoration(
-        color: primaryPurple,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'te sobra pra gastar',
-            style: AppTypography.body(
-              context,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: onPurple.withValues(alpha: .80),
-            ),
-          ),
-          const SizedBox(height: 10),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              Formatters.money(snapshot.spendablePool),
-              style: AppTypography.money(
-                context,
-                fontSize: 52,
-                color: AppColors.lime,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: AppColors.darkBackground.withValues(alpha: .14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  AppIcons.calendar,
-                  size: 17,
-                  color: onPurple.withValues(alpha: .88),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    'dinheiro disponível, sem benefícios, depois dos compromissos '
-                    'até o próximo recebimento',
-                    style: AppTypography.body(
-                      context,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: onPurple.withValues(alpha: .84),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  Widget _buildHero({required FolegoSnapshot snapshot}) {
+    return HomeFinancialHero(snapshot: snapshot);
   }
 
   Widget _buildQuickActions({

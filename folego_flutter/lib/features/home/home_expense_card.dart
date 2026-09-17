@@ -10,6 +10,7 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/home_expense_summary.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import 'home_expense_navigation_scope.dart';
+import 'home_spending_palette.dart';
 
 class HomeExpenseCard extends StatefulWidget {
   const HomeExpenseCard({
@@ -271,8 +272,10 @@ class _ExpenseDonut extends StatelessWidget {
         .map(
           (item) => _DonutSlice(
             share: item.share,
-            color: CategoryVisuals.colorFor(
+            color: HomeSpendingPalette.colorFor(
               category: item.category,
+              categoryId: item.categoryId,
+              isOther: item.isOther,
               brightness: brightness,
             ),
           ),
@@ -425,8 +428,10 @@ class _ExpenseLegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = CategoryVisuals.colorFor(
+    final color = HomeSpendingPalette.colorFor(
       category: item.category,
+      categoryId: item.categoryId,
+      isOther: item.isOther,
       brightness: brightness,
     );
 
