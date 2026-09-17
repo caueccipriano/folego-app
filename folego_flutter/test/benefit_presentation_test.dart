@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
+import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/data/models/recurring_item.dart';
 import 'package:folego/data/models/transaction_detail.dart';
 import 'package:folego/data/models/transaction_filters.dart';
@@ -79,7 +80,7 @@ void main() {
     expect(detail.typeLabel, contains('não afeta saldo disponível'));
   });
 
-  testWidgets('Home deixa claro que sobra e gastos principais são cash', (
+  testWidgets('Home separa dinheiro disponível e composição dos gastos do mês', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -100,10 +101,11 @@ void main() {
 
     expect(find.text('te sobra pra gastar'), findsOneWidget);
     expect(find.textContaining('dinheiro disponível, sem benefícios'), findsOneWidget);
-    expect(
-      find.text('gastos do bolso neste mês; benefícios ficam separados'),
-      findsOneWidget,
-    );
+    expect(find.text('seu mês até agora'), findsOneWidget);
+    expect(find.text('conta'), findsOneWidget);
+    expect(find.text('cartões'), findsOneWidget);
+    expect(find.text('benefícios'), findsOneWidget);
+    expect(find.text('reembolsos'), findsOneWidget);
     expect(find.textContaining('1.600'), findsOneWidget);
   });
 }
@@ -149,6 +151,40 @@ class _BenefitRepository implements FolegoRepository {
 
   @override
   Future<String> getProfileName() async => 'Cauê';
+
+  @override
+  Future<MonthlyMoneySummary> getMonthlyMoneySummary({
+    required String spaceId,
+    DateTime? periodMonth,
+  }) async => MonthlyMoneySummary(
+    periodMonth: DateTime(2026, 9),
+    incomeAmount: 6000,
+    spendingAccount: 900,
+    spendingCards: 300,
+    spendingBenefits: 42,
+    refundsAmount: 0,
+    spendingNet: 1242,
+    incomeMinusSpending: 4758,
+    competenceCardsTotal: 300,
+    competenceDirect: 900,
+    competenceBenefits: 42,
+    competenceRefunds: 0,
+    competenceNet: 1242,
+    competenceCards: const [
+      MonthlyCardCompetence(
+        cardId: 'card-1',
+        name: 'Cartão',
+        amount: 300,
+      ),
+    ],
+    cashInflow: 6000,
+    cashOutflow: 900,
+    cashNet: 5100,
+    movementCardPayments: 0,
+    movementTransfers: 0,
+    movementReserveInvestment: 0,
+    movementReconciliation: 0,
+  );
 
   @override
   Future<TransactionPage> getTransactionsPage(
