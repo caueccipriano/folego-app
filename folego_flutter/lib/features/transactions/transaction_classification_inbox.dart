@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../core/entitlements/feature_entitlements.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/financial_display_text.dart';
 import '../../core/utils/formatters.dart';
+import '../../data/models/automation_rule.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_automation.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
 import '../../shared/widgets/category_search_picker.dart';
@@ -40,6 +43,10 @@ class _TransactionClassificationInboxState
   bool _refreshing = false;
   bool _changed = false;
   String? _error;
+
+  bool get _automationEnabled => FeatureEntitlementsScope.of(context)
+      .entitlements
+      .allows(AppCapability.automationRules);
 
   @override
   void initState() {
@@ -140,9 +147,16 @@ class _TransactionClassificationInboxState
         _savingEventId = null;
         _changed = true;
       });
+
+      final ruleCreated = await _offerAlwaysCategorize(item, selected);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Classificado em ${selected.breadcrumb}.'),
+          content: Text(
+            ruleCreated
+                ? 'Classificado em ${selected.breadcrumb} e regra preparada para próximas revisões.'
+                : 'Classificado em ${selected.breadcrumb}.',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -153,6 +167,75 @@ class _TransactionClassificationInboxState
         _error = _friendly(error);
       });
     }
+  }
+
+  Future<bool> _offerAlwaysCategorize(
+    TransactionItem item,
+    CategoryItem category,
+  ) async {
+    if (!_automationEnabled) return false;
+    final description = item.description.trim();
+    if (description.length < 3) return false;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('sempre fazer assim?'),
+        content: Text(
+          'Sempre categorizar “${_shortLabel(description)}” como ${category.breadcrumb}?\n\nA regra só prepara a categoria para revisão; ela não cria nem confirma lançamentos sozinha.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('agora não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('criar regra'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return false;
+
+    final isSimpleAccountEvent =
+        (item.eventType == 'expense' || item.eventType == 'income') &&
+        item.accountId != null;
+    final direction = transactionClassificationKind(item.eventType) == 'income'
+        ? AutomationDirection.credit
+        : AutomationDirection.debit;
+
+    try {
+      await widget.repository.createAutomationRule(
+        spaceId: widget.spaceId,
+        draft: AutomationRuleDraft(
+          name: 'Sempre: ${_shortLabel(description)}',
+          matchField: AutomationMatchField.description,
+          matchType: AutomationMatchType.contains,
+          matchValue: description,
+          sourceScope: isSimpleAccountEvent
+              ? AutomationSourceScope.account
+              : AutomationSourceScope.any,
+          sourceAccountId: isSimpleAccountEvent ? item.accountId : null,
+          direction: direction,
+          categoryId: category.id,
+          actionType: AutomationActionType.reviewCategory,
+          executionMode: AutomationExecutionMode.review,
+        ),
+      );
+      return true;
+    } catch (error) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('A categoria foi salva, mas a regra não: ${_friendly(error)}')),
+      );
+      return false;
+    }
+  }
+
+  String _shortLabel(String value) {
+    final compact = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return compact.length <= 36 ? compact : '${compact.substring(0, 33)}…';
   }
 
   Future<CategoryItem?> _showCategoryPicker({
