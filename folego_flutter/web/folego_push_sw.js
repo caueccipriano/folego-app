@@ -1,11 +1,14 @@
 const CACHE_PREFIX = 'folego-shell-';
-const CACHE_NAME = 'folego-shell-v1';
+const CACHE_VERSION = '__FOLEGO_CACHE_VERSION__';
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const OFFLINE_FALLBACK_URL = new URL('index.html', self.registration.scope).href;
 
 const APP_SHELL_URLS = [
   'index.html',
   'manifest.json',
   'flutter_bootstrap.js',
+  'flutter.js',
+  'main.dart.js',
   'folego_ios_zoom_fix.js',
   'folego_push_bridge.js',
   'favicon.png',
