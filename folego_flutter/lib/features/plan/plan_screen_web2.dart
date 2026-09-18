@@ -639,8 +639,6 @@ class _PlanScreenState extends State<PlanScreen> {
         padding: const EdgeInsets.fromLTRB(0, 22, 0, 140),
         children: [
           _buildHeader(brightness, layout),
-          const SizedBox(height: 16),
-          _buildPlanModeToggle(brightness),
           if (_refreshing) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(minHeight: 2),
@@ -667,8 +665,6 @@ class _PlanScreenState extends State<PlanScreen> {
           padding: const EdgeInsets.only(top: 22),
           child: _buildHeader(brightness, layout),
         ),
-        const SizedBox(height: 14),
-        _buildPlanModeToggle(brightness),
         if (_refreshing) ...[
           const SizedBox(height: 12),
           const LinearProgressIndicator(minHeight: 2),
@@ -712,75 +708,6 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPlanModeToggle(Brightness brightness) {
-    final border = AppColors.border(brightness);
-    final surface = AppColors.surface(brightness);
-    final accent = AppColors.primaryPurple(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-
-    Widget segment({
-      required String label,
-      required bool selected,
-      required VoidCallback? onTap,
-    }) {
-      return Expanded(
-        child: Material(
-          color: selected
-              ? accent.withValues(alpha: .13)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            key: ValueKey('plan-mode-$label'),
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AppTypography.label(
-                  context,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? accent : secondary,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: border),
-          ),
-          child: Row(
-            children: [
-              segment(
-                label: 'resumo',
-                selected: true,
-                onTap: null,
-              ),
-              segment(
-                label: 'projeção',
-                selected: false,
-                onTap: widget.onOpenProjection,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
