@@ -11,6 +11,14 @@ declare
   v_account uuid := gen_random_uuid();
   v_space_sheet uuid := gen_random_uuid();
   v_account_sheet uuid := gen_random_uuid();
+  v_space_budget uuid := gen_random_uuid();
+  v_budget_parent uuid := gen_random_uuid();
+  v_budget_child uuid := gen_random_uuid();
+  v_space_future uuid := gen_random_uuid();
+  v_account_future uuid := gen_random_uuid();
+  v_protected_future uuid := gen_random_uuid();
+  v_future_parent uuid := gen_random_uuid();
+  v_future_child uuid := gen_random_uuid();
   v_card uuid := gen_random_uuid();
   v_invoice uuid := gen_random_uuid();
   v_parent_category uuid := gen_random_uuid();
@@ -23,6 +31,7 @@ declare
   v_today date := (now() at time zone 'America/Sao_Paulo')::date;
   v_next_month date := (date_trunc('month', v_today) + interval '1 month')::date;
   v_next_due date;
+  v_future_date date;
   v_before_events bigint;
   v_after_events bigint;
   v_before_impacts bigint;
@@ -336,6 +345,171 @@ begin
   ) <> 500 then
     raise exception 'budget_plus_card_recurring_should_equal_budget';
   end if;
+
+  -- Fixture D: budget-only planning must produce a real projection even when
+  -- there are no recurring items, cards, debts or persisted planning items.
+  insert into public.financial_spaces(id, owner_id, name, type, currency, timezone)
+  values(v_space_budget, v_user, 'Projection budget-only fixture', 'personal', 'BRL', 'America/Sao_Paulo');
+
+  insert into public.space_members(space_id, user_id, role)
+  values(v_space_budget, v_user, 'owner');
+
+  insert into public.categories(
+    id, space_id, name, kind, parent_id, active, category_role, is_selectable
+  ) values
+    (
+      v_budget_parent, v_space_budget, 'Budget-only parent', 'expense',
+      null, true, 'group', false
+    ),
+    (
+      v_budget_child, v_space_budget, 'Budget-only child', 'expense',
+      v_budget_parent, true, 'economic', true
+    );
+
+  insert into public.budget_recurring_rules(
+    space_id, category_id, planned_amount, effective_from
+  ) values(
+    v_space_budget,
+    v_budget_child,
+    300,
+    date_trunc('month', v_today)::date
+  );
+
+  select public.get_projection(v_space_budget, 3, '[]'::jsonb, '{}'::text[])
+    into v_projection;
+
+  v_first := (v_projection -> 'months') -> 0;
+  v_second := (v_projection -> 'months') -> 1;
+
+  if coalesce((v_projection ->> 'has_projection_inputs')::boolean, false) is not true then
+    raise exception 'budget_only_projection_not_recognized_as_input';
+  end if;
+
+  if round((v_first ->> 'direct_expenses')::numeric, 2) <> 300 then
+    raise exception 'budget_only_current_month_wrong: %', v_first ->> 'direct_expenses';
+  end if;
+
+  if round((v_second ->> 'opening_balance')::numeric, 2)
+      <> round((v_first ->> 'closing_balance')::numeric, 2) then
+    raise exception 'budget_only_month_chaining_wrong';
+  end if;
+
+  -- Fixture E: future confirmed cash movements must be projected from the
+  -- canonical ledger. Transfers from a spendable account into a protected
+  -- account count as reserve transfers, while account-to-account movement
+  -- inside the spendable pool would net to zero.
+  insert into public.financial_spaces(id, owner_id, name, type, currency, timezone)
+  values(v_space_future, v_user, 'Projection future movement fixture', 'personal', 'BRL', 'America/Sao_Paulo');
+
+  insert into public.space_members(space_id, user_id, role)
+  values(v_space_future, v_user, 'owner');
+
+  insert into public.accounts(
+    id, space_id, name, type, available_for_spending, active
+  ) values
+    (v_account_future, v_space_future, 'Conta futura', 'checking', true, true),
+    (v_protected_future, v_space_future, 'Reserva futura', 'savings', false, true);
+
+  insert into public.categories(
+    id, space_id, name, kind, parent_id, active, category_role, is_selectable
+  ) values
+    (
+      v_future_parent, v_space_future, 'Future parent', 'expense',
+      null, true, 'group', false
+    ),
+    (
+      v_future_child, v_space_future, 'Future expense', 'expense',
+      v_future_parent, true, 'economic', true
+    );
+
+  insert into public.financial_events(
+    id, space_id, event_type, description, amount, currency,
+    occurred_at, competence_date, status, source
+  ) values(
+    gen_random_uuid(), v_space_future, 'opening_balance', 'Future opening', 1000, 'BRL',
+    v_today::timestamptz, v_today, 'confirmed', 'test'
+  ) returning id into v_event;
+
+  insert into public.financial_impacts(
+    event_id, space_id, dimension, amount, account_id, effective_date
+  ) values(v_event, v_space_future, 'cash', 1000, v_account_future, v_today);
+
+  v_future_date := (date_trunc('month', v_today) + interval '1 month + 5 days')::date;
+
+  insert into public.financial_events(
+    id, space_id, event_type, description, amount, currency,
+    occurred_at, competence_date, status, source
+  ) values(
+    gen_random_uuid(), v_space_future, 'income', 'Future income', 500, 'BRL',
+    v_future_date::timestamptz, v_future_date, 'confirmed', 'test'
+  ) returning id into v_event;
+
+  insert into public.financial_impacts(
+    event_id, space_id, dimension, amount, account_id, effective_date
+  ) values(v_event, v_space_future, 'cash', 500, v_account_future, v_future_date);
+
+  insert into public.financial_events(
+    id, space_id, event_type, description, amount, currency,
+    occurred_at, competence_date, category_id, status, source
+  ) values(
+    gen_random_uuid(), v_space_future, 'expense', 'Future expense', 120, 'BRL',
+    v_future_date::timestamptz, v_future_date, v_future_child, 'confirmed', 'test'
+  ) returning id into v_event;
+
+  insert into public.financial_impacts(
+    event_id, space_id, dimension, amount, account_id, category_id, effective_date
+  ) values
+    (v_event, v_space_future, 'cash', -120, v_account_future, null, v_future_date),
+    (v_event, v_space_future, 'economic', -120, null, v_future_child, v_future_date),
+    (v_event, v_space_future, 'budget', -120, null, v_future_child, v_future_date);
+
+  insert into public.financial_events(
+    id, space_id, event_type, description, amount, currency,
+    occurred_at, competence_date, status, source, metadata
+  ) values(
+    gen_random_uuid(), v_space_future, 'transfer', 'Future reserve transfer', 200, 'BRL',
+    v_future_date::timestamptz, v_future_date, 'confirmed', 'test',
+    jsonb_build_object('from_account_id', v_account_future, 'to_account_id', v_protected_future)
+  ) returning id into v_event;
+
+  insert into public.financial_impacts(
+    event_id, space_id, dimension, amount, account_id, effective_date
+  ) values
+    (v_event, v_space_future, 'cash', -200, v_account_future, v_future_date),
+    (v_event, v_space_future, 'cash', 200, v_protected_future, v_future_date);
+
+  select public.get_projection(v_space_future, 3, '[]'::jsonb, '{}'::text[])
+    into v_projection;
+
+  v_first := (v_projection -> 'months') -> 0;
+  v_next := (v_projection -> 'months') -> 1;
+
+  if round((v_first ->> 'closing_balance')::numeric, 2) <> 1000 then
+    raise exception 'future_movements_leaked_into_current_balance: %',
+      v_first ->> 'closing_balance';
+  end if;
+
+  if round((v_next ->> 'opening_balance')::numeric, 2) <> 1000 then
+    raise exception 'future_movements_next_month_opening_wrong: %',
+      v_next ->> 'opening_balance';
+  end if;
+
+  if round((v_next ->> 'guaranteed_income')::numeric, 2) <> 500 then
+    raise exception 'future_income_missing: %', v_next ->> 'guaranteed_income';
+  end if;
+
+  if round((v_next ->> 'direct_expenses')::numeric, 2) <> 120 then
+    raise exception 'future_expense_missing: %', v_next ->> 'direct_expenses';
+  end if;
+
+  if round((v_next ->> 'reserve_transfers')::numeric, 2) <> 200 then
+    raise exception 'future_reserve_transfer_missing: %', v_next ->> 'reserve_transfers';
+  end if;
+
+  if round((v_next ->> 'closing_balance')::numeric, 2) <> 1180 then
+    raise exception 'future_movements_closing_wrong: %', v_next ->> 'closing_balance';
+  end if;
+
 end;
 $test$;
 
