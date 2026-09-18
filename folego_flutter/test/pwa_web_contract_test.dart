@@ -1,0 +1,82 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('PWA web contract', () {
+    test('index keeps install metadata, safe-area viewport and script order', () {
+      final index = File('web/index.html').readAsStringSync();
+
+      expect(index, contains('viewport-fit=cover'));
+      expect(index, contains('apple-mobile-web-app-capable'));
+      expect(index, contains('apple-mobile-web-app-status-bar-style'));
+      expect(index, contains('rel="manifest" href="manifest.json"'));
+      expect(index, contains('(prefers-color-scheme: light)'));
+      expect(index, contains('(prefers-color-scheme: dark)'));
+      expect(index, isNot(contains(r'</script>\n')));
+
+      final zoomFix = index.indexOf('folego_ios_zoom_fix.js');
+      final pushBridge = index.indexOf('folego_push_bridge.js');
+      final flutterBootstrap = index.indexOf('flutter_bootstrap.js');
+
+      expect(zoomFix, greaterThanOrEqualTo(0));
+      expect(pushBridge, greaterThan(zoomFix));
+      expect(flutterBootstrap, greaterThan(pushBridge));
+    });
+
+    test('manifest is installable inside the GitHub Pages app scope', () {
+      final manifest =
+          jsonDecode(File('web/manifest.json').readAsStringSync())
+              as Map<String, dynamic>;
+
+      expect(manifest['id'], './');
+      expect(manifest['start_url'], './');
+      expect(manifest['scope'], './');
+      expect(manifest['display'], 'standalone');
+      expect(manifest['lang'], 'pt-BR');
+
+      final icons = (manifest['icons'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      expect(
+        icons.any(
+          (icon) =>
+              icon['sizes'] == '192x192' &&
+              icon['purpose'] == 'any',
+        ),
+        isTrue,
+      );
+      expect(
+        icons.any(
+          (icon) =>
+              icon['sizes'] == '512x512' &&
+              icon['purpose'] == 'maskable',
+        ),
+        isTrue,
+      );
+    });
+
+    test('custom worker owns push and notification click behavior', () {
+      final worker = File('web/folego_push_sw.js').readAsStringSync();
+      final bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
+
+      expect(worker, contains("addEventListener('push'"));
+      expect(worker, contains("addEventListener('notificationclick'"));
+      expect(worker, contains('self.clients.openWindow'));
+      expect(bootstrap, contains('_flutter.loader.load();'));
+      expect(bootstrap, isNot(contains('serviceWorkerSettings')));
+    });
+
+    test('Pages workflow configures and deploys the PWA artifact', () {
+      final workflow =
+          File('../.github/workflows/deploy-web.yml').readAsStringSync();
+
+      expect(workflow, contains('actions/configure-pages@v5'));
+      expect(workflow, contains('actions/upload-pages-artifact@v4'));
+      expect(workflow, contains('actions/deploy-pages@v4'));
+      expect(workflow, contains('name: github-pages'));
+      expect(workflow, contains('--base-href "/folego-app/"'));
+      expect(workflow, contains('Verify PWA artifact'));
+    });
+  });
+}
