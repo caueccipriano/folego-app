@@ -80,7 +80,13 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('monthly-money-composition')));
     await tester.pumpAndSettle();
 
-    expect(find.text('gastos feitos no mês'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.text('gastos feitos no mês'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('competência do mês'), findsOneWidget);
     expect(find.text('cartões na competência'), findsOneWidget);
     expect(find.text('despesa por competência'), findsOneWidget);
