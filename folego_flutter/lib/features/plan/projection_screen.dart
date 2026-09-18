@@ -2256,6 +2256,7 @@ class _ProjectionSimulationSheetState
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _freeComponent,
             decoration: const InputDecoration(labelText: 'tipo'),
             items: const [
