@@ -32,7 +32,6 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     ];
 
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final glassTint = surface.withValues(alpha: isDark ? .62 : .70);
     final glassHighlight = Colors.white.withValues(alpha: isDark ? .10 : .42);
 
@@ -108,7 +107,6 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                 item: items[index],
                                 selected: selectedIndex == index,
                                 onTap: () => onDestinationSelected(index),
-                                outerBorder: border,
                               ),
                             );
                           }),
@@ -131,13 +129,11 @@ class _Destination extends StatelessWidget {
     required this.item,
     required this.selected,
     required this.onTap,
-    required this.outerBorder,
   });
 
   final _NavItem item;
   final bool selected;
   final VoidCallback onTap;
-  final Color outerBorder;
 
   @override
   Widget build(BuildContext context) {
