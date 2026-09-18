@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -363,6 +362,8 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   onBack: widget.onBack,
                   onScenario: _openScenarioSettings,
                 ),
+                const SizedBox(height: 14),
+                _ProjectionPlanModeToggle(onSummary: widget.onBack),
                 const SizedBox(height: 18),
                 _HorizonSelector(
                   value: _horizon,
@@ -528,6 +529,66 @@ class _ProjectionHeader extends StatelessWidget {
           icon: const Icon(AppIcons.adjustments),
         ),
       ],
+    );
+  }
+}
+
+class _ProjectionPlanModeToggle extends StatelessWidget {
+  const _ProjectionPlanModeToggle({required this.onSummary});
+
+  final VoidCallback onSummary;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final accent = AppColors.primaryPurple(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+
+    Widget item(String label, bool selected, VoidCallback? onTap) {
+      return Expanded(
+        child: Material(
+          color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppTypography.label(
+                  context,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? accent : secondary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Container(
+        key: const ValueKey('projection-plan-mode-toggle'),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          children: [
+            item('resumo', false, onSummary),
+            item('projeção', true, null),
+          ],
+        ),
+      ),
     );
   }
 }
