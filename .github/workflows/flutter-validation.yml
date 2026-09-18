@@ -34,7 +34,15 @@ jobs:
         run: flutter analyze
 
       - name: Flutter test
-        run: flutter test -r compact --concurrency=1 --fail-fast
+        run: |
+          set +e
+          flutter test -r compact --concurrency=1 --fail-fast > /tmp/flutter-test.log 2>&1
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            tr '\r' '\n' < /tmp/flutter-test.log | tail -n 180
+            exit "$code"
+          fi
+          echo "Flutter tests passed"
 
       - name: Flutter build web
         run: flutter build web --release
