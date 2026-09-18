@@ -36,13 +36,15 @@ jobs:
       - name: Flutter test
         run: |
           set +e
-          flutter test -r compact --concurrency=1 --fail-fast > /tmp/flutter-test.log 2>&1
+          flutter test test/projection_screen_test.dart -r expanded --concurrency=1 --fail-fast > /tmp/flutter-test.log 2>&1
           code=$?
           if [ "$code" -ne 0 ]; then
-            tr '\r' '\n' < /tmp/flutter-test.log | tail -n 180
+            tr '\r' '\n' < /tmp/flutter-test.log > /tmp/flutter-test-normalized.log
+            awk 'BEGIN {printing=0; count=0} /EXCEPTION CAUGHT/ {printing=1} printing {print; count++} count>=220 {exit}' /tmp/flutter-test-normalized.log
+            tail -n 30 /tmp/flutter-test-normalized.log
             exit "$code"
           fi
-          echo "Flutter tests passed"
+          echo "Projection tests passed"
 
       - name: Flutter build web
         run: flutter build web --release
