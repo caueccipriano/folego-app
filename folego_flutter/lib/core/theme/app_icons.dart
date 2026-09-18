@@ -345,6 +345,10 @@ abstract final class AppIcons {
 
   static const IconData refresh = TablerIcons.refresh;
 
+  static const IconData adjustments = TablerIcons.adjustments;
+
+  static const IconData chartLine = TablerIcons.chartLine;
+
   static const IconData eye = TablerIcons.eye;
 
   static const IconData eyeOff = TablerIcons.eyeOff;
