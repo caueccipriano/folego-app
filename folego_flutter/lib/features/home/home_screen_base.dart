@@ -13,6 +13,7 @@ import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
 import '../../data/models/home_expense_summary.dart';
 import '../../data/models/monthly_money_summary.dart';
+import '../../data/models/projection_model.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
@@ -20,9 +21,11 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'home_monthly_money_card.dart';
+import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
+import '../plan/projection_navigation_scope.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.space, required this.repository});
@@ -38,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   FolegoSnapshot? _snapshot;
 
   MonthlyMoneySummary? _monthlyMoney;
+  ProjectionResult? _projection;
   List<TransactionItem> _recentTransactions = const [];
   List<CategoryItem> _categories = const [];
   List<UpcomingEvent> _upcomingEvents = const [];
@@ -47,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
   String? _error;
   bool _monthlyMoneyUnavailable = false;
+  bool _projectionUnavailable = false;
   bool _recentUnavailable = false;
   bool _upcomingUnavailable = false;
 
@@ -103,6 +108,13 @@ class _HomeScreenState extends State<HomeScreen> {
           widget.repository.getUpcomingEvents(widget.space.id, days: 30),
           'upcoming events',
         ),
+        _optional(
+          widget.repository.getProjection(
+            spaceId: widget.space.id,
+            horizonMonths: 3,
+          ),
+          'projection',
+        ),
       ]);
 
       if (!mounted) {
@@ -128,13 +140,16 @@ class _HomeScreenState extends State<HomeScreen> {
         final monthlyMoney = values[2] as MonthlyMoneySummary?;
         final recentTransactions = values[3] as List<TransactionItem>?;
         final upcomingEvents = values[6] as List<UpcomingEvent>?;
+        final projection = values[7] as ProjectionResult?;
 
         _monthlyMoney = monthlyMoney;
+        _projection = projection;
         _recentTransactions = recentTransactions ?? const [];
         _upcomingEvents = upcomingEvents ?? const [];
         _categories = categoriesById.values.toList(growable: false);
 
         _monthlyMoneyUnavailable = monthlyMoney == null;
+        _projectionUnavailable = projection == null;
         _recentUnavailable = recentTransactions == null;
         _upcomingUnavailable = upcomingEvents == null;
         _loading = false;
@@ -249,6 +264,11 @@ class _HomeScreenState extends State<HomeScreen> {
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
     );
+    final projectionInsight = HomeProjectionInsightCard(
+      projection: _projection,
+      unavailable: _projectionUnavailable,
+      onOpen: () => ProjectionNavigationScope.maybeOf(context)?.open(),
+    );
     final latestSection = _buildLatestSection(
       latest: latest,
       brightness: brightness,
@@ -283,6 +303,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   upcoming,
                   const SizedBox(height: 30),
                   monthlyMoney,
+                  const SizedBox(height: 16),
+                  projectionInsight,
                   const SizedBox(height: 30),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
@@ -298,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 30),
                   monthlyMoney,
+                  const SizedBox(height: 16),
+                  projectionInsight,
                   const SizedBox(height: 30),
                   latestSection,
                 ] else ...[
@@ -313,7 +337,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 7, child: monthlyMoney),
+                      Expanded(
+                        flex: 7,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            monthlyMoney,
+                            const SizedBox(height: 16),
+                            projectionInsight,
+                          ],
+                        ),
+                      ),
                       const SizedBox(width: 28),
                       Expanded(
                         flex: 5,
