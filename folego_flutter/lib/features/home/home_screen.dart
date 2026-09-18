@@ -127,8 +127,17 @@ class _HomeContentState extends State<_HomeContent> {
       );
     }
 
+    // Do not block the whole Home while onboarding state is being checked.
+    // Returning a full-screen loading state here makes IndexedStack tabs look
+    // blank on iOS/PWA when their async setup is still pending.
     if (_loadingSetup) {
-      return const _HomeLoadingState();
+      return HomeExpenseNavigationScope(
+        onOpenExpenses: _openExpenseTransactions,
+        child: base.HomeScreen(
+          space: widget.space,
+          repository: widget.repository,
+        ),
+      );
     }
 
     return HomeExpenseNavigationScope(
