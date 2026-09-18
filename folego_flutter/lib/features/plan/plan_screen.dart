@@ -6,28 +6,70 @@ import '../../core/theme/app_icons.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'flexible_budget_screen.dart';
 import 'plan_screen_web2.dart' as base;
+import 'projection_screen.dart';
 
-class PlanScreen extends StatelessWidget {
+class PlanScreen extends StatefulWidget {
   const PlanScreen({
     super.key,
     required this.repository,
     required this.spaceId,
+    this.projectionRequestToken = 0,
   });
 
   final FolegoRepository repository;
   final String spaceId;
 
+  /// Changes when another area (for example Home) asks to open Projection.
+  final int projectionRequestToken;
+
+  @override
+  State<PlanScreen> createState() => _PlanScreenState();
+}
+
+class _PlanScreenState extends State<PlanScreen> {
+  bool _projection = false;
+
+  @override
+  void didUpdateWidget(covariant PlanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spaceId != widget.spaceId) {
+      _projection = false;
+    }
+    if (oldWidget.projectionRequestToken != widget.projectionRequestToken) {
+      _projection = true;
+    }
+  }
+
+  void _showProjection() {
+    if (_projection) return;
+    setState(() => _projection = true);
+  }
+
+  void _showSummary() {
+    if (!_projection) return;
+    setState(() => _projection = false);
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_projection) {
+      return ProjectionScreen(
+        repository: widget.repository,
+        spaceId: widget.spaceId,
+        onBack: _showSummary,
+      );
+    }
+
     return Stack(
       children: [
         RealtimeRefreshView(
           domain: AppRealtimeDomain.plan,
-          identity: spaceId,
+          identity: widget.spaceId,
           builder: (refreshToken) => base.PlanScreen(
-            repository: repository,
-            spaceId: spaceId,
+            repository: widget.repository,
+            spaceId: widget.spaceId,
             refreshToken: refreshToken,
+            onProjectionRequested: _showProjection,
           ),
         ),
         Positioned(
@@ -40,8 +82,8 @@ class PlanScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => FlexibleBudgetScreen(
-                    repository: repository,
-                    spaceId: spaceId,
+                    repository: widget.repository,
+                    spaceId: widget.spaceId,
                   ),
                 ),
               ),
