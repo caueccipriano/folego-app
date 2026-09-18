@@ -173,7 +173,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       PlanScreen(
         repository: widget.repository,
         spaceId: widget.space.id,
-        projectionRequestToken: _projectionRequestToken,
+        projectionOpenToken: _projectionRequestToken,
       ),
       WalletScreen(repository: widget.repository, spaceId: widget.space.id),
       ProfileScreen(
