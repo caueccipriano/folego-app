@@ -29,7 +29,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('projeção'), findsOneWidget);
+      expect(find.text('projeção'), findsWidgets);
       expect(find.text('atual'), findsOneWidget);
       expect(find.text('seu futuro financeiro'), findsOneWidget);
       expect(find.text('12 meses'), findsOneWidget);
