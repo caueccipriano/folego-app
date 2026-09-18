@@ -15,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages-preview
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
@@ -28,6 +28,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -47,11 +50,20 @@ jobs:
       - name: Build web app
         run: flutter build web --release --base-href "/folego-app/"
 
+      - name: Verify PWA artifact
+        run: |
+          test -f build/web/index.html
+          test -f build/web/manifest.json
+          test -f build/web/folego_push_sw.js
+          test -f build/web/folego_push_bridge.js
+          grep -F 'href="/folego-app/"' build/web/index.html
+          grep -F '"display": "standalone"' build/web/manifest.json
+
       - name: Add SPA fallback
         run: cp build/web/index.html build/web/404.html
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: folego_flutter/build/web
 
@@ -59,7 +71,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: mobile-preview
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
