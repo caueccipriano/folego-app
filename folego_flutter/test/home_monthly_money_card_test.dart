@@ -52,14 +52,14 @@ void main() {
     );
 
     expect(find.text('seu mês até agora'), findsOneWidget);
-    expect(find.text('gastos do mês'), findsOneWidget);
+    expect(find.text('gastos feitos no mês'), findsWidgets);
     expect(find.text(Formatters.money(4731.89)), findsOneWidget);
     expect(find.text('conta'), findsOneWidget);
     expect(find.text('cartões'), findsOneWidget);
     expect(find.text('benefícios'), findsOneWidget);
     expect(find.text('reembolsos'), findsOneWidget);
-    expect(find.text('receitas do mês'), findsOneWidget);
-    expect(find.text('saldo compras x renda'), findsOneWidget);
+    expect(find.text('receitas reais'), findsOneWidget);
+    expect(find.text('resultado econômico'), findsOneWidget);
     expect(find.text('pagamentos de fatura'), findsNothing);
   });
 
@@ -82,12 +82,11 @@ void main() {
 
     expect(find.text('gastos feitos no mês'), findsOneWidget);
     expect(find.text('competência do mês'), findsOneWidget);
-    expect(find.text('fatura AMEX Gold / parcelas'), findsOneWidget);
+    expect(find.text('cartões na competência'), findsOneWidget);
     expect(find.text('despesa por competência'), findsOneWidget);
-    expect(find.text('movimentações que não são gasto'), findsOneWidget);
+    expect(find.text('movimentações que não são novos gastos'), findsOneWidget);
     expect(find.text('pagamentos de fatura'), findsOneWidget);
-    expect(find.text('transferências entre suas contas'), findsOneWidget);
-    expect(find.text('investimentos / reserva'), findsOneWidget);
+    expect(find.text('transferências / investimentos'), findsOneWidget);
     expect(find.text('ajustes de conciliação'), findsOneWidget);
     expect(find.text('movimentação de caixa'), findsOneWidget);
     expect(find.text(monthlyCardSemanticsTooltip), findsOneWidget);
