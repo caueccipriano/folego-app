@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/integrations/eu_bridge.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -46,10 +47,12 @@ class _HomeScreenState extends State<HomeScreen> {
         widget.repository.getProfileName(),
         widget.repository.getSnapshot(widget.space.id),
       ]);
+      final snapshot = values[1] as FolegoSnapshot;
+      await EuBridge.publishFolego(snapshot);
       if (!mounted) return;
       setState(() {
         _name = values[0] as String;
-        _snapshot = values[1] as FolegoSnapshot;
+        _snapshot = snapshot;
         _loading = false;
       });
     } catch (error) {
