@@ -71,7 +71,7 @@ class _PlanScreenState extends State<PlanScreen> {
             repository: widget.repository,
             spaceId: widget.spaceId,
             refreshToken: refreshToken,
-            onOpenProjection: _openProjection,
+            onProjectionRequested: _openProjection,
           ),
         ),
         Positioned(
