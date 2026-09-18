@@ -1656,12 +1656,10 @@ class _PlanModeToggle extends StatelessWidget {
   const _PlanModeToggle({
     required this.projection,
     this.onProjection,
-    this.onSummary,
   });
 
   final bool projection;
   final VoidCallback? onProjection;
-  final VoidCallback? onSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -1714,7 +1712,7 @@ class _PlanModeToggle extends StatelessWidget {
           item(
             label: 'resumo',
             selected: !projection,
-            onTap: projection ? onSummary : null,
+            onTap: null,
           ),
           item(
             label: 'projeção',
