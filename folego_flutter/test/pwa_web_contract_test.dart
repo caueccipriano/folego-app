@@ -74,8 +74,9 @@ void main() {
       expect(workflow, contains('actions/configure-pages@v5'));
       expect(workflow, contains('actions/upload-pages-artifact@v4'));
       expect(workflow, contains('actions/deploy-pages@v4'));
-      expect(workflow, contains('name: github-pages'));
+      expect(workflow, contains('name: github-pages-preview'));
       expect(workflow, contains('--base-href "/folego-app/"'));
+      expect(workflow, contains('Version PWA cache'));
       expect(workflow, contains('Verify PWA artifact'));
     });
   });
