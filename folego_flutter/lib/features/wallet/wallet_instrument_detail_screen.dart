@@ -230,6 +230,7 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
   String? _paymentAccountName;
   List<WalletCardPurchaseLine> _purchases = const [];
   List<WalletCardInstallmentLine> _upcoming = const [];
+  CardInvoiceSemantics? _invoiceSemantics;
   bool _loading = true;
   String? _error;
 
@@ -258,10 +259,15 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
         cardId: card.id,
         currentInvoiceId: card.invoiceId,
       );
+      final semanticsFuture = widget.repository.getCardInvoiceSemantics(
+        spaceId: widget.spaceId,
+        cardId: card.id,
+      );
       final values = await Future.wait<dynamic>([
         accountsFuture,
         purchasesFuture,
         upcomingFuture,
+        semanticsFuture,
       ]);
       if (!mounted) return;
       final accounts = values[0] as List;
@@ -277,6 +283,7 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
         _paymentAccountName = payer;
         _purchases = values[1] as List<WalletCardPurchaseLine>;
         _upcoming = values[2] as List<WalletCardInstallmentLine>;
+        _invoiceSemantics = values[3] as CardInvoiceSemantics;
         _loading = false;
         _error = null;
       });
@@ -338,9 +345,11 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
       if (_card.brand?.trim().isNotEmpty == true) _card.brand!.trim(),
       if (_card.lastFour?.trim().isNotEmpty == true) '•••• ${_card.lastFour!.trim()}',
     ].join(' · ');
-    final due = _card.invoiceDueDate == null
+    final semantics = _invoiceSemantics;
+    final semanticDue = semantics?.dueDate ?? _card.invoiceDueDate;
+    final due = semanticDue == null
         ? 'vence dia ${_card.dueDay}'
-        : 'vence ${Formatters.shortDate.format(_card.invoiceDueDate!)}';
+        : 'vence ${Formatters.shortDate.format(semanticDue)}';
 
     return _InstrumentDetailScaffold(
       title: _card.name,
@@ -354,8 +363,24 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
           _ResponsiveDetailGrid(
             children: [
               _DetailPanel(
-                label: 'fatura atual',
-                value: Formatters.money(_card.invoiceBalance),
+                label: 'compras do ciclo',
+                value: Formatters.money(
+                  semantics?.grossPurchases ?? _card.invoiceBalance,
+                ),
+                supporting: 'compras e parcelas lançadas neste ciclo',
+              ),
+              _DetailPanel(
+                label: 'créditos',
+                value: semantics == null || semantics.credits <= 0
+                    ? Formatters.money(0)
+                    : '-${Formatters.money(semantics.credits)}',
+                supporting: 'estornos e créditos reduzem o valor a pagar',
+              ),
+              _DetailPanel(
+                label: 'a pagar',
+                value: Formatters.money(
+                  semantics?.amountDue ?? _card.invoiceBalance,
+                ),
                 supporting: '$due · fecha dia ${_card.closingDay}',
                 emphasis: true,
                 action: _card.canPayInvoice
@@ -365,6 +390,15 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
                         label: const Text('pagar'),
                       )
                     : null,
+              ),
+              _DetailPanel(
+                label: 'vencimento',
+                value: semanticDue == null
+                    ? 'dia ${_card.dueDay}'
+                    : Formatters.shortDate.format(semanticDue),
+                supporting: semantics?.referenceMonth == null
+                    ? 'ciclo atual'
+                    : 'referência ${Formatters.monthYear.format(semantics!.referenceMonth!)}',
               ),
               _DetailPanel(
                 label: 'limite',
