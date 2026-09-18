@@ -5,6 +5,7 @@ abstract final class Formatters {
 
   static final shortDate = DateFormat('dd MMM', 'pt_BR');
   static final fullDate = DateFormat('dd/MM/yyyy', 'pt_BR');
+  static final monthYear = DateFormat('MMM/yyyy', 'pt_BR');
 
   static String money(num? value) => currency.format(value ?? 0);
 
