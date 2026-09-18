@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -31,108 +29,54 @@ class LiquidGlassNavigationBar extends StatelessWidget {
       _NavItem(icon: AppIcons.profile, label: l10n.profile),
     ];
 
-    final glassBase = isDark
-        ? const Color(0xFF15151B).withValues(alpha: .38)
-        : Colors.white.withValues(alpha: .56);
-    final glassLower = isDark
-        ? const Color(0xFF101014).withValues(alpha: .28)
-        : const Color(0xFFF7F7FA).withValues(alpha: .42);
-    final highlight = Colors.white.withValues(alpha: isDark ? .16 : .72);
+    final background = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 9),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: SizedBox(
-            height: 78,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-                child: DecoratedBox(
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: SizedBox(
+        height: 74,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Container(
+                  width: double.infinity,
+                  height: 74,
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        highlight,
-                        glassBase,
-                        glassLower,
-                      ],
-                      stops: const [0, .28, 1],
-                    ),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: Colors.white.withValues(
-                        alpha: isDark ? .20 : .68,
-                      ),
-                      width: .85,
-                    ),
+                    color: background,
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: border),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(
-                          alpha: isDark ? .26 : .09,
+                          alpha: isDark ? .22 : .07,
                         ),
-                        blurRadius: 34,
-                        spreadRadius: -9,
-                        offset: const Offset(0, 12),
+                        blurRadius: 22,
+                        spreadRadius: -6,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 18,
-                        right: 18,
-                        top: 0,
-                        child: Container(
-                          height: 1,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.transparent,
-                                Colors.white.withValues(
-                                  alpha: isDark ? .38 : .90,
-                                ),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
+                  child: Row(
+                    children: List.generate(items.length, (index) {
+                      return Expanded(
+                        child: _Destination(
+                          item: items[index],
+                          selected: selectedIndex == index,
+                          onTap: () => onDestinationSelected(index),
                         ),
-                      ),
-                      Positioned(
-                        left: 26,
-                        right: 26,
-                        bottom: 0,
-                        child: Container(
-                          height: .6,
-                          color: Colors.black.withValues(
-                            alpha: isDark ? .20 : .05,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Row(
-                          children: List.generate(items.length, (index) {
-                            return Expanded(
-                              child: _Destination(
-                                item: items[index],
-                                selected: selectedIndex == index,
-                                onTap: () => onDestinationSelected(index),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ],
+                      );
+                    }),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -158,12 +102,7 @@ class _Destination extends StatelessWidget {
     final inactiveColor = isDark
         ? AppColors.darkSecondaryText
         : AppColors.lightSecondaryText;
-    final activeForeground = isDark
-        ? AppColors.darkPrimaryText
-        : AppColors.lightPrimaryText;
-
-    final selectedTop = Colors.white.withValues(alpha: isDark ? .13 : .60);
-    final selectedBottom = activePurple.withValues(alpha: isDark ? .13 : .11);
+    final activeForeground = isDark ? AppColors.darkPrimaryText : Colors.white;
 
     return Semantics(
       selected: selected,
@@ -172,102 +111,59 @@ class _Destination extends StatelessWidget {
       child: Tooltip(
         message: item.label,
         waitDuration: const Duration(milliseconds: 600),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(24),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 230),
-              curve: Curves.easeOutCubic,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                gradient: selected
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [selectedTop, selectedBottom],
-                      )
-                    : null,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: selected
-                      ? Colors.white.withValues(
-                          alpha: isDark ? .16 : .66,
-                        )
-                      : Colors.transparent,
-                  width: .8,
-                ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? .18 : .05,
-                          ),
-                          blurRadius: 16,
-                          spreadRadius: -8,
-                          offset: const Offset(0, 7),
-                        ),
-                        BoxShadow(
-                          color: activePurple.withValues(
-                            alpha: isDark ? .10 : .08,
-                          ),
-                          blurRadius: 18,
-                          spreadRadius: -10,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 230),
-                    curve: Curves.easeOutCubic,
-                    width: selected ? 38 : 34,
-                    height: 31,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? Colors.white.withValues(
-                              alpha: isDark ? .07 : .30,
-                            )
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: selected ? activePurple : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
                       item.icon,
-                      size: selected ? 22 : 21,
-                      color: selected ? activePurple : inactiveColor,
+                      size: 23,
+                      color: selected ? activeForeground : inactiveColor,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 10,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
-                        color: selected ? activeForeground : inactiveColor,
+                    const SizedBox(height: 4),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 10,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: selected ? activeForeground : inactiveColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (selected)
+                  Positioned(
+                    bottom: 4,
+                    child: Container(
+                      width: 14,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: AppColors.lime,
+                        borderRadius: BorderRadius.circular(99),
                       ),
                     ),
                   ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 230),
-                    width: selected ? 4 : 0,
-                    height: selected ? 4 : 0,
-                    margin: const EdgeInsets.only(top: 3),
-                    decoration: BoxDecoration(
-                      color: activePurple.withValues(alpha: .92),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
