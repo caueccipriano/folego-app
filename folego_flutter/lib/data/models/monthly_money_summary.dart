@@ -75,6 +75,23 @@ class MonthlyMoneySummary {
   final double movementReserveInvestment;
   final double movementReconciliation;
 
+  // Official money semantics used across Home, composition and Projection.
+  double get realIncome => incomeAmount;
+  double get spendingMade => spendingNet;
+  double get accountSpending => spendingAccount;
+  double get cardPurchasesMade => spendingCards;
+  double get benefitSpending => spendingBenefits;
+  double get refunds => refundsAmount;
+  double get competenceExpenses => competenceNet;
+  double get economicResult => realIncome - competenceExpenses;
+  double get cardCompetence => competenceCardsTotal;
+  double get cardPayments => movementCardPayments;
+  double get transfersAndInvestments =>
+      movementTransfers + movementReserveInvestment;
+  double get reconciliationAdjustments => movementReconciliation;
+  double get nonExpenseCashOutflows =>
+      cardPayments + transfersAndInvestments + reconciliationAdjustments;
+
   factory MonthlyMoneySummary.fromJson(Map<String, dynamic> json) {
     final cardsRaw = json['competence_cards'];
     final cards = cardsRaw is List
