@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final values = await Future.wait<dynamic>([
-        widget.repository.getSnapshot(widget.space.id),
+        _optional(widget.repository.getSnapshot(widget.space.id), 'snapshot'),
         _optional(widget.repository.getProfileName(), 'profile'),
         _optional(
           widget.repository.getMonthlyMoneySummary(spaceId: widget.space.id),
@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       setState(() {
-        _snapshot = values[0] as FolegoSnapshot;
+        _snapshot = values[0] as FolegoSnapshot?;
         _name = (values[1] as String?)?.trim().isNotEmpty == true
             ? (values[1] as String).trim()
             : 'você';
