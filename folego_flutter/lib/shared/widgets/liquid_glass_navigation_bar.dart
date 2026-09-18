@@ -31,9 +31,13 @@ class LiquidGlassNavigationBar extends StatelessWidget {
       _NavItem(icon: AppIcons.profile, label: l10n.profile),
     ];
 
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final glassTint = surface.withValues(alpha: isDark ? .62 : .70);
-    final glassHighlight = Colors.white.withValues(alpha: isDark ? .10 : .42);
+    final glassBase = isDark
+        ? const Color(0xFF15151B).withValues(alpha: .38)
+        : Colors.white.withValues(alpha: .56);
+    final glassLower = isDark
+        ? const Color(0xFF101014).withValues(alpha: .28)
+        : const Color(0xFFF7F7FA).withValues(alpha: .42);
+    final highlight = Colors.white.withValues(alpha: isDark ? .16 : .72);
 
     return SafeArea(
       top: false,
@@ -42,38 +46,38 @@ class LiquidGlassNavigationBar extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: SizedBox(
-            height: 76,
+            height: 78,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(32),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        glassHighlight,
-                        glassTint,
-                        glassTint.withValues(alpha: isDark ? .54 : .62),
+                        highlight,
+                        glassBase,
+                        glassLower,
                       ],
-                      stops: const [0, .34, 1],
+                      stops: const [0, .28, 1],
                     ),
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(32),
                     border: Border.all(
                       color: Colors.white.withValues(
-                        alpha: isDark ? .14 : .52,
+                        alpha: isDark ? .20 : .68,
                       ),
-                      width: .8,
+                      width: .85,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(
-                          alpha: isDark ? .30 : .10,
+                          alpha: isDark ? .26 : .09,
                         ),
-                        blurRadius: 28,
-                        spreadRadius: -8,
-                        offset: const Offset(0, 10),
+                        blurRadius: 34,
+                        spreadRadius: -9,
+                        offset: const Offset(0, 12),
                       ),
                     ],
                   ),
@@ -90,11 +94,22 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                               colors: [
                                 Colors.transparent,
                                 Colors.white.withValues(
-                                  alpha: isDark ? .24 : .68,
+                                  alpha: isDark ? .38 : .90,
                                 ),
                                 Colors.transparent,
                               ],
                             ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 26,
+                        right: 26,
+                        bottom: 0,
+                        child: Container(
+                          height: .6,
+                          color: Colors.black.withValues(
+                            alpha: isDark ? .20 : .05,
                           ),
                         ),
                       ),
@@ -147,6 +162,9 @@ class _Destination extends StatelessWidget {
         ? AppColors.darkPrimaryText
         : AppColors.lightPrimaryText;
 
+    final selectedTop = Colors.white.withValues(alpha: isDark ? .13 : .60);
+    final selectedBottom = activePurple.withValues(alpha: isDark ? .13 : .11);
+
     return Semantics(
       selected: selected,
       button: true,
@@ -158,9 +176,9 @@ class _Destination extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(23),
+            borderRadius: BorderRadius.circular(24),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
+              duration: const Duration(milliseconds: 230),
               curve: Curves.easeOutCubic,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
@@ -168,83 +186,86 @@ class _Destination extends StatelessWidget {
                     ? LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: isDark ? .13 : .52),
-                          activePurple.withValues(alpha: isDark ? .28 : .20),
-                        ],
+                        colors: [selectedTop, selectedBottom],
                       )
                     : null,
-                borderRadius: BorderRadius.circular(23),
-                border: selected
-                    ? Border.all(
-                        color: Colors.white.withValues(
-                          alpha: isDark ? .16 : .58,
-                        ),
-                        width: .8,
-                      )
-                    : Border.all(color: Colors.transparent, width: .8),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: selected
+                      ? Colors.white.withValues(
+                          alpha: isDark ? .16 : .66,
+                        )
+                      : Colors.transparent,
+                  width: .8,
+                ),
                 boxShadow: selected
                     ? [
                         BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? .18 : .05,
+                          ),
+                          blurRadius: 16,
+                          spreadRadius: -8,
+                          offset: const Offset(0, 7),
+                        ),
+                        BoxShadow(
                           color: activePurple.withValues(
-                            alpha: isDark ? .22 : .16,
+                            alpha: isDark ? .10 : .08,
                           ),
                           blurRadius: 18,
-                          spreadRadius: -7,
-                          offset: const Offset(0, 6),
+                          spreadRadius: -10,
                         ),
                       ]
                     : null,
               ),
-              child: Stack(
-                alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        item.icon,
-                        size: 22,
-                        color: selected ? activePurple : inactiveColor,
-                      ),
-                      const SizedBox(height: 4),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          item.label,
-                          maxLines: 1,
-                          style: AppTypography.label(
-                            context,
-                            fontSize: 10,
-                            fontWeight: selected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: selected
-                                ? activeForeground
-                                : inactiveColor,
-                          ),
-                        ),
-                      ),
-                    ],
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 230),
+                    curve: Curves.easeOutCubic,
+                    width: selected ? 38 : 34,
+                    height: 31,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? Colors.white.withValues(
+                              alpha: isDark ? .07 : .30,
+                            )
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      item.icon,
+                      size: selected ? 22 : 21,
+                      color: selected ? activePurple : inactiveColor,
+                    ),
                   ),
-                  if (selected)
-                    Positioned(
-                      bottom: 4,
-                      child: Container(
-                        width: 15,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: AppColors.lime.withValues(alpha: .95),
-                          borderRadius: BorderRadius.circular(99),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.lime.withValues(alpha: .28),
-                              blurRadius: 7,
-                            ),
-                          ],
-                        ),
+                  const SizedBox(height: 2),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 10,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected ? activeForeground : inactiveColor,
                       ),
                     ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 230),
+                    width: selected ? 4 : 0,
+                    height: selected ? 4 : 0,
+                    margin: const EdgeInsets.only(top: 3),
+                    decoration: BoxDecoration(
+                      color: activePurple.withValues(alpha: .92),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ],
               ),
             ),
