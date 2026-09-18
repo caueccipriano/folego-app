@@ -8,9 +8,11 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/monthly_money_summary.dart';
 
 const monthlyCardSemanticsTooltip =
-    'Compras no cartão aparecem aqui quando são feitas. '
-    'As parcelas aparecem por competência em Faturas e parcelas. '
-    'Pagar a fatura não conta como gasto novamente.';
+    'Gastos feitos no mês mostram o que você comprou ou gastou neste mês. '
+    'Compras no cartão entram pelo valor total no dia da compra. '
+    'Despesa por competência mostra o que pertence financeiramente ao mês, '
+    'e compras parceladas entram parcela a parcela. '
+    'Pagar a fatura reduz seu saldo, mas não conta como uma nova despesa.';
 
 class HomeMonthlyMoneyCard extends StatelessWidget {
   const HomeMonthlyMoneyCard({
@@ -98,7 +100,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'gastos do mês',
+            'gastos feitos no mês',
             style: AppTypography.label(context, color: secondary),
           ),
           const SizedBox(height: 4),
@@ -145,14 +147,14 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
           Divider(color: border),
           const SizedBox(height: 14),
           _SummaryRow(
-            label: 'receitas do mês',
-            value: Formatters.money(value.incomeAmount),
+            label: 'receitas reais',
+            value: Formatters.money(value.realIncome),
             valueColor: AppColors.positiveText(brightness),
           ),
           const SizedBox(height: 11),
           _SummaryRow(
-            label: 'saldo compras x renda',
-            value: _signedMoney(value.incomeMinusSpending),
+            label: 'resultado econômico',
+            value: _signedMoney(value.economicResult),
             valueColor: primary,
           ),
           const SizedBox(height: 14),
@@ -404,69 +406,76 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _CompositionSection(
-              title: 'gastos feitos no mês',
-              subtitle: 'quanto você comprou ou gastou quando o movimento aconteceu',
+              title: 'gastos feitos',
+              subtitle:
+                  'mostra o que você comprou ou gastou neste mês; cartão entra pelo valor total no dia da compra',
               rows: [
-                _CompositionRow('conta', summary.spendingAccount),
-                _CompositionRow('cartões', summary.spendingCards),
-                _CompositionRow('benefícios', summary.spendingBenefits),
+                _CompositionRow(
+                  'conta / PIX / débito',
+                  summary.accountSpending,
+                ),
+                _CompositionRow(
+                  'cartões — compras feitas',
+                  summary.cardPurchasesMade,
+                ),
+                _CompositionRow(
+                  'benefícios gastos',
+                  summary.benefitSpending,
+                ),
                 _CompositionRow(
                   'reembolsos',
-                  summary.refundsAmount,
+                  summary.refunds,
                   subtract: true,
                 ),
               ],
-              totalLabel: 'total líquido de gastos feitos',
-              total: summary.spendingNet,
+              totalLabel: 'gastos feitos no mês',
+              total: summary.spendingMade,
             ),
             const SizedBox(height: 14),
             _CompositionSection(
               title: 'competência do mês',
-              subtitle: 'faturas e parcelas, despesas diretas e benefícios que pertencem a ${_monthName(summary.periodMonth.month)}',
+              subtitle:
+                  'mostra o que pertence financeiramente a ${_monthName(summary.periodMonth.month)}; parceladas entram parcela a parcela',
               rows: [
-                for (final card in summary.competenceCards)
-                  _CompositionRow(
-                    'fatura ${card.name} / parcelas',
-                    card.amount,
-                  ),
                 _CompositionRow(
                   'despesas diretas',
                   summary.competenceDirect,
                 ),
                 _CompositionRow(
-                  'benefícios',
+                  'cartões na competência',
+                  summary.cardCompetence,
+                ),
+                _CompositionRow(
+                  'outras despesas',
                   summary.competenceBenefits,
                 ),
                 if (summary.competenceRefunds > 0)
                   _CompositionRow(
-                    'reembolsos que reduzem competência',
+                    'reembolsos / ajustes econômicos',
                     summary.competenceRefunds,
                     subtract: true,
                   ),
               ],
               totalLabel: 'despesa por competência',
-              total: summary.competenceNet,
+              total: summary.competenceExpenses,
             ),
             const SizedBox(height: 14),
             _CompositionSection(
-              title: 'movimentações que não são gasto',
-              subtitle: 'dinheiro mudou de lugar ou o saldo foi conciliado, sem criar nova despesa',
+              title: 'movimentações que não são novos gastos',
+              subtitle:
+                  'podem reduzir ou mover caixa, mas não aumentam seus gastos feitos',
               rows: [
                 _CompositionRow(
                   'pagamentos de fatura',
-                  summary.movementCardPayments,
+                  summary.cardPayments,
                 ),
                 _CompositionRow(
-                  'transferências entre suas contas',
-                  summary.movementTransfers,
-                ),
-                _CompositionRow(
-                  'investimentos / reserva',
-                  summary.movementReserveInvestment,
+                  'transferências / investimentos',
+                  summary.transfersAndInvestments,
                 ),
                 _CompositionRow(
                   'ajustes de conciliação',
-                  summary.movementReconciliation,
+                  summary.reconciliationAdjustments,
                 ),
               ],
             ),
