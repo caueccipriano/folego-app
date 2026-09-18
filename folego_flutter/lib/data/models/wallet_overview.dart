@@ -105,6 +105,41 @@ class WalletAccount {
   }
 }
 
+class CardInvoiceSemantics {
+  const CardInvoiceSemantics({
+    required this.grossPurchases,
+    required this.credits,
+    required this.payments,
+    required this.amountDue,
+    this.invoiceId,
+    this.dueDate,
+    this.closingDate,
+    this.referenceMonth,
+  });
+
+  final String? invoiceId;
+  final double grossPurchases;
+  final double credits;
+  final double payments;
+  final double amountDue;
+  final DateTime? dueDate;
+  final DateTime? closingDate;
+  final DateTime? referenceMonth;
+
+  factory CardInvoiceSemantics.fromJson(Map<String, dynamic> json) {
+    return CardInvoiceSemantics(
+      invoiceId: json['invoice_id'] as String?,
+      grossPurchases: _number(json['gross_purchases']),
+      credits: _number(json['credits']),
+      payments: _number(json['payments']),
+      amountDue: _number(json['amount_due']),
+      dueDate: _nullableDate(json['due_date']),
+      closingDate: _nullableDate(json['closing_date']),
+      referenceMonth: _nullableDate(json['reference_month']),
+    );
+  }
+}
+
 class WalletCard {
   const WalletCard({
     required this.id,
