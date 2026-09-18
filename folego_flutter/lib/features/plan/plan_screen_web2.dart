@@ -36,6 +36,7 @@ class PlanScreen extends StatefulWidget {
     this.refreshToken,
     this.loadOverride,
     this.saveOverride,
+    this.onProjectionRequested,
   });
 
   final FolegoRepository repository;
@@ -45,6 +46,8 @@ class PlanScreen extends StatefulWidget {
   /// It intentionally is not used as this widget's key, so interaction state
   /// and scroll position survive a refresh.
   final Object? refreshToken;
+
+  final VoidCallback? onProjectionRequested;
 
   @visibleForTesting
   final PlanBudgetLoader? loadOverride;
@@ -776,6 +779,11 @@ class _PlanScreenState extends State<PlanScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           title,
+          const SizedBox(height: 14),
+          _PlanModeToggle(
+            projection: false,
+            onProjection: widget.onProjectionRequested,
+          ),
           const SizedBox(height: 16),
           Align(alignment: Alignment.centerLeft, child: monthPicker),
           if (_isPastMonth) ...[
@@ -789,7 +797,22 @@ class _PlanScreenState extends State<PlanScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: title),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              title,
+              const SizedBox(height: 14),
+              SizedBox(
+                width: 260,
+                child: _PlanModeToggle(
+                  projection: false,
+                  onProjection: widget.onProjectionRequested,
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(width: 20),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1626,4 +1649,80 @@ String _sortKey(String value) {
 
 String _message(Object error) {
   return error.toString().replaceFirst('Exception: ', '');
+}
+
+
+class _PlanModeToggle extends StatelessWidget {
+  const _PlanModeToggle({
+    required this.projection,
+    this.onProjection,
+    this.onSummary,
+  });
+
+  final bool projection;
+  final VoidCallback? onProjection;
+  final VoidCallback? onSummary;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final accent = AppColors.primaryPurple(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+
+    Widget item({
+      required String label,
+      required bool selected,
+      required VoidCallback? onTap,
+    }) {
+      return Expanded(
+        child: Material(
+          color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppTypography.label(
+                  context,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? accent : secondary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      key: const ValueKey('plan-mode-toggle'),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          item(
+            label: 'resumo',
+            selected: !projection,
+            onTap: projection ? onSummary : null,
+          ),
+          item(
+            label: 'projeção',
+            selected: projection,
+            onTap: projection ? null : onProjection,
+          ),
+        ],
+      ),
+    );
+  }
 }
