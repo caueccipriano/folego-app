@@ -13,6 +13,11 @@ declare
   v_account_sheet uuid := gen_random_uuid();
   v_card uuid := gen_random_uuid();
   v_invoice uuid := gen_random_uuid();
+  v_parent_category uuid := gen_random_uuid();
+  v_child_category uuid := gen_random_uuid();
+  v_recurring_date date;
+  v_recurring_cash_month date;
+  v_third jsonb;
   v_event uuid := gen_random_uuid();
   v_purchase uuid := gen_random_uuid();
   v_today date := (now() at time zone 'America/Sao_Paulo')::date;
@@ -189,33 +194,47 @@ begin
     raise exception 'spreadsheet_fixture_month2_wrong: %', v_second ->> 'closing_balance';
   end if;
 
-  -- Fixture C: existing future card installment enters only its due month.
+  -- Fixture C: existing future card installment enters only its due month,
+  -- is not double-counted with its budget, and card-backed recurrences use
+  -- the same closing/due cycle as a real card purchase.
+  insert into public.categories(
+    id, space_id, name, kind, parent_id, active, category_role, is_selectable
+  ) values
+    (
+      v_parent_category, v_space, 'Compras projeção', 'expense',
+      null, true, 'group', false
+    ),
+    (
+      v_child_category, v_space, 'Categoria projeção', 'expense',
+      v_parent_category, true, 'economic', true
+    );
+
   insert into public.credit_cards(
     id, space_id, name, closing_day, due_day, payment_account_id, active
   ) values(
-    v_card, v_space, 'Cartão projeção', 1, 5, v_account, true
+    v_card, v_space, 'Cartão projeção', 10, 20, v_account, true
   );
 
   insert into public.financial_events(
     id, space_id, event_type, description, amount, currency,
-    occurred_at, competence_date, status, source
+    occurred_at, competence_date, category_id, status, source
   ) values(
     gen_random_uuid(), v_space, 'card_purchase', 'Compra 6x', 897.84, 'BRL',
-    v_today::timestamptz, v_today, 'confirmed', 'test'
+    v_today::timestamptz, v_today, v_child_category, 'confirmed', 'test'
   ) returning id into v_event;
 
   insert into public.card_purchases(
     id, space_id, card_id, event_id, description, total_amount,
-    installments_count, purchase_at, status
+    installments_count, purchase_at, category_id, status
   ) values(
     v_purchase, v_space, v_card, v_event, 'Compra 6x', 897.84,
-    6, v_today::timestamptz, 'confirmed'
+    6, v_today::timestamptz, v_child_category, 'confirmed'
   );
 
   v_next_due := make_date(
     extract(year from v_next_month)::int,
     extract(month from v_next_month)::int,
-    5
+    20
   );
 
   insert into public.card_invoices(
@@ -235,11 +254,40 @@ begin
     6, 149.64, v_next_month, 'invoiced'
   );
 
+  insert into public.financial_impacts(
+    event_id, space_id, dimension, amount, category_id, effective_date
+  ) values(
+    v_event, v_space, 'budget', -149.64, v_child_category, v_next_month
+  );
+
+  insert into public.budget_recurring_rules(
+    space_id, category_id, planned_amount, effective_from
+  ) values(
+    v_space, v_child_category, 500, v_next_month
+  );
+
+  -- Occurs on day 16 after a day-10 close, therefore it belongs to the
+  -- following cycle and is paid on day 20 of the month after v_next_month.
+  v_recurring_date := (v_next_month + interval '15 days')::date;
+  v_recurring_cash_month :=
+    (date_trunc('month', v_recurring_date) + interval '1 month')::date;
+
+  insert into public.recurring_items(
+    space_id, name, item_type, amount, frequency, monthly_days,
+    category_id, card_id, starts_on, ends_on, certainty, active,
+    recurrence_kind
+  ) values(
+    v_space, 'Assinatura no cartão', 'expense', 99, 'monthly',
+    array[16]::integer[], v_child_category, v_card,
+    v_recurring_date, v_recurring_date, 'confirmed', true, 'subscription'
+  );
+
   select public.get_projection(v_space, 3, '[]'::jsonb, '{}'::text[])
     into v_projection;
 
   v_first := (v_projection -> 'months') -> 0;
   v_next := (v_projection -> 'months') -> 1;
+  v_third := (v_projection -> 'months') -> 2;
 
   if round((v_first ->> 'card_installments')::numeric, 2) <> 0 then
     raise exception 'future_installment_leaked_into_current_month: %',
@@ -249,6 +297,44 @@ begin
   if round((v_next ->> 'card_installments')::numeric, 2) <> 149.64 then
     raise exception 'future_installment_missing_in_correct_month: %',
       v_next ->> 'card_installments';
+  end if;
+
+  if round((v_next ->> 'direct_expenses')::numeric, 2) <> 350.36 then
+    raise exception 'known_installment_double_counted_with_budget: %',
+      v_next ->> 'direct_expenses';
+  end if;
+
+  if round(
+    (v_next ->> 'direct_expenses')::numeric
+    + (v_next ->> 'card_installments')::numeric,
+    2
+  ) <> 500 then
+    raise exception 'budget_plus_known_card_should_equal_budget: direct %, card %',
+      v_next ->> 'direct_expenses',
+      v_next ->> 'card_installments';
+  end if;
+
+  if date_trunc('month', (v_third ->> 'month')::date)::date
+      <> v_recurring_cash_month then
+    raise exception 'recurring_card_fixture_month_mismatch';
+  end if;
+
+  if round((v_third ->> 'card_installments')::numeric, 2) <> 99 then
+    raise exception 'card_recurring_not_routed_to_invoice_month: %',
+      v_third ->> 'card_installments';
+  end if;
+
+  if round((v_third ->> 'direct_expenses')::numeric, 2) <> 401 then
+    raise exception 'card_recurring_not_offset_from_budget: %',
+      v_third ->> 'direct_expenses';
+  end if;
+
+  if round(
+    (v_third ->> 'direct_expenses')::numeric
+    + (v_third ->> 'card_installments')::numeric,
+    2
+  ) <> 500 then
+    raise exception 'budget_plus_card_recurring_should_equal_budget';
   end if;
 end;
 $test$;
