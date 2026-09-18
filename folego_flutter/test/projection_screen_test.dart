@@ -64,8 +64,20 @@ void main() {
 
     expect(find.byType(DataTable), findsOneWidget);
     expect(find.text('Alimentação'), findsWidgets);
-    expect(find.text('SET'), findsOneWidget);
-    expect(find.text('OUT'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(DataTable),
+        matching: find.text('SET'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(DataTable),
+        matching: find.text('OUT'),
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
