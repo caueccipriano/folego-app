@@ -150,51 +150,6 @@ class _HomeContentState extends State<_HomeContent> {
   }
 }
 
-class _HomeLoadingState extends StatelessWidget {
-  const _HomeLoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return Scaffold(
-      backgroundColor: AppColors.background(brightness),
-      body: SafeArea(
-        child: AppContentContainer.dashboard(
-          verticalPadding: 24,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 126,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: AppColors.border(brightness).withValues(alpha: .55),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                width: double.infinity,
-                height: 180,
-                decoration: BoxDecoration(
-                  color: AppColors.surface(brightness),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.border(brightness)),
-                ),
-                alignment: Alignment.center,
-                child: const SizedBox.square(
-                  dimension: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _FirstUseHome extends StatelessWidget {
   const _FirstUseHome({
     required this.setup,
