@@ -16,6 +16,7 @@ import '../home/home_screen.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import '../plan/flexible_budget_screen.dart';
 import '../plan/plan_screen.dart';
+import '../plan/projection_navigation_scope.dart';
 import '../profile/profile_screen.dart';
 import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
@@ -49,6 +50,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 0;
+  int _projectionRequestToken = 0;
   late final RealtimeInvalidationCoordinator _realtimeCoordinator;
   late final RealtimeSessionController _realtimeSession;
   late final NotificationService _notificationService;
@@ -126,6 +128,13 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     }
   }
 
+  void _openProjection() {
+    setState(() {
+      _index = 2;
+      _projectionRequestToken += 1;
+    });
+  }
+
   Future<void> _openFlexibleBudget() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -161,7 +170,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         repository: widget.repository,
         space: widget.space,
       ),
-      PlanScreen(repository: widget.repository, spaceId: widget.space.id),
+      PlanScreen(
+        repository: widget.repository,
+        spaceId: widget.space.id,
+        projectionRequestToken: _projectionRequestToken,
+      ),
       WalletScreen(repository: widget.repository, spaceId: widget.space.id),
       ProfileScreen(
         client: Supabase.instance.client,
@@ -170,15 +183,18 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       ),
     ];
 
-    return FlexibleBudgetNavigationScope(
-      onOpen: () => unawaited(_openFlexibleBudget()),
-      child: ResponsiveNavigationShell(
+    return ProjectionNavigationScope(
+      onOpen: _openProjection,
+      child: FlexibleBudgetNavigationScope(
+        onOpen: () => unawaited(_openFlexibleBudget()),
+        child: ResponsiveNavigationShell(
         selectedIndex: _index,
         onDestinationSelected: (value) {
           if (_index == value) return;
           setState(() => _index = value);
         },
         pages: pages,
+        ),
       ),
     );
   }
