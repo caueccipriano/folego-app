@@ -34,7 +34,7 @@ jobs:
         run: flutter analyze
 
       - name: Flutter test
-        run: flutter test -r expanded --fail-fast
+        run: flutter test -r compact --concurrency=1 --fail-fast
 
       - name: Flutter build web
         run: flutter build web --release
