@@ -1227,7 +1227,13 @@ class _ProjectionInsights extends StatelessWidget {
     final minMonth = months.reduce(
       (a, b) => a.closingBalance <= b.closingBalance ? a : b,
     );
-    final critical = months.where((month) => month.isCritical).firstOrNull;
+    ProjectionMonth? critical;
+    for (final month in months) {
+      if (month.isCritical) {
+        critical = month;
+        break;
+      }
+    }
     final text = critical == null
         ? 'Seu menor saldo projetado ocorre em ${_monthYear(minMonth.month)}.'
         : 'Em ${_monthYear(critical.month)}, o fechamento projetado fica em ${Formatters.money(critical.closingBalance)}.';
