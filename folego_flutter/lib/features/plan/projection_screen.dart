@@ -2283,11 +2283,14 @@ class _ProjectionSimulationSheetState
           _moneyField(_amount, 'valor'),
           const SizedBox(height: 10),
           _categoryDropdown(optional: true),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            value: _freeRecurring,
-            title: const Text('repete todo mês'),
-            onChanged: (value) => setState(() => _freeRecurring = value),
+          Material(
+            type: MaterialType.transparency,
+            child: SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: _freeRecurring,
+              title: const Text('repete todo mês'),
+              onChanged: (value) => setState(() => _freeRecurring = value),
+            ),
           ),
         ];
     }
