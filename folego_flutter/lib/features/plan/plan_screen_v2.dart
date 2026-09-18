@@ -885,7 +885,20 @@ class _PlanScreenState extends State<PlanScreen> {
       brightness: brightness,
     );
     final icon = CategoryVisuals.iconFor(category: parent.categoryName);
-    final percentage = (parent.usageRatio * 100).round();
+    final budgetedActual = children
+        .where((child) => child.hasBudget)
+        .fold<double>(0, (total, child) => total + child.actualAmount);
+    final budgetUsageRatio = parent.plannedAmount > 0
+        ? budgetedActual / parent.plannedAmount
+        : 0.0;
+    final percentage = (budgetUsageRatio * 100).round();
+    final budgetProgressState = parent.plannedAmount <= 0
+        ? BudgetProgressState.noLimit
+        : budgetUsageRatio > 1
+            ? BudgetProgressState.exceeded
+            : budgetUsageRatio >= .70
+                ? BudgetProgressState.attention
+                : BudgetProgressState.comfortable;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -932,7 +945,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             const SizedBox(height: 4),
                             Text(
                               parent.hasBudget
-                                  ? '${Formatters.money(parent.actualAmount)} de ${Formatters.money(parent.plannedAmount)}'
+                                  ? '${Formatters.money(parent.actualAmount)} gastos no total'
                                   : parent.hasActivity
                                       ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
                                       : 'sem limites nas subcategorias',
@@ -942,6 +955,17 @@ class _PlanScreenState extends State<PlanScreen> {
                                 color: secondaryText,
                               ),
                             ),
+                            if (parent.hasBudget) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                '${Formatters.money(budgetedActual)} de ${Formatters.money(parent.plannedAmount)} nos limites definidos',
+                                style: AppTypography.label(
+                                  context,
+                                  fontSize: 9,
+                                  color: secondaryText,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -954,7 +978,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: _progressColor(
-                              parent.progressState,
+                              budgetProgressState,
                               brightness,
                             ),
                           ),
@@ -983,11 +1007,11 @@ class _PlanScreenState extends State<PlanScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(99),
                   child: LinearProgressIndicator(
-                    value: parent.progress,
+                    value: budgetUsageRatio.clamp(0.0, 1.0),
                     minHeight: 5,
                     backgroundColor: border.withValues(alpha: .60),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      _progressColor(parent.progressState, brightness),
+                      _progressColor(budgetProgressState, brightness),
                     ),
                   ),
                 ),
