@@ -74,6 +74,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+
+  Future<T?> _optionalCall<T>(
+    Future<T> Function() call,
+    String label,
+  ) async {
+    try {
+      return await call();
+    } catch (error) {
+      debugPrint('Home optional section failed ($label): $error');
+      return null;
+    }
+  }
+
   Future<void> _load() async {
     if (mounted) {
       setState(() {
@@ -108,8 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
           widget.repository.getUpcomingEvents(widget.space.id, days: 30),
           'upcoming events',
         ),
-        _optional(
-          widget.repository.getProjection(
+        _optionalCall(
+          () => widget.repository.getProjection(
             spaceId: widget.space.id,
             horizonMonths: 3,
           ),
