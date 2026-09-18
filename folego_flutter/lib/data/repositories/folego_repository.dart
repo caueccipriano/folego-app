@@ -777,6 +777,24 @@ class FolegoRepository {
     return WalletOverview.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
+
+  Future<CardInvoiceSemantics> getCardInvoiceSemantics({
+    required String spaceId,
+    required String cardId,
+  }) async {
+    final data = await _client.rpc(
+      'get_card_invoice_semantics',
+      params: {
+        'p_space_id': spaceId,
+        'p_card_id': cardId,
+      },
+    );
+
+    return CardInvoiceSemantics.fromJson(
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
   Future<String> createCard({
     required String spaceId,
     required String name,
