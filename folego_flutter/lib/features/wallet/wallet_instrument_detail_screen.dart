@@ -241,27 +241,57 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
     _load();
   }
 
+  Future<T> _bestEffort<T>(
+    Future<T> Function() load,
+    T fallback,
+  ) async {
+    try {
+      return await load();
+    } catch (error) {
+      debugPrint('Wallet card optional detail failed: $error');
+      return fallback;
+    }
+  }
+
   Future<void> _load() async {
     try {
       final overview = await widget.repository.getWalletOverview(spaceId: widget.spaceId);
       final match = overview.cards.where((item) => item.id == _card.id);
       final card = match.isEmpty ? _card : match.first;
-      final accountsFuture = widget.repository.listPaymentAccounts(widget.spaceId);
+      final accountsFuture = _bestEffort(
+        () => widget.repository.listPaymentAccounts(widget.spaceId),
+        const <dynamic>[],
+      );
       final purchasesFuture = card.invoiceId == null
           ? Future.value(<WalletCardPurchaseLine>[])
-          : widget.repository.listCardInvoicePurchases(
-              spaceId: widget.spaceId,
-              cardId: card.id,
-              invoiceId: card.invoiceId!,
+          : _bestEffort(
+              () => widget.repository.listCardInvoicePurchases(
+                spaceId: widget.spaceId,
+                cardId: card.id,
+                invoiceId: card.invoiceId!,
+              ),
+              const <WalletCardPurchaseLine>[],
             );
-      final upcomingFuture = widget.repository.listCardUpcomingInstallments(
-        spaceId: widget.spaceId,
-        cardId: card.id,
-        currentInvoiceId: card.invoiceId,
+      final upcomingFuture = _bestEffort(
+        () => widget.repository.listCardUpcomingInstallments(
+          spaceId: widget.spaceId,
+          cardId: card.id,
+          currentInvoiceId: card.invoiceId,
+        ),
+        const <WalletCardInstallmentLine>[],
       );
-      final semanticsFuture = widget.repository.getCardInvoiceSemantics(
-        spaceId: widget.spaceId,
-        cardId: card.id,
+      final semanticsFuture = _bestEffort(
+        () => widget.repository.getCardInvoiceSemantics(
+          spaceId: widget.spaceId,
+          cardId: card.id,
+        ),
+        CardInvoiceSemantics(
+          grossPurchases: card.invoiceBalance,
+          credits: 0,
+          payments: 0,
+          amountDue: card.invoiceBalance,
+          dueDate: card.invoiceDueDate,
+        ),
       );
       final values = await Future.wait<dynamic>([
         accountsFuture,
