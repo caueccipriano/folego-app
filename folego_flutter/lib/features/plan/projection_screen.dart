@@ -327,7 +327,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return ColoredBox(
+    return Material(
       color: AppColors.background(brightness),
       child: SafeArea(
         child: AppContentContainer.dashboard(
