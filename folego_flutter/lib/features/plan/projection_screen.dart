@@ -452,6 +452,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                       foregroundColor: brightness == Brightness.dark
                           ? AppColors.darkPrimaryText
                           : Colors.white,
+                      minimumSize: const Size(0, 48),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 14,
