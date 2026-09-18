@@ -109,7 +109,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('simular mudança'), findsOneWidget);
+    expect(find.text('simular mudança'), findsNWidgets(2));
     expect(
       find.text(
         'Nada aqui vira lançamento. Primeiro você vê o efeito no futuro.',
