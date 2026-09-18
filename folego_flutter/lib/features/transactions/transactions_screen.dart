@@ -35,13 +35,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   FinancialSpace? _space;
   List<TransactionItem> _pending = const [];
   bool _loadingPending = true;
+  bool _openedPushClassification = false;
   RealtimeRefreshBinding? _realtimeBinding;
 
   @override
   void initState() {
     super.initState();
     _bindRealtime();
-    unawaited(_loadPending());
+    unawaited(
+      _loadPending().then((_) => _openClassificationFromPushIfNeeded()),
+    );
   }
 
   @override
@@ -84,6 +87,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (!mounted) return;
       setState(() => _loadingPending = false);
     }
+  }
+
+  void _openClassificationFromPushIfNeeded() {
+    if (_openedPushClassification || !mounted) return;
+    final route = Uri.base.queryParameters['push_route'];
+    if (route != '/transactions/classification') return;
+
+    _openedPushClassification = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_openClassificationInbox());
+    });
   }
 
   Future<FinancialSpace?> _resolveSpace() async {
