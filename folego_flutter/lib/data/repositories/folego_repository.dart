@@ -6,6 +6,7 @@ import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
 import '../models/monthly_money_summary.dart';
+import '../models/projection_model.dart';
 import '../models/onboarding_state.dart';
 import '../models/recurring_item.dart';
 import '../models/transaction_item.dart';
@@ -561,6 +562,49 @@ class FolegoRepository {
     );
 
     return MonthlyMoneySummary.fromJson(_firstMap(data));
+  }
+
+
+  Future<ProjectionResult> getProjection({
+    required String spaceId,
+    int horizonMonths = 12,
+    List<ProjectionAdjustment> adjustments = const [],
+    Set<String> disabledVariableIncomeKeys = const {},
+  }) async {
+    final data = await _client.rpc(
+      'get_projection',
+      params: {
+        'p_space_id': spaceId,
+        'p_horizon_months': horizonMonths,
+        'p_adjustments': adjustments.map((item) => item.toJson()).toList(),
+        'p_disabled_variable_income_keys':
+            disabledVariableIncomeKeys.toList(growable: false),
+      },
+    );
+
+    return ProjectionResult.fromJson(
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  Future<List<String>> addProjectionPlanningItems({
+    required String spaceId,
+    required List<ProjectionAdjustment> items,
+  }) async {
+    if (items.isEmpty) {
+      throw ArgumentError('Adicione pelo menos um item ao planejamento.');
+    }
+
+    final data = await _client.rpc(
+      'add_projection_planning_items',
+      params: {
+        'p_space_id': spaceId,
+        'p_items': items.map((item) => item.toJson()).toList(),
+      },
+    );
+
+    if (data is! List) return const [];
+    return data.map((value) => value.toString()).toList(growable: false);
   }
 
   // ---------------------------------------------------------------------------
