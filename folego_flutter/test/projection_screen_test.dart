@@ -6,8 +6,13 @@ import 'package:folego/data/models/projection_model.dart';
 import 'package:folego/data/models/recurring_item.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/plan/projection_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('pt_BR');
+  });
+
   for (final mode in <ThemeMode>[ThemeMode.light, ThemeMode.dark]) {
     testWidgets('projection renders core mobile hierarchy in $mode', (
       tester,
