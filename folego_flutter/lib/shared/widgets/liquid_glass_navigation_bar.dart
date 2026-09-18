@@ -111,9 +111,9 @@ class _Destination extends StatelessWidget {
       child: Tooltip(
         message: item.label,
         waitDuration: const Duration(milliseconds: 600),
-        child: InkWell(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
