@@ -13,14 +13,15 @@ class PlanScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
-    this.projectionRequestToken = 0,
+    this.projectionOpenToken,
   });
 
   final FolegoRepository repository;
   final String spaceId;
 
-  /// Changes when another area (for example Home) asks to open Projection.
-  final int projectionRequestToken;
+  /// Changes when another area (for example Home) asks to open
+  /// Planejamento > Projeção directly.
+  final Object? projectionOpenToken;
 
   @override
   State<PlanScreen> createState() => _PlanScreenState();
@@ -35,17 +36,18 @@ class _PlanScreenState extends State<PlanScreen> {
     if (oldWidget.spaceId != widget.spaceId) {
       _projection = false;
     }
-    if (oldWidget.projectionRequestToken != widget.projectionRequestToken) {
+    if (oldWidget.projectionOpenToken != widget.projectionOpenToken &&
+        widget.projectionOpenToken != null) {
       _projection = true;
     }
   }
 
-  void _showProjection() {
+  void _openProjection() {
     if (_projection) return;
     setState(() => _projection = true);
   }
 
-  void _showSummary() {
+  void _openSummary() {
     if (!_projection) return;
     setState(() => _projection = false);
   }
@@ -56,7 +58,7 @@ class _PlanScreenState extends State<PlanScreen> {
       return ProjectionScreen(
         repository: widget.repository,
         spaceId: widget.spaceId,
-        onBack: _showSummary,
+        onBack: _openSummary,
       );
     }
 
@@ -69,7 +71,7 @@ class _PlanScreenState extends State<PlanScreen> {
             repository: widget.repository,
             spaceId: widget.spaceId,
             refreshToken: refreshToken,
-            onProjectionRequested: _showProjection,
+            onOpenProjection: _openProjection,
           ),
         ),
         Positioned(
