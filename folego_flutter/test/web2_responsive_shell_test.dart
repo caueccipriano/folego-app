@@ -112,6 +112,22 @@ void main() {
     expect(counts, everyElement(1));
   });
 
+  testWidgets('Home shows a retry state instead of a blank page when snapshot fails', (tester) async {
+    _setViewport(tester, const Size(390, 844));
+    await tester.pumpWidget(_app(home.HomeScreen(
+      space: const FinancialSpace(id: 'space', name: 'Casa'),
+      repository: _HomeSnapshotFailureRepository(),
+    )));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text('não consegui carregar seu resumo financeiro'),
+      findsOneWidget,
+    );
+    expect(find.text('tentar novamente'), findsOneWidget);
+  });
+
   testWidgets('Home desktop uses dashboard columns instead of a mobile stack', (tester) async {
     _setViewport(tester, const Size(1366, 900));
     await tester.pumpWidget(_app(home.HomeScreen(
@@ -205,6 +221,16 @@ class _ProbePageState extends State<_ProbePage> {
   Widget build(BuildContext context) => Center(
     child: Text('page ${widget.index}', key: ValueKey('page-${widget.index}')),
   );
+}
+
+class _HomeSnapshotFailureRepository extends _HomeRepository {
+  @override
+  Future<FolegoSnapshot> getSnapshot(
+    String spaceId, {
+    DateTime? asOfDate,
+  }) async {
+    throw Exception('snapshot unavailable');
+  }
 }
 
 class _HomeRepository implements FolegoRepository {
