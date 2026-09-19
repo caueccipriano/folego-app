@@ -36,7 +36,6 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     ];
 
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final highlight = Colors.white.withValues(alpha: isDark ? .08 : .72);
     final lower = surface.withValues(alpha: isDark ? .98 : .94);
 
