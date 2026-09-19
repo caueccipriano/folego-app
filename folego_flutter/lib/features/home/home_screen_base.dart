@@ -144,8 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
         categoriesById[category.id] = category;
       }
 
+      final snapshot = values[0] as FolegoSnapshot?;
+
       setState(() {
-        _snapshot = values[0] as FolegoSnapshot?;
+        _snapshot = snapshot;
+        _error = snapshot == null
+            ? 'não consegui carregar seu resumo financeiro'
+            : null;
         _name = (values[1] as String?)?.trim().isNotEmpty == true
             ? (values[1] as String).trim()
             : 'você';
