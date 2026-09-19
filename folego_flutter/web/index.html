@@ -59,6 +59,50 @@
   </style>
 </head>
 <body>
+  <script>
+    (() => {
+      // One-time repair for users who opened builds controlled by the old
+      // cache-first PWA worker. The old worker could keep main.dart.js from a
+      // broken build even after GitHub Pages had deployed a fixed version.
+      const repairVersion = 'ios-pwa-geometry-20260919-v2';
+      const repairKey = 'folego-pwa-repair-version';
+
+      let alreadyRepaired = false;
+      try {
+        alreadyRepaired = localStorage.getItem(repairKey) === repairVersion;
+        if (!alreadyRepaired) localStorage.setItem(repairKey, repairVersion);
+      } catch (_) {
+        // Storage can be unavailable in hardened/private browser contexts.
+      }
+
+      if (alreadyRepaired || !('serviceWorker' in navigator)) return;
+
+      const hadController = navigator.serviceWorker.controller != null;
+
+      Promise.all([
+        navigator.serviceWorker.getRegistrations().then((registrations) =>
+          Promise.all(registrations.map((registration) => registration.unregister())),
+        ),
+        'caches' in window
+          ? caches.keys().then((names) =>
+              Promise.all(
+                names
+                  .filter((name) => name.startsWith('folego-shell-'))
+                  .map((name) => caches.delete(name)),
+              ),
+            )
+          : Promise.resolve(),
+      ])
+        .then(() => {
+          // A page stays under its current controller until navigation. Reload
+          // once after unregistering so Flutter boots from the network.
+          if (hadController) window.location.reload();
+        })
+        .catch(() => {
+          // Cache repair must never prevent the app from starting.
+        });
+    })();
+  </script>
   <script src="folego_ios_zoom_fix.js"></script>
   <script src="folego_push_bridge.js"></script>
   <script src="flutter_bootstrap.js" async></script>
