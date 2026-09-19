@@ -17,6 +17,8 @@ void main() {
       expect(index, isNot(contains('position: fixed !important')));
       expect(index, isNot(contains('height: 100dvh !important')));
       expect(index, contains('Do not size or position flutter-view here.'));
+      expect(index, contains('ios-pwa-geometry-20260919-v2'));
+      expect(index, contains('folego-shell-'));
       expect(index, isNot(contains(r'</script>\n')));
 
       final zoomFix = index.indexOf('folego_ios_zoom_fix.js');
@@ -59,13 +61,20 @@ void main() {
       );
     });
 
-    test('custom worker owns push and notification click behavior', () {
+    test('custom worker owns push but never caches the Flutter bundle', () {
       final worker = File('web/folego_push_sw.js').readAsStringSync();
+      final bridge = File('web/folego_push_bridge.js').readAsStringSync();
       final bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
 
       expect(worker, contains("addEventListener('push'"));
       expect(worker, contains("addEventListener('notificationclick'"));
       expect(worker, contains('self.clients.openWindow'));
+      expect(worker, contains('__FOLEGO_CACHE_VERSION__'));
+      expect(worker, isNot(contains("addEventListener('fetch'")));
+      expect(worker, isNot(contains('main.dart.js')));
+      expect(bridge, contains('updateViaCache'));
+      expect(bridge, contains('DOMContentLoaded'));
+      expect(bridge, contains('registration.update()'));
       expect(bootstrap, contains('_flutter.loader.load();'));
       expect(bootstrap, isNot(contains('serviceWorkerSettings')));
     });
