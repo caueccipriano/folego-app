@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -7,6 +5,12 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Mobile navigation with a glass-like visual treatment.
+///
+/// Important: this intentionally does not use BackdropFilter. On iOS PWAs the
+/// real backdrop blur introduced an extra compositing layer around the
+/// bottomNavigationBar and made visual and pointer geometry diverge. The
+/// gradient below keeps the same visual language without changing hit testing.
 class LiquidGlassNavigationBar extends StatelessWidget {
   const LiquidGlassNavigationBar({
     super.key,
@@ -31,13 +35,10 @@ class LiquidGlassNavigationBar extends StatelessWidget {
       _NavItem(icon: AppIcons.profile, label: l10n.profile),
     ];
 
-    final glassBase = isDark
-        ? const Color(0xFF15151B).withValues(alpha: .38)
-        : Colors.white.withValues(alpha: .56);
-    final glassLower = isDark
-        ? const Color(0xFF101014).withValues(alpha: .28)
-        : const Color(0xFFF7F7FA).withValues(alpha: .42);
-    final highlight = Colors.white.withValues(alpha: isDark ? .16 : .72);
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final highlight = Colors.white.withValues(alpha: isDark ? .08 : .72);
+    final lower = surface.withValues(alpha: isDark ? .98 : .94);
 
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
@@ -45,101 +46,58 @@ class LiquidGlassNavigationBar extends StatelessWidget {
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 9),
       child: SizedBox(
         height: 78,
-        width: double.infinity,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: SizedBox(
-              width: double.infinity,
-              height: 78,
-              child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-                child: DecoratedBox(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Container(
+                  width: double.infinity,
+                  height: 78,
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        highlight,
-                        glassBase,
-                        glassLower,
-                      ],
-                      stops: const [0, .28, 1],
+                      colors: [highlight, surface, lower],
+                      stops: const [0, .30, 1],
                     ),
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
-                      color: Colors.white.withValues(
-                        alpha: isDark ? .20 : .68,
-                      ),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: .14)
+                          : Colors.white.withValues(alpha: .78),
                       width: .85,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(
-                          alpha: isDark ? .26 : .09,
+                          alpha: isDark ? .24 : .09,
                         ),
-                        blurRadius: 34,
+                        blurRadius: 28,
                         spreadRadius: -9,
-                        offset: const Offset(0, 12),
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 18,
-                        right: 18,
-                        top: 0,
-                        child: Container(
-                          height: 1,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.transparent,
-                                Colors.white.withValues(
-                                  alpha: isDark ? .38 : .90,
-                                ),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: List.generate(items.length, (index) {
+                      return Expanded(
+                        child: _Destination(
+                          key: ValueKey('mobile-nav-destination-$index'),
+                          item: items[index],
+                          selected: selectedIndex == index,
+                          onTap: () => onDestinationSelected(index),
                         ),
-                      ),
-                      Positioned(
-                        left: 26,
-                        right: 26,
-                        bottom: 0,
-                        child: Container(
-                          height: .6,
-                          color: Colors.black.withValues(
-                            alpha: isDark ? .20 : .05,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: List.generate(items.length, (index) {
-                            return Expanded(
-                              child: _Destination(
-                                item: items[index],
-                                selected: selectedIndex == index,
-                                onTap: () => onDestinationSelected(index),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ],
+                      );
+                    }),
                   ),
                 ),
               ),
-              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -148,6 +106,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
 class _Destination extends StatelessWidget {
   const _Destination({
+    super.key,
     required this.item,
     required this.selected,
     required this.onTap,
@@ -169,112 +128,78 @@ class _Destination extends StatelessWidget {
         ? AppColors.darkPrimaryText
         : AppColors.lightPrimaryText;
 
-    final selectedTop = Colors.white.withValues(alpha: isDark ? .13 : .60);
-    final selectedBottom = activePurple.withValues(alpha: isDark ? .13 : .11);
+    final selectedTop = Colors.white.withValues(alpha: isDark ? .12 : .64);
+    final selectedBottom = activePurple.withValues(alpha: isDark ? .16 : .13);
 
     return Semantics(
       selected: selected,
       button: true,
       label: item.label,
-      child: Tooltip(
-        message: item.label,
-        waitDuration: const Duration(milliseconds: 600),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(24),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 230),
-              curve: Curves.easeOutCubic,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                gradient: selected
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [selectedTop, selectedBottom],
-                      )
-                    : null,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: selected
-                      ? Colors.white.withValues(
-                          alpha: isDark ? .16 : .66,
-                        )
-                      : Colors.transparent,
-                  width: .8,
-                ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? .18 : .05,
-                          ),
-                          blurRadius: 16,
-                          spreadRadius: -8,
-                          offset: const Offset(0, 7),
-                        ),
-                        BoxShadow(
-                          color: activePurple.withValues(
-                            alpha: isDark ? .10 : .08,
-                          ),
-                          blurRadius: 18,
-                          spreadRadius: -10,
-                        ),
-                      ]
-                    : null,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              gradient: selected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [selectedTop, selectedBottom],
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: selected
+                    ? Colors.white.withValues(alpha: isDark ? .14 : .62)
+                    : Colors.transparent,
+                width: .8,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 230),
-                    curve: Curves.easeOutCubic,
-                    width: selected ? 38 : 34,
-                    height: 31,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? Colors.white.withValues(
-                              alpha: isDark ? .07 : .30,
-                            )
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    alignment: Alignment.center,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 38,
+                  height: 30,
+                  child: Center(
                     child: Icon(
                       item.icon,
                       size: selected ? 22 : 21,
                       color: selected ? activePurple : inactiveColor,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 10,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
-                        color: selected ? activeForeground : inactiveColor,
-                      ),
+                ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 10,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected ? activeForeground : inactiveColor,
                     ),
                   ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 230),
-                    width: selected ? 4 : 0,
-                    height: selected ? 4 : 0,
-                    margin: const EdgeInsets.only(top: 3),
-                    decoration: BoxDecoration(
-                      color: activePurple.withValues(alpha: .92),
-                      shape: BoxShape.circle,
-                    ),
+                ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: selected ? 4 : 0,
+                  height: selected ? 4 : 0,
+                  margin: const EdgeInsets.only(top: 3),
+                  decoration: BoxDecoration(
+                    color: activePurple.withValues(alpha: .92),
+                    shape: BoxShape.circle,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
