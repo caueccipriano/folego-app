@@ -72,7 +72,6 @@
       let alreadyRepaired = false;
       try {
         alreadyRepaired = localStorage.getItem(repairKey) === repairVersion;
-        if (!alreadyRepaired) localStorage.setItem(repairKey, repairVersion);
       } catch (_) {
         // Storage can be unavailable in hardened/private browser contexts.
       }
@@ -106,6 +105,12 @@
           : Promise.resolve(),
       ])
         .then(() => {
+          try {
+            localStorage.setItem(repairKey, repairVersion);
+          } catch (_) {
+            // Best effort only.
+          }
+
           // Reload once after clearing the legacy shell cache so the currently
           // controlled page boots Flutter from the network. We keep the
           // registration itself so an existing Web Push subscription survives.
