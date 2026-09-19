@@ -11,8 +11,8 @@
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#101014",
-  "theme_color": "#101014",
+  "background_color": "#F5F1E8",
+  "theme_color": "#F5F1E8",
   "description": "Entenda quanto do seu dinheiro está realmente livre hoje, sem apertar amanhã.",
   "categories": [
     "finance",

@@ -116,6 +116,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.all(6),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: List.generate(items.length, (index) {
                             return Expanded(
                               child: _Destination(

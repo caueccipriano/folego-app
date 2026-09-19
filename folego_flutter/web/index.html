@@ -42,19 +42,18 @@
       width: 100%;
       height: 100%;
       min-height: 100%;
-      background: var(--folego-web-bg);
+      overflow: hidden;
       overscroll-behavior: none;
+      background: var(--folego-web-bg);
     }
 
-    body {
-      min-height: 100vh;
-      min-height: 100dvh;
-    }
-
+    /*
+     * Do not size or position flutter-view here.
+     * Flutter's web engine owns that geometry. Forcing 100dvh/fixed sizing on
+     * iOS PWAs can desync the visual viewport from Flutter pointer hit-testing
+     * after viewport/safe-area changes.
+     */
     flutter-view {
-      width: 100%;
-      height: 100%;
-      min-height: 100dvh;
       background-color: var(--folego-web-bg) !important;
     }
   </style>

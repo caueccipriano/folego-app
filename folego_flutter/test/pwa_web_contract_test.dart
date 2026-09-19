@@ -14,6 +14,9 @@ void main() {
       expect(index, contains('rel="manifest" href="manifest.json"'));
       expect(index, contains('(prefers-color-scheme: light)'));
       expect(index, contains('(prefers-color-scheme: dark)'));
+      expect(index, isNot(contains('position: fixed !important')));
+      expect(index, isNot(contains('height: 100dvh !important')));
+      expect(index, contains('Do not size or position flutter-view here.'));
       expect(index, isNot(contains(r'</script>\n')));
 
       final zoomFix = index.indexOf('folego_ios_zoom_fix.js');

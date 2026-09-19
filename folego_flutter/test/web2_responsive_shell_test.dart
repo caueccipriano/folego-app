@@ -20,6 +20,27 @@ void main() {
     expect(find.byKey(const ValueKey('desktop-sidebar')), findsNothing);
   });
 
+  testWidgets('mobile navigation maps every destination to the correct page', (tester) async {
+    await _pumpShell(tester, const Size(390, 844));
+
+    final destinations = <({IconData icon, int page})>[
+      (icon: AppIcons.transactions, page: 1),
+      (icon: AppIcons.plan, page: 2),
+      (icon: AppIcons.wallet, page: 3),
+      (icon: AppIcons.profile, page: 4),
+      (icon: AppIcons.home, page: 0),
+    ];
+
+    for (final destination in destinations) {
+      await tester.tap(find.byIcon(destination.icon));
+      await tester.pump();
+      expect(
+        find.byKey(ValueKey('page-${destination.page}')),
+        findsOneWidget,
+      );
+    }
+  });
+
   testWidgets('768 stays in compact navigation mode', (tester) async {
     await _pumpShell(tester, const Size(768, 900));
     expect(find.byKey(const ValueKey('mobile-bottom-navigation')), findsOneWidget);
