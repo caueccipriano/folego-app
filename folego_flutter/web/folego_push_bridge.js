@@ -1,6 +1,8 @@
 (() => {
   const VAPID_PUBLIC_KEY = 'BH7q2FubEJ5uZqSuZli0usVvqP9dbGyFoGSZu03YDryy_IKuZoVqHzC_9geURT5eNZqmpcAMwYvttD6Pi4zSBiY';
 
+  let registrationPromise = null;
+
   function supported() {
     return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   }
@@ -23,30 +25,51 @@
     return outputArray;
   }
 
-  async function registerWorker() {
-    const workerUrl = new URL('folego_push_sw.js', document.baseURI);
-    const registration = await navigator.serviceWorker.register(workerUrl.href, { scope: './' });
-    await registration.update();
+  async function registerWorkerOnce() {
+    if (!('serviceWorker' in navigator)) return null;
+    if (registrationPromise) return registrationPromise;
 
-    if (registration.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    }
-
-    if (!registration.active) {
-      await new Promise((resolve) => {
-        const worker = registration.installing || registration.waiting;
-        if (!worker) return resolve();
-        const onState = () => {
-          if (worker.state === 'activated' || worker.state === 'redundant') {
-            worker.removeEventListener('statechange', onState);
-            resolve();
-          }
-        };
-        worker.addEventListener('statechange', onState);
+    registrationPromise = (async () => {
+      const workerUrl = new URL('folego_push_sw.js', document.baseURI);
+      const registration = await navigator.serviceWorker.register(workerUrl.href, {
+        scope: './',
+        updateViaCache: 'none',
       });
-    }
 
-    return registration;
+      // Always ask the browser for the latest worker on app launch. Previously
+      // this only happened after the user requested push permission, which let
+      // old service workers survive across deploys.
+      await registration.update();
+
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      return registration;
+    })();
+
+    try {
+      return await registrationPromise;
+    } catch (error) {
+      registrationPromise = null;
+      throw error;
+    }
+  }
+
+  async function ensureLatestWorker() {
+    try {
+      await registerWorkerOnce();
+    } catch (_) {
+      // Push setup must never block app startup.
+    }
+  }
+
+  // Refresh the worker on every app load, independently of notification
+  // permission. This keeps installed PWAs aligned with the deployed build.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', ensureLatestWorker, { once: true });
+  } else {
+    void ensureLatestWorker();
   }
 
   window.folegoPushGetStatus = async function () {
@@ -66,7 +89,7 @@
       return JSON.stringify({ status: permission === 'denied' ? 'denied' : 'notDetermined' });
     }
 
-    const registration = await registerWorker();
+    const registration = await registerWorkerOnce();
     let subscription = await registration.pushManager.getSubscription();
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
