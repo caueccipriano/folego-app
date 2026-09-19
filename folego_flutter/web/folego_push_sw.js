@@ -1,100 +1,17 @@
-const CACHE_PREFIX = 'folego-shell-';
-const CACHE_VERSION = '__FOLEGO_CACHE_VERSION__';
-const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
-const OFFLINE_FALLBACK_URL = new URL('index.html', self.registration.scope).href;
+const BUILD_VERSION = '__FOLEGO_CACHE_VERSION__';
 
-const APP_SHELL_URLS = [
-  'index.html',
-  'manifest.json',
-  'flutter_bootstrap.js',
-  'flutter.js',
-  'main.dart.js',
-  'folego_ios_zoom_fix.js',
-  'folego_push_bridge.js',
-  'favicon.png',
-  'icons/Icon-192.png',
-  'icons/Icon-512.png',
-  'icons/Icon-maskable-192.png',
-  'icons/Icon-maskable-512.png',
-].map((path) => new URL(path, self.registration.scope).href);
+// This service worker exists for Web Push only.
+// Do not intercept app-shell requests here: cache-first delivery of Flutter's
+// main.dart.js can keep an installed iOS PWA on an old build and make visual
+// geometry/hit testing look "stuck" after a deploy.
+self.__FOLEGO_BUILD_VERSION__ = BUILD_VERSION;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(APP_SHELL_URLS);
-    await self.skipWaiting();
-  })());
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames
-        .filter(
-          (name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME,
-        )
-        .map((name) => caches.delete(name)),
-    );
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  if (request.method !== 'GET') return;
-
-  const url = new URL(request.url);
-  const scope = new URL(self.registration.scope);
-
-  // Never cache Supabase/API traffic or third-party resources here. Financial
-  // data must keep its own consistency rules; this worker only caches the app
-  // shell and same-origin static Flutter assets.
-  if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) {
-    return;
-  }
-
-  if (request.mode === 'navigate') {
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(request);
-        if (response.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(OFFLINE_FALLBACK_URL, response.clone());
-        }
-        return response;
-      } catch (_) {
-        const cached = await caches.match(OFFLINE_FALLBACK_URL);
-        if (cached) return cached;
-        throw _;
-      }
-    })());
-    return;
-  }
-
-  event.respondWith((async () => {
-    const cached = await caches.match(request);
-
-    const networkFetch = fetch(request)
-      .then(async (response) => {
-        if (response.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(request, response.clone());
-        }
-        return response;
-      })
-      .catch(() => null);
-
-    if (cached) {
-      event.waitUntil(networkFetch);
-      return cached;
-    }
-
-    const networkResponse = await networkFetch;
-    if (networkResponse) return networkResponse;
-
-    return Response.error();
-  })());
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('message', (event) => {
