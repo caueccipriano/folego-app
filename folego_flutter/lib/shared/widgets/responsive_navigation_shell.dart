@@ -28,7 +28,10 @@ class ResponsiveNavigationShell extends StatelessWidget {
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
 
     return Scaffold(
-      extendBody: !desktop,
+      // Keep the mobile body and navigation in separate layout regions. This
+      // prevents an oversized/transformed nav compositor layer from covering
+      // the page or intercepting touches on iOS PWAs.
+      extendBody: false,
       body: Row(
         children: [
           if (desktop)
