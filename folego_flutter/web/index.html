@@ -64,6 +64,8 @@
       // One-time repair for users who opened builds controlled by the old
       // cache-first PWA worker. The old worker could keep main.dart.js from a
       // broken build even after GitHub Pages had deployed a fixed version.
+      // We clear only Folego's old shell caches and preserve the registration
+      // so an existing push subscription is not destroyed.
       const repairVersion = 'ios-pwa-geometry-20260919-v2';
       const repairKey = 'folego-pwa-repair-version';
 
@@ -85,7 +87,12 @@
           Promise.all(
             registrations
               .filter((registration) => registration.scope.startsWith(appScope))
-              .map((registration) => registration.unregister()),
+              .map(async (registration) => {
+                await registration.update();
+                if (registration.waiting) {
+                  registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+              }),
           ),
         ),
         'caches' in window
@@ -99,8 +106,9 @@
           : Promise.resolve(),
       ])
         .then(() => {
-          // A page stays under its current controller until navigation. Reload
-          // once after unregistering so Flutter boots from the network.
+          // Reload once after clearing the legacy shell cache so the currently
+          // controlled page boots Flutter from the network. We keep the
+          // registration itself so an existing Web Push subscription survives.
           if (hadController) window.location.reload();
         })
         .catch(() => {
