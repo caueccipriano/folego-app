@@ -20,6 +20,18 @@ void main() {
     expect(find.byKey(const ValueKey('desktop-sidebar')), findsNothing);
   });
 
+  testWidgets('mobile liquid nav stays pinned to the bottom and does not consume the body', (tester) async {
+    await _pumpShell(tester, const Size(390, 844));
+
+    final navRect = tester.getRect(
+      find.byKey(const ValueKey('mobile-liquid-nav')),
+    );
+
+    expect(navRect.height, lessThanOrEqualTo(90));
+    expect(navRect.top, greaterThan(740));
+    expect(navRect.bottom, closeTo(844, 1));
+  });
+
   testWidgets('mobile navigation maps every destination to the correct page', (tester) async {
     await _pumpShell(tester, const Size(390, 844));
 
