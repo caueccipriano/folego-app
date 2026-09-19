@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/integrations/eu_bridge.dart';
+import '../../core/integrations/traco_bridge.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _name = 'Você';
   bool _loading = true;
   String? _error;
+  TracoBridgeData? _tracoBridge;
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final values = await Future.wait([
         widget.repository.getProfileName(),
         widget.repository.getSnapshot(widget.space.id),
+        TracoBridge.read(),
       ]);
       final snapshot = values[1] as FolegoSnapshot;
       await EuBridge.publishFolego(snapshot);
@@ -53,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _name = values[0] as String;
         _snapshot = snapshot;
+        _tracoBridge = values[2] as TracoBridgeData?;
         _loading = false;
       });
     } catch (error) {
@@ -296,6 +300,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            if (_tracoBridge != null && _tracoBridge!.categories.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.fitness_center_rounded, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Projeto corporal · Traço',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Categorias que o Traço sugeriu para acompanhar quanto seu projeto corporal custa de verdade.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _tracoBridge!.categories
+                          .map(
+                            (item) => Chip(
+                              avatar: Icon(
+                                item.kind == 'food' ? Icons.restaurant_rounded : Icons.fitness_center_rounded,
+                                size: 16,
+                              ),
+                              label: Text(item.label),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             SectionCard(
               child: Row(
