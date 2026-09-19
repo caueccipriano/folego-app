@@ -20,16 +20,21 @@ void main() {
     expect(find.byKey(const ValueKey('desktop-sidebar')), findsNothing);
   });
 
-  testWidgets('mobile liquid nav stays pinned to the bottom and does not consume the body', (tester) async {
+  testWidgets('mobile liquid nav stays pinned to the bottom and isolated from the body', (tester) async {
     await _pumpShell(tester, const Size(390, 844));
 
     final navRect = tester.getRect(
       find.byKey(const ValueKey('mobile-liquid-nav')),
     );
+    final contentRect = tester.getRect(
+      find.byKey(const ValueKey('shell-content')),
+    );
 
     expect(navRect.height, lessThanOrEqualTo(90));
     expect(navRect.top, greaterThan(740));
     expect(navRect.bottom, closeTo(844, 1));
+    expect(contentRect.bottom, lessThanOrEqualTo(navRect.top + 1));
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets('mobile navigation maps every destination to the correct page', (tester) async {
@@ -44,7 +49,16 @@ void main() {
     ];
 
     for (final destination in destinations) {
-      await tester.tap(find.byIcon(destination.icon));
+      final target = find.byKey(
+        ValueKey('mobile-nav-destination-${destination.page}'),
+      );
+      final targetRect = tester.getRect(target);
+      final navRect = tester.getRect(
+        find.byKey(const ValueKey('mobile-liquid-nav')),
+      );
+
+      expect(navRect.contains(targetRect.center), isTrue);
+      await tester.tapAt(targetRect.center);
       await tester.pump();
       expect(
         find.byKey(ValueKey('page-${destination.page}')),
