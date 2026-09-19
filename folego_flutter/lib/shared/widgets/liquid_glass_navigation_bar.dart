@@ -135,7 +135,6 @@ class LiquidGlassNavigationBar extends StatelessWidget {
           ),
         ),
       ),
-      ),
     );
   }
 }
@@ -173,10 +172,9 @@ class _Destination extends StatelessWidget {
       child: Tooltip(
         message: item.label,
         waitDuration: const Duration(milliseconds: 600),
-        child: SizedBox.expand(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(24),
             child: AnimatedContainer(
