@@ -40,14 +40,19 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     final highlight = Colors.white.withValues(alpha: isDark ? .16 : .72);
 
     return SafeArea(
+      key: const ValueKey('mobile-liquid-nav'),
       top: false,
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 9),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: SizedBox(
-            height: 78,
-            child: ClipRRect(
+      child: SizedBox(
+        height: 78,
+        width: double.infinity,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: SizedBox(
+              width: double.infinity,
+              height: 78,
+              child: ClipRRect(
               borderRadius: BorderRadius.circular(32),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
@@ -131,6 +136,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
               ),
             ),
           ),
