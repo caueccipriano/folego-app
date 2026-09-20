@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/layout/app_scroll_gutter.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -629,15 +630,42 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader({required Color primaryText}) {
-    return Text(
-      'e aí, ${_name.toLowerCase()}',
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: AppTypography.display(
-        context,
-        fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact ? 24 : 28,
-        color: primaryText,
-      ),
+    final brightness = Theme.of(context).brightness;
+    final secondary = AppColors.secondaryText(brightness);
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final hidden = FinancialPrivacy.hidden.value;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            'e aí, ${_name.toLowerCase()}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.display(
+              context,
+              fontSize:
+                  AppBreakpoints.of(context) == AppLayoutSize.compact ? 24 : 28,
+              color: primaryText,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        IconButton(
+          key: const ValueKey('home-privacy-toggle'),
+          tooltip: hidden ? 'mostrar valores' : 'ocultar valores',
+          onPressed: FinancialPrivacy.toggle,
+          style: IconButton.styleFrom(
+            minimumSize: const Size(42, 42),
+            backgroundColor: surface,
+            foregroundColor: secondary,
+            side: BorderSide(color: border),
+          ),
+          icon: Icon(hidden ? AppIcons.eyeOff : AppIcons.eye, size: 19),
+        ),
+      ],
     );
   }
 
