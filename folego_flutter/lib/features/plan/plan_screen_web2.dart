@@ -4,6 +4,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/ui/app_snackbars.dart';
@@ -347,7 +348,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             height: 4,
                             decoration: BoxDecoration(
                               color: border,
-                              borderRadius: BorderRadius.circular(99),
+                              borderRadius: BorderRadius.circular(AppRadii.pill),
                             ),
                           ),
                         ),
@@ -474,7 +475,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             padding: const EdgeInsets.all(13),
                             decoration: BoxDecoration(
                               color: familyColor.withValues(alpha: .08),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadii.control),
                               border: Border.all(
                                 color: familyColor.withValues(alpha: .20),
                               ),
@@ -719,7 +720,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final monthPicker = Container(
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Row(
@@ -830,7 +831,7 @@ class _PlanScreenState extends State<PlanScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -897,7 +898,7 @@ class _PlanScreenState extends State<PlanScreen> {
           const SizedBox(height: 16),
           if (summary.plannedAmount > 0) ...[
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppRadii.pill),
               child: LinearProgressIndicator(
                 value: summary.usageRatio.clamp(0.0, 1.0),
                 minHeight: 7,
@@ -938,7 +939,7 @@ class _PlanScreenState extends State<PlanScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: purple.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: purple.withValues(alpha: .18)),
       ),
       child: Column(
@@ -1034,7 +1035,7 @@ class _PlanScreenState extends State<PlanScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface(brightness),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadii.card),
           border: Border.all(color: border),
         ),
         clipBehavior: Clip.antiAlias,
@@ -1134,7 +1135,7 @@ class _PlanScreenState extends State<PlanScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 11),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
                   child: LinearProgressIndicator(
                     value: parent.progress,
                     minHeight: 4,
@@ -1192,16 +1193,16 @@ class _PlanScreenState extends State<PlanScreen> {
       padding: const EdgeInsets.only(bottom: 7),
       child: Material(
         color: AppColors.background(brightness).withValues(alpha: .35),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         child: InkWell(
           key: ValueKey('plan-child-${child.categoryId}'),
           onTap: () => _editBudget(child),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(color: border.withValues(alpha: .80)),
             ),
             child: Column(
@@ -1273,7 +1274,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   ),
                   const SizedBox(height: 6),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
                     child: LinearProgressIndicator(
                       value: child.progress,
                       minHeight: 4,
@@ -1334,7 +1335,7 @@ class _PlanScreenState extends State<PlanScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Text(
@@ -1356,7 +1357,7 @@ class _PlanScreenState extends State<PlanScreen> {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppColors.surface(brightness),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadii.card),
           border: Border.all(color: AppColors.border(brightness)),
         ),
         child: Column(
@@ -1493,14 +1494,14 @@ class _ScopeChoice extends StatelessWidget {
     final border = selected ? accent : AppColors.border(brightness);
     return Material(
       color: selected ? accent.withValues(alpha: .08) : Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadii.control),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadii.control),
             border: Border.all(color: border),
           ),
           child: Row(
@@ -1563,7 +1564,7 @@ class _TinyPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .09),
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1596,7 +1597,7 @@ class _HistoricalPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.warningText(brightness).withValues(alpha: .10),
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: Text(
         'somente consulta',
@@ -1720,7 +1721,7 @@ class _PlanModeToggle extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: border),
       ),
       child: Row(
