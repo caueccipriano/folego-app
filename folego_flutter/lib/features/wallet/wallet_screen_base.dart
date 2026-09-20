@@ -262,6 +262,7 @@ class _WalletScreenState extends State<WalletScreen> {
         label: 'dinheiro em contas',
         value: summary.totalCash,
         icon: AppIcons.account,
+        subtitle: '${Formatters.money(summary.availableCash)} disponível para gastar',
       ),
       _PositionMetric(
         label: 'benefícios',
@@ -511,10 +512,12 @@ class _PositionMetric {
     required this.label,
     required this.value,
     required this.icon,
+    this.subtitle,
   });
   final String label;
   final double value;
   final IconData icon;
+  final String? subtitle;
 }
 
 class _PositionMetricCard extends StatelessWidget {
@@ -572,6 +575,19 @@ class _PositionMetricCard extends StatelessWidget {
               ),
             ),
           ),
+          if (metric.subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              metric.subtitle!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.label(
+                context,
+                fontSize: 9,
+                color: secondary,
+              ),
+            ),
+          ],
         ],
       ),
     );
