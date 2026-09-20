@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/entitlements/feature_entitlements.dart';
+import '../../core/layout/app_content_container.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/automation_rule.dart';
@@ -15,6 +17,10 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_automation.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
+import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 
 class AutomationRulesScreen extends StatefulWidget {
   const AutomationRulesScreen({
@@ -184,18 +190,9 @@ class _AutomationRulesScreenState extends State<AutomationRulesScreen> {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final canEdit = _canEdit;
+
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(
-        title: const Text('automações'),
-        actions: [
-          IconButton(
-            tooltip: 'atualizar',
-            onPressed: _loading ? null : _load,
-            icon: const Icon(AppIcons.refresh),
-          ),
-        ],
-      ),
       floatingActionButton: canEdit
           ? FloatingActionButton.extended(
               key: const ValueKey('automation-add-rule'),
@@ -204,71 +201,111 @@ class _AutomationRulesScreenState extends State<AutomationRulesScreen> {
               label: const Text('nova regra'),
             )
           : null,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
-                children: [
-                  _EntitlementCard(canEdit: canEdit),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _preview,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'prévia de correspondência',
-                      hintText: 'ex.: UBER TRIP',
-                      prefixIcon: Icon(AppIcons.search),
-                    ),
+      body: SafeArea(
+        child: AppContentContainer.list(
+          fillHeight: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: AppPageHeader(
+                  title: 'automações',
+                  subtitle: 'regras para sugerir e preparar classificações',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(AppIcons.back),
                   ),
-                  if (_preview.text.trim().isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _previewMatches.isEmpty
-                          ? 'nenhuma regra ativa corresponderia'
-                          : 'regra vencedora: ${_previewMatches.first.name}',
-                      style: AppTypography.body(
-                        context,
-                        color: AppColors.secondaryText(brightness),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 22),
-                  if (_error != null)
-                    Text(
-                      _error!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
-                  if (_rules.isEmpty)
-                    const _EmptyRules()
-                  else
-                    ..._rules.map(
-                      (rule) => Card(
-                        child: ListTile(
-                          onTap: canEdit ? () => _openForm(rule) : null,
-                          title: Text(rule.name),
-                          subtitle: Text(
-                            '${_conditionLabel(rule)}\n${_actionLabel(rule)} · ${_sourceLabel(rule)}',
-                          ),
-                          isThreeLine: true,
-                          leading: Switch.adaptive(
-                            value: rule.active,
-                            onChanged: canEdit
-                                ? (value) => _toggle(rule, value)
-                                : null,
-                          ),
-                          trailing: canEdit
-                              ? const Icon(AppIcons.chevronRight)
-                              : null,
-                        ),
-                      ),
-                    ),
-                ],
+                  trailing: IconButton(
+                    tooltip: 'atualizar',
+                    onPressed: _loading ? null : _load,
+                    icon: const Icon(AppIcons.refresh),
+                  ),
+                ),
               ),
-            ),
+              Expanded(
+                child: _loading
+                    ? const AppLoadingState(label: 'organizando suas automações')
+                    : _error != null && _rules.isEmpty
+                        ? AppErrorState(
+                            title: 'não consegui carregar suas automações',
+                            description: _error,
+                            onRetry: _load,
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView(
+                              padding: const EdgeInsets.fromLTRB(0, 8, 0, 110),
+                              children: [
+                                _EntitlementCard(canEdit: canEdit),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: _preview,
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: const InputDecoration(
+                                    labelText: 'prévia de correspondência',
+                                    hintText: 'ex.: UBER TRIP',
+                                    prefixIcon: Icon(AppIcons.search),
+                                  ),
+                                ),
+                                if (_preview.text.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _previewMatches.isEmpty
+                                        ? 'nenhuma regra ativa corresponderia'
+                                        : 'regra vencedora: ${_previewMatches.first.name}',
+                                    style: AppTypography.body(
+                                      context,
+                                      color: AppColors.secondaryText(brightness),
+                                    ),
+                                  ),
+                                ],
+                                if (_error != null) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _error!,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.error,
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 22),
+                                if (_rules.isEmpty)
+                                  const _EmptyRules()
+                                else
+                                  ..._rules.map(
+                                    (rule) => Card(
+                                      child: ListTile(
+                                        onTap: canEdit ? () => _openForm(rule) : null,
+                                        title: Text(rule.name),
+                                        subtitle: Text(
+                                          '${_conditionLabel(rule)}\n${_actionLabel(rule)} · ${_sourceLabel(rule)}',
+                                        ),
+                                        isThreeLine: true,
+                                        leading: Switch.adaptive(
+                                          value: rule.active,
+                                          onChanged: canEdit
+                                              ? (value) => _toggle(rule, value)
+                                              : null,
+                                        ),
+                                        trailing: canEdit
+                                            ? const Icon(AppIcons.chevronRight)
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
+
 }
 
 class _AutomationRuleForm extends StatefulWidget {
@@ -652,7 +689,7 @@ class _EntitlementCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -666,7 +703,7 @@ class _EntitlementCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    canEdit ? 'regras habilitadas para dev/teste' : 'Premium em breve',
+                    canEdit ? 'regras habilitadas para dev/teste' : 'premium em breve',
                     style: AppTypography.section(context, fontSize: 15),
                   ),
                   const SizedBox(height: 4),
@@ -693,15 +730,10 @@ class _EmptyRules extends StatelessWidget {
   const _EmptyRules();
 
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 30),
-        child: Column(
-          children: [
-            Icon(AppIcons.recurring, size: 38),
-            SizedBox(height: 10),
-            Text('nenhuma regra criada ainda'),
-          ],
-        ),
+  Widget build(BuildContext context) => const AppEmptyState(
+        icon: AppIcons.recurring,
+        title: 'nenhuma regra criada ainda',
+        description: 'suas regras de automação aparecerão aqui',
       );
 }
 
