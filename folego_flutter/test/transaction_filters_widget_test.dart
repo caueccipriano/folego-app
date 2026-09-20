@@ -163,7 +163,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Nenhum lançamento ainda.'), findsOneWidget);
+    expect(find.text('nenhum lançamento ainda'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('transaction-filter-button')));
     await tester.pumpAndSettle();
