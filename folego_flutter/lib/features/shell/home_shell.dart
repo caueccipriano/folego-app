@@ -167,7 +167,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
-      builder: (context, _, __) {
+      builder: (context, hidden, child) {
         final pages = [
           HomeScreen(space: widget.space, repository: widget.repository),
           TransactionsScreen(
