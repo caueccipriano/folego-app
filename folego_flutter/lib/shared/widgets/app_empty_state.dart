@@ -12,12 +12,14 @@ class AppEmptyState extends StatelessWidget {
     required this.title,
     this.description,
     this.accentColor,
+    this.action,
   });
 
   final IconData icon;
   final String title;
   final String? description;
   final Color? accentColor;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,10 @@ class AppEmptyState extends StatelessWidget {
                 color: secondary,
               ),
             ),
+          ],
+          if (action != null) ...[
+            const SizedBox(height: 15),
+            action!,
           ],
         ],
       ),
