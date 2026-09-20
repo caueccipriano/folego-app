@@ -112,7 +112,7 @@ void main() {
     expect(find.text('simular mudança'), findsNWidgets(2));
     expect(
       find.text(
-        'Nada aqui vira lançamento. Primeiro você vê o efeito no futuro.',
+        'nada aqui vira lançamento. primeiro você vê o efeito no futuro',
       ),
       findsOneWidget,
     );
