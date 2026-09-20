@@ -45,7 +45,7 @@ class AppEmptyState extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: .11),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: Icon(icon, color: accent, size: 22),
           ),
