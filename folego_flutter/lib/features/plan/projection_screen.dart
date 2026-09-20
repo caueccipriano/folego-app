@@ -361,104 +361,97 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
-        return Stack(
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(0, 14, 0, 80),
           children: [
-            ListView(
-              padding: const EdgeInsets.fromLTRB(0, 14, 0, 120),
-              children: [
-                _ProjectionHeader(
-                  onBack: widget.onBack,
-                  onScenario: _openScenarioSettings,
-                ),
-                const SizedBox(height: 14),
-                _ProjectionPlanModeToggle(onSummary: widget.onBack),
-                const SizedBox(height: 18),
-                _HorizonSelector(
-                  value: _horizon,
-                  onChanged: _setHorizon,
-                ),
-                const SizedBox(height: 16),
-                if (!projection.hasProjectionInputs && _adjustments.isEmpty)
-                  _ProjectionEmptyState(onBack: widget.onBack)
-                else ...[
-                  _ProjectionHero(
-                    projection: projection,
-                    simulated: _simulated != null,
-                    baseEndingBalance: _base?.summary.endingBalance,
-                  ),
-                  const SizedBox(height: 18),
-                  AppSectionHeader(
-                    title: 'saldo projetado',
-                    subtitle: _simulated == null
-                        ? 'como seu saldo evolui se o cenário atual continuar'
-                        : 'antes x depois da mudança simulada',
-                  ),
-                  const SizedBox(height: 12),
-                  _ProjectionChartCard(
-                    base: _base!,
-                    simulated: _simulated,
-                  ),
-                  const SizedBox(height: 16),
-                  _MonthCarousel(
-                    months: projection.months,
-                    selectedIndex: _selectedMonth,
-                    onTap: _openMonthDetail,
-                  ),
-                  const SizedBox(height: 18),
-                  _ProjectionViewToggle(
-                    categories: _showCategories,
-                    onChanged: (value) {
-                      setState(() => _showCategories = value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  if (_showCategories)
-                    _ProjectionCategories(
-                      projection: projection,
-                      selectedIndex: _selectedMonth,
-                      desktopMatrix: wide,
-                    )
-                  else
-                    _ProjectionInsights(projection: projection),
-                  if (_simulated != null) ...[
-                    const SizedBox(height: 18),
-                    _SimulationComparison(
-                      base: _base!,
-                      simulated: _simulated!,
-                      saving: _savingPlan,
-                      onDiscard: _discardSimulation,
-                      onPersist: _addSimulationToPlanning,
-                    ),
-                  ],
-                  const SizedBox(height: 84),
-                ],
-              ],
+            _ProjectionHeader(
+              onBack: widget.onBack,
+              onScenario: _openScenarioSettings,
             ),
-            if (projection.hasProjectionInputs || _adjustments.isNotEmpty)
-              Positioned(
-                right: 0,
-                bottom: 18,
-                child: SafeArea(
-                  child: FilledButton.icon(
-                    key: const ValueKey('projection-simulate-change'),
-                    onPressed: _openSimulation,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: accent,
-                      foregroundColor: brightness == Brightness.dark
-                          ? AppColors.darkPrimaryText
-                          : Colors.white,
-                      minimumSize: const Size(0, 48),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 14,
-                      ),
-                      shape: const StadiumBorder(),
+            const SizedBox(height: 14),
+            _ProjectionPlanModeToggle(onSummary: widget.onBack),
+            const SizedBox(height: 18),
+            _HorizonSelector(
+              value: _horizon,
+              onChanged: _setHorizon,
+            ),
+            const SizedBox(height: 16),
+            if (!projection.hasProjectionInputs && _adjustments.isEmpty)
+              _ProjectionEmptyState(onBack: widget.onBack)
+            else ...[
+              _ProjectionHero(
+                projection: projection,
+                simulated: _simulated != null,
+                baseEndingBalance: _base?.summary.endingBalance,
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  key: const ValueKey('projection-simulate-change'),
+                  onPressed: _openSimulation,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: brightness == Brightness.dark
+                        ? AppColors.darkPrimaryText
+                        : Colors.white,
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
-                    icon: const Icon(AppIcons.adjustments, size: 19),
-                    label: const Text('simular mudança'),
+                    shape: const StadiumBorder(),
                   ),
+                  icon: const Icon(AppIcons.adjustments, size: 18),
+                  label: const Text('simular mudança'),
                 ),
               ),
+              const SizedBox(height: 18),
+              AppSectionHeader(
+                title: 'saldo projetado',
+                subtitle: _simulated == null
+                    ? 'como seu saldo evolui se o cenário atual continuar'
+                    : 'antes x depois da mudança simulada',
+              ),
+              const SizedBox(height: 12),
+              _ProjectionChartCard(
+                base: _base!,
+                simulated: _simulated,
+              ),
+              const SizedBox(height: 16),
+              _MonthCarousel(
+                months: projection.months,
+                selectedIndex: _selectedMonth,
+                onTap: _openMonthDetail,
+              ),
+              const SizedBox(height: 18),
+              _ProjectionViewToggle(
+                categories: _showCategories,
+                onChanged: (value) {
+                  setState(() => _showCategories = value);
+                },
+              ),
+              const SizedBox(height: 16),
+              if (_showCategories)
+                _ProjectionCategories(
+                  projection: projection,
+                  selectedIndex: _selectedMonth,
+                  desktopMatrix: wide,
+                )
+              else
+                _ProjectionInsights(projection: projection),
+              if (_simulated != null) ...[
+                const SizedBox(height: 18),
+                _SimulationComparison(
+                  base: _base!,
+                  simulated: _simulated!,
+                  saving: _savingPlan,
+                  onDiscard: _discardSimulation,
+                  onPersist: _addSimulationToPlanning,
+                ),
+              ],
+              const SizedBox(height: 36),
+            ],
           ],
         );
       },
