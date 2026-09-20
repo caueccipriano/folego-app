@@ -98,7 +98,7 @@ Future<void> _openReview(WidgetTester tester) async {
           required candidates,
         }) async => 'batch-qa',
         rowsLoaderOverride: (_) async => _rows(),
-        updateOverride: (_, __) async {},
+        updateOverride: (batchId, rows) async {},
         confirmOverride: (_) async => const StatementImportResult(
           batchId: 'batch-qa',
           status: 'partially_completed',
