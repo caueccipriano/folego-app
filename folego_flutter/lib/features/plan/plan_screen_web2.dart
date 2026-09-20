@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
 
 typedef PlanBudgetLoader =
     Future<List<BudgetOverviewItem>> Function({
@@ -612,7 +613,7 @@ class _PlanScreenState extends State<PlanScreen> {
         child: SafeArea(
           child: AppContentContainer.dashboard(
             fillHeight: true,
-            child: _buildError(brightness),
+            child: _buildError(),
           ),
         ),
       );
@@ -1340,52 +1341,12 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildError(Brightness brightness) {
+  Widget _buildError() {
     return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surface(brightness),
-          borderRadius: BorderRadius.circular(AppRadii.card),
-          border: Border.all(color: AppColors.border(brightness)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              AppIcons.warning,
-              size: 36,
-              color: AppColors.expenseText(brightness),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'não consegui carregar seu planejamento',
-              textAlign: TextAlign.center,
-              style: AppTypography.body(
-                context,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryText(brightness),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _error ?? '',
-              textAlign: TextAlign.center,
-              style: AppTypography.body(
-                context,
-                fontSize: 12,
-                color: AppColors.secondaryText(brightness),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => _load(initial: true),
-              child: const Text('tentar novamente'),
-            ),
-          ],
-        ),
+      child: AppErrorState(
+        title: 'não consegui carregar seu planejamento',
+        description: _error,
+        onRetry: () => _load(initial: true),
       ),
     );
   }
