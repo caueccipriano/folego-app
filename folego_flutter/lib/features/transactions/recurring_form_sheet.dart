@@ -297,19 +297,16 @@ Future<void> _pickMonthlyDay() async {
           children: [
             Text(
               'qual dia?',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: AppTypography.section(context, fontSize: 20),
             ),
             const SizedBox(height: 6),
             Text(
               'você pode adicionar mais de um dia',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: .58),
-                  ),
+              style: AppTypography.body(
+                context,
+                fontSize: 12,
+                color: AppColors.secondaryText(Theme.of(context).brightness),
+              ),
             ),
             const SizedBox(height: 18),
             Wrap(
@@ -598,6 +595,8 @@ monthlyLastDay:
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
+    final primaryText = AppColors.primaryText(brightness);
+    final secondaryText = AppColors.secondaryText(brightness);
     final accent = _isExpense
         ? AppColors.lime
         : AppColors.primaryPurple(brightness);
@@ -669,19 +668,20 @@ monthlyLastDay:
                                 _editing
                                     ? 'editar recorrência'
                                     : 'nova recorrência',
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(fontWeight: FontWeight.w900),
+                                style: AppTypography.section(
+                                  context,
+                                  fontSize: 21,
+                                  color: primaryText,
+                                ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'o Fôlego considera isso antes do dinheiro sair ou entrar',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: .58),
-                                    ),
+                                style: AppTypography.body(
+                                  context,
+                                  fontSize: 12,
+                                  color: secondaryText,
+                                ),
                               ),
                             ],
                           ),
@@ -900,9 +900,12 @@ if (_frequency == 'monthly') ...[
 
   Text(
     'dias do mês',
-    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
+    style: AppTypography.label(
+      context,
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      color: primaryText,
+    ),
   ),
 
   const SizedBox(height: 8),
@@ -948,12 +951,11 @@ if (_frequency == 'monthly') ...[
 
     Text(
       'o valor informado será considerado em cada uma dessas datas',
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context)
-                .colorScheme
-                .onSurface
-                .withValues(alpha: .58),
-          ),
+      style: AppTypography.body(
+        context,
+        fontSize: 11,
+        color: secondaryText,
+      ),
     ),
   ],
 ],
@@ -1019,7 +1021,11 @@ if (_frequency == 'monthly') ...[
                             Expanded(
                               child: Text(
                                 'vai repetir a cada 14 dias a partir de ${_dateLabel(_startsOn)}',
-                                style: Theme.of(context).textTheme.bodyMedium,
+                                style: AppTypography.body(
+                                  context,
+                                  fontSize: 12,
+                                  color: primaryText,
+                                ),
                               ),
                             ),
                           ],
@@ -1319,13 +1325,25 @@ class _DateTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      title,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 10,
+                        color: AppColors.secondaryText(brightness),
+                      ),
+                    ),
 
                     const SizedBox(height: 2),
 
                     Text(
                       value,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryText(brightness),
+                      ),
                     ),
                   ],
                 ),
