@@ -13,42 +13,19 @@ class AuthBrandMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final purple = AppColors.primaryPurple(brightness);
     final text = AppColors.primaryText(brightness);
 
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          width: 36,
-          height: 30,
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: 4,
-                child: Container(
-                  width: 24,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: purple,
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 2,
-                child: Container(
-                  width: 22,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: AppColors.lime,
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                  ),
-                ),
-              ),
-            ],
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.asset(
+            'web/icons/Icon-512.png',
+            key: const ValueKey('folego-brand-icon'),
+            width: 38,
+            height: 38,
+            filterQuality: FilterQuality.high,
           ),
         ),
         const SizedBox(width: 10),
