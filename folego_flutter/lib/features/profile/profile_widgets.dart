@@ -190,7 +190,6 @@ class _SettingsRow extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.trailingLabel,
     this.trailing,
     this.onTap,
     this.enabled = true,
@@ -200,7 +199,6 @@ class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final String? trailingLabel;
   final Widget? trailing;
   final VoidCallback? onTap;
   final bool enabled;
@@ -271,25 +269,6 @@ class _SettingsRow extends StatelessWidget {
                   const SizedBox(width: 8),
                   if (trailing != null)
                     trailing!
-                  else if (trailingLabel != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.border(brightness).withValues(alpha: .35),
-                        borderRadius: BorderRadius.circular(AppRadii.pill),
-                      ),
-                      child: Text(
-                        trailingLabel!,
-                        style: AppTypography.label(
-                          context,
-                          fontSize: 9,
-                          color: secondary,
-                        ),
-                      ),
-                    )
                   else if (onTap != null)
                     Icon(AppIcons.chevronRight, size: 18, color: secondary),
                 ],
