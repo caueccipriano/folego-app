@@ -130,7 +130,6 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
-    final border = AppColors.border(brightness);
     final editing = widget.goal != null;
 
     return Padding(
@@ -316,7 +315,6 @@ class _GoalContributionSheetState extends State<_GoalContributionSheet> {
     final brightness = Theme.of(context).brightness;
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
-    final border = AppColors.border(brightness);
     final purple = AppColors.primaryPurple(brightness);
 
     return Padding(
