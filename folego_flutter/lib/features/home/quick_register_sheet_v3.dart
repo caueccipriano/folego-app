@@ -16,6 +16,7 @@ import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/credit_card_item.dart';
 import '../../data/models/financial_space.dart';
+import '../../data/models/transaction_item.dart';
 import '../../data/models/transaction_reflection.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_categories.dart';
@@ -58,6 +59,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   List<AccountItem> _benefitAccounts = const [];
   List<CreditCardItem> _creditCards = const [];
   List<CategoryItem> _categories = const [];
+  List<_QuickSuggestion> _suggestions = const [];
 
   String? _incomeAccountId;
   String? _categoryId;
@@ -102,6 +104,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     _bindCategoryRealtime();
     _bindInstrumentRealtime();
     _load();
+    unawaited(_loadSuggestions());
   }
 
   @override
@@ -262,6 +265,49 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     } catch (_) {
       // Atualizar instrumentos nunca limpa valor, descrição, estabelecimento,
       // reflexão, categoria ou os demais campos do lançamento em edição.
+    }
+  }
+
+  Future<void> _loadSuggestions() async {
+    try {
+      final page = await _withTimeout(
+        widget.repository.getTransactionsPage(widget.space.id, pageSize: 24),
+        'Os atalhos demoraram demais para carregar.',
+      );
+      final counts = <String, int>{};
+      final first = <String, TransactionItem>{};
+
+      for (final item in page.items) {
+        final matchesType = _isExpense ? item.isExpense : item.isIncome;
+        if (!matchesType) continue;
+        final label = item.description.trim();
+        if (label.isEmpty) continue;
+        final key = label.toLowerCase();
+        counts[key] = (counts[key] ?? 0) + 1;
+        first.putIfAbsent(key, () => item);
+      }
+
+      final ranked = first.entries.toList()
+        ..sort((a, b) {
+          final byCount = (counts[b.key] ?? 0).compareTo(counts[a.key] ?? 0);
+          if (byCount != 0) return byCount;
+          return b.value.occurredAt.compareTo(a.value.occurredAt);
+        });
+
+      if (!mounted) return;
+      setState(() {
+        _suggestions = ranked
+            .take(4)
+            .map(
+              (entry) => _QuickSuggestion(
+                label: entry.value.description.trim(),
+                categoryId: entry.value.categoryId,
+              ),
+            )
+            .toList(growable: false);
+      });
+    } catch (_) {
+      // Sugestões são aditivas; o registro continua rápido sem elas.
     }
   }
 
@@ -672,6 +718,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         _header(brightness),
                         const SizedBox(height: 16),
                         _moneyField(),
+                        if (_suggestions.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          _suggestionRow(brightness),
+                        ],
                         const SizedBox(height: 12),
                         _detailsSection(),
                         const SizedBox(height: 12),
@@ -926,6 +976,52 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       avatar: Icon(icon, size: 17),
       label: Text(label),
       onSelected: (_) => _changePaymentType(type),
+    );
+  }
+
+  Widget _suggestionRow(Brightness brightness) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'atalhos',
+          style: AppTypography.label(
+            context,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: AppColors.secondaryText(brightness),
+          ),
+        ),
+        const SizedBox(height: 7),
+        SizedBox(
+          width: double.infinity,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var i = 0; i < _suggestions.length; i++) ...[
+                  ActionChip(
+                    avatar: const Icon(AppIcons.history, size: 15),
+                    label: Text(_suggestions[i].label),
+                    onPressed: () {
+                      final suggestion = _suggestions[i];
+                      setState(() {
+                        _description.text = suggestion.label;
+                        if (suggestion.categoryId != null &&
+                            _categories.any((item) => item.id == suggestion.categoryId)) {
+                          _categoryId = suggestion.categoryId;
+                        }
+                        _error = null;
+                      });
+                    },
+                  ),
+                  if (i != _suggestions.length - 1) const SizedBox(width: 7),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1202,3 +1298,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     return error.toString().replaceFirst('Exception: ', '');
   }
 }
+
+class _QuickSuggestion {
+  const _QuickSuggestion({required this.label, this.categoryId});
+
+  final String label;
+  final String? categoryId;
+}
+
