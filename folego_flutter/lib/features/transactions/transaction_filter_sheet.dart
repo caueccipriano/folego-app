@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/transaction_filters.dart';
@@ -193,7 +194,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: surface,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(AppRadii.sheet),
           border: Border.all(color: border),
         ),
         child: Column(
