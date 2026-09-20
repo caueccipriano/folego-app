@@ -14,6 +14,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_empty_state.dart';
 
 typedef PlanBudgetLoader =
     Future<List<BudgetOverviewItem>> Function({
@@ -1331,22 +1332,10 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _buildCategoriesEmpty(Brightness brightness) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Text(
-        'nenhuma categoria disponível para planejamento',
-        textAlign: TextAlign.center,
-        style: AppTypography.body(
-          context,
-          fontSize: 12,
-          color: AppColors.secondaryText(brightness),
-        ),
-      ),
+    return const AppEmptyState(
+      icon: AppIcons.categoryUnclassified,
+      title: 'nenhuma categoria disponível para planejamento',
+      description: 'ative ou crie categorias para começar a definir seus limites',
     );
   }
 
