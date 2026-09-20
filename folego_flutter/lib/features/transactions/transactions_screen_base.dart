@@ -1116,6 +1116,63 @@ class _TransactionsTabV3 extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 9),
+          SizedBox(
+            width: double.infinity,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _quickFilterChip(
+                    context,
+                    label: 'todos',
+                    selected: filters.eventTypes.isEmpty,
+                    onTap: () => onFiltersChanged(
+                      filters.copyWith(eventTypes: const <String>{}),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  _quickFilterChip(
+                    context,
+                    label: 'gastos',
+                    selected: _isExpenseQuickFilter,
+                    onTap: () => onFiltersChanged(
+                      filters.copyWith(
+                        eventTypes: const {
+                          'expense',
+                          'card_purchase',
+                          'benefit_expense',
+                          'debt_payment',
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  _quickFilterChip(
+                    context,
+                    label: 'receitas',
+                    selected: _isIncomeQuickFilter,
+                    onTap: () => onFiltersChanged(
+                      filters.copyWith(
+                        eventTypes: const {'income', 'benefit_credit'},
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  _quickFilterChip(
+                    context,
+                    label: 'cartão',
+                    selected: _isCardQuickFilter,
+                    onTap: () => onFiltersChanged(
+                      filters.copyWith(
+                        eventTypes: const {'card_purchase', 'card_payment'},
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           if (chips.isNotEmpty) ...[
             const SizedBox(height: 10),
             SizedBox(
@@ -1210,17 +1267,108 @@ class _TransactionsTabV3 extends StatelessWidget {
               );
             }
             final item = transactions[index];
-            return _TransactionCardV3(
-              item: item,
-              visual: _visualFor(item, context),
-              onOpen: () => onOpen(item),
-              onEdit: item.canEditAsSimple ? () => onEdit(item) : null,
-              onDelete: item.canEditAsSimple ? () => onDelete(item) : null,
+            final group = _transactionGroupLabel(item.occurredAt);
+            final previousGroup = index == 0
+                ? null
+                : _transactionGroupLabel(transactions[index - 1].occurredAt);
+            final showGroup = group != previousGroup;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (showGroup) ...[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      2,
+                      index == 0 ? 2 : 8,
+                      2,
+                      6,
+                    ),
+                    child: Text(
+                      group,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.secondaryText(
+                          Theme.of(context).brightness,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                _TransactionCardV3(
+                  item: item,
+                  visual: _visualFor(item, context),
+                  onOpen: () => onOpen(item),
+                  onEdit: item.canEditAsSimple ? () => onEdit(item) : null,
+                  onDelete: item.canEditAsSimple ? () => onDelete(item) : null,
+                ),
+              ],
             );
           },
         ),
       ),
     );
+  }
+
+  bool get _isExpenseQuickFilter =>
+      filters.eventTypes.length == 4 &&
+      filters.eventTypes.containsAll(const {
+        'expense',
+        'card_purchase',
+        'benefit_expense',
+        'debt_payment',
+      });
+
+  bool get _isIncomeQuickFilter =>
+      filters.eventTypes.length == 2 &&
+      filters.eventTypes.containsAll(const {'income', 'benefit_credit'});
+
+  bool get _isCardQuickFilter =>
+      filters.eventTypes.length == 2 &&
+      filters.eventTypes.containsAll(const {'card_purchase', 'card_payment'});
+
+  Widget _quickFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final brightness = Theme.of(context).brightness;
+    final accent = AppColors.primaryPurple(brightness);
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: accent.withValues(alpha: .12),
+      side: BorderSide(
+        color: selected ? accent.withValues(alpha: .5) : AppColors.border(brightness),
+      ),
+      labelStyle: AppTypography.label(
+        context,
+        fontSize: 10,
+        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        color: selected ? accent : AppColors.secondaryText(brightness),
+      ),
+    );
+  }
+
+  String _transactionGroupLabel(DateTime value) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(value.year, value.month, value.day);
+    final diff = today.difference(date).inDays;
+
+    if (diff == 0) return 'hoje';
+    if (diff == 1) return 'ontem';
+    if (diff > 1 && diff < 7) return 'esta semana';
+
+    const months = [
+      'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+      'jul', 'ago', 'set', 'out', 'nov', 'dez',
+    ];
+    return '${value.day.toString().padLeft(2, '0')} ${months[value.month - 1]}';
   }
 
   List<_ActiveFilterChip> _activeChips() {
