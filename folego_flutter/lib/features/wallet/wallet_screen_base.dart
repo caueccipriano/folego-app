@@ -15,6 +15,7 @@ import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_detail_screen.dart';
 
@@ -196,7 +197,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 _buildHeader(brightness),
                 const SizedBox(height: 18),
                 if (_loading)
-                  const _WalletLoading()
+                  const AppLoadingState(label: 'organizando sua carteira')
                 else if (_error != null)
                   _WalletError(message: _error!, onRetry: _load)
                 else if (_overview != null) ...[
@@ -1367,16 +1368,6 @@ class _WalletSectionLoading extends StatelessWidget {
   }
 }
 
-class _WalletLoading extends StatelessWidget {
-  const _WalletLoading();
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 100),
-      child: Center(child: CircularProgressIndicator()),
-    );
-  }
-}
 
 class _WalletSectionError extends StatelessWidget {
   const _WalletSectionError({required this.message, required this.onRetry});
