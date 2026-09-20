@@ -56,6 +56,7 @@ final class AppPreferenceRepository {
   static const themeKey = 'folego.theme_mode';
   static const languageKey = 'folego.language';
   static const firstRunIntroKey = 'folego.first_run_intro_seen';
+  static const rememberedEmailKey = 'folego.auth.remembered_email';
 
   final AppPreferenceStore _store;
 
@@ -85,6 +86,15 @@ final class AppPreferenceRepository {
 
   Future<void> saveFirstRunIntroSeen(bool value) {
     return _store.setString(firstRunIntroKey, value ? 'true' : 'false');
+  }
+
+  Future<String?> loadRememberedEmail() async {
+    final value = (await _store.getString(rememberedEmailKey))?.trim();
+    return value == null || value.isEmpty ? null : value;
+  }
+
+  Future<void> saveRememberedEmail(String? email) {
+    return _store.setString(rememberedEmailKey, email?.trim() ?? '');
   }
 }
 
@@ -203,6 +213,14 @@ abstract final class AppPreferences {
   static Future<void> markFirstRunIntroSeen() async {
     firstRunIntroSeen.value = true;
     await _repository.saveFirstRunIntroSeen(true);
+  }
+
+  static Future<String?> loadRememberedEmail() {
+    return _repository.loadRememberedEmail();
+  }
+
+  static Future<void> setRememberedEmail(String? email) {
+    return _repository.saveRememberedEmail(email);
   }
 
   static void _applyTheme(ThemeMode mode) {
