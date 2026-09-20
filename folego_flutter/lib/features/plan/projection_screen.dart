@@ -355,8 +355,6 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final projection = _display;
     if (projection == null) return const SizedBox.shrink();
 
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
 
     return LayoutBuilder(
