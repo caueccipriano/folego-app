@@ -315,26 +315,85 @@ class _MetricGrid extends StatelessWidget {
           );
         }
 
-        return Column(
+        const gap = 8.0;
+        final itemWidth = (constraints.maxWidth - gap) / 2;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            Row(
-              children: [
-                Expanded(child: _MetricTile(data: items[0])),
-                const SizedBox(width: 10),
-                Expanded(child: _MetricTile(data: items[1])),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(child: _MetricTile(data: items[2])),
-                const SizedBox(width: 10),
-                Expanded(child: _MetricTile(data: items[3])),
-              ],
-            ),
+            for (final item in items)
+              SizedBox(
+                width: itemWidth,
+                child: _CompactMetricTile(data: item),
+              ),
           ],
         );
       },
+    );
+  }
+}
+
+class _CompactMetricTile extends StatelessWidget {
+  const _CompactMetricTile({required this.data});
+
+  final _MetricData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final muted = AppColors.background(brightness);
+    final border = AppColors.border(brightness);
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    final amount = data.subtract && data.amount > 0
+        ? '-${Formatters.money(data.amount)}'
+        : Formatters.money(data.amount);
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: muted,
+        borderRadius: BorderRadius.circular(AppRadii.control),
+        border: Border.all(color: border.withValues(alpha: .68)),
+      ),
+      child: Row(
+        children: [
+          Icon(data.icon, size: 16, color: secondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 9,
+                    color: secondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    amount,
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 12,
+                      color: primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -545,7 +604,7 @@ class _MonthlyMoneyComposition extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(color: border),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(AppRadii.compactCard),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -645,7 +704,7 @@ class _CompositionSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: border),
       ),
       child: Column(
