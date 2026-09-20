@@ -41,6 +41,16 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate brand icons from canonical SVG
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          rsvg-convert -w 512 -h 512 web/icons/folego-logo.svg -o web/icons/Icon-512.png
+          cp web/icons/Icon-512.png web/icons/Icon-maskable-512.png
+          rsvg-convert -w 192 -h 192 web/icons/folego-logo.svg -o web/icons/Icon-192.png
+          cp web/icons/Icon-192.png web/icons/Icon-maskable-192.png
+          rsvg-convert -w 64 -h 64 web/icons/folego-logo.svg -o web/favicon.png
+
       - name: Analyze
         run: flutter analyze
 
@@ -65,6 +75,10 @@ jobs:
           ! grep -F "__FOLEGO_CACHE_VERSION__" build/web/folego_push_sw.js
           ! grep -F "__FOLEGO_BUILD_VERSION__" build/web/index.html
           grep -F 'href="/folego-app/"' build/web/index.html
+          grep -F 'property="og:image"' build/web/index.html
+          grep -F "${GITHUB_SHA}" build/web/index.html
+          test -f build/web/icons/Icon-512.png
+          test -f build/web/icons/Icon-192.png
           grep -F '"display": "standalone"' build/web/manifest.json
 
       - name: Add SPA fallback
