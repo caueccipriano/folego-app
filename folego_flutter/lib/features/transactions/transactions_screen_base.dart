@@ -718,15 +718,15 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Lançamentos',
+          'lançamentos',
           style: AppTypography.section(context, fontSize: 21),
         ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Transações'),
-            Tab(text: 'Assinaturas'),
-            Tab(text: 'Recorrências'),
+            Tab(text: 'transações'),
+            Tab(text: 'assinaturas'),
+            Tab(text: 'recorrências'),
           ],
         ),
       ),
@@ -1003,7 +1003,7 @@ class _TransactionsTabV3 extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              filtered ? 'nenhum lançamento por aqui' : 'Nenhum lançamento ainda.',
+              filtered ? 'nenhum lançamento por aqui' : 'nenhum lançamento ainda',
               textAlign: TextAlign.center,
               style: AppTypography.body(
                 context,
