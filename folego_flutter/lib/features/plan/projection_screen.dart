@@ -5,12 +5,17 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/projection_model.dart';
 import '../../data/models/recurring_item.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_section_header.dart';
 
 class ProjectionScreen extends StatefulWidget {
   const ProjectionScreen({
@@ -333,9 +338,13 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         child: AppContentContainer.dashboard(
           fillHeight: true,
           child: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const AppLoadingState(label: 'calculando sua projeção')
               : _error != null
-                  ? _ProjectionError(message: _error!, onRetry: _load)
+                  ? AppErrorState(
+                      title: 'não consegui carregar sua projeção',
+                      description: _error,
+                      onRetry: () => _load(),
+                    )
                   : _buildContent(brightness),
         ),
       ),
@@ -379,24 +388,11 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                     baseEndingBalance: _base?.summary.endingBalance,
                   ),
                   const SizedBox(height: 18),
-                  Text(
-                    'saldo projetado',
-                    style: AppTypography.section(
-                      context,
-                      fontSize: 18,
-                      color: primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _simulated == null
+                  AppSectionHeader(
+                    title: 'saldo projetado',
+                    subtitle: _simulated == null
                         ? 'como seu saldo evolui se o cenário atual continuar'
                         : 'antes x depois da mudança simulada',
-                    style: AppTypography.body(
-                      context,
-                      fontSize: 11,
-                      color: secondary,
-                    ),
                   ),
                   const SizedBox(height: 12),
                   _ProjectionChartCard(
@@ -509,7 +505,7 @@ class _ProjectionHeader extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: BorderRadius.circular(99),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
             border: Border.all(color: border),
           ),
           child: Text(
@@ -580,7 +576,7 @@ class _ProjectionPlanModeToggle extends StatelessWidget {
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           border: Border.all(color: border),
         ),
         child: Row(
@@ -667,7 +663,7 @@ class _ProjectionHero extends StatelessWidget {
           accent.withValues(alpha: brightness == Brightness.dark ? .12 : .08),
           AppColors.surface(brightness),
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadii.sheet),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -755,7 +751,7 @@ class _ProjectionHero extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: alert.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
                   border: Border.all(color: alert.withValues(alpha: .25)),
                 ),
                 child: Text(
@@ -841,7 +837,7 @@ class _ProjectionChartCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -1143,7 +1139,7 @@ class _ProjectionViewToggle extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: border),
       ),
       child: Row(
@@ -1369,7 +1365,7 @@ class _CategoryMonthList extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(color: border),
             ),
             child: Row(
@@ -1694,7 +1690,7 @@ class _SimulationComparison extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -1793,78 +1789,20 @@ class _ProjectionEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final border = AppColors.border(brightness);
-    final surface = AppColors.surface(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(AppIcons.chartLine, size: 28),
-          const SizedBox(height: 12),
-          Text(
-            'a projeção precisa conhecer seus compromissos',
-            style: AppTypography.section(context, fontSize: 18),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Cadastre receitas e despesas recorrentes, parcelas ou dívidas. Aí o Fôlego consegue mostrar como os próximos meses provavelmente fecham.',
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: secondary,
-            ),
-          ),
-          const SizedBox(height: 15),
-          OutlinedButton.icon(
-            onPressed: onBack,
-            icon: const Icon(AppIcons.back, size: 17),
-            label: const Text('voltar ao planejamento'),
-          ),
-        ],
+    return AppEmptyState(
+      icon: AppIcons.chartLine,
+      title: 'a projeção precisa conhecer seus compromissos',
+      description:
+          'cadastre receitas e despesas recorrentes, parcelas ou dívidas. aí o Fôlego consegue mostrar como os próximos meses provavelmente fecham',
+      action: OutlinedButton.icon(
+        onPressed: onBack,
+        icon: const Icon(AppIcons.back, size: 17),
+        label: const Text('voltar ao planejamento'),
       ),
     );
   }
 }
 
-class _ProjectionError extends StatelessWidget {
-  const _ProjectionError({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final Future<void> Function({bool quiet}) onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(AppIcons.warning, size: 40),
-            const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 14),
-            FilledButton(
-              onPressed: () => onRetry(),
-              child: const Text('tentar novamente'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 enum _SimulationTemplate {
   free,
@@ -2122,7 +2060,7 @@ class _ProjectionSimulationSheetState
                     height: 4,
                     decoration: BoxDecoration(
                       color: AppColors.border(brightness),
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
                   ),
                 ),
