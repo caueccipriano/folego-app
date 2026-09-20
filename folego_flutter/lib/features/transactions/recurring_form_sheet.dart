@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
@@ -13,6 +13,7 @@ import '../../data/models/recurring_item.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
+import '../../shared/widgets/app_loading_state.dart';
 
 typedef ActiveRecurringCardLoader = Future<List<CreditCardItem>> Function(
   String spaceId,
@@ -205,7 +206,7 @@ _monthlyLastDay = false;
       if (currentCardId != null && !cardsById.containsKey(currentCardId)) {
         cardsById[currentCardId] = _RecurringCardOption(
           id: currentCardId,
-          name: 'Cartão atual',
+          name: 'cartão atual',
           available: false,
         );
       }
@@ -295,14 +296,14 @@ Future<void> _pickMonthlyDay() async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Qual dia?',
+              'qual dia?',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Você pode adicionar mais de um dia.',
+              'você pode adicionar mais de um dia',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -356,9 +357,9 @@ Future<void> _pickMonthlyDay() async {
       initialDate: _startsOn,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
-      helpText: 'Quando começa?',
-      cancelText: 'Cancelar',
-      confirmText: 'Selecionar',
+      helpText: 'quando começa?',
+      cancelText: 'cancelar',
+      confirmText: 'selecionar',
     );
 
     if (selected == null || !mounted) {
@@ -403,9 +404,9 @@ Future<void> _pickMonthlyDay() async {
       initialDate: _endsOn ?? _startsOn.add(const Duration(days: 365)),
       firstDate: _startsOn,
       lastDate: DateTime(2100),
-      helpText: 'Quando termina?',
-      cancelText: 'Cancelar',
-      confirmText: 'Selecionar',
+      helpText: 'quando termina?',
+      cancelText: 'cancelar',
+      confirmText: 'selecionar',
     );
 
     if (selected == null || !mounted) {
@@ -465,7 +466,7 @@ Future<void> _pickMonthlyDay() async {
 
     if (_name.text.trim().isEmpty) {
       setState(() {
-        _error = 'Informe o nome da recorrência.';
+        _error = 'informe o nome da recorrência';
       });
 
       return;
@@ -473,7 +474,7 @@ Future<void> _pickMonthlyDay() async {
 
     if (amount <= 0) {
       setState(() {
-        _error = 'Informe um valor maior que zero.';
+        _error = 'informe um valor maior que zero';
       });
 
       return;
@@ -488,8 +489,8 @@ Future<void> _pickMonthlyDay() async {
     if (invalidDestination) {
       setState(() {
         _error = _isExpense
-            ? 'Selecione uma conta ou cartão.'
-            : 'Selecione uma conta.';
+            ? 'selecione uma conta ou cartão'
+            : 'selecione uma conta';
       });
 
       return;
@@ -498,8 +499,8 @@ Future<void> _pickMonthlyDay() async {
     if (_categoryId == null) {
       setState(() {
         _error = _isExpense
-            ? 'Selecione uma categoria de gasto.'
-            : 'Selecione uma categoria de receita.';
+            ? 'selecione uma categoria de gasto'
+            : 'selecione uma categoria de receita';
       });
 
       return;
@@ -595,31 +596,21 @@ monthlyLastDay:
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final iconBackground = _isExpense
-        ? AppPalette.lime
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    final accent = _isExpense
+        ? AppColors.lime
+        : AppColors.primaryPurple(brightness);
+    final accentForeground = _isExpense
+        ? AppColors.iconOnLime
         : isDark
-        ? const Color(0xFFF3F1EC)
-        : const Color(0xFF111111);
+            ? AppColors.darkPrimaryText
+            : Colors.white;
 
-    final iconForeground = _isExpense
-        ? const Color(0xFF111111)
-        : isDark
-        ? const Color(0xFF111111)
-        : AppPalette.lime;
-
-    final buttonBackground = _isExpense
-        ? AppPalette.lime
-        : isDark
-        ? const Color(0xFFF3F1EC)
-        : const Color(0xFF111111);
-
-    final buttonForeground = _isExpense
-        ? const Color(0xFF111111)
-        : isDark
-        ? const Color(0xFF111111)
-        : AppPalette.lime;
+    final iconBackground = accent;
+    final iconForeground = accentForeground;
+    final buttonBackground = accent;
+    final buttonForeground = accentForeground;
 
     return SafeArea(
       top: false,
@@ -631,10 +622,7 @@ monthlyLastDay:
           bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
         ),
         child: _loading
-            ? const SizedBox(
-                height: 300,
-                child: Center(child: CircularProgressIndicator()),
-              )
+            ? const AppLoadingState(label: 'organizando sua recorrência')
             : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -646,7 +634,7 @@ monthlyLastDay:
                         height: 4,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.outlineVariant,
-                          borderRadius: BorderRadius.circular(99),
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
                         ),
                       ),
                     ),
@@ -660,7 +648,7 @@ monthlyLastDay:
                           height: 52,
                           decoration: BoxDecoration(
                             color: iconBackground,
-                            borderRadius: BorderRadius.circular(17),
+                            borderRadius: BorderRadius.circular(AppRadii.compactCard),
                           ),
                           child: Icon(
                             _isExpense
@@ -707,12 +695,12 @@ monthlyLastDay:
                       segments: const [
                         ButtonSegment(
                           value: 'expense',
-                          label: Text('Gasto'),
+                          label: Text('gasto'),
                           icon: Icon(Icons.receipt_long_rounded),
                         ),
                         ButtonSegment(
                           value: 'income',
-                          label: Text('Receita'),
+                          label: Text('receita'),
                           icon: Icon(Icons.add_rounded),
                         ),
                       ],
@@ -728,8 +716,8 @@ monthlyLastDay:
                       controller: _name,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'Nome',
-                        hintText: _isExpense ? 'Ex.: Aluguel' : 'Ex.: Salário',
+                        labelText: 'nome',
+                        hintText: _isExpense ? 'ex.: aluguel' : 'ex.: salário',
                       ),
                     ),
 
@@ -742,7 +730,7 @@ monthlyLastDay:
                       ),
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
-                        labelText: 'Valor',
+                        labelText: 'valor',
                         prefixText: 'R\$ ',
                       ),
                     ),
@@ -754,12 +742,12 @@ monthlyLastDay:
                         segments: const [
                           ButtonSegment(
                             value: false,
-                            label: Text('Conta'),
+                            label: Text('conta'),
                             icon: Icon(AppIcons.account),
                           ),
                           ButtonSegment(
                             value: true,
-                            label: Text('Cartão'),
+                            label: Text('cartão'),
                             icon: Icon(AppIcons.creditCard),
                           ),
                         ],
@@ -776,7 +764,7 @@ monthlyLastDay:
                         initialValue: _accountId,
                         isExpanded: true,
                         decoration: const InputDecoration(
-                          labelText: 'Conta',
+                          labelText: 'conta',
                           prefixIcon: Icon(AppIcons.account),
                         ),
                         items: _accounts
@@ -804,7 +792,7 @@ monthlyLastDay:
                         initialValue: _cardId,
                         isExpanded: true,
                         decoration: const InputDecoration(
-                          labelText: 'Cartão',
+                          labelText: 'cartão',
                           prefixIcon: Icon(AppIcons.creditCard),
                         ),
                         items: _cards
@@ -837,8 +825,8 @@ monthlyLastDay:
                         _cards.any(
                           (card) => card.id == _cardId && !card.available,
                         )
-                            ? 'Este cartão não aparece mais entre os cartões ativos. O vínculo atual será preservado.'
-                            : 'Cada ocorrência será lançada como uma compra 1x neste cartão.',
+                            ? 'este cartão não aparece mais entre os cartões ativos. o vínculo atual será preservado'
+                            : 'cada ocorrência será lançada como uma compra 1x neste cartão',
                         style: AppTypography.body(
                           context,
                           fontSize: 11,
@@ -855,8 +843,8 @@ monthlyLastDay:
                       initialValue: _categoryId,
                       decoration: InputDecoration(
                         labelText: _isExpense
-                            ? 'Categoria do gasto'
-                            : 'Categoria da receita',
+                            ? 'categoria do gasto'
+                            : 'categoria da receita',
                       ),
                       items: _availableCategories
                           .map(
@@ -878,24 +866,24 @@ monthlyLastDay:
                     DropdownButtonFormField<String>(
                       initialValue: _frequency,
                       decoration: const InputDecoration(
-                        labelText: 'Frequência',
+                        labelText: 'frequência',
                       ),
                       items: const [
                         DropdownMenuItem(
                           value: 'weekly',
-                          child: Text('Toda semana'),
+                          child: Text('toda semana'),
                         ),
                         DropdownMenuItem(
                           value: 'biweekly',
-                          child: Text('A cada 2 semanas'),
+                          child: Text('a cada 2 semanas'),
                         ),
                         DropdownMenuItem(
                           value: 'monthly',
-                          child: Text('Todo mês'),
+                          child: Text('todo mês'),
                         ),
                         DropdownMenuItem(
                           value: 'yearly',
-                          child: Text('Todo ano'),
+                          child: Text('todo ano'),
                         ),
                       ],
                       onChanged: (value) {
@@ -911,7 +899,7 @@ if (_frequency == 'monthly') ...[
   const SizedBox(height: 12),
 
   Text(
-    'Dias do mês',
+    'dias do mês',
     style: Theme.of(context).textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
         ),
@@ -925,7 +913,7 @@ if (_frequency == 'monthly') ...[
     children: [
       ...(_monthlyDays.toList()..sort()).map(
         (day) => InputChip(
-          label: Text('Dia $day'),
+          label: Text('dia $day'),
           onDeleted: () {
             setState(() {
               _monthlyDays.remove(day);
@@ -935,7 +923,7 @@ if (_frequency == 'monthly') ...[
       ),
 
       FilterChip(
-        label: const Text('Último dia'),
+        label: const Text('último dia'),
         selected: _monthlyLastDay,
         onSelected: (selected) {
           setState(() {
@@ -949,7 +937,7 @@ if (_frequency == 'monthly') ...[
           Icons.add_rounded,
           size: 18,
         ),
-        label: const Text('Outro dia'),
+        label: const Text('outro dia'),
         onPressed: _pickMonthlyDay,
       ),
     ],
@@ -959,7 +947,7 @@ if (_frequency == 'monthly') ...[
     const SizedBox(height: 10),
 
     Text(
-      'O valor informado será considerado em cada uma dessas datas.',
+      'o valor informado será considerado em cada uma dessas datas',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context)
                 .colorScheme
@@ -976,31 +964,31 @@ if (_frequency == 'monthly') ...[
                       DropdownButtonFormField<int>(
                         initialValue: _weekday,
                         decoration: const InputDecoration(
-                          labelText: 'Dia da semana',
+                          labelText: 'dia da semana',
                         ),
                         items: const [
-                          DropdownMenuItem(value: 0, child: Text('Domingo')),
+                          DropdownMenuItem(value: 0, child: Text('domingo')),
                           DropdownMenuItem(
                             value: 1,
-                            child: Text('Segunda-feira'),
+                            child: Text('segunda-feira'),
                           ),
                           DropdownMenuItem(
                             value: 2,
-                            child: Text('Terça-feira'),
+                            child: Text('terça-feira'),
                           ),
                           DropdownMenuItem(
                             value: 3,
-                            child: Text('Quarta-feira'),
+                            child: Text('quarta-feira'),
                           ),
                           DropdownMenuItem(
                             value: 4,
-                            child: Text('Quinta-feira'),
+                            child: Text('quinta-feira'),
                           ),
                           DropdownMenuItem(
                             value: 5,
-                            child: Text('Sexta-feira'),
+                            child: Text('sexta-feira'),
                           ),
-                          DropdownMenuItem(value: 6, child: Text('Sábado')),
+                          DropdownMenuItem(value: 6, child: Text('sábado')),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -1022,7 +1010,7 @@ if (_frequency == 'monthly') ...[
                               .colorScheme
                               .surfaceContainerHighest
                               .withValues(alpha: .45),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadii.control),
                         ),
                         child: Row(
                           children: [
@@ -1030,7 +1018,7 @@ if (_frequency == 'monthly') ...[
                             const SizedBox(width: 11),
                             Expanded(
                               child: Text(
-                                'Vai repetir a cada 14 dias a partir de ${_dateLabel(_startsOn)}.',
+                                'vai repetir a cada 14 dias a partir de ${_dateLabel(_startsOn)}',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
@@ -1048,7 +1036,7 @@ if (_frequency == 'monthly') ...[
                             child: DropdownButtonFormField<int>(
                               initialValue: _dayOfMonth,
                               decoration: const InputDecoration(
-                                labelText: 'Dia',
+                                labelText: 'dia',
                               ),
                               items: List.generate(
                                 31,
@@ -1073,53 +1061,53 @@ if (_frequency == 'monthly') ...[
                             child: DropdownButtonFormField<int>(
                               initialValue: _monthOfYear,
                               decoration: const InputDecoration(
-                                labelText: 'Mês',
+                                labelText: 'mês',
                               ),
                               items: const [
                                 DropdownMenuItem(
                                   value: 1,
-                                  child: Text('Janeiro'),
+                                  child: Text('janeiro'),
                                 ),
                                 DropdownMenuItem(
                                   value: 2,
-                                  child: Text('Fevereiro'),
+                                  child: Text('fevereiro'),
                                 ),
                                 DropdownMenuItem(
                                   value: 3,
-                                  child: Text('Março'),
+                                  child: Text('março'),
                                 ),
                                 DropdownMenuItem(
                                   value: 4,
-                                  child: Text('Abril'),
+                                  child: Text('abril'),
                                 ),
-                                DropdownMenuItem(value: 5, child: Text('Maio')),
+                                DropdownMenuItem(value: 5, child: Text('maio')),
                                 DropdownMenuItem(
                                   value: 6,
-                                  child: Text('Junho'),
+                                  child: Text('junho'),
                                 ),
                                 DropdownMenuItem(
                                   value: 7,
-                                  child: Text('Julho'),
+                                  child: Text('julho'),
                                 ),
                                 DropdownMenuItem(
                                   value: 8,
-                                  child: Text('Agosto'),
+                                  child: Text('agosto'),
                                 ),
                                 DropdownMenuItem(
                                   value: 9,
-                                  child: Text('Setembro'),
+                                  child: Text('setembro'),
                                 ),
                                 DropdownMenuItem(
                                   value: 10,
-                                  child: Text('Outubro'),
+                                  child: Text('outubro'),
                                 ),
                                 DropdownMenuItem(
                                   value: 11,
-                                  child: Text('Novembro'),
+                                  child: Text('novembro'),
                                 ),
                                 DropdownMenuItem(
                                   value: 12,
-                                  child: Text('Dezembro'),
+                                  child: Text('dezembro'),
                                 ),
                               ],
                               onChanged: (value) {
@@ -1138,7 +1126,7 @@ if (_frequency == 'monthly') ...[
                     const SizedBox(height: 16),
 
                     _DateTile(
-                      title: 'Começa em',
+                      title: 'começa em',
                       value: _dateLabel(_startsOn),
                       icon: Icons.calendar_today_outlined,
                       onTap: _pickStartDate,
@@ -1147,16 +1135,16 @@ if (_frequency == 'monthly') ...[
                     const SizedBox(height: 10),
 
                     _DateTile(
-                      title: 'Termina em',
+                      title: 'termina em',
                       value: _endsOn == null
-                          ? 'Sem data final'
+                          ? 'sem data final'
                           : _dateLabel(_endsOn!),
                       icon: Icons.event_available_outlined,
                       onTap: _pickEndDate,
                       trailing: _endsOn == null
                           ? null
                           : IconButton(
-                              tooltip: 'Remover data final',
+                              tooltip: 'remover data final',
                               onPressed: () {
                                 setState(() {
                                   _endsOn = null;
@@ -1174,7 +1162,7 @@ if (_frequency == 'monthly') ...[
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.errorContainer
                               .withValues(alpha: isDark ? .25 : .65),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadii.control),
                         ),
                         child: Text(
                           _error!,
@@ -1204,8 +1192,8 @@ if (_frequency == 'monthly') ...[
                             )
                           : Text(
                               _editing
-                                  ? 'Salvar recorrência'
-                                  : 'Criar recorrência',
+                                  ? 'salvar recorrência'
+                                  : 'criar recorrência',
                             ),
                     ),
                   ],
@@ -1263,15 +1251,15 @@ if (_frequency == 'monthly') ...[
     final text = error.toString();
 
     if (text.contains('write_access_denied')) {
-      return 'Você não tem permissão para alterar esse espaço financeiro.';
+      return 'você não tem permissão para alterar esse espaço financeiro';
     }
 
     if (text.contains('amount_must_be_positive')) {
-      return 'O valor precisa ser maior que zero.';
+      return 'o valor precisa ser maior que zero';
     }
 
     if (text.contains('Invalid income category')) {
-      return 'Selecione uma categoria de receita válida.';
+      return 'selecione uma categoria de receita válida';
     }
 
     return text
@@ -1311,15 +1299,15 @@ class _DateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadii.control),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
           decoration: BoxDecoration(
             border: Border.all(color: Theme.of(context).dividerColor),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadii.control),
           ),
           child: Row(
             children: [
