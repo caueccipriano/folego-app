@@ -120,7 +120,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
     final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
     final layout = AppBreakpoints.of(context);
     final columns = switch (layout) {
       AppLayoutSize.compact => 1,
@@ -380,28 +379,6 @@ class _SmallEmpty extends StatelessWidget {
           context,
           color: AppColors.primaryText(brightness),
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 64),
-      child: Column(
-        children: [
-          const Icon(AppIcons.warning, size: 40),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: onRetry, child: const Text('tentar novamente')),
-        ],
       ),
     );
   }
