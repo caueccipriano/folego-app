@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
@@ -177,7 +178,7 @@ class _WalletAddMenu extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadii.feature),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         top: false,
@@ -269,10 +270,10 @@ class _AddTile extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Material(
         color: AppColors.background(brightness).withValues(alpha: .55),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadii.compactCard),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -424,7 +425,7 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
     final protected = walletAccountTypeIsProtected(_type);
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadii.feature),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         top: false,
@@ -694,7 +695,7 @@ class _WalletCardEditorState extends State<WalletCardEditor> {
     final brightness = Theme.of(context).brightness;
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadii.feature),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         top: false,
@@ -850,7 +851,7 @@ class _InfoNote extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .55),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Row(
