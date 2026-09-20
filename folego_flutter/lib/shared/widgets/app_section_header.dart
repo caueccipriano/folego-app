@@ -54,11 +54,9 @@ class AppSectionHeader extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (stackTrailing) ...[
-              titleText(),
-              const SizedBox(height: 8),
-              trailing!,
-            ] else
+            if (stackTrailing)
+              titleText()
+            else
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -72,6 +70,10 @@ class AppSectionHeader extends StatelessWidget {
             if (subtitle?.trim().isNotEmpty == true) ...[
               const SizedBox(height: 4),
               subtitleText(),
+            ],
+            if (stackTrailing) ...[
+              const SizedBox(height: 8),
+              trailing!,
             ],
           ],
         );
