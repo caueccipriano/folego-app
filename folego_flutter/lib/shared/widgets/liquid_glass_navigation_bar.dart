@@ -146,6 +146,12 @@ class _Destination extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.feature),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return activePurple.withValues(alpha: .10);
+            }
+            return null;
+          }),
           child: AnimatedContainer(
             duration: motionDuration,
             curve: Curves.easeOutCubic,
