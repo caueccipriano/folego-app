@@ -37,7 +37,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     if (unavailable || summary == null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: surface,
           borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -60,7 +60,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     return Container(
       key: const ValueKey('home-monthly-money-card'),
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -78,7 +78,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                   children: [
                     Text(
                       'seu mês até agora',
-                      style: AppTypography.section(context, fontSize: 20),
+                      style: AppTypography.section(context, fontSize: 18),
                     ),
                     const SizedBox(height: 5),
                     Text(
@@ -99,7 +99,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           _MonthlyHeadlineGrid(
             items: [
               _MonthlyHeadlineData(
@@ -122,12 +122,12 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           Text(
             'de onde vieram os gastos',
             style: AppTypography.label(context, color: secondary),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _MetricGrid(
             items: [
               _MetricData(
@@ -350,8 +350,8 @@ class _CompactMetricTile extends StatelessWidget {
         : Formatters.money(data.amount);
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      constraints: const BoxConstraints(minHeight: 54),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: muted,
         borderRadius: BorderRadius.circular(AppRadii.control),
