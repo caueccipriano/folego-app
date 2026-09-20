@@ -15,6 +15,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/utils/error_translator.dart';
 import '../../data/models/profile_export.dart';
 import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
@@ -22,6 +23,7 @@ import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
@@ -54,6 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loadingVersion = true;
   bool _exporting = false;
   bool _signingOut = false;
+  bool _accountActionRunning = false;
+  bool _deletingAccount = false;
   String? _identityError;
   String? _versionError;
 
@@ -204,6 +208,275 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _changeEmail() async {
+    if (_accountActionRunning || _deletingAccount) return;
+    final controller = TextEditingController(
+      text: widget.client.auth.currentUser?.email ?? _identity.email,
+    );
+    final email = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          'alterar e-mail',
+          style: AppTypography.section(dialogContext, fontSize: 18),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.emailAddress,
+          autocorrect: false,
+          decoration: const InputDecoration(
+            labelText: 'novo e-mail',
+            hintText: 'voce@exemplo.com',
+          ),
+          onSubmitted: (value) {
+            if (AuthValidation.email(value) == null) {
+              Navigator.of(dialogContext).pop(value.trim());
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (AuthValidation.email(controller.text) == null) {
+                Navigator.of(dialogContext).pop(controller.text.trim());
+              }
+            },
+            child: const Text('continuar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (email == null || !mounted) return;
+
+    setState(() => _accountActionRunning = true);
+    try {
+      await widget.client.auth.updateUser(UserAttributes(email: email));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'pedido enviado para $email · confirme a alteração pelo e-mail',
+          ),
+        ),
+      );
+      await _loadIdentity();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorTranslator.forDisplay(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _accountActionRunning = false);
+    }
+  }
+
+  Future<void> _changePassword() async {
+    if (_accountActionRunning || _deletingAccount) return;
+    final password = TextEditingController();
+    final confirmation = TextEditingController();
+    var obscure = true;
+    var obscureConfirmation = true;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(
+            'alterar senha',
+            style: AppTypography.section(dialogContext, fontSize: 18),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: password,
+                autofocus: true,
+                obscureText: obscure,
+                autocorrect: false,
+                decoration: InputDecoration(
+                  labelText: 'nova senha',
+                  suffixIcon: IconButton(
+                    onPressed: () => setDialogState(() => obscure = !obscure),
+                    icon: Icon(obscure ? AppIcons.eye : AppIcons.eyeOff),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: confirmation,
+                obscureText: obscureConfirmation,
+                autocorrect: false,
+                decoration: InputDecoration(
+                  labelText: 'confirmar nova senha',
+                  suffixIcon: IconButton(
+                    onPressed: () => setDialogState(
+                      () => obscureConfirmation = !obscureConfirmation,
+                    ),
+                    icon: Icon(
+                      obscureConfirmation ? AppIcons.eye : AppIcons.eyeOff,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final passwordError = AuthValidation.password(
+                  password.text,
+                  enforceMinimum: true,
+                );
+                final confirmationError = AuthValidation.passwordConfirmation(
+                  confirmation.text,
+                  password.text,
+                );
+                if (passwordError == null && confirmationError == null) {
+                  Navigator.of(dialogContext).pop(password.text);
+                } else {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        passwordError ??
+                            confirmationError ??
+                            'confira a nova senha',
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Text('salvar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    password.dispose();
+    confirmation.dispose();
+    if (result == null || !mounted) return;
+
+    setState(() => _accountActionRunning = true);
+    try {
+      await widget.client.auth.updateUser(UserAttributes(password: result));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('senha atualizada')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorTranslator.forDisplay(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _accountActionRunning = false);
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    if (_deletingAccount || _accountActionRunning) return;
+    final controller = TextEditingController();
+    var typed = '';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(
+            'apagar sua conta?',
+            style: AppTypography.section(dialogContext, fontSize: 18),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita.',
+                style: AppTypography.body(
+                  dialogContext,
+                  fontSize: 12,
+                  color: AppColors.secondaryText(
+                    Theme.of(dialogContext).brightness,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  labelText: 'digite APAGAR para confirmar',
+                ),
+                onChanged: (value) =>
+                    setDialogState(() => typed = value.trim().toUpperCase()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('cancelar'),
+            ),
+            FilledButton(
+              onPressed: typed == 'APAGAR'
+                  ? () => Navigator.of(dialogContext).pop(true)
+                  : null,
+              child: const Text('apagar conta'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingAccount = true);
+    try {
+      final response = await widget.client.functions.invoke('delete-account');
+      if (response.status < 200 || response.status >= 300) {
+        throw StateError('delete_account_failed');
+      }
+
+      final notificationService = NotificationServiceRegistry.current;
+      if (notificationService != null) {
+        await notificationService.clearForLogout();
+      }
+      await AppPreferences.setRememberedEmail(null);
+      try {
+        await widget.client.auth.signOut();
+      } catch (_) {
+        // O usuário já pode ter sido removido do Auth.
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('conta apagada')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is StateError
+                ? 'não consegui apagar sua conta agora'
+                : ErrorTranslator.forDisplay(error),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _deletingAccount = false);
+    }
+  }
+
   Future<void> _confirmSignOut() async {
     if (_signingOut || _logoutAction.isRunning) return;
     final confirmed = await showDialog<bool>(
@@ -268,6 +541,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _SettingsCard(
               children: [
                 _SettingsRow(
+                  icon: AppIcons.edit,
+                  title: 'alterar e-mail',
+                  subtitle: widget.client.auth.currentUser?.email ??
+                      _identity.email,
+                  enabled: !_accountActionRunning && !_deletingAccount,
+                  onTap: _changeEmail,
+                ),
+                _SettingsRow(
+                  icon: AppIcons.privacy,
+                  title: 'alterar senha',
+                  subtitle: 'troque sua senha de acesso ao Fôlego',
+                  enabled: !_accountActionRunning && !_deletingAccount,
+                  onTap: _changePassword,
+                ),
+                _SettingsRow(
                   icon: AppIcons.categoryUnclassified,
                   title: 'organização',
                   subtitle: 'categorias e marcadores em um só lugar',
@@ -301,7 +589,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'automações',
                   subtitle:
                       'quando algo parecido aparecer, sugerir ou preparar a classificação',
-                  trailingLabel: 'premium em breve',
                   onTap: _openAutomationRules,
                 ),
               ],
@@ -365,6 +652,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     )
                   : null,
               onTap: _confirmSignOut,
+            ),
+            _SettingsRow(
+              icon: AppIcons.delete,
+              title: _deletingAccount ? 'apagando conta…' : 'apagar conta',
+              subtitle: 'remove permanentemente sua conta e seus dados',
+              destructive: true,
+              enabled: !_deletingAccount && !_accountActionRunning,
+              trailing: _deletingAccount
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: _deleteAccount,
             ),
           ],
         ),
