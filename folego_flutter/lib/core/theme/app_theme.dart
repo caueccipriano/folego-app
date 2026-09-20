@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_radii.dart';
 import 'app_typography.dart';
 
 /// ---------------------------------------------------------------------------
@@ -252,7 +253,7 @@ abstract final class AppTheme {
         color: surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadii.card),
           side: BorderSide(color: border),
         ),
       ),
@@ -278,27 +279,27 @@ abstract final class AppTheme {
         ),
 
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: BorderSide(color: border),
         ),
 
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: BorderSide(color: border),
         ),
 
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: BorderSide(color: primaryPurple, width: 1.5),
         ),
 
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: BorderSide(color: scheme.error),
         ),
 
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: BorderSide(color: scheme.error, width: 1.5),
         ),
       ),
@@ -322,7 +323,7 @@ abstract final class AppTheme {
           ),
 
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
           ),
         ),
       ),
@@ -356,7 +357,7 @@ abstract final class AppTheme {
           ),
 
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
           ),
         ),
       ),
@@ -392,7 +393,7 @@ abstract final class AppTheme {
           color: primaryText,
         ),
 
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.pill)),
 
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       ),
@@ -409,7 +410,7 @@ abstract final class AppTheme {
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: secondaryText),
 
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadii.feature),
           side: BorderSide(color: border),
         ),
       ),
@@ -428,7 +429,7 @@ abstract final class AppTheme {
         dragHandleColor: secondaryText.withValues(alpha: .45),
 
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
         ),
       ),
 
@@ -494,7 +495,7 @@ abstract final class AppTheme {
               : Colors.white,
         ),
 
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control)),
       ),
     );
   }
