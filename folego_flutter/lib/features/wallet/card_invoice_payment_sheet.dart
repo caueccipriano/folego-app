@@ -14,6 +14,7 @@ import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_card_payments.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
+import '../../shared/widgets/app_sheet_handle.dart';
 import 'card_invoice_payment_state.dart';
 
 Future<bool?> showCardInvoicePaymentSheet({
@@ -310,16 +311,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!widget.dialogMode) ...[
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: border,
-                        borderRadius: BorderRadius.circular(AppRadii.pill),
-                      ),
-                    ),
-                  ),
+                  const AppSheetHandle(),
                   const SizedBox(height: 18),
                 ],
                 Row(
