@@ -50,7 +50,7 @@ class _AccountHeader extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -65,8 +65,8 @@ class _AccountHeader extends StatelessWidget {
                 label: 'iniciais ${identity.initials}',
                 image: true,
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: purple.withValues(alpha: .14),
@@ -77,13 +77,13 @@ class _AccountHeader extends StatelessWidget {
                     identity.initials,
                     style: AppTypography.section(
                       context,
-                      fontSize: 17,
+                      fontSize: 16,
                       color: purple,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +94,7 @@ class _AccountHeader extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.section(
                         context,
-                        fontSize: 16,
+                        fontSize: 15,
                         color: primary,
                       ),
                     ),
@@ -106,12 +106,12 @@ class _AccountHeader extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
                           context,
-                          fontSize: 12,
+                          fontSize: 11,
                           color: secondary,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 3),
                     Text(
                       'conta pessoal do Fôlego',
                       style: AppTypography.label(
@@ -389,8 +389,8 @@ class _AppearanceOption extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.control),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 56),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(
@@ -400,7 +400,7 @@ class _AppearanceOption extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 18, color: selected ? purple : primary),
+                Icon(icon, size: 17, color: selected ? purple : primary),
                 const SizedBox(height: 5),
                 Text(
                   label,
@@ -412,10 +412,7 @@ class _AppearanceOption extends StatelessWidget {
                     color: selected ? purple : primary,
                   ),
                 ),
-                if (selected) ...[
-                  const SizedBox(height: 2),
-                  Icon(AppIcons.check, size: 12, color: purple),
-                ],
+
               ],
             ),
           ),
