@@ -684,7 +684,7 @@ class _ProjectionHero extends StatelessWidget {
 
     return Container(
       key: const ValueKey('projection-hero'),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Color.alphaBlend(
           accent.withValues(alpha: brightness == Brightness.dark ? .12 : .08),
@@ -723,7 +723,7 @@ class _ProjectionHero extends StatelessWidget {
               Formatters.money(summary.endingBalance),
               style: AppTypography.money(
                 context,
-                fontSize: 36,
+                fontSize: 32,
                 color: summary.endingBalance < 0 ? alert : primary,
               ),
             ),
@@ -742,7 +742,7 @@ class _ProjectionHero extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -768,7 +768,7 @@ class _ProjectionHero extends StatelessWidget {
             ],
           ),
           if (critical != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 9),
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
@@ -860,7 +860,7 @@ class _ProjectionChartCard extends StatelessWidget {
     final alert = AppColors.expenseText(brightness);
 
     return Container(
-      height: 238,
+      height: 220,
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
       decoration: BoxDecoration(
         color: surface,
