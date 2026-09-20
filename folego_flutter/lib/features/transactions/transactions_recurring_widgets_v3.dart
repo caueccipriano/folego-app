@@ -45,7 +45,7 @@ class _RecurringTab extends StatelessWidget {
               Text(
                 'nenhuma recorrência',
                 textAlign: TextAlign.center,
-                style: AppTypography.section(context, fontSize: 18),
+                style: AppTypography.section(context, fontSize: 17),
               ),
               const SizedBox(height: 8),
               Text(
@@ -71,7 +71,7 @@ class _RecurringTab extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(0, 18, 0, 120),
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
           children: [
             Text(
               'suas recorrências',
@@ -82,13 +82,13 @@ class _RecurringTab extends StatelessWidget {
               'edite ou pause o que se repete no seu mês',
               style: AppTypography.body(
                 context,
-                fontSize: 12,
+                fontSize: 11,
                 color: Theme.of(
                   context,
                 ).colorScheme.onSurface.withValues(alpha: .58),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             ...items.map(
               (item) => _RecurringCard(
                 item: item,
@@ -141,8 +141,8 @@ class _RecurringCard extends StatelessWidget {
         : primaryText;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(11, 8, 5, 8),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.fromLTRB(10, 7, 5, 7),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
