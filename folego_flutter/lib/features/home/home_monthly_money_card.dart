@@ -171,6 +171,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
       ),
     );
   }
+}
 
 class _MonthlyHeadlineData {
   const _MonthlyHeadlineData({
