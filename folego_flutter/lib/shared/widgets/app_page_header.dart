@@ -12,11 +12,13 @@ class AppPageHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.leading,
     this.trailing,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? leading;
   final Widget? trailing;
 
   @override
@@ -31,6 +33,10 @@ class AppPageHeader extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            if (leading != null) ...[
+              leading!,
+              const SizedBox(width: 8),
+            ],
             Expanded(
               child: Text(
                 title,
