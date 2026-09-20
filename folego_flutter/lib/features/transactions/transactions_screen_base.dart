@@ -28,6 +28,7 @@ import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../home/quick_register_sheet.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
@@ -411,6 +412,43 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     );
     if (changed == true && mounted) {
       await _refreshTransactions(clearVisible: false);
+    }
+  }
+
+  Future<void> _openQuickRegister(String type) async {
+    final space = _space;
+    if (space == null) return;
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      builder: (_) => QuickRegisterSheet(
+        space: space,
+        repository: widget.repository,
+        initialType: type,
+      ),
+    );
+    if (saved == true && mounted) {
+      await _refresh();
+    }
+  }
+
+  Future<void> _addRecurring() async {
+    final space = _space;
+    if (space == null) return;
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      builder: (_) => RecurringFormSheet(
+        space: space,
+        repository: widget.repository,
+      ),
+    );
+    if (saved == true && mounted) {
+      await _refresh();
     }
   }
 
@@ -893,6 +931,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                               onOpen: _openTransactionDetail,
                               onEdit: _editTransaction,
                               onDelete: _deleteTransaction,
+                              onRegisterExpense: () => _openQuickRegister('expense'),
+                              onRegisterIncome: () => _openQuickRegister('income'),
                             ),
                             SubscriptionsTab(
                               items: subscriptions,
@@ -919,6 +959,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                               onRealize: _realizeRecurring,
                               onToggle: _toggleRecurring,
                               onDelete: _deleteRecurring,
+                              onAdd: _addRecurring,
                             ),
                           ],
                         ),
@@ -1018,6 +1059,8 @@ class _TransactionsTabV3 extends StatelessWidget {
     required this.onOpen,
     required this.onEdit,
     required this.onDelete,
+    required this.onRegisterExpense,
+    required this.onRegisterIncome,
   });
 
   final List<TransactionItem> transactions;
@@ -1041,6 +1084,8 @@ class _TransactionsTabV3 extends StatelessWidget {
   final Future<void> Function(TransactionItem) onOpen;
   final Future<void> Function(TransactionItem) onEdit;
   final Future<void> Function(TransactionItem) onDelete;
+  final VoidCallback onRegisterExpense;
+  final VoidCallback onRegisterIncome;
 
   @override
   Widget build(BuildContext context) {
@@ -1233,7 +1278,25 @@ class _TransactionsTabV3 extends StatelessWidget {
                       icon: const Icon(AppIcons.close, size: 17),
                       label: const Text('limpar busca e filtros'),
                     )
-                  : null,
+                  : Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          key: const ValueKey('transactions-empty-add-expense'),
+                          onPressed: onRegisterExpense,
+                          icon: const Icon(AppIcons.expense, size: 17),
+                          label: const Text('registrar gasto'),
+                        ),
+                        OutlinedButton.icon(
+                          key: const ValueKey('transactions-empty-add-income'),
+                          onPressed: onRegisterIncome,
+                          icon: const Icon(AppIcons.income, size: 17),
+                          label: const Text('registrar receita'),
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
