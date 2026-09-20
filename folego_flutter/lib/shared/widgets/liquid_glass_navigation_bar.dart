@@ -46,9 +46,9 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
       top: false,
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 7),
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       child: SizedBox(
-        height: 72,
+        height: 68,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -57,7 +57,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: Container(
                   width: double.infinity,
-                  height: 72,
+                  height: 68,
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -177,7 +177,7 @@ class _Destination extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 36,
-                  height: 28,
+                  height: 26,
                   child: Center(
                     child: Icon(
                       item.icon,
