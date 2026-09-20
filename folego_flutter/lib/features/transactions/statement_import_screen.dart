@@ -6,6 +6,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
@@ -17,6 +18,8 @@ import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../data/repositories/folego_repository_statement_import.dart';
 import '../../shared/widgets/category_search_field.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 import '../profile/category_management_screen.dart';
 import 'statement_import_parser.dart';
 
@@ -492,22 +495,52 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     final brightness = Theme.of(context).brightness;
     final size = AppBreakpoints.of(context);
     final desktop = size == AppLayoutSize.expanded || size == AppLayoutSize.wide;
+
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(
-        title: const Text('importar extrato'),
-        actions: [if (_step != _ImportStep.result) TextButton(onPressed: _loading ? null : _cancelImport, child: const Text('cancelar'))],
-      ),
-      body: AppContentContainer(
-        maxWidth: desktop ? AppContentWidths.dashboard : AppContentWidths.form,
-        child: _bootstrapping
-            ? const Center(child: CircularProgressIndicator())
-            : Column(children: [
-                _StepHeader(step: _step, fileType: _fileType),
-                if (_error != null) ...[const SizedBox(height: 10), _MessageBox(text: _error!, error: true)],
-                const SizedBox(height: 12),
-                Expanded(child: _body(desktop)),
-              ]),
+      body: SafeArea(
+        child: AppContentContainer(
+          maxWidth: desktop ? AppContentWidths.dashboard : AppContentWidths.form,
+          fillHeight: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: AppPageHeader(
+                  title: 'importar extrato',
+                  subtitle: 'CSV ou OFX com revisão antes de criar lançamentos',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: _loading ? null : _cancelImport,
+                    icon: const Icon(AppIcons.back),
+                  ),
+                  trailing: _step != _ImportStep.result
+                      ? TextButton(
+                          onPressed: _loading ? null : _cancelImport,
+                          child: const Text('cancelar'),
+                        )
+                      : null,
+                ),
+              ),
+              Expanded(
+                child: _bootstrapping
+                    ? const AppLoadingState(label: 'preparando a importação')
+                    : Column(
+                        children: [
+                          _StepHeader(step: _step, fileType: _fileType),
+                          if (_error != null) ...[
+                            const SizedBox(height: 10),
+                            _MessageBox(text: _error!, error: true),
+                          ],
+                          const SizedBox(height: 12),
+                          Expanded(child: _body(desktop)),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -690,7 +723,7 @@ class _ReviewRowCard extends StatelessWidget {
     final duplicate = _duplicateLabel(row.duplicateState);
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.surface(brightness), borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.border(brightness))),
+      decoration: BoxDecoration(color: AppColors.surface(brightness), borderRadius: BorderRadius.circular(AppRadii.compactCard), border: Border.all(color: AppColors.border(brightness))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
           Checkbox(key: ValueKey('statement-import-include-${row.id}'), value: row.selected, onChanged: (value) => onChanged(row.copyWith(decision: value == true ? StatementImportDecision.include : StatementImportDecision.ignore))),
@@ -797,7 +830,7 @@ class _DuplicateBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final exact = state == StatementImportDuplicateState.exactDuplicate || state == StatementImportDuplicateState.alreadyImported;
     final color = exact ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary;
-    return DecoratedBox(decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(999)), child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text(text, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: color))));
+    return DecoratedBox(decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(AppRadii.pill)), child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text(text, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: color))));
   }
 }
 
@@ -807,7 +840,7 @@ class _IntroCard extends StatelessWidget {
   final String title;
   final String text;
   @override
-  Widget build(BuildContext context) { final brightness = Theme.of(context).brightness; return Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: AppColors.surface(brightness), borderRadius: BorderRadius.circular(22), border: Border.all(color: AppColors.border(brightness))), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, size: 24), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: AppTypography.section(context, fontSize: 17)), const SizedBox(height: 4), Text(text, style: AppTypography.body(context, fontSize: 11, color: AppColors.secondaryText(brightness)))]))])); }
+  Widget build(BuildContext context) { final brightness = Theme.of(context).brightness; return Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: AppColors.surface(brightness), borderRadius: BorderRadius.circular(AppRadii.card), border: Border.all(color: AppColors.border(brightness))), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, size: 24), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: AppTypography.section(context, fontSize: 17)), const SizedBox(height: 4), Text(text, style: AppTypography.body(context, fontSize: 11, color: AppColors.secondaryText(brightness)))]))])); }
 }
 
 class _MessageBox extends StatelessWidget {
@@ -815,11 +848,11 @@ class _MessageBox extends StatelessWidget {
   final String text;
   final bool error;
   @override
-  Widget build(BuildContext context) { final brightness = Theme.of(context).brightness; final color = error ? AppColors.expenseText(brightness) : AppColors.secondaryText(brightness); return Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color.withValues(alpha: .08), borderRadius: BorderRadius.circular(14)), child: Text(text, style: TextStyle(color: color))); }
+  Widget build(BuildContext context) { final brightness = Theme.of(context).brightness; final color = error ? AppColors.expenseText(brightness) : AppColors.secondaryText(brightness); return Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color.withValues(alpha: .08), borderRadius: BorderRadius.circular(AppRadii.control)), child: Text(text, style: TextStyle(color: color))); }
 }
 
 class _MetricChip extends StatelessWidget { const _MetricChip({required this.label}); final String label; @override Widget build(BuildContext context) => Chip(label: Text(label)); }
-class _ResultMetric extends StatelessWidget { const _ResultMetric({required this.value, required this.label}); final int value; final String label; @override Widget build(BuildContext context) { final brightness = Theme.of(context).brightness; return Container(width: 150, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.surface(brightness), borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.border(brightness))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('$value', style: AppTypography.money(context, fontSize: 26)), Text(label, style: AppTypography.label(context, fontSize: 9))])); } }
+class _ResultMetric extends StatelessWidget { const _ResultMetric({required this.value, required this.label}); final int value; final String label; @override Widget build(BuildContext context) { final brightness = Theme.of(context).brightness; return Container(width: 150, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.surface(brightness), borderRadius: BorderRadius.circular(AppRadii.compactCard), border: Border.all(color: AppColors.border(brightness))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('$value', style: AppTypography.money(context, fontSize: 26)), Text(label, style: AppTypography.label(context, fontSize: 9))])); } }
 
 List<StatementImportFinalType> _allowedTypes(StatementImportSourceKind kind) => switch (kind) { StatementImportSourceKind.account => const [StatementImportFinalType.expense, StatementImportFinalType.income, StatementImportFinalType.transfer, StatementImportFinalType.cardPayment], StatementImportSourceKind.card => const [StatementImportFinalType.cardPurchase, StatementImportFinalType.cardPayment], StatementImportSourceKind.benefit => const [StatementImportFinalType.benefitExpense, StatementImportFinalType.benefitCredit] };
 String? _categoryKind(StatementImportFinalType? type) => switch (type) { StatementImportFinalType.income || StatementImportFinalType.benefitCredit => 'income', StatementImportFinalType.expense || StatementImportFinalType.cardPurchase || StatementImportFinalType.benefitExpense => 'expense', _ => null };
