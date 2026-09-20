@@ -50,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late ProfileIdentity _identity;
   AppVersionInfo? _versionInfo;
   ThemeMode _themeMode = ThemeMode.system;
-  AppLanguagePreference _language = AppLanguagePreference.system;
   bool _loadingIdentity = true;
   bool _loadingVersion = true;
   bool _exporting = false;
@@ -63,7 +62,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _identity = ProfileIdentity(email: widget.client.auth.currentUser?.email ?? '');
     _themeMode = AppThemeController.mode.value;
-    _language = AppPreferences.languagePreference.value;
     _logoutAction = ProfileLogoutAction(() async {
       final notificationService = NotificationServiceRegistry.current;
       if (notificationService != null) {
@@ -127,22 +125,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('tema aplicado, mas não consegui salvar essa preferência'),
-        ),
-      );
-    }
-  }
-
-  Future<void> _setLanguage(AppLanguagePreference language) async {
-    final normalized = normalizeLanguagePreference(language);
-    if (_language == normalized) return;
-    setState(() => _language = normalized);
-    try {
-      await AppPreferences.setLanguagePreference(normalized);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('idioma aplicado, mas não consegui salvar essa preferência'),
         ),
       );
     }
@@ -299,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _preferencesSection() => _ProfileSection(
         title: 'preferências',
-        subtitle: 'aparência, idioma, notificações e automações',
+        subtitle: 'aparência, notificações e automações',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -324,8 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            _LanguageCard(selected: _language, onSelected: _setLanguage),
+
           ],
         ),
       );
