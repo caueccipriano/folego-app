@@ -72,7 +72,7 @@ class AppSectionHeader extends StatelessWidget {
               subtitleText(),
             ],
             if (stackTrailing) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               trailing!,
             ],
           ],
