@@ -148,7 +148,7 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final debt = _detail?.debt ?? widget.debt;
+    final loadedDebt = _detail?.debt;
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
       body: SafeArea(
@@ -160,10 +160,10 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 12),
                 child: AppPageHeader(
-                  title: debt.name,
-                  subtitle: _detail == null
+                  title: loadedDebt?.name ?? widget.debt.name,
+                  subtitle: loadedDebt == null
                       ? 'detalhes da dívida'
-                      : '${debt.creditor} · ${debtTypeLabel(debt.debtType)}',
+                      : '${loadedDebt.creditor} · ${debtTypeLabel(loadedDebt.debtType)}',
                   leading: IconButton(
                     tooltip: 'voltar',
                     onPressed: () => Navigator.of(context).maybePop(),
@@ -200,8 +200,6 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
 
     final detail = _detail!;
     final debt = detail.debt;
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
     final openInstallments = detail.installments.where((item) => !item.isPaid).toList();
     final paidInstallments = detail.installments.where((item) => item.isPaid).toList();
 
