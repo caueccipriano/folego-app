@@ -443,6 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _QuickAction(
             label: 'gasto',
+            semanticLabel: 'registrar gasto',
             icon: AppIcons.expense,
             background: AppColors.lime,
             foreground: AppColors.iconOnLime,
@@ -453,6 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _QuickAction(
             label: 'receita',
+            semanticLabel: 'registrar receita',
             icon: AppIcons.income,
             background: surface,
             foreground: positive,
@@ -464,6 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _QuickAction(
             label: 'metas',
+            semanticLabel: 'abrir metas',
             icon: AppIcons.goals,
             background: surface,
             foreground: AppColors.primaryPurple(brightness),
@@ -475,6 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _QuickAction(
             label: 'diário',
+            semanticLabel: 'abrir diário',
             icon: AppIcons.journal,
             background: surface,
             foreground: primaryText,
@@ -854,6 +858,7 @@ class _HomeScreenState extends State<HomeScreen> {
 class _QuickAction extends StatelessWidget {
   const _QuickAction({
     required this.label,
+    this.semanticLabel,
     required this.icon,
     required this.background,
     required this.foreground,
@@ -862,6 +867,7 @@ class _QuickAction extends StatelessWidget {
   });
 
   final String label;
+  final String? semanticLabel;
   final IconData icon;
   final Color background;
   final Color foreground;
@@ -872,7 +878,7 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: label,
+      label: semanticLabel ?? label,
       child: Material(
         color: background,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
