@@ -141,8 +141,8 @@ class _RecurringCard extends StatelessWidget {
         : primaryText;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 9),
-      padding: const EdgeInsets.fromLTRB(13, 11, 7, 11),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 9, 6, 9),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -153,8 +153,8 @@ class _RecurringCard extends StatelessWidget {
           CategoryIconBadge(
             icon: visual.icon,
             color: visual.color,
-            size: 42,
-            iconSize: 21,
+            size: 40,
+            iconSize: 20,
             radius: AppRadii.control,
           ),
           const SizedBox(width: 10),
@@ -169,7 +169,7 @@ class _RecurringCard extends StatelessWidget {
                         item.name,
                         style: AppTypography.body(
                           context,
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: primaryText,
                         ),
@@ -196,39 +196,47 @@ class _RecurringCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  [
-                    item.typeLabel,
-                    if (item.categoryName != null) item.categoryName!,
-                    if (item.accountName != null) item.accountName!,
-                  ].join(' • '),
-                  style: AppTypography.body(
-                    context,
-                    fontSize: 11,
-                    color: secondaryText,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: item.active
-                        ? AppPalette.green.withValues(alpha: .13)
-                        : secondaryText.withValues(alpha: .08),
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                  ),
-                  child: Text(
-                    item.active ? 'ativa' : 'pausada',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: item.active ? AppPalette.green : secondaryText,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        [
+                          item.typeLabel,
+                          if (item.categoryName != null) item.categoryName!,
+                          if (item.accountName != null) item.accountName!,
+                        ].join(' • '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 10,
+                          color: secondaryText,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: item.active
+                            ? AppPalette.green.withValues(alpha: .13)
+                            : secondaryText.withValues(alpha: .08),
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
+                      ),
+                      child: Text(
+                        item.active ? 'ativa' : 'pausada',
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: item.active ? AppPalette.green : secondaryText,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
