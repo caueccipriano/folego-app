@@ -976,43 +976,71 @@ class _TransactionsTabV3 extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: searchController,
-                  builder: (context, value, _) {
-                    return TextField(
-                      controller: searchController,
-                      textInputAction: TextInputAction.search,
-                      onChanged: onSearchChanged,
-                      decoration: InputDecoration(
-                        hintText: 'buscar lançamento',
-                        prefixIcon: const Icon(AppIcons.search, size: 19),
-                        suffixIcon: value.text.isEmpty
-                            ? null
-                            : IconButton(
-                                tooltip: 'limpar busca',
-                                onPressed: onClearSearch,
-                                icon: const Icon(AppIcons.close, size: 18),
-                              ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 430;
+              final filterCount = filters.activeFilterCount;
+
+              final filterButton = compact
+                  ? Tooltip(
+                      message: filterCount == 0
+                          ? 'filtros'
+                          : 'filtros · $filterCount',
+                      child: OutlinedButton(
+                        key: const ValueKey('transaction-filter-button'),
+                        onPressed: onOpenFilters,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(50, 54),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: Badge(
+                          isLabelVisible: filterCount > 0,
+                          label: Text('$filterCount'),
+                          child: const Icon(AppIcons.filter, size: 19),
+                        ),
+                      ),
+                    )
+                  : OutlinedButton.icon(
+                      key: const ValueKey('transaction-filter-button'),
+                      onPressed: onOpenFilters,
+                      icon: const Icon(AppIcons.filter, size: 18),
+                      label: Text(
+                        filterCount == 0
+                            ? 'filtros'
+                            : 'filtros · $filterCount',
                       ),
                     );
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                key: const ValueKey('transaction-filter-button'),
-                onPressed: onOpenFilters,
-                icon: const Icon(AppIcons.filter, size: 18),
-                label: Text(
-                  filters.activeFilterCount == 0
-                      ? 'filtros'
-                      : 'filtros · ${filters.activeFilterCount}',
-                ),
-              ),
-            ],
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: searchController,
+                      builder: (context, value, _) {
+                        return TextField(
+                          controller: searchController,
+                          textInputAction: TextInputAction.search,
+                          onChanged: onSearchChanged,
+                          decoration: InputDecoration(
+                            hintText: 'buscar lançamento',
+                            prefixIcon: const Icon(AppIcons.search, size: 19),
+                            suffixIcon: value.text.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'limpar busca',
+                                    onPressed: onClearSearch,
+                                    icon: const Icon(AppIcons.close, size: 18),
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  filterButton,
+                ],
+              );
+            },
           ),
           if (chips.isNotEmpty) ...[
             const SizedBox(height: 10),
