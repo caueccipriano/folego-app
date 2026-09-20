@@ -610,8 +610,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(AppIcons.info, size: 16, color: secondaryText),
         ],
       ),
     );
