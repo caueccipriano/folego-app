@@ -12,6 +12,8 @@ import '../../data/models/onboarding_state.dart';
 import '../../data/models/transaction_filters.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../transactions/transactions_screen.dart';
+import '../transactions/recurring_form_sheet.dart';
+import 'quick_register_sheet.dart';
 import '../wallet/wallet_instrument_management.dart';
 import 'home_expense_navigation_scope.dart';
 import 'home_screen_base.dart' as base;
@@ -94,6 +96,41 @@ class _HomeContentState extends State<_HomeContent> {
     }
   }
 
+
+  Future<void> _addRecurringIncome() async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      builder: (_) => RecurringFormSheet(
+        space: widget.space,
+        repository: widget.repository,
+        initialType: 'income',
+      ),
+    );
+    if (saved == true && mounted) {
+      await _loadSetup();
+    }
+  }
+
+  Future<void> _openQuickRegister(String type) async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      builder: (_) => QuickRegisterSheet(
+        space: widget.space,
+        repository: widget.repository,
+        initialType: type,
+      ),
+    );
+    if (saved == true && mounted) {
+      await _loadSetup();
+    }
+  }
+
   void _openExpenseTransactions(String? categoryId) {
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
@@ -124,6 +161,9 @@ class _HomeContentState extends State<_HomeContent> {
         setup: setup,
         creatingAccount: _creatingAccount,
         onAddAccount: _addAccount,
+        onAddRecurringIncome: _addRecurringIncome,
+        onRegisterIncome: () => _openQuickRegister('income'),
+        onRegisterExpense: () => _openQuickRegister('expense'),
       );
     }
 
@@ -155,11 +195,17 @@ class _FirstUseHome extends StatelessWidget {
     required this.setup,
     required this.creatingAccount,
     required this.onAddAccount,
+    required this.onAddRecurringIncome,
+    required this.onRegisterIncome,
+    required this.onRegisterExpense,
   });
 
   final OnboardingState setup;
   final bool creatingAccount;
   final VoidCallback onAddAccount;
+  final VoidCallback onAddRecurringIncome;
+  final VoidCallback onRegisterIncome;
+  final VoidCallback onRegisterExpense;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +220,7 @@ class _FirstUseHome extends StatelessWidget {
         : 'falta saber quando entra dinheiro';
     final text = needsAccount
         ? 'adicione onde seu dinheiro fica. não precisa cadastrar cartões, dívidas ou orçamento agora.'
-        : 'sua conta já está aqui. cadastre um recebimento recorrente em lançamentos → recorrências para o Fôlego calcular até onde o dinheiro precisa durar.';
+        : 'sua conta já está aqui. cadastre seu salário ou outra receita recorrente agora — ou registre gastos e receitas avulsas sem sair desta tela.';
 
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
@@ -193,16 +239,28 @@ class _FirstUseHome extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: purple.withValues(alpha: .12),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      key: ValueKey(
+                        needsAccount
+                            ? 'first-use-account-icon'
+                            : 'first-use-income-icon',
+                      ),
+                      onTap: needsAccount ? onAddAccount : onAddRecurringIncome,
                       borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Icon(
-                      needsAccount ? AppIcons.wallet : AppIcons.income,
-                      color: purple,
+                      child: Ink(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: purple.withValues(alpha: .12),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(
+                          needsAccount ? AppIcons.wallet : AppIcons.add,
+                          color: purple,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -219,8 +277,8 @@ class _FirstUseHome extends StatelessWidget {
                       color: secondary,
                     ),
                   ),
-                  if (needsAccount) ...[
-                    const SizedBox(height: 18),
+                  const SizedBox(height: 18),
+                  if (needsAccount)
                     Semantics(
                       button: true,
                       label: 'adicionar onde seu dinheiro fica',
@@ -235,6 +293,35 @@ class _FirstUseHome extends StatelessWidget {
                             : const Icon(AppIcons.add),
                         label: const Text('adicionar onde seu dinheiro fica'),
                       ),
+                    )
+                  else ...[
+                    FilledButton.icon(
+                      key: const ValueKey('first-use-add-recurring-income'),
+                      onPressed: onAddRecurringIncome,
+                      icon: const Icon(AppIcons.income),
+                      label: const Text('cadastrar salário ou receita recorrente'),
+                    ),
+                    const SizedBox(height: 9),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: const ValueKey('first-use-register-income'),
+                            onPressed: onRegisterIncome,
+                            icon: const Icon(AppIcons.income, size: 18),
+                            label: const Text('receita'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: const ValueKey('first-use-register-expense'),
+                            onPressed: onRegisterExpense,
+                            icon: const Icon(AppIcons.expense, size: 18),
+                            label: const Text('gasto'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
@@ -261,7 +348,7 @@ class _FirstUseHome extends StatelessWidget {
             const _FirstUseTip(
               icon: AppIcons.wallet,
               title: 'explore no seu ritmo',
-              text: 'as outras áreas continuam disponíveis pela navegação. você não precisa terminar uma configuração obrigatória.',
+              text: 'as outras áreas continuam disponíveis pela navegação. e agora você também pode lançar receita ou gasto direto por aqui.',
             ),
             const SizedBox(height: 18),
             Text(
