@@ -303,13 +303,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _languageSection() => _ProfileSection(
         title: 'idioma',
         subtitle:
-            'português está completo; inglês e espanhol voltam quando a tradução chegar a 100%',
+            'português está completo; outros idiomas entram quando estiverem prontos',
         child: _LanguageCard(selected: _language, onSelected: _setLanguage),
       );
 
   Widget _notificationsSection() => _ProfileSection(
         title: 'notificações e automações',
-        subtitle: 'lembretes essenciais são Free; automações ficam preparadas para o Premium futuro',
+        subtitle: 'lembretes do dia a dia e regras para organizar seus lançamentos',
         child: _SettingsCard(
           children: [
             _SettingsRow(
@@ -400,11 +400,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       const SizedBox(height: 28),
       _appearanceSection(),
       const SizedBox(height: 28),
-      _languageSection(),
-      const SizedBox(height: 28),
       _notificationsSection(),
       const SizedBox(height: 28),
       _privacySection(),
+      const SizedBox(height: 28),
+      _languageSection(),
       const SizedBox(height: 28),
       _aboutSection(),
       const SizedBox(height: 28),
@@ -457,11 +457,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _appearanceSection(),
                           const SizedBox(height: 28),
-                          _languageSection(),
+                          _notificationsSection(),
                           const SizedBox(height: 28),
                           _privacySection(),
                           const SizedBox(height: 28),
-                          _notificationsSection(),
+                          _languageSection(),
                           const SizedBox(height: 28),
                           _aboutSection(),
                         ],
