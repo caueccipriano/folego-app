@@ -120,7 +120,7 @@ class HomeFinancialHero extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'te sobra pra gastar',
+              'você pode gastar',
               style: AppTypography.body(
                 context,
                 fontSize: compact ? 13 : 14,
@@ -188,7 +188,7 @@ class HomeFinancialHero extends StatelessWidget {
                       const SizedBox(width: 7),
                       Expanded(
                         child: Text(
-                          'dinheiro disponível, sem benefícios',
+                          'benefícios ficam fora desta conta',
                           style: AppTypography.label(
                             context,
                             fontSize: 11,
