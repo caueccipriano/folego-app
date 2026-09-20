@@ -17,6 +17,7 @@ import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
 
 typedef PlanBudgetLoader =
     Future<List<BudgetOverviewItem>> Function({
@@ -603,7 +604,7 @@ class _PlanScreenState extends State<PlanScreen> {
       return ColoredBox(
         color: AppColors.background(brightness),
         child: const SafeArea(
-          child: Center(child: CircularProgressIndicator()),
+          child: AppLoadingState(label: 'organizando seu planejamento'),
         ),
       );
     }
