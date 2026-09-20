@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -125,7 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: active
                               ? AppColors.primaryPurple(brightness)
                               : AppColors.border(brightness),
-                          borderRadius: BorderRadius.circular(99),
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
                         ),
                       ),
                     ),
@@ -223,7 +224,7 @@ class _IntroCard extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadii.feature),
             border: Border.all(color: border),
           ),
           child: Column(
@@ -235,7 +236,7 @@ class _IntroCard extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: purple.withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
                 ),
                 child: Icon(step.icon, color: purple, size: 27),
               ),
