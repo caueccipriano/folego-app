@@ -1001,7 +1001,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               children: [
                 for (var i = 0; i < _suggestions.length; i++) ...[
                   ActionChip(
-                    avatar: const Icon(AppIcons.history, size: 15),
+                    avatar: const Icon(AppIcons.transactions, size: 15),
                     label: Text(_suggestions[i].label),
                     onPressed: () {
                       final suggestion = _suggestions[i];
