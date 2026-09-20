@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/notifications/notification_adapter_factory.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/realtime/realtime_invalidation.dart';
@@ -164,38 +165,43 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomeScreen(space: widget.space, repository: widget.repository),
-      TransactionsScreen(
-        repository: widget.repository,
-        space: widget.space,
-      ),
-      PlanScreen(
-        repository: widget.repository,
-        spaceId: widget.space.id,
-        projectionOpenToken: _projectionRequestToken,
-      ),
-      WalletScreen(repository: widget.repository, spaceId: widget.space.id),
-      ProfileScreen(
-        client: Supabase.instance.client,
-        repository: widget.repository,
-        spaceId: widget.space.id,
-      ),
-    ];
+    return ValueListenableBuilder<bool>(
+      valueListenable: FinancialPrivacy.hidden,
+      builder: (context, _, __) {
+        final pages = [
+          HomeScreen(space: widget.space, repository: widget.repository),
+          TransactionsScreen(
+            repository: widget.repository,
+            space: widget.space,
+          ),
+          PlanScreen(
+            repository: widget.repository,
+            spaceId: widget.space.id,
+            projectionOpenToken: _projectionRequestToken,
+          ),
+          WalletScreen(repository: widget.repository, spaceId: widget.space.id),
+          ProfileScreen(
+            client: Supabase.instance.client,
+            repository: widget.repository,
+            spaceId: widget.space.id,
+          ),
+        ];
 
-    return ProjectionNavigationScope(
-      onOpen: _openProjection,
-      child: FlexibleBudgetNavigationScope(
-        onOpen: () => unawaited(_openFlexibleBudget()),
-        child: ResponsiveNavigationShell(
-        selectedIndex: _index,
-        onDestinationSelected: (value) {
-          if (_index == value) return;
-          setState(() => _index = value);
-        },
-        pages: pages,
-        ),
-      ),
+        return ProjectionNavigationScope(
+          onOpen: _openProjection,
+          child: FlexibleBudgetNavigationScope(
+            onOpen: () => unawaited(_openFlexibleBudget()),
+            child: ResponsiveNavigationShell(
+              selectedIndex: _index,
+              onDestinationSelected: (value) {
+                if (_index == value) return;
+                setState(() => _index = value);
+              },
+              pages: pages,
+            ),
+          ),
+        );
+      },
     );
   }
 }
