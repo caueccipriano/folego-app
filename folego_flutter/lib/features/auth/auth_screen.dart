@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
+import '../../core/preferences/app_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -43,10 +45,31 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _resending = false;
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
+  bool _rememberMe = false;
   String? _error;
   String? _pendingEmail;
 
   bool get _isSignUp => _view == _AuthView.signUp;
+
+  String get _authRedirectUrl {
+    final base = Uri.base;
+    return base.replace(query: '', fragment: '').toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedEmail();
+  }
+
+  Future<void> _loadRememberedEmail() async {
+    final email = await AppPreferences.loadRememberedEmail();
+    if (!mounted || email == null) return;
+    setState(() {
+      _emailController.text = email;
+      _rememberMe = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -101,6 +124,10 @@ class _AuthScreenState extends State<AuthScreen> {
             email: email,
             password: _passwordController.text,
           );
+          await AppPreferences.setRememberedEmail(
+            _rememberMe ? email : null,
+          );
+          TextInput.finishAutofillContext(shouldSave: _rememberMe);
           break;
         case _AuthView.signUp:
           final fullName = AuthValidation.fullName(
@@ -111,7 +138,9 @@ class _AuthScreenState extends State<AuthScreen> {
             email: email,
             password: _passwordController.text,
             data: {'full_name': fullName},
+            emailRedirectTo: _authRedirectUrl,
           );
+          TextInput.finishAutofillContext(shouldSave: true);
           if (!mounted) return;
           if (response.session == null) {
             setState(() {
@@ -121,7 +150,10 @@ class _AuthScreenState extends State<AuthScreen> {
           }
           break;
         case _AuthView.recovery:
-          await widget.client.auth.resetPasswordForEmail(email);
+          await widget.client.auth.resetPasswordForEmail(
+            email,
+            redirectTo: _authRedirectUrl,
+          );
           if (!mounted) return;
           setState(() {
             _pendingEmail = email;
@@ -135,7 +167,17 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (error, stackTrace) {
       debugPrint('Auth action failed: $error\n$stackTrace');
       if (!mounted) return;
-      setState(() => _error = ErrorTranslator.forDisplay(error));
+      final emailNotConfirmed = error is AuthException &&
+          error.message.toLowerCase().contains('email not confirmed');
+      if (_view == _AuthView.login && emailNotConfirmed) {
+        setState(() {
+          _pendingEmail = _emailController.text.trim();
+          _view = _AuthView.checkEmail;
+          _error = null;
+        });
+      } else {
+        setState(() => _error = ErrorTranslator.forDisplay(error));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -150,7 +192,11 @@ class _AuthScreenState extends State<AuthScreen> {
       _error = null;
     });
     try {
-      await widget.client.auth.resend(type: OtpType.signup, email: email);
+      await widget.client.auth.resend(
+        type: OtpType.signup,
+        email: email,
+        emailRedirectTo: _authRedirectUrl,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Novo e-mail de confirmação enviado.')),
@@ -340,7 +386,9 @@ class _AuthScreenState extends State<AuthScreen> {
               textInputAction: _view == _AuthView.recovery
                   ? TextInputAction.done
                   : TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
+              autofillHints: _view == _AuthView.login
+                  ? const [AutofillHints.username, AutofillHints.email]
+                  : const [AutofillHints.email],
               validator: AuthValidation.email,
               onFieldSubmitted: (_) {
                 if (_view == _AuthView.recovery) {
@@ -425,13 +473,47 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ],
             if (_view == _AuthView.login) ...[
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _loading
-                      ? null
-                      : () => _changeView(_AuthView.recovery),
-                  child: const Text('Esqueci minha senha'),
+              Row(
+                children: [
+                  Checkbox(
+                    key: const ValueKey('auth-remember-me'),
+                    value: _rememberMe,
+                    onChanged: _loading
+                        ? null
+                        : (value) => setState(() => _rememberMe = value ?? false),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _loading
+                          ? null
+                          : () => setState(() => _rememberMe = !_rememberMe),
+                      child: Text(
+                        'lembrar-me neste dispositivo',
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 12,
+                          color: secondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _loading
+                        ? null
+                        : () => _changeView(_AuthView.recovery),
+                    child: const Text('Esqueci minha senha'),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 6),
+                child: Text(
+                  'o Fôlego guarda seu e-mail; a senha fica com o iPhone ou navegador',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 9,
+                    color: secondary,
+                  ),
                 ),
               ),
             ] else
@@ -490,6 +572,20 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Text(_resending ? 'Reenviando...' : 'Reenviar e-mail'),
         ),
         const SizedBox(height: 8),
+        TextButton(
+          onPressed: _resending
+              ? null
+              : () {
+                  _confirmEmailController.clear();
+                  _passwordController.clear();
+                  _confirmPasswordController.clear();
+                  _changeView(_AuthView.signUp);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _emailFocus.requestFocus();
+                  });
+                },
+          child: const Text('Usei o e-mail errado'),
+        ),
         TextButton(
           onPressed: _resending ? null : () => _backToLogin(),
           child: const Text('Voltar para entrar'),
