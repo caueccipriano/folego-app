@@ -21,6 +21,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_diary.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
+import '../../shared/widgets/app_sheet_handle.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/category_search_picker.dart';
 import 'quick_register_payment_state.dart';
@@ -665,20 +666,22 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const AppSheetHandle(),
+                        const SizedBox(height: 12),
                         _header(brightness),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 16),
                         _moneyField(),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                         _categoryField(brightness),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 14),
                         _paymentSection(brightness),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 14),
                         _detailsSection(),
                         if (_canReflect) ...[
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 14),
                           _reflectionSection(brightness),
                         ],
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 14),
                         _recurrenceSection(brightness),
                         if (_error != null) ...[
                           const SizedBox(height: 14),
@@ -691,7 +694,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         FilledButton(
                           onPressed: _saving ? null : _save,
                           style: FilledButton.styleFrom(
@@ -705,7 +708,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                   height: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
-                              : Text(_isRecurring ? 'salvar recorrência' : 'salvar lançamento'),
+                              : Text(
+                                  _isRecurring
+                                      ? 'salvar recorrência'
+                                      : _isExpense
+                                          ? 'registrar gasto'
+                                          : 'registrar receita',
+                                ),
                         ),
                       ],
                     ),
@@ -734,8 +743,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               const SizedBox(height: 4),
               Text(
                 _isExpense
-                    ? 'registre primeiro. reflita só se fizer sentido.'
-                    : 'registre o que entrou sem complicação.',
+                    ? 'valor, categoria e pagamento. o resto é detalhe.'
+                    : 'valor, categoria e conta. pronto.',
                 style: AppTypography.body(
                   context,
                   fontSize: 11,
@@ -759,7 +768,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       controller: _amount,
       autofocus: true,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: AppTypography.money(context, fontSize: 26),
+      style: AppTypography.money(context, fontSize: 30),
       decoration: const InputDecoration(
         labelText: 'valor',
         prefixText: 'R\$ ',
