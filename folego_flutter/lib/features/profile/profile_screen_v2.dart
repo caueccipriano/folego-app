@@ -19,6 +19,7 @@ import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
+import '../../shared/widgets/app_page_header.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
@@ -391,7 +392,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
-    final primaryText = AppColors.primaryText(brightness);
     final layout = AppBreakpoints.of(context);
     final desktop =
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
@@ -421,13 +421,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(0, 20, 0, 130),
             children: [
-              Text(
-                'perfil',
-                style: AppTypography.display(
-                  context,
-                  fontSize: 28,
-                  color: primaryText,
-                ),
+              const AppPageHeader(
+                title: 'perfil',
+                subtitle: 'sua conta, preferências e privacidade',
               ),
               const SizedBox(height: 18),
               if (!desktop)
