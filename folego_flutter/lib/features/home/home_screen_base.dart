@@ -450,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => _openRegister('expense'),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _QuickAction(
             label: 'receita',
@@ -462,7 +462,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => _openRegister('income'),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _QuickAction(
             label: 'metas',
@@ -474,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: _openGoals,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _QuickAction(
             label: 'diário',
@@ -513,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(AppRadii.card),
@@ -524,11 +524,11 @@ class _HomeScreenState extends State<HomeScreen> {
               CategoryIconBadge(
                 icon: AppIcons.calendar,
                 color: primaryPurple,
-                size: 38,
-                iconSize: 19,
+                size: 36,
+                iconSize: 18,
                 radius: AppRadii.control,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -581,7 +581,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'último movimento',
           subtitle: 'o que aconteceu por último',
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         if (_recentUnavailable)
           _buildCompactEmptyCard(
             message: 'não foi possível carregar o último movimento',
@@ -630,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -639,7 +639,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           Icon(AppIcons.transactions, size: 21, color: secondaryText),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
@@ -753,7 +753,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -896,7 +896,7 @@ class _QuickAction extends StatelessWidget {
             return null;
           }),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 58),
+            constraints: const BoxConstraints(minHeight: 52),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.compactCard),
@@ -907,8 +907,8 @@ class _QuickAction extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: foreground, size: 20),
-                const SizedBox(height: 5),
+                Icon(icon, color: foreground, size: 19),
+                const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
