@@ -1013,7 +1013,7 @@ class _PlanScreenState extends State<PlanScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'abra uma categoria para definir limites nas subcategorias',
+          'toque para ver quanto ainda cabe em cada subcategoria',
           style: AppTypography.body(
             context,
             fontSize: 12,
@@ -1096,7 +1096,9 @@ class _PlanScreenState extends State<PlanScreen> {
                             const SizedBox(height: 3),
                             Text(
                               parent.hasBudget
-                                  ? '${Formatters.money(parent.actualAmount)} de ${Formatters.money(parent.plannedAmount)}'
+                                  ? parent.remainingAmount >= 0
+                                      ? '${Formatters.money(parent.remainingAmount)} ainda disponíveis'
+                                      : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
                                   : parent.hasActivity
                                       ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
                                       : 'sem limites nas subcategorias',
@@ -1105,7 +1107,10 @@ class _PlanScreenState extends State<PlanScreen> {
                               style: AppTypography.label(
                                 context,
                                 fontSize: 10,
-                                color: secondaryText,
+                                color: parent.hasBudget &&
+                                        parent.remainingAmount < 0
+                                    ? AppColors.expenseText(brightness)
+                                    : secondaryText,
                               ),
                             ),
                           ],
