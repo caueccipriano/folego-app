@@ -27,6 +27,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
@@ -785,7 +786,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
             ),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingState(label: 'organizando seus lançamentos')
                   : _error != null
                       ? _ErrorState(
                           message: _error!,
