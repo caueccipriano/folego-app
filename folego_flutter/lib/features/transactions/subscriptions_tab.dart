@@ -54,7 +54,7 @@ class SubscriptionsTab extends StatelessWidget {
                 : 'subscriptions-desktop-layout',
           ),
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(0, 14, 0, 98),
+          padding: const EdgeInsets.fromLTRB(0, 10, 0, 76),
           children: [
             _Header(
               monthlyEquivalent: monthly,
@@ -62,7 +62,7 @@ class SubscriptionsTab extends StatelessWidget {
               canClassify: recurringCandidates.any((item) => item.isExpense),
               onClassify: () => _pickRecurring(context),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             if (items.isEmpty)
               _EmptyState(
                 canClassify: recurringCandidates.any((item) => item.isExpense),
@@ -164,7 +164,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -182,12 +182,12 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   'assinaturas',
-                  style: AppTypography.section(context, fontSize: 18),
+                  style: AppTypography.section(context, fontSize: 17),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   '${Formatters.money(monthlyEquivalent)} / mês',
-                  style: AppTypography.money(context, fontSize: 22),
+                  style: AppTypography.money(context, fontSize: 20),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -224,7 +224,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(22),
