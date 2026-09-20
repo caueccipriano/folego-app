@@ -305,7 +305,8 @@ class _PlanScreenState extends State<PlanScreen> {
             final surface = AppColors.surface(brightness);
             final border = AppColors.border(brightness);
             final primaryText = AppColors.primaryText(brightness);
-                    final accent = AppColors.primaryPurple(brightness);
+            final secondaryText = AppColors.secondaryText(brightness);
+            final accent = AppColors.primaryPurple(brightness);
             final parentName = item.parentName ?? item.categoryName;
             final familyColor = CategoryVisuals.colorFor(
               category: parentName,
