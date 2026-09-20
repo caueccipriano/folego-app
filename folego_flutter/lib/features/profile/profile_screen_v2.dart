@@ -297,78 +297,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
 
-  Widget _appearanceSection() => _ProfileSection(
-        title: 'aparência',
-        subtitle: 'o tema muda na hora e fica salvo neste dispositivo',
-        child: _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
-      );
-
-  Widget _languageSection() => _ProfileSection(
-        title: 'idioma',
-        subtitle: 'idioma usado na interface',
-        child: _LanguageCard(selected: _language, onSelected: _setLanguage),
-      );
-
-  Widget _notificationsSection() => _ProfileSection(
-        title: 'notificações e automações',
-        subtitle: 'lembretes do dia a dia e regras para organizar seus lançamentos',
-        child: _SettingsCard(
+  Widget _preferencesSection() => _ProfileSection(
+        title: 'preferências',
+        subtitle: 'aparência, idioma, notificações e automações',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _SettingsRow(
-              icon: AppIcons.notifications,
-              title: 'notificações',
-              subtitle: 'faturas, dívidas, recorrências, assinaturas e entradas previstas',
-              onTap: _openNotificationSettings,
+            _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
+            const SizedBox(height: 10),
+            _SettingsCard(
+              children: [
+                _SettingsRow(
+                  icon: AppIcons.notifications,
+                  title: 'notificações',
+                  subtitle:
+                      'faturas, dívidas, recorrências, assinaturas e entradas previstas',
+                  onTap: _openNotificationSettings,
+                ),
+                _SettingsRow(
+                  icon: AppIcons.recurring,
+                  title: 'automações',
+                  subtitle:
+                      'quando algo parecido aparecer, sugerir ou preparar a classificação',
+                  trailingLabel: 'premium em breve',
+                  onTap: _openAutomationRules,
+                ),
+              ],
             ),
-            _SettingsRow(
-              icon: AppIcons.recurring,
-              title: 'automações',
-              subtitle: 'quando algo parecido aparecer, sugerir ou preparar a classificação',
-              trailingLabel: 'Premium em breve',
-              onTap: _openAutomationRules,
-            ),
+            const SizedBox(height: 10),
+            _LanguageCard(selected: _language, onSelected: _setLanguage),
           ],
         ),
       );
 
-  Widget _privacySection() => _ProfileSection(
-        title: 'privacidade e dados',
-        subtitle: 'leve uma cópia legível dos dados do seu espaço',
-        child: _SettingsCard(
+  Widget _dataSection() => _ProfileSection(
+        title: 'dados e aplicativo',
+        subtitle: 'exportação e informações desta instalação',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Builder(
-              builder: (exportContext) => _SettingsRow(
-                icon: AppIcons.exportData,
-                title: 'exportar dados',
-                subtitle: 'CSV com lançamentos do espaço financeiro atual',
-                trailing: _exporting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : null,
-                enabled: !_exporting,
-                onTap: () => _exportData(exportContext),
-              ),
+            _SettingsCard(
+              children: [
+                Builder(
+                  builder: (exportContext) => _SettingsRow(
+                    icon: AppIcons.exportData,
+                    title: 'exportar dados',
+                    subtitle: 'CSV com lançamentos do espaço financeiro atual',
+                    trailing: _exporting
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : null,
+                    enabled: !_exporting,
+                    onTap: () => _exportData(exportContext),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _AboutCard(
+              versionInfo: _versionInfo,
+              loading: _loadingVersion,
+              error: _versionError,
+              onRetry: _loadVersion,
             ),
           ],
-        ),
-      );
-
-  Widget _aboutSection() => _ProfileSection(
-        title: 'sobre o Fôlego',
-        subtitle: 'informações desta instalação',
-        child: _AboutCard(
-          versionInfo: _versionInfo,
-          loading: _loadingVersion,
-          error: _versionError,
-          onRetry: _loadVersion,
         ),
       );
 
   Widget _logoutSection() => _ProfileSection(
-        title: 'sair',
-        subtitle: 'encerre somente a sessão deste dispositivo',
+        title: 'sessão',
+        subtitle: 'acesso neste dispositivo',
         child: _SettingsCard(
           children: [
             _SettingsRow(
@@ -398,17 +398,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
     final mobileSections = <Widget>[
       _accountSection(),
-      const SizedBox(height: 20),
-      _appearanceSection(),
-      const SizedBox(height: 20),
-      _notificationsSection(),
-      const SizedBox(height: 20),
-      _privacySection(),
-      const SizedBox(height: 20),
-      _languageSection(),
-      const SizedBox(height: 20),
-      _aboutSection(),
-      const SizedBox(height: 20),
+      const SizedBox(height: 22),
+      _preferencesSection(),
+      const SizedBox(height: 22),
+      _dataSection(),
+      const SizedBox(height: 22),
       _logoutSection(),
     ];
 
@@ -452,15 +446,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _appearanceSection(),
+                          _preferencesSection(),
                           const SizedBox(height: 28),
-                          _notificationsSection(),
-                          const SizedBox(height: 28),
-                          _privacySection(),
-                          const SizedBox(height: 28),
-                          _languageSection(),
-                          const SizedBox(height: 28),
-                          _aboutSection(),
+                          _dataSection(),
                         ],
                       ),
                     ),
