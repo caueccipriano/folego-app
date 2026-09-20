@@ -764,7 +764,7 @@ class _PlanScreenState extends State<PlanScreen> {
         ),
         const SizedBox(height: 5),
         Text(
-          'quanto você quer poder gastar neste mês e como está indo',
+          'seu limite, seus gastos e o que ainda cabe neste mês',
           style: AppTypography.body(
             context,
             fontSize: 13,
@@ -835,6 +835,12 @@ class _PlanScreenState extends State<PlanScreen> {
     final border = AppColors.border(brightness);
     final progressColor = _progressColor(summary.progressState, brightness);
     final percentage = (summary.usageRatio * 100).round();
+    final remainingLabel = summary.remainingAmount >= 0
+        ? 'ainda pode gastar'
+        : 'passou do planejado';
+    final remainingColor = summary.remainingAmount < 0
+        ? AppColors.expenseText(brightness)
+        : primaryText;
 
     return Container(
       key: const ValueKey('plan-summary'),
@@ -856,30 +862,53 @@ class _PlanScreenState extends State<PlanScreen> {
               color: primaryText,
             ),
           ),
+          const SizedBox(height: 14),
+          Text(
+            remainingLabel,
+            style: AppTypography.label(
+              context,
+              fontSize: 11,
+              color: secondaryText,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              Formatters.money(summary.remainingAmount.abs()),
+              style: AppTypography.money(
+                context,
+                fontSize: 32,
+                color: remainingColor,
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Row(
             children: [
-              _Metric(
-                label: 'planejado',
-                value: Formatters.money(summary.plannedAmount),
-                brightness: brightness,
+              Expanded(
+                child: _Metric(
+                  label: 'planejado',
+                  value: Formatters.money(summary.plannedAmount),
+                  brightness: brightness,
+                ),
               ),
-              _Metric(
-                label: 'realizado',
-                value: Formatters.money(summary.actualAmount),
-                brightness: brightness,
+              const SizedBox(width: 10),
+              Expanded(
+                child: _Metric(
+                  label: 'realizado',
+                  value: Formatters.money(summary.actualAmount),
+                  brightness: brightness,
+                ),
               ),
-              _Metric(
-                label: summary.remainingAmount >= 0 ? 'restante' : 'acima',
-                value: Formatters.money(summary.remainingAmount.abs()),
-                brightness: brightness,
-              ),
-              _Metric(
-                label: 'consumido',
-                value: summary.plannedAmount > 0 ? '$percentage%' : '—',
-                brightness: brightness,
+              const SizedBox(width: 10),
+              Expanded(
+                child: _Metric(
+                  label: 'consumido',
+                  value: summary.plannedAmount > 0 ? '$percentage%' : '—',
+                  brightness: brightness,
+                ),
               ),
             ],
           ),
