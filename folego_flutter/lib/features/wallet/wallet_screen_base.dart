@@ -186,19 +186,19 @@ class _WalletScreenState extends State<WalletScreen> {
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 22, 0, 150),
+              padding: const EdgeInsets.fromLTRB(0, 20, 0, 150),
               children: [
                 _buildHeader(brightness),
-                const SizedBox(height: 22),
+                const SizedBox(height: 18),
                 if (_loading)
                   const _WalletLoading()
                 else if (_error != null)
                   _WalletError(message: _error!, onRetry: _load)
                 else if (_overview != null) ...[
                   _buildPositionSummary(),
-                  const SizedBox(height: 24),
-                  _buildSelector(),
                   const SizedBox(height: 20),
+                  _buildSelector(),
+                  const SizedBox(height: 16),
                   _buildSelectedSection(),
                 ],
               ],
