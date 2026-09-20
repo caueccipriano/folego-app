@@ -225,7 +225,7 @@ class _SettingsRow extends StatelessWidget {
       child: Material(
         color: AppColors.surface(brightness),
         child: InkWell(
-          onTap: enabled ? onTap : null,
+          onTap: onTap,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 64),
             child: Padding(
@@ -466,8 +466,6 @@ class _LanguageOption extends StatelessWidget {
     required this.icon,
     required this.selected,
     this.onTap,
-    this.enabled = true,
-    this.badge,
   });
 
   final String label;
@@ -475,8 +473,6 @@ class _LanguageOption extends StatelessWidget {
   final IconData icon;
   final bool selected;
   final VoidCallback? onTap;
-  final bool enabled;
-  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -486,8 +482,7 @@ class _LanguageOption extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
 
     return Semantics(
-      button: enabled && onTap != null,
-      enabled: enabled,
+      button: onTap != null,
       selected: selected,
       label: label,
       child: Material(
@@ -505,7 +500,7 @@ class _LanguageOption extends StatelessWidget {
                   Icon(
                     icon,
                     size: 20,
-                    color: enabled && selected ? purple : secondary,
+                    color: selected ? purple : secondary,
                   ),
                   const SizedBox(width: 11),
                   Expanded(
@@ -518,11 +513,7 @@ class _LanguageOption extends StatelessWidget {
                             context,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: !enabled
-                                ? secondary
-                                : selected
-                                    ? purple
-                                    : primary,
+                            color: selected ? purple : primary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -537,23 +528,7 @@ class _LanguageOption extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (badge != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.border(brightness).withValues(alpha: .35),
-                        borderRadius: BorderRadius.circular(AppRadii.pill),
-                      ),
-                      child: Text(
-                        badge!,
-                        style: AppTypography.label(
-                          context,
-                          fontSize: 9,
-                          color: secondary,
-                        ),
-                      ),
-                    )
-                  else if (selected)
+                  if (selected)
                     Container(
                       width: 28,
                       height: 28,
