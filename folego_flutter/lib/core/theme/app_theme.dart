@@ -374,6 +374,64 @@ abstract final class AppTheme {
       ),
 
       // -----------------------------------------------------------------------
+      // SWITCHES
+      // -----------------------------------------------------------------------
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return secondaryText.withValues(alpha: .45);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return brightness == Brightness.dark
+                ? AppColors.darkPrimaryText
+                : Colors.white;
+          }
+          return secondaryText;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return border.withValues(alpha: .45);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return primaryPurple.withValues(alpha: .42);
+          }
+          return surface;
+        }),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed) ||
+              states.contains(WidgetState.focused)) {
+            return primaryPurple.withValues(alpha: .10);
+          }
+          return null;
+        }),
+      ),
+
+      // -----------------------------------------------------------------------
+      // SEGMENTED BUTTONS
+      // -----------------------------------------------------------------------
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return primaryPurple.withValues(
+                alpha: brightness == Brightness.dark ? .18 : .10,
+              );
+            }
+            return surface;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? primaryPurple
+                : primaryText;
+          }),
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          textStyle: WidgetStatePropertyAll(
+            textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+
+      // -----------------------------------------------------------------------
       // CHIPS
       // -----------------------------------------------------------------------
       chipTheme: ChipThemeData(
