@@ -19,6 +19,7 @@ import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
@@ -244,7 +245,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading && _snapshot == null) {
-      return const SafeArea(child: Center(child: CircularProgressIndicator()));
+      return ColoredBox(
+        color: AppColors.background(Theme.of(context).brightness),
+        child: const SafeArea(
+          child: AppLoadingState(label: 'organizando seu resumo'),
+        ),
+      );
     }
 
     if (_error != null && _snapshot == null) {
