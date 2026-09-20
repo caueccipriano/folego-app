@@ -19,6 +19,7 @@ import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'home_monthly_money_card.dart';
@@ -607,27 +608,9 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppTypography.section(
-            context,
-            fontSize: 20,
-            color: primaryText,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          subtitle,
-          style: AppTypography.body(
-            context,
-            fontSize: 12,
-            color: secondaryText,
-          ),
-        ),
-      ],
+    return AppSectionHeader(
+      title: title,
+      subtitle: subtitle,
     );
   }
 
