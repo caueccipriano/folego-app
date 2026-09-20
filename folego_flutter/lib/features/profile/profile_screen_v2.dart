@@ -379,11 +379,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
     final mobileSections = <Widget>[
       _accountSection(),
-      const SizedBox(height: 22),
+      const SizedBox(height: 18),
       _preferencesSection(),
-      const SizedBox(height: 22),
+      const SizedBox(height: 18),
       _dataSection(),
-      const SizedBox(height: 22),
+      const SizedBox(height: 18),
       _logoutSection(),
     ];
 
@@ -395,13 +395,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           fillHeight: true,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(0, 20, 0, 130),
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 104),
             children: [
               const AppPageHeader(
                 title: 'perfil',
                 subtitle: 'sua conta, preferências e privacidade',
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               if (!desktop)
                 ...mobileSections
               else
