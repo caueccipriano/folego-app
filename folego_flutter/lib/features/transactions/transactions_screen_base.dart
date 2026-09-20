@@ -741,7 +741,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
           children: [
             AppContentContainer.dashboard(
               child: Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                padding: const EdgeInsets.only(top: 16, bottom: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -814,7 +814,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                               ],
                             ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
@@ -1198,9 +1198,9 @@ class _TransactionsTabV3 extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView.separated(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(0, 4, 0, 120),
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 98),
           itemCount: transactions.length + (showFooter ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             if (index >= transactions.length) {
               return _TransactionLoadMoreFooterV3(
@@ -1397,17 +1397,17 @@ class _TransactionCardV3 extends StatelessWidget {
           onTap: onOpen,
           borderRadius: BorderRadius.circular(AppRadii.card),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: Row(
               children: [
                 CategoryIconBadge(
                   icon: visual.icon,
                   color: visual.color,
-                  size: 44,
-                  iconSize: 22,
-                  radius: 14,
+                  size: 40,
+                  iconSize: 20,
+                  radius: AppRadii.control,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1423,7 +1423,7 @@ class _TransactionCardV3 extends StatelessWidget {
                           color: primary,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 3),
                       Text(
                         [
                           categoryLabel,
