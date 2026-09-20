@@ -569,8 +569,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _buildSectionHeader(
           title: 'último movimento',
           subtitle: 'o que aconteceu por último',
-          primaryText: primaryText,
-          secondaryText: secondaryText,
         ),
         const SizedBox(height: 14),
         if (_recentUnavailable)
@@ -605,8 +603,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSectionHeader({
     required String title,
     required String subtitle,
-    required Color primaryText,
-    required Color secondaryText,
   }) {
     return AppSectionHeader(
       title: title,
