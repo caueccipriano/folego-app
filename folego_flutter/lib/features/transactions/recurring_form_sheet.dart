@@ -26,12 +26,17 @@ class RecurringFormSheet extends StatefulWidget {
     required this.repository,
     this.item,
     this.activeCardLoader,
-  });
+    this.initialType = 'expense',
+  }) : assert(
+          initialType == 'expense' || initialType == 'income',
+          'initialType deve ser expense ou income',
+        );
 
   final FinancialSpace space;
   final FolegoRepository repository;
   final RecurringItem? item;
   final ActiveRecurringCardLoader? activeCardLoader;
+  final String initialType;
 
   @override
   State<RecurringFormSheet> createState() => _RecurringFormSheetState();
@@ -130,6 +135,7 @@ _monthlyLastDay = item.monthlyLastDay;
       _startsOn = item.startsOn;
       _endsOn = item.endsOn;
     } else {
+      _type = widget.initialType;
       _dayOfMonth = _startsOn.day;
       _weekday = _postgresWeekday(_startsOn);
       _monthOfYear = _startsOn.month;
