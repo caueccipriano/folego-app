@@ -26,6 +26,10 @@ class AppPageHeader extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    final titleSize = compact ? 26.0 : 28.0;
+    final subtitleSize = compact ? 12.0 : 13.0;
+    final leadingIndent = compact ? 52.0 : 56.0;
 
     Widget titleRow({required bool includeTrailing}) {
       return Row(
@@ -42,7 +46,7 @@ class AppPageHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppTypography.display(
                 context,
-                fontSize: 28,
+                fontSize: titleSize,
                 color: primary,
               ),
             ),
@@ -56,12 +60,12 @@ class AppPageHeader extends StatelessWidget {
     }
 
     Widget subtitleText() => Padding(
-          padding: EdgeInsets.only(left: leading == null ? 0 : 56),
+          padding: EdgeInsets.only(left: leading == null ? 0 : leadingIndent),
           child: Text(
             subtitle!,
             style: AppTypography.body(
               context,
-              fontSize: 13,
+              fontSize: subtitleSize,
               color: secondary,
             ),
           ),
@@ -77,13 +81,13 @@ class AppPageHeader extends StatelessWidget {
           children: [
             titleRow(includeTrailing: !stackTrailing),
             if (subtitle?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 5),
+              const SizedBox(height: 4),
               subtitleText(),
             ],
             if (stackTrailing) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Padding(
-                padding: EdgeInsets.only(left: leading == null ? 0 : 56),
+                padding: EdgeInsets.only(left: leading == null ? 0 : leadingIndent),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: trailing!,
