@@ -5,6 +5,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_space.dart';
@@ -13,6 +14,11 @@ import '../../data/models/upcoming_financial_event.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_agenda.dart';
+import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import '../transactions/recurring_form_sheet.dart';
 import '../wallet/wallet_detail_screen.dart';
 
@@ -171,10 +177,10 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(event.isIncome ? 'Marcar como recebido?' : 'Realizar agora?'),
+        title: Text(event.isIncome ? 'marcar como recebido?' : 'realizar agora?'),
         content: Text(
           '${event.title}\n${Formatters.money(event.amount)}\n\n'
-          'A previsão será transformada no lançamento canônico correspondente.',
+          'a previsão será transformada no lançamento correspondente',
         ),
         actions: [
           TextButton(
@@ -217,47 +223,41 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
     final brightness = Theme.of(context).brightness;
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(
-        title: Text(
-          'agenda',
-          style: AppTypography.display(
-            context,
-            fontSize: 24,
-            color: AppColors.primaryText(brightness),
+      body: SafeArea(
+        child: AppContentContainer.list(
+          fillHeight: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: AppPageHeader(
+                  title: 'agenda',
+                  subtitle: 'próximos compromissos e entradas do seu dinheiro',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(AppIcons.back),
+                  ),
+                ),
+              ),
+              Expanded(child: _buildBody(brightness)),
+            ],
           ),
         ),
-        centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      body: AppContentContainer.list(
-        fillHeight: true,
-        child: _buildBody(brightness),
       ),
     );
   }
 
   Widget _buildBody(Brightness brightness) {
     if (_loading && _events.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState(label: 'organizando sua agenda');
     }
     if (_error != null && _events.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(AppIcons.warning, size: 42),
-            const SizedBox(height: 12),
-            Text(
-              'não consegui carregar sua agenda',
-              style: AppTypography.section(context, fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: _load, child: const Text('tentar novamente')),
-          ],
-        ),
+      return AppErrorState(
+        title: 'não consegui carregar sua agenda',
+        description: _error,
+        onRetry: _load,
       );
     }
 
@@ -276,22 +276,9 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
         children: [
           _AgendaHero(summary: summary),
           const SizedBox(height: 22),
-          Text(
-            'o que vem pela frente',
-            style: AppTypography.section(
-              context,
-              fontSize: 20,
-              color: AppColors.primaryText(brightness),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'obrigações e entradas reais, sem contar a mesma saída duas vezes',
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: AppColors.secondaryText(brightness),
-            ),
+          const AppSectionHeader(
+            title: 'o que vem pela frente',
+            subtitle: 'obrigações e entradas reais, sem contar a mesma saída duas vezes',
           ),
           const SizedBox(height: 14),
           SingleChildScrollView(
@@ -357,7 +344,7 @@ class _AgendaHero extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: purple,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +405,7 @@ class _AgendaHeroMetric extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: .12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -525,12 +512,12 @@ class _AgendaEventCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.surface(brightness),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(color: AppColors.border(brightness)),
           ),
           child: Row(
@@ -540,7 +527,7 @@ class _AgendaEventCard extends StatelessWidget {
                 height: 42,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
                 ),
                 child: Icon(icon, size: 20, color: accent),
               ),
@@ -658,7 +645,7 @@ class _AgendaEmpty extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
