@@ -43,7 +43,7 @@ class _RecurringTab extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Nenhuma recorrência',
+                'nenhuma recorrência',
                 textAlign: TextAlign.center,
                 style: AppTypography.section(context, fontSize: 18),
               ),
@@ -74,12 +74,12 @@ class _RecurringTab extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(0, 18, 0, 120),
           children: [
             Text(
-              'Suas recorrências',
+              'suas recorrências',
               style: AppTypography.section(context, fontSize: 18),
             ),
             const SizedBox(height: 5),
             Text(
-              'Edite ou pause o que se repete no seu mês.',
+              'edite ou pause o que se repete no seu mês',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -221,7 +221,7 @@ class _RecurringCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
-                    item.active ? 'Ativa' : 'Pausada',
+                    item.active ? 'ativa' : 'pausada',
                     style: AppTypography.label(
                       context,
                       fontSize: 10,
@@ -322,13 +322,13 @@ class _RecurringCard extends StatelessWidget {
       if (item.active)
         _SheetAction(
           value: 'realize',
-          label: item.isIncome ? 'Marcar como recebido' : 'Marcar como pago',
+          label: item.isIncome ? 'marcar como recebido' : 'marcar como pago',
         ),
-      const _SheetAction(value: 'edit', label: 'Editar recorrência'),
-      _SheetAction(value: 'toggle', label: item.active ? 'Pausar' : 'Reativar'),
+      const _SheetAction(value: 'edit', label: 'editar recorrência'),
+      _SheetAction(value: 'toggle', label: item.active ? 'pausar' : 'reativar'),
       const _SheetAction(
         value: 'delete',
-        label: 'Excluir recorrência',
+        label: 'excluir recorrência',
         destructive: true,
       ),
     ];
