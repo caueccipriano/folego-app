@@ -18,6 +18,7 @@ import '../../data/models/transaction_item.dart';
 import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/app_error_state.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'home_monthly_money_card.dart';
@@ -394,18 +395,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(AppIcons.warning, size: 42),
-              const SizedBox(height: 12),
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 18),
-              FilledButton(
-                onPressed: _load,
-                child: const Text('tentar novamente'),
-              ),
-            ],
+          child: AppErrorState(
+            title: 'não consegui carregar seu resumo financeiro',
+            description: _error,
+            onRetry: _load,
           ),
         ),
       ),
