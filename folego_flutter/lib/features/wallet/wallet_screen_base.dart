@@ -13,6 +13,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_detail_screen.dart';
 
@@ -1440,53 +1441,16 @@ class _WalletSectionError extends StatelessWidget {
 
 class _WalletError extends StatelessWidget {
   const _WalletError({required this.message, required this.onRetry});
+
   final String message;
   final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final expense = AppColors.expenseText(brightness);
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        children: [
-          Icon(AppIcons.warning, size: 24, color: expense),
-          const SizedBox(height: 12),
-          Text(
-            'não consegui carregar sua carteira',
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryText(brightness),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            message,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 10,
-              color: AppColors.secondaryText(brightness),
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () => onRetry(),
-            child: const Text('tentar novamente'),
-          ),
-        ],
-      ),
+    return AppErrorState(
+      title: 'não consegui carregar sua carteira',
+      description: message,
+      onRetry: onRetry,
     );
   }
 }
