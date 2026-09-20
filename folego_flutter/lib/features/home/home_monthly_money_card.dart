@@ -37,7 +37,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     if (unavailable || summary == null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: surface,
           borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -99,7 +99,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           _MonthlyHeadlineGrid(
             items: [
               _MonthlyHeadlineData(
@@ -122,7 +122,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
             'de onde vieram os gastos',
             style: AppTypography.label(context, color: secondary),
@@ -153,7 +153,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
@@ -241,7 +241,7 @@ class _MonthlyHeadlineTile extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: muted,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
@@ -260,7 +260,7 @@ class _MonthlyHeadlineTile extends StatelessWidget {
               color: secondary,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -269,7 +269,7 @@ class _MonthlyHeadlineTile extends StatelessWidget {
               key: data.valueKey,
               style: AppTypography.money(
                 context,
-                fontSize: 18,
+                fontSize: 17,
                 color: data.valueColor,
               ),
             ),
