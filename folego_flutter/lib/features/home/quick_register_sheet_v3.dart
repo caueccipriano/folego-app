@@ -889,72 +889,17 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                 () => _expensePayment = _expensePayment.withAccountId(value),
               ),
             ),
-          QuickExpensePaymentType.creditCard => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DropdownButtonFormField<String>(
-                  initialValue: _creditCards.any((e) => e.id == _expensePayment.cardId)
-                      ? _expensePayment.cardId
-                      : null,
-                  decoration: const InputDecoration(labelText: 'cartão'),
-                  items: _creditCards
-                      .map((item) => DropdownMenuItem(value: item.id, child: Text(item.name)))
-                      .toList(),
-                  onChanged: (value) => setState(
-                    () => _expensePayment = _expensePayment.withCardId(value),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                if (_isRecurring)
-                  Text(
-                    'cada ocorrência será lançada como uma compra 1x no cartão.',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 9,
-                      color: AppColors.secondaryText(brightness),
-                    ),
-                  )
-                else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'parcelas',
-                          style: AppTypography.body(context, fontSize: 11),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _expensePayment.installmentsCount <= 1
-                            ? null
-                            : () => setState(() {
-                                _expensePayment = _expensePayment.withInstallmentsCount(
-                                  _expensePayment.installmentsCount - 1,
-                                );
-                              }),
-                        icon: const Icon(AppIcons.delete, size: 17),
-                      ),
-                      Text('${_expensePayment.installmentsCount}x'),
-                      IconButton(
-                        onPressed: _expensePayment.installmentsCount >= cardPurchaseMaxInstallments
-                            ? null
-                            : () => setState(() {
-                                _expensePayment = _expensePayment.withInstallmentsCount(
-                                  _expensePayment.installmentsCount + 1,
-                                );
-                              }),
-                        icon: const Icon(AppIcons.add, size: 18),
-                      ),
-                    ],
-                  ),
-                  TextField(
-                    controller: _merchant,
-                    decoration: const InputDecoration(
-                      labelText: 'estabelecimento',
-                      hintText: 'opcional',
-                    ),
-                  ),
-                ],
-              ],
+          QuickExpensePaymentType.creditCard => DropdownButtonFormField<String>(
+              initialValue: _creditCards.any((e) => e.id == _expensePayment.cardId)
+                  ? _expensePayment.cardId
+                  : null,
+              decoration: const InputDecoration(labelText: 'cartão'),
+              items: _creditCards
+                  .map((item) => DropdownMenuItem(value: item.id, child: Text(item.name)))
+                  .toList(),
+              onChanged: (value) => setState(
+                () => _expensePayment = _expensePayment.withCardId(value),
+              ),
             ),
           QuickExpensePaymentType.benefit => DropdownButtonFormField<String>(
               initialValue: _benefitAccounts.any(
@@ -1024,8 +969,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           OutlinedButton.icon(
             onPressed: _pickDate,
             icon: const Icon(AppIcons.calendar, size: 18),
-            label: Text('data · \${_formatDate(_date)}'),
+            label: Text('data · ${_formatDate(_date)}'),
           ),
+          if (_isExpense &&
+              _expensePayment.type == QuickExpensePaymentType.creditCard) ...[
+            const SizedBox(height: 14),
+            _cardAdvancedDetails(brightness),
+          ],
           if (_canReflect) ...[
             const SizedBox(height: 14),
             _reflectionSection(brightness),
@@ -1034,6 +984,64 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           _recurrenceSection(brightness),
         ],
       ),
+    );
+  }
+
+  Widget _cardAdvancedDetails(Brightness brightness) {
+    if (_isRecurring) {
+      return Text(
+        'cada ocorrência será lançada como uma compra 1x no cartão.',
+        style: AppTypography.label(
+          context,
+          fontSize: 9,
+          color: AppColors.secondaryText(brightness),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'parcelas',
+                style: AppTypography.body(context, fontSize: 11),
+              ),
+            ),
+            IconButton(
+              onPressed: _expensePayment.installmentsCount <= 1
+                  ? null
+                  : () => setState(() {
+                      _expensePayment = _expensePayment.withInstallmentsCount(
+                        _expensePayment.installmentsCount - 1,
+                      );
+                    }),
+              icon: const Icon(Icons.remove_rounded, size: 18),
+            ),
+            Text('${_expensePayment.installmentsCount}x'),
+            IconButton(
+              onPressed:
+                  _expensePayment.installmentsCount >= cardPurchaseMaxInstallments
+                      ? null
+                      : () => setState(() {
+                          _expensePayment = _expensePayment.withInstallmentsCount(
+                            _expensePayment.installmentsCount + 1,
+                          );
+                        }),
+              icon: const Icon(AppIcons.add, size: 18),
+            ),
+          ],
+        ),
+        TextField(
+          controller: _merchant,
+          decoration: const InputDecoration(
+            labelText: 'estabelecimento',
+            hintText: 'opcional',
+          ),
+        ),
+      ],
     );
   }
 
