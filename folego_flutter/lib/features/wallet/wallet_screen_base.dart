@@ -312,7 +312,8 @@ class _WalletScreenState extends State<WalletScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: _WalletSectionChip(
-              label: '${section.$1} ${section.$3}',
+              label: section.$1,
+              count: section.$3,
               icon: section.$2,
               selected: _section == index,
               onTap: () => _selectSection(index),
@@ -1359,11 +1360,12 @@ class _WalletEmpty extends StatelessWidget {
 
 class _WalletSectionLoading extends StatelessWidget {
   const _WalletSectionLoading();
+
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 120,
-      child: Center(child: CircularProgressIndicator()),
+    return const AppLoadingState(
+      label: 'organizando suas parcelas',
+      compact: true,
     );
   }
 }
@@ -1436,11 +1438,13 @@ class _WalletError extends StatelessWidget {
 class _WalletSectionChip extends StatelessWidget {
   const _WalletSectionChip({
     required this.label,
+    required this.count,
     required this.icon,
     required this.selected,
     required this.onTap,
   });
   final String label;
+  final int count;
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
@@ -1453,13 +1457,21 @@ class _WalletSectionChip extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 160);
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: '$label, $count',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.pill),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: motionDuration,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: selected ? purple.withValues(alpha: .13) : surface,
@@ -1480,6 +1492,27 @@ class _WalletSectionChip extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: selected ? primary : secondary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? purple.withValues(alpha: .16)
+                      : border.withValues(alpha: .55),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                ),
+                child: Text(
+                  '$count',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? purple : secondary,
+                  ),
                 ),
               ),
             ],
