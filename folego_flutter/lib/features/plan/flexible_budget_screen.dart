@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/ui/app_snackbars.dart';
@@ -11,6 +12,10 @@ import '../../data/models/budget_overview_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 
 class FlexibleBudgetScreen extends StatefulWidget {
   const FlexibleBudgetScreen({
@@ -310,7 +315,6 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
     final brightness = Theme.of(context).brightness;
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(title: const Text('orçamento flexível')),
       body: SafeArea(
         child: AppContentContainer.dashboard(
           fillHeight: true,
@@ -318,17 +322,28 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 100),
+              padding: const EdgeInsets.fromLTRB(0, 20, 0, 100),
               children: [
+                AppPageHeader(
+                  title: 'orçamento flexível',
+                  subtitle: 'controle do que pode variar sem apertar o mês',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(AppIcons.back),
+                  ),
+                ),
+                const SizedBox(height: 18),
                 _monthPicker(brightness),
                 const SizedBox(height: 18),
                 if (_loading && _overview == null)
-                  const Padding(
-                    padding: EdgeInsets.all(48),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
+                  const AppLoadingState(label: 'organizando seu orçamento flexível')
                 else if (_error != null && _overview == null)
-                  _errorCard(brightness)
+                  AppErrorState(
+                    title: 'não consegui carregar seu orçamento flexível',
+                    description: _error,
+                    onRetry: _load,
+                  )
                 else ...[
                   _globalCard(brightness),
                   const SizedBox(height: 22),
@@ -397,7 +412,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -452,7 +467,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
           if (overview.configured) ...[
             const SizedBox(height: 16),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppRadii.pill),
               child: LinearProgressIndicator(
                 value: ratio,
                 minHeight: 7,
@@ -490,14 +505,10 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'limites por categoria',
-          style: AppTypography.section(context, fontSize: 19),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'eles ajudam a distribuir seu dinheiro. um gasto flexível continua contando no teto global mesmo quando a categoria está sem limite.',
-          style: AppTypography.body(context, fontSize: 12, color: secondary),
+        const AppSectionHeader(
+          title: 'limites por categoria',
+          subtitle:
+              'eles ajudam a distribuir seu dinheiro. um gasto flexível continua contando no teto global mesmo quando a categoria está sem limite',
         ),
         if (_activeWithoutLimit > 0) ...[
           const SizedBox(height: 12),
@@ -505,7 +516,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               color: AppColors.warningText(brightness).withValues(alpha: .08),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: Text(
               '$_activeWithoutLimit ${_activeWithoutLimit == 1 ? 'categoria com gasto está' : 'categorias com gastos estão'} sem limite definido.',
@@ -544,15 +555,15 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       padding: const EdgeInsets.only(bottom: 9),
       child: Material(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         child: InkWell(
           key: ValueKey('flex-budget-category-${item.categoryId}'),
           onTap: _isPastMonth || _saving ? null : () => _editCategoryLimit(item),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadii.compactCard),
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(AppRadii.compactCard),
               border: Border.all(color: border),
             ),
             child: Row(
@@ -611,25 +622,6 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
     );
   }
 
-  Widget _errorCard(Brightness brightness) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        children: [
-          const Icon(AppIcons.warning, size: 30),
-          const SizedBox(height: 8),
-          Text(_error ?? 'não consegui carregar o orçamento flexível'),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: _load, child: const Text('tentar novamente')),
-        ],
-      ),
-    );
-  }
 
   Color _progressColor(BudgetProgressState state, Brightness brightness) {
     return switch (state) {
@@ -659,7 +651,7 @@ class _MiniMetric extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .45),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
