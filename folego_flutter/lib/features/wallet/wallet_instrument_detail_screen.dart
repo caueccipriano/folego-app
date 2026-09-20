@@ -4,6 +4,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/wallet_detail.dart';
@@ -12,6 +13,10 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../data/repositories/folego_repository_wallet_management.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_instrument_management.dart';
 
@@ -196,7 +201,7 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
           ),
           const SizedBox(height: 12),
           if (_loading)
-            const Center(child: CircularProgressIndicator())
+            const AppLoadingState(label: 'organizando este instrumento')
           else if (_error != null)
             _ErrorCard(message: _error!, onRetry: _load)
           else if (_movements.isEmpty)
@@ -451,7 +456,7 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
           const _SectionTitle('compras da fatura', 'itens vinculados à fatura atual'),
           const SizedBox(height: 12),
           if (_loading)
-            const Center(child: CircularProgressIndicator())
+            const AppLoadingState(label: 'organizando este instrumento')
           else if (_error != null)
             _ErrorCard(message: _error!, onRetry: _load)
           else if (_purchases.isEmpty)
@@ -491,46 +496,47 @@ class _InstrumentDetailScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final accent = AppColors.primaryPurple(brightness);
+
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
       body: SafeArea(
         child: AppContentContainer.dashboard(
           fillHeight: true,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(0, 14, 0, 48),
+            padding: const EdgeInsets.fromLTRB(0, 20, 0, 48),
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    tooltip: 'voltar',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(AppIcons.back),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(icon, color: AppColors.primaryPurple(brightness), size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.section(context, fontSize: 21)),
-                        Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.body(context, fontSize: 10, color: AppColors.secondaryText(brightness))),
-                      ],
+              AppPageHeader(
+                title: title,
+                subtitle: subtitle,
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'voltar',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(AppIcons.back),
                     ),
-                  ),
-                  IconButton(
-                    key: const ValueKey('wallet-detail-edit'),
-                    tooltip: 'editar',
-                    onPressed: onEdit,
-                    icon: const Icon(AppIcons.edit),
-                  ),
-                  IconButton(
-                    key: const ValueKey('wallet-detail-archive'),
-                    tooltip: 'arquivar',
-                    onPressed: onArchive,
-                    icon: const Icon(AppIcons.eyeOff),
-                  ),
-                ],
+                    Icon(icon, color: accent, size: 22),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      key: const ValueKey('wallet-detail-edit'),
+                      tooltip: 'editar',
+                      onPressed: onEdit,
+                      icon: const Icon(AppIcons.edit),
+                    ),
+                    IconButton(
+                      key: const ValueKey('wallet-detail-archive'),
+                      tooltip: 'arquivar',
+                      onPressed: onArchive,
+                      icon: const Icon(AppIcons.eyeOff),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 22),
               child,
@@ -587,7 +593,7 @@ class _DetailPanel extends StatelessWidget {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(
           color: emphasis
               ? AppColors.primaryPurple(brightness).withValues(alpha: .25)
@@ -611,20 +617,13 @@ class _DetailPanel extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title, this.subtitle);
+
   final String title;
   final String subtitle;
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTypography.section(context, fontSize: 17)),
-        const SizedBox(height: 3),
-        Text(subtitle, style: AppTypography.body(context, fontSize: 10, color: AppColors.secondaryText(brightness))),
-      ],
-    );
+    return AppSectionHeader(title: title, subtitle: subtitle);
   }
 }
 
@@ -704,7 +703,7 @@ class _RowSurface extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Row(
@@ -740,7 +739,7 @@ class _EmptyCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Text(text, style: AppTypography.body(context, fontSize: 11, color: AppColors.secondaryText(brightness))),
@@ -750,18 +749,16 @@ class _EmptyCard extends StatelessWidget {
 
 class _ErrorCard extends StatelessWidget {
   const _ErrorCard({required this.message, required this.onRetry});
+
   final String message;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(message),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(onPressed: onRetry, icon: const Icon(AppIcons.refresh), label: const Text('tentar de novo')),
-      ],
+    return AppErrorState(
+      title: 'não consegui carregar estes detalhes',
+      description: message,
+      onRetry: () async => onRetry(),
     );
   }
 }
