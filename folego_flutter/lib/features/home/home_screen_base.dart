@@ -513,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(AppRadii.card),
@@ -524,8 +524,8 @@ class _HomeScreenState extends State<HomeScreen> {
               CategoryIconBadge(
                 icon: AppIcons.calendar,
                 color: primaryPurple,
-                size: 42,
-                iconSize: 20,
+                size: 38,
+                iconSize: 19,
                 radius: AppRadii.control,
               ),
               const SizedBox(width: 10),
@@ -537,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'próximo movimento',
                       style: AppTypography.body(
                         context,
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: primaryText,
                       ),
@@ -896,8 +896,8 @@ class _QuickAction extends StatelessWidget {
             return null;
           }),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 64),
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
+            constraints: const BoxConstraints(minHeight: 58),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.compactCard),
               border: borderColor == null
@@ -907,7 +907,7 @@ class _QuickAction extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: foreground, size: 21),
+                Icon(icon, color: foreground, size: 20),
                 const SizedBox(height: 5),
                 FittedBox(
                   fit: BoxFit.scaleDown,
