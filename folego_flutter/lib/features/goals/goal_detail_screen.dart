@@ -4,12 +4,16 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_goal.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_goals.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 import 'goal_form_sheet.dart';
 import 'goals_widgets.dart';
 
@@ -161,14 +165,15 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
-    final primary = AppColors.primaryText(brightness);
     final layout = AppBreakpoints.of(context);
     final wide = layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
 
     if (_loading && _details == null) {
       return ColoredBox(
         color: background,
-        child: const SafeArea(child: Center(child: CircularProgressIndicator())),
+        child: const SafeArea(
+          child: AppLoadingState(label: 'organizando os detalhes da meta'),
+        ),
       );
     }
 
@@ -179,15 +184,10 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(AppIcons.warning, size: 40),
-                  const SizedBox(height: 12),
-                  Text(_error!, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  FilledButton(onPressed: _load, child: const Text('tentar novamente')),
-                ],
+              child: AppErrorState(
+                title: 'não consegui carregar esta meta',
+                description: _error,
+                onRetry: _load,
               ),
             ),
           ),
@@ -212,32 +212,19 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(0, 18, 0, 42),
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    tooltip: 'voltar',
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(AppIcons.back),
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      goal.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.display(
-                        context,
-                        fontSize: wide ? 29 : 24,
-                        color: primary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'editar meta',
-                    onPressed: _saving ? null : _editGoal,
-                    icon: const Icon(AppIcons.edit),
-                  ),
-                ],
+              AppPageHeader(
+                title: goal.name,
+                subtitle: 'progresso, aportes e histórico desta meta',
+                leading: IconButton(
+                  tooltip: 'voltar',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(AppIcons.back),
+                ),
+                trailing: IconButton(
+                  tooltip: 'editar meta',
+                  onPressed: _saving ? null : _editGoal,
+                  icon: const Icon(AppIcons.edit),
+                ),
               ),
               const SizedBox(height: 22),
               if (wide)
@@ -295,7 +282,7 @@ class _ProgressCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -308,7 +295,7 @@ class _ProgressCard extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: purple.withValues(alpha: .11),
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(AppRadii.compactCard),
                 ),
                 child: Icon(
                   GoalIconVisuals.iconFor(goal.icon),
@@ -438,7 +425,7 @@ class _HistoryCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -474,7 +461,7 @@ class _HistoryCard extends StatelessWidget {
                       height: 38,
                       decoration: BoxDecoration(
                         color: positive.withValues(alpha: .10),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadii.control),
                       ),
                       child: Icon(AppIcons.add, size: 19, color: positive),
                     ),
