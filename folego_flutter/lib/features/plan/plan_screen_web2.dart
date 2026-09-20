@@ -636,20 +636,20 @@ class _PlanScreenState extends State<PlanScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(0, 20, 0, 140),
+        padding: const EdgeInsets.fromLTRB(0, 16, 0, 104),
         children: [
           _buildHeader(brightness, layout),
           if (_refreshing) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(minHeight: 2),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           _buildSummary(brightness),
           if (_budgetedCount == 0) ...[
             const SizedBox(height: 16),
             _buildNoPlan(brightness),
           ],
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
           _buildCategories(brightness),
         ],
       ),
@@ -760,12 +760,12 @@ class _PlanScreenState extends State<PlanScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           title,
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           _PlanModeToggle(
             projection: false,
             onProjection: widget.onProjectionRequested,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Align(alignment: Alignment.centerLeft, child: monthPicker),
           if (_isPastMonth) ...[
             const SizedBox(height: 10),
@@ -826,7 +826,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return Container(
       key: const ValueKey('plan-summary'),
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -839,11 +839,11 @@ class _PlanScreenState extends State<PlanScreen> {
             'resumo do mês',
             style: AppTypography.section(
               context,
-              fontSize: 19,
+              fontSize: 18,
               color: primaryText,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
             remainingLabel,
             style: AppTypography.label(
@@ -860,12 +860,12 @@ class _PlanScreenState extends State<PlanScreen> {
               Formatters.money(summary.remainingAmount.abs()),
               style: AppTypography.money(
                 context,
-                fontSize: 32,
+                fontSize: 30,
                 color: remainingColor,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -893,7 +893,7 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (summary.plannedAmount > 0) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -1379,7 +1379,7 @@ class _Metric extends StatelessWidget {
     final border = AppColors.border(brightness);
     return Container(
       constraints: const BoxConstraints(minWidth: 118),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .38),
         borderRadius: BorderRadius.circular(AppRadii.control),
