@@ -338,7 +338,7 @@ abstract final class AppTheme {
             fontWeight: FontWeight.w600,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadii.control),
           ),
         ),
       ),
