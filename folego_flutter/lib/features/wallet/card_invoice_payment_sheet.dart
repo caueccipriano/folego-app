@@ -6,6 +6,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
@@ -296,7 +297,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
         decoration: BoxDecoration(
           color: background,
           borderRadius: widget.dialogMode
-              ? BorderRadius.circular(28)
+              ? BorderRadius.circular(AppRadii.sheet)
               : const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(color: border),
         ),
@@ -315,7 +316,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                       height: 4,
                       decoration: BoxDecoration(
                         color: border,
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
                       ),
                     ),
                   ),
@@ -380,7 +381,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
                     color: surface,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(AppRadii.compactCard),
                     border: Border.all(color: border),
                   ),
                   child: Row(
@@ -501,7 +502,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                     padding: const EdgeInsets.symmetric(horizontal: 13),
                     decoration: BoxDecoration(
                       color: surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       border: Border.all(color: border),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -570,15 +571,15 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                       vertical: 14,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       borderSide: BorderSide(color: border),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       borderSide: BorderSide(color: border),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       borderSide: BorderSide(color: purple),
                     ),
                   ),
@@ -597,7 +598,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: _saving ? null : _pickDate,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadii.control),
                     child: Ink(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -605,7 +606,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                       ),
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadii.control),
                         border: Border.all(color: border),
                       ),
                       child: Row(
@@ -712,13 +713,13 @@ class _PaymentTypeChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
             color: selected ? purple.withValues(alpha: .12) : surface,
-            borderRadius: BorderRadius.circular(99),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
             border: Border.all(color: selected ? purple : border),
           ),
           child: Text(
