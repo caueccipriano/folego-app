@@ -176,42 +176,39 @@ class HomeFinancialHero extends StatelessWidget {
             ],
             SizedBox(height: compact ? 14 : 16),
             if (compact)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        AppIcons.benefit,
-                        size: 16,
-                        color: onPurple.withValues(alpha: .74),
-                      ),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
-                          'benefícios ficam fora desta conta',
-                          style: AppTypography.label(
-                            context,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: onPurple.withValues(alpha: .78),
-                          ),
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    AppIcons.benefit,
+                    size: 16,
+                    color: onPurple.withValues(alpha: .74),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      'benefícios ficam fora desta conta',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: onPurple.withValues(alpha: .78),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   TextButton.icon(
                     key: const ValueKey('home-folego-explainer'),
                     style: TextButton.styleFrom(
                       foregroundColor: onPurple,
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size(0, 34),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: () => _showExplanation(context),
-                    icon: const Icon(AppIcons.info, size: 16),
-                    label: const Text('como chegamos nisso?'),
+                    icon: const Icon(AppIcons.info, size: 15),
+                    label: const Text('entenda'),
                   ),
                 ],
               )
