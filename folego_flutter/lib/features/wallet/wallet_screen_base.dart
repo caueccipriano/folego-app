@@ -10,6 +10,7 @@ import '../../data/models/wallet_detail.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
+import '../../shared/widgets/app_page_header.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_detail_screen.dart';
 
@@ -210,48 +211,24 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildHeader(Brightness brightness) {
-    final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'carteira',
-                style: AppTypography.display(
-                  context,
-                  fontSize: 28,
-                  color: primary,
-                ),
-              ),
-            ),
-            IconButton(
-              tooltip: 'atualizar',
-              onPressed: _load,
-              style: IconButton.styleFrom(
-                minimumSize: const Size(42, 42),
-                backgroundColor: surface,
-                foregroundColor: secondary,
-                side: BorderSide(color: border),
-              ),
-              icon: const Icon(AppIcons.refresh, size: 19),
-            ),
-          ],
+
+    return AppPageHeader(
+      title: 'carteira',
+      subtitle: 'contas, cartões, benefícios e dívidas num só lugar',
+      trailing: IconButton(
+        tooltip: 'atualizar',
+        onPressed: _load,
+        style: IconButton.styleFrom(
+          minimumSize: const Size(42, 42),
+          backgroundColor: surface,
+          foregroundColor: secondary,
+          side: BorderSide(color: border),
         ),
-        const SizedBox(height: 5),
-        Text(
-          'contas, cartões, benefícios e dívidas num só lugar',
-          style: AppTypography.body(
-            context,
-            fontSize: 13,
-            color: secondary,
-          ),
-        ),
-      ],
+        icon: const Icon(AppIcons.refresh, size: 19),
+      ),
     );
   }
 
