@@ -395,47 +395,6 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-    required this.valueColor,
-  });
-
-  final String label;
-  final String value;
-  final Color valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final secondary = AppColors.secondaryText(Theme.of(context).brightness);
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: secondary,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          value,
-          style: AppTypography.body(
-            context,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 Future<void> showMonthlyMoneyComposition(
   BuildContext context, {
   required MonthlyMoneySummary summary,
