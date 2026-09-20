@@ -436,10 +436,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required Brightness brightness,
   }) {
     final positive = AppColors.positiveText(brightness);
-    final onPurple = brightness == Brightness.dark
-        ? AppColors.iconOnPurpleDark
-        : AppColors.iconOnPurpleLight;
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -468,8 +464,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: _QuickAction(
             label: 'metas',
             icon: AppIcons.goals,
-            background: AppColors.primaryPurple(brightness),
-            foreground: onPurple,
+            background: surface,
+            foreground: AppColors.primaryPurple(brightness),
+            borderColor: border,
             onTap: _openGoals,
           ),
         ),
@@ -532,35 +529,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'próximos dias',
+                      'próximo movimento',
                       style: AppTypography.body(
                         context,
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: primaryText,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 5),
                     Text(
-                      'veja o que entra e sai nos próximos 30 dias',
+                      detail,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.body(
                         context,
                         fontSize: 12,
-                        color: secondaryText,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      detail,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: primaryText,
+                        color: secondaryText,
                       ),
                     ),
                   ],
