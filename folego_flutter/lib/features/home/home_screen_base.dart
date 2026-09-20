@@ -20,7 +20,6 @@ import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
-import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
@@ -189,6 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openRegister(String type) async {
+    final beforeSpendable = _snapshot?.spendablePool.toDouble();
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -204,17 +204,24 @@ class _HomeScreenState extends State<HomeScreen> {
     if (saved == true) {
       await _load();
       if (!mounted) return;
+      final afterSpendable = _snapshot?.spendablePool.toDouble();
+      final changed = beforeSpendable != null &&
+          afterSpendable != null &&
+          (beforeSpendable - afterSpendable).abs() >= .01;
+      final message = changed
+          ? '${type == 'expense' ? 'gasto' : 'receita'} salvo · disponível: '
+              '${Formatters.money(beforeSpendable)} → ${Formatters.money(afterSpendable)}'
+          : type == 'expense'
+              ? 'gasto salvo · seu Fôlego foi atualizado'
+              : 'receita salva · seu Fôlego foi atualizado';
+
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 1800),
-            content: Text(
-              type == 'expense'
-                  ? 'gasto salvo · seu Fôlego foi atualizado'
-                  : 'receita salva · seu Fôlego foi atualizado',
-            ),
+            duration: const Duration(milliseconds: 2200),
+            content: Text(message),
           ),
         );
     }
@@ -260,12 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading && _snapshot == null) {
-      return ColoredBox(
-        color: AppColors.background(Theme.of(context).brightness),
-        child: const SafeArea(
-          child: AppLoadingState(label: 'organizando seu resumo'),
-        ),
-      );
+      return _buildHomeSkeleton();
     }
 
     if (_error != null && _snapshot == null) {
@@ -288,6 +290,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
+    final pulse = _buildPulseCard(
+      snapshot: snapshot,
+      surface: surface,
+      border: border,
+      primaryText: primaryText,
+      secondaryText: secondaryText,
+      primaryPurple: primaryPurple,
+    );
     final quickActions = _buildQuickActions(
       surface: surface,
       border: border,
@@ -338,6 +348,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
+                  if (pulse is! SizedBox) ...[
+                    const SizedBox(height: 10),
+                    pulse,
+                  ],
                   const SizedBox(height: 12),
                   if (_hasUrgentUpcoming()) ...[
                     upcoming,
@@ -356,6 +370,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
+                  if (pulse is! SizedBox) ...[
+                    const SizedBox(height: 12),
+                    pulse,
+                  ],
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +393,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 7, child: hero),
+                      Expanded(
+                        flex: 7,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            hero,
+                            if (pulse is! SizedBox) ...[
+                              const SizedBox(height: 12),
+                              pulse,
+                            ],
+                          ],
+                        ),
+                      ),
                       const SizedBox(width: 28),
                       Expanded(flex: 5, child: quickActions),
                     ],
@@ -414,6 +444,175 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHomeSkeleton() {
+    final brightness = Theme.of(context).brightness;
+    final background = AppColors.background(brightness);
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final muted = AppColors.secondaryText(brightness).withValues(alpha: .14);
+    final bottom = MediaQuery.paddingOf(context).bottom + 88;
+
+    Widget block(double height, {double? width, double radius = 18}) => Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            width: width ?? double.infinity,
+            height: height,
+            decoration: BoxDecoration(
+              color: muted,
+              borderRadius: BorderRadius.circular(radius),
+            ),
+          ),
+        );
+
+    return ColoredBox(
+      color: background,
+      child: SafeArea(
+        child: AppContentContainer.dashboard(
+          fillHeight: true,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: AppScrollGutter.padding(context, top: 14, bottom: bottom),
+            children: [
+              block(26, width: 180, radius: 10),
+              const SizedBox(height: 14),
+              Container(
+                height: 184,
+                decoration: BoxDecoration(
+                  color: surface,
+                  borderRadius: BorderRadius.circular(AppRadii.feature),
+                  border: Border.all(color: border),
+                ),
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    block(12, width: 130, radius: 6),
+                    const SizedBox(height: 14),
+                    block(42, width: 220, radius: 10),
+                    const SizedBox(height: 14),
+                    block(12, width: 250, radius: 6),
+                    const Spacer(),
+                    block(30, width: 170, radius: 15),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  for (var i = 0; i < 4; i++) ...[
+                    Expanded(child: block(50, radius: 14)),
+                    if (i != 3) const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
+              block(86),
+              const SizedBox(height: 10),
+              block(112),
+              const SizedBox(height: 10),
+              block(180),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPulseCard({
+    required FolegoSnapshot snapshot,
+    required Color surface,
+    required Color border,
+    required Color primaryText,
+    required Color secondaryText,
+    required Color primaryPurple,
+  }) {
+    final pending = _upcomingEvents
+        .where((event) => event.isPending)
+        .toList()
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final next = pending.isEmpty ? null : pending.first;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    String? copy;
+    if (next != null) {
+      final day = DateTime(next.dueDate.year, next.dueDate.month, next.dueDate.day);
+      final days = day.difference(today).inDays;
+      if (days <= 2) {
+        final sign = next.isIncome ? '+' : '-';
+        copy =
+            '${_futureDate(next.dueDate)} · ${next.name} · $sign${Formatters.money(next.amount.abs())}';
+      }
+    }
+
+    if (copy == null && snapshot.spendablePool <= 0) {
+      copy = 'seu espaço está no limite · confira os próximos movimentos antes de gastar';
+    }
+
+    if (copy == null &&
+        snapshot.dailyFolego != null &&
+        snapshot.dailyFolego! > 0) {
+      copy =
+          'ritmo de referência · ${Formatters.money(snapshot.dailyFolego!)} por dia até o próximo recebimento';
+    }
+
+    if (copy == null) return const SizedBox.shrink();
+
+    return Container(
+      key: const ValueKey('home-pulse'),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: primaryPurple.withValues(alpha: .10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(AppIcons.chartLine, size: 16, color: primaryPurple),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'pulso',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: primaryPurple,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  copy,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: primaryText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(AppIcons.info, size: 16, color: secondaryText),
+        ],
       ),
     );
   }
@@ -716,6 +915,8 @@ class _HomeScreenState extends State<HomeScreen> {
             border: border,
             primaryText: primaryText,
             secondaryText: secondaryText,
+            actionLabel: 'registrar gasto',
+            onAction: () => _openRegister('expense'),
           )
         else
           _buildLatestCard(
@@ -746,6 +947,8 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color border,
     required Color primaryText,
     required Color secondaryText,
+    String? actionLabel,
+    VoidCallback? onAction,
   }) {
     return Container(
       width: double.infinity,
@@ -770,6 +973,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: onAction,
+              child: Text(actionLabel),
+            ),
+          ],
         ],
       ),
     );
