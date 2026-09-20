@@ -5,6 +5,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
@@ -323,7 +324,7 @@ class _DebtFormState extends State<DebtForm> {
                     const SizedBox(height: 12),
                     InkWell(
                       onTap: _saving ? null : _pickDue,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       child: InputDecorator(
                         decoration: const InputDecoration(labelText: 'primeiro vencimento'),
                         child: Row(
