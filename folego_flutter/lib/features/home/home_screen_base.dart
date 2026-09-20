@@ -270,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final latest = _latestTransaction();
 
-    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 180;
+    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 120;
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
@@ -316,23 +316,23 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: AppScrollGutter.padding(
                 context,
-                top: 20,
+                top: 16,
                 bottom: bottomListPadding,
               ),
               children: [
                 header,
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   quickActions,
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   upcoming,
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   monthlyMoney,
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   projectionInsight,
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
@@ -513,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(AppRadii.card),
@@ -524,11 +524,11 @@ class _HomeScreenState extends State<HomeScreen> {
               CategoryIconBadge(
                 icon: AppIcons.calendar,
                 color: primaryPurple,
-                size: 46,
-                iconSize: 22,
-                radius: 15,
+                size: 42,
+                iconSize: 20,
+                radius: AppRadii.control,
               ),
-              const SizedBox(width: 13),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -896,8 +896,8 @@ class _QuickAction extends StatelessWidget {
             return null;
           }),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 72),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
+            constraints: const BoxConstraints(minHeight: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.compactCard),
               border: borderColor == null
@@ -907,8 +907,8 @@ class _QuickAction extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: foreground, size: 24),
-                const SizedBox(height: 7),
+                Icon(icon, color: foreground, size: 21),
+                const SizedBox(height: 5),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
