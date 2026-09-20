@@ -7,6 +7,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
@@ -742,7 +743,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(AppRadii.compactCard),
                         border: Border.all(color: border),
                       ),
                       child: TabBar(
@@ -1295,12 +1296,12 @@ class _TransactionCardV3 extends StatelessWidget {
       child: Material(
         color: surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadii.card),
           side: BorderSide(color: border),
         ),
         child: InkWell(
           onTap: onOpen,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadii.card),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
             child: Row(
