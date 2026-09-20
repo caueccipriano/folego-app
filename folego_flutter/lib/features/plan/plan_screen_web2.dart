@@ -636,20 +636,20 @@ class _PlanScreenState extends State<PlanScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(0, 16, 0, 104),
+        padding: const EdgeInsets.fromLTRB(0, 12, 0, 92),
         children: [
           _buildHeader(brightness, layout),
           if (_refreshing) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(minHeight: 2),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildSummary(brightness),
           if (_budgetedCount == 0) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _buildNoPlan(brightness),
           ],
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           _buildCategories(brightness),
         ],
       ),
@@ -826,7 +826,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return Container(
       key: const ValueKey('plan-summary'),
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -860,12 +860,12 @@ class _PlanScreenState extends State<PlanScreen> {
               Formatters.money(summary.remainingAmount.abs()),
               style: AppTypography.money(
                 context,
-                fontSize: 30,
+                fontSize: 28,
                 color: remainingColor,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -1379,7 +1379,7 @@ class _Metric extends StatelessWidget {
     final border = AppColors.border(brightness);
     return Container(
       constraints: const BoxConstraints(minWidth: 118),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .38),
         borderRadius: BorderRadius.circular(AppRadii.control),
