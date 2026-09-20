@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 import 'liquid_glass_navigation_bar.dart';
 
 /// Responsive application chrome. The content stack stays in the same branch of
@@ -71,16 +73,20 @@ class DesktopNavigationSidebar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final bool compact;
 
-  static const _items = <_DesktopNavItem>[
-    _DesktopNavItem(icon: AppIcons.home, label: 'Início'),
-    _DesktopNavItem(icon: AppIcons.transactions, label: 'Lançamentos'),
-    _DesktopNavItem(icon: AppIcons.plan, label: 'Plano'),
-    _DesktopNavItem(icon: AppIcons.wallet, label: 'Carteira'),
-    _DesktopNavItem(icon: AppIcons.profile, label: 'Perfil'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final items = <_DesktopNavItem>[
+      _DesktopNavItem(icon: AppIcons.home, label: l10n.home.toLowerCase()),
+      _DesktopNavItem(
+        icon: AppIcons.transactions,
+        label: l10n.transactions.toLowerCase(),
+      ),
+      _DesktopNavItem(icon: AppIcons.plan, label: l10n.plan.toLowerCase()),
+      _DesktopNavItem(icon: AppIcons.wallet, label: l10n.wallet.toLowerCase()),
+      _DesktopNavItem(icon: AppIcons.profile, label: l10n.profile.toLowerCase()),
+    ];
+
     final brightness = Theme.of(context).brightness;
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
@@ -117,10 +123,10 @@ class DesktopNavigationSidebar extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: _items.length,
+                  itemCount: items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 5),
                   itemBuilder: (context, index) {
-                    final item = _items[index];
+                    final item = items[index];
                     return Semantics(
                       selected: selectedIndex == index,
                       button: true,
@@ -131,7 +137,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                         child: InkWell(
                           key: ValueKey('desktop-nav-$index'),
                           onTap: () => onDestinationSelected(index),
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(AppRadii.control),
                           hoverColor: accent.withValues(alpha: .07),
                           focusColor: accent.withValues(alpha: .10),
                           child: AnimatedContainer(
@@ -143,7 +149,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                               color: selectedIndex == index
                                   ? accent.withValues(alpha: .11)
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(AppRadii.control),
                             ),
                             child: Row(
                               children: [
