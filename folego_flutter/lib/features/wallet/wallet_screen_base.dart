@@ -536,8 +536,8 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     return Container(
-      constraints: const BoxConstraints(minHeight: 92),
-      padding: const EdgeInsets.all(12),
+      constraints: const BoxConstraints(minHeight: 84),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -565,7 +565,7 @@ class _PositionMetricCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -573,7 +573,7 @@ class _PositionMetricCard extends StatelessWidget {
               Formatters.money(metric.value),
               style: AppTypography.money(
                 context,
-                fontSize: 16,
+                fontSize: 15,
                 color: metric.value < 0
                     ? AppColors.expenseText(brightness)
                     : primary,
@@ -1295,7 +1295,7 @@ class _InteractiveWalletCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(
@@ -1319,14 +1319,14 @@ class _CardIcon extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final tone = color ?? AppColors.primaryPurple(brightness);
     return Container(
-      width: 42,
-      height: 42,
+      width: 38,
+      height: 38,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: tone.withValues(alpha: .11),
         borderRadius: BorderRadius.circular(13),
       ),
-      child: Icon(icon, color: tone, size: 20),
+      child: Icon(icon, color: tone, size: 19),
     );
   }
 }
@@ -1495,7 +1495,7 @@ class _WalletSectionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadii.pill),
           child: AnimatedContainer(
             duration: motionDuration,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             decoration: BoxDecoration(
               color: selected ? purple.withValues(alpha: .13) : surface,
               borderRadius: BorderRadius.circular(AppRadii.pill),
