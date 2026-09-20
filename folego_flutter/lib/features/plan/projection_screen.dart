@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 
 class ProjectionScreen extends StatefulWidget {
@@ -477,53 +478,47 @@ class _ProjectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
     final surface = AppColors.surface(brightness);
-    return Row(
-      children: [
-        IconButton(
-          tooltip: 'voltar ao resumo',
-          onPressed: onBack,
-          icon: const Icon(AppIcons.back),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            'projeção',
-            style: AppTypography.display(
-              context,
-              fontSize: 28,
-              color: primary,
+
+    return AppPageHeader(
+      title: 'projeção',
+      subtitle: 'veja como os próximos meses podem fechar',
+      leading: IconButton(
+        tooltip: 'voltar ao resumo',
+        onPressed: onBack,
+        icon: const Icon(AppIcons.back),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              border: Border.all(color: border),
+            ),
+            child: Text(
+              'atual',
+              style: AppTypography.label(
+                context,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: secondary,
+              ),
             ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: Border.all(color: border),
+          const SizedBox(width: 6),
+          IconButton(
+            key: const ValueKey('projection-scenario-settings'),
+            tooltip: 'ajustar cenário',
+            onPressed: onScenario,
+            icon: const Icon(AppIcons.adjustments),
           ),
-          child: Text(
-            'atual',
-            style: AppTypography.label(
-              context,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: secondary,
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        IconButton(
-          key: const ValueKey('projection-scenario-settings'),
-          tooltip: 'ajustar cenário',
-          onPressed: onScenario,
-          icon: const Icon(AppIcons.adjustments),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
