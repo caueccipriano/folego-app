@@ -640,39 +640,11 @@ class _AgendaEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.feature),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        children: [
-          Icon(AppIcons.calendar, size: 34, color: AppColors.secondaryText(brightness)),
-          const SizedBox(height: 12),
-          Text(
-            'nada apertando por enquanto',
-            textAlign: TextAlign.center,
-            style: AppTypography.section(
-              context,
-              fontSize: 18,
-              color: AppColors.primaryText(brightness),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'quando surgir uma recorrência, fatura ou parcela de dívida, ela aparece aqui',
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: AppColors.secondaryText(brightness),
-            ),
-          ),
-        ],
-      ),
+    return const AppEmptyState(
+      icon: AppIcons.calendar,
+      title: 'nada apertando por enquanto',
+      description:
+          'quando surgir uma recorrência, fatura ou parcela de dívida, ela aparece aqui',
     );
   }
 }
