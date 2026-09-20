@@ -7,6 +7,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/theme/reflection_visuals.dart';
@@ -782,11 +783,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
     return InkWell(
       onTap: _pickCategory,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppRadii.compactCard),
       child: Container(
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadii.compactCard),
           border: Border.all(color: AppColors.border(brightness)),
         ),
         child: Row(
@@ -999,7 +1000,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .45),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
