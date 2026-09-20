@@ -158,7 +158,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Se nada mudar e seus compromissos atuais continuarem, esta é a projeção.',
+                    'se nada mudar e seus compromissos atuais continuarem, esta é a projeção',
                     style: AppTypography.body(
                       context,
                       fontSize: 12,
@@ -176,7 +176,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Você pode desligar uma entrada incerta sem mexer nas receitas garantidas.',
+                    'você pode desligar uma entrada incerta sem mexer nas receitas garantidas',
                     style: AppTypography.body(
                       context,
                       fontSize: 11,
@@ -1225,7 +1225,7 @@ class _ProjectionInsights extends StatelessWidget {
       }
     }
     final text = critical == null
-        ? 'Seu menor saldo projetado ocorre em ${_monthYear(minMonth.month)}.'
+        ? 'seu menor saldo projetado ocorre em ${_monthYear(minMonth.month)}'
         : 'Em ${_monthYear(critical.month)}, o fechamento projetado fica em ${Formatters.money(critical.closingBalance)}.';
 
     ProjectionMonth? installmentEnd;
@@ -1274,7 +1274,7 @@ class _ProjectionInsights extends StatelessWidget {
           if (projection.variableIncomes.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              'Receitas variáveis podem ser ligadas ou desligadas no ícone de ajustes do cenário.',
+              'receitas variáveis podem ser ligadas ou desligadas no ícone de ajustes do cenário',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -1896,43 +1896,43 @@ class _ProjectionSimulationSheetState
           if (entry > 0)
             ProjectionAdjustment(
               id: '$idBase-entry',
-              name: 'Novo carro — entrada',
+              name: 'novo carro — entrada',
               component: 'direct_expense',
               amountDelta: entry,
               frequency: 'once',
               startsOn: _startsOn,
-              categoryName: 'Transporte',
+              categoryName: 'transporte',
             ),
           if (installment > 0)
             ProjectionAdjustment(
               id: '$idBase-installment',
-              name: 'Novo carro — financiamento',
+              name: 'novo carro — financiamento',
               component: 'debt',
               amountDelta: installment,
               frequency: 'monthly',
               startsOn: _startsOn,
               endsOn: end,
-              categoryName: 'Dívidas / financiamentos',
+              categoryName: 'dívidas / financiamentos',
             ),
           if (maintenance > 0)
             ProjectionAdjustment(
               id: '$idBase-maintenance',
-              name: 'Novo carro — manutenção',
+              name: 'novo carro — manutenção',
               component: 'recurring_expense',
               amountDelta: maintenance,
               frequency: 'monthly',
               startsOn: _startsOn,
-              categoryName: 'Transporte',
+              categoryName: 'transporte',
             ),
           if (ipva > 0)
             ProjectionAdjustment(
               id: '$idBase-ipva',
-              name: 'Novo carro — IPVA',
+              name: 'novo carro — IPVA',
               component: 'direct_expense',
               amountDelta: ipva,
               frequency: 'yearly',
               startsOn: _startsOn,
-              categoryName: 'Transporte',
+              categoryName: 'transporte',
             ),
         ];
       case _SimulationTemplate.salary:
@@ -1944,7 +1944,7 @@ class _ProjectionSimulationSheetState
         result = [
           ProjectionAdjustment(
             id: '$idBase-salary',
-            name: 'Novo salário',
+            name: 'novo salário',
             component: 'income',
             amountDelta: amount,
             frequency: 'monthly',
@@ -1960,13 +1960,13 @@ class _ProjectionSimulationSheetState
         result = [
           ProjectionAdjustment(
             id: '$idBase-cancel',
-            name: 'Cancelar ${item.name}',
+            name: 'cancelar ${item.name}',
             component: 'recurring_expense',
             amountDelta: -item.amount,
             frequency: 'monthly',
             startsOn: _startsOn,
             endsOn: item.endsOn,
-            categoryName: item.categoryName ?? 'Assinaturas',
+            categoryName: item.categoryName ?? 'assinaturas',
             categoryId: item.categoryId,
           ),
         ];
@@ -1980,7 +1980,7 @@ class _ProjectionSimulationSheetState
         result = [
           ProjectionAdjustment(
             id: '$idBase-reduce',
-            name: 'Reduzir ${category.name}',
+            name: 'reduzir ${category.name}',
             component: 'direct_expense',
             amountDelta: -amount,
             frequency: 'monthly',
@@ -2064,7 +2064,7 @@ class _ProjectionSimulationSheetState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Nada aqui vira lançamento. Primeiro você vê o efeito no futuro.',
+                  'nada aqui vira lançamento. primeiro você vê o efeito no futuro',
                   style: AppTypography.body(
                     context,
                     fontSize: 11,
