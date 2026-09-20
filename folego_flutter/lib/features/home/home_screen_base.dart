@@ -203,6 +203,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (saved == true) {
       await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(milliseconds: 1800),
+            content: Text(
+              type == 'expense'
+                  ? 'gasto salvo · seu Fôlego foi atualizado'
+                  : 'receita salva · seu Fôlego foi atualizado',
+            ),
+          ),
+        );
     }
   }
 
@@ -325,13 +339,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
                   const SizedBox(height: 12),
-                  quickActions,
-                  const SizedBox(height: 12),
-                  upcoming,
+                  if (_hasUrgentUpcoming()) ...[
+                    upcoming,
+                    const SizedBox(height: 10),
+                    quickActions,
+                  ] else ...[
+                    quickActions,
+                    const SizedBox(height: 10),
+                    projectionInsight,
+                  ],
+                  const SizedBox(height: 10),
+                  if (_hasUrgentUpcoming()) projectionInsight else upcoming,
                   const SizedBox(height: 10),
                   monthlyMoney,
-                  const SizedBox(height: 10),
-                  projectionInsight,
                   const SizedBox(height: 14),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
@@ -490,6 +510,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  bool _hasUrgentUpcoming() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    for (final event in _upcomingEvents) {
+      if (!event.isPending || !event.isExpense) continue;
+      final day = DateTime(event.dueDate.year, event.dueDate.month, event.dueDate.day);
+      if (day.difference(today).inDays <= 2) return true;
+    }
+    return false;
+  }
+
   Widget _buildUpcomingCard({
     required Color surface,
     required Color border,
@@ -497,15 +528,11 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color secondaryText,
     required Color primaryPurple,
   }) {
-    final sorted = [..._upcomingEvents]
+    final sorted = _upcomingEvents
+        .where((event) => event.isPending)
+        .toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    final next = sorted.isEmpty ? null : sorted.first;
-
-    final detail = _upcomingUnavailable
-        ? 'veja o que entra e sai nos próximos 30 dias'
-        : next == null
-        ? 'nada previsto nos próximos 30 dias'
-        : '${next.name} · ${next.isIncome ? '+' : '-'}${Formatters.money(next.amount.abs())} · ${_futureDate(next.dueDate)}';
+    final visible = sorted.take(3).toList(growable: false);
 
     return Material(
       color: Colors.transparent,
@@ -513,56 +540,148 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(color: border),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CategoryIconBadge(
-                icon: AppIcons.calendar,
-                color: primaryPurple,
-                size: 36,
-                iconSize: 18,
-                radius: AppRadii.control,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'próximo movimento',
+              Row(
+                children: [
+                  CategoryIconBadge(
+                    icon: AppIcons.calendar,
+                    color: primaryPurple,
+                    size: 32,
+                    iconSize: 16,
+                    radius: AppRadii.control,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      'próximos movimentos',
                       style: AppTypography.body(
                         context,
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: primaryText,
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      detail,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: secondaryText,
-                      ),
+                  ),
+                  Text(
+                    'ver todos',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: primaryPurple,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 3),
+                  Icon(AppIcons.chevronRight, size: 17, color: primaryPurple),
+                ],
               ),
-              const SizedBox(width: 8),
-              Icon(AppIcons.chevronRight, size: 20, color: secondaryText),
+              const SizedBox(height: 10),
+              if (_upcomingUnavailable)
+                Text(
+                  'não consegui atualizar os próximos movimentos agora',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: secondaryText,
+                  ),
+                )
+              else if (visible.isEmpty)
+                Text(
+                  'nada previsto nos próximos 30 dias',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: secondaryText,
+                  ),
+                )
+              else
+                for (var i = 0; i < visible.length; i++) ...[
+                  _buildUpcomingTimelineRow(
+                    visible[i],
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                  ),
+                  if (i != visible.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 15),
+                      child: Divider(height: 12, color: border.withValues(alpha: .7)),
+                    ),
+                ],
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUpcomingTimelineRow(
+    UpcomingEvent event, {
+    required Color primaryText,
+    required Color secondaryText,
+  }) {
+    final brightness = Theme.of(context).brightness;
+    final amountColor = event.isIncome
+        ? AppColors.positiveText(brightness)
+        : primaryText;
+    final sign = event.isIncome ? '+' : '-';
+
+    return Row(
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: event.isIncome
+                ? AppColors.positiveText(brightness)
+                : AppColors.primaryPurple(brightness),
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 9),
+        SizedBox(
+          width: 54,
+          child: Text(
+            _futureDate(event.dueDate),
+            style: AppTypography.label(
+              context,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: secondaryText,
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            event.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: primaryText,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$sign${Formatters.money(event.amount.abs())}',
+          style: AppTypography.money(
+            context,
+            fontSize: 11,
+            color: amountColor,
+          ),
+        ),
+      ],
     );
   }
 
