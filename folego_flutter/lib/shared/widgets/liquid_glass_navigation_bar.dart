@@ -46,9 +46,9 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
       top: false,
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 9),
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 7),
       child: SizedBox(
-        height: 78,
+        height: 72,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -57,8 +57,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: Container(
                   width: double.infinity,
-                  height: 78,
-                  padding: const EdgeInsets.all(6),
+                  height: 72,
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -176,17 +176,17 @@ class _Destination extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 38,
-                  height: 30,
+                  width: 36,
+                  height: 28,
                   child: Center(
                     child: Icon(
                       item.icon,
-                      size: selected ? 22 : 21,
+                      size: selected ? 21 : 20,
                       color: selected ? activePurple : inactiveColor,
                     ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
@@ -194,14 +194,14 @@ class _Destination extends StatelessWidget {
                     maxLines: 1,
                     style: AppTypography.label(
                       context,
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight:
                           selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? activeForeground : inactiveColor,
                     ),
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
               ],
             ),
           ),
