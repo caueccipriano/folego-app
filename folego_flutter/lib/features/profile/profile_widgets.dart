@@ -444,18 +444,6 @@ class _ChoiceSurface extends StatelessWidget {
   }
 }
 
-class _ChoiceDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 46,
-      endIndent: 12,
-      color: AppColors.border(Theme.of(context).brightness),
-    );
-  }
-}
-
 class _AboutCard extends StatelessWidget {
   const _AboutCard({
     required this.versionInfo,
