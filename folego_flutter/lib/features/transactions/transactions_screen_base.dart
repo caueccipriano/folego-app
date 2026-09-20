@@ -1198,9 +1198,9 @@ class _TransactionsTabV3 extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView.separated(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(0, 4, 0, 98),
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 76),
           itemCount: transactions.length + (showFooter ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 6),
           itemBuilder: (context, index) {
             if (index >= transactions.length) {
               return _TransactionLoadMoreFooterV3(
@@ -1397,14 +1397,14 @@ class _TransactionCardV3 extends StatelessWidget {
           onTap: onOpen,
           borderRadius: BorderRadius.circular(AppRadii.card),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            padding: const EdgeInsets.fromLTRB(11, 8, 11, 8),
             child: Row(
               children: [
                 CategoryIconBadge(
                   icon: visual.icon,
                   color: visual.color,
-                  size: 40,
-                  iconSize: 20,
+                  size: 38,
+                  iconSize: 19,
                   radius: AppRadii.control,
                 ),
                 const SizedBox(width: 10),
