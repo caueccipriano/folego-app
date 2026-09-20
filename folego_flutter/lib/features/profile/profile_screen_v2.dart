@@ -21,6 +21,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
