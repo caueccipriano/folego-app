@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/financial_display_text.dart';
 import '../../core/utils/formatters.dart';
@@ -13,6 +14,8 @@ import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_detail.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
 import 'recurring_form_sheet.dart';
 import 'transaction_action_sheets.dart';
 import 'transaction_edit_sheet.dart';
@@ -311,15 +314,27 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
     final body = _loading
         ? const SizedBox(
             height: 240,
-            child: Center(child: CircularProgressIndicator()),
+            child: AppLoadingState(label: 'organizando este lançamento'),
           )
         : _error != null && _detail == null
-            ? SizedBox(height: 260, child: _errorView(brightness))
+            ? SizedBox(
+                height: 280,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: AppErrorState(
+                      title: 'não consegui carregar este lançamento',
+                      description: _error,
+                      onRetry: _load,
+                    ),
+                  ),
+                ),
+              )
             : _detailBody(brightness);
 
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(_compact ? 28 : 24),
+      borderRadius: BorderRadius.circular(_compact ? AppRadii.sheet : AppRadii.feature),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         child: Column(
@@ -356,28 +371,6 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         ),
       );
 
-  Widget _errorView(Brightness brightness) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                AppIcons.warning,
-                color: AppColors.expenseText(brightness),
-                size: 32,
-              ),
-              const SizedBox(height: 10),
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 14),
-              OutlinedButton(
-                onPressed: _load,
-                child: const Text('tentar novamente'),
-              ),
-            ],
-          ),
-        ),
-      );
 
   Widget _detailBody(Brightness brightness) {
     final detail = _detail!;
@@ -596,7 +589,7 @@ class _Hero extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.background(brightness),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
@@ -643,7 +636,7 @@ class _LegacyCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: purple.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: purple.withValues(alpha: .20)),
       ),
       child: Row(
@@ -693,7 +686,7 @@ class _Section extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
@@ -769,7 +762,7 @@ class _Notice extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.background(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Text(
