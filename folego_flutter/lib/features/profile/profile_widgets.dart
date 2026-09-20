@@ -490,7 +490,7 @@ class _LanguageOption extends StatelessWidget {
             ? purple.withValues(alpha: .07)
             : AppColors.surface(brightness),
         child: InkWell(
-          onTap: enabled ? onTap : null,
+          onTap: onTap,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 62),
             child: Padding(
