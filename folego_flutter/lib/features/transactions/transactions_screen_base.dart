@@ -23,6 +23,7 @@ import '../../data/repositories/folego_repository_subscriptions.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/app_page_header.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
@@ -707,7 +708,13 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    final accent = AppColors.primaryPurple(brightness);
     final subscriptions = _recurringItems
         .where((item) => _subscriptionIds.contains(item.id))
         .toList(growable: false);
@@ -716,81 +723,132 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         .toList(growable: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'lançamentos',
-          style: AppTypography.section(context, fontSize: 21),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'transações'),
-            Tab(text: 'assinaturas'),
-            Tab(text: 'recorrências'),
-          ],
-        ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? _ErrorState(message: _error!, onRetry: _retryInitialLoad)
-              : TabBarView(
-                  controller: _tabController,
+      backgroundColor: AppColors.background(brightness),
+      body: SafeArea(
+        child: Column(
+          children: [
+            AppContentContainer.dashboard(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _TransactionsTabV3(
-                      transactions: _transactions,
-                      categoryById: _categoryById,
-                      filters: _filters,
-                      filterOptions: _filterOptions,
-                      searchController: _searchController,
-                      loading: _loadingTransactions,
-                      loadingMore: _loadingMore,
-                      hasMore: _hasMoreTransactions,
-                      loadMoreError: _loadMoreError,
-                      onSearchChanged: _onSearchChanged,
-                      onClearSearch: _clearSearch,
-                      onOpenFilters: _openFilters,
-                      onClearFilters: _clearAllFilters,
-                      onRemovePeriod: _removePeriodFilter,
-                      onRemoveTypes: _removeTypeFilter,
-                      onFiltersChanged: (filters) => _applyFilters(
-                        filters,
-                        syncSearchField: false,
-                      ),
-                      onRefresh: _refresh,
-                      onLoadMore: _loadMoreTransactions,
-                      onOpen: _openTransactionDetail,
-                      onEdit: _editTransaction,
-                      onDelete: _deleteTransaction,
+                    const AppPageHeader(
+                      title: 'lançamentos',
+                      subtitle: 'movimentações, assinaturas e recorrências',
                     ),
-                    SubscriptionsTab(
-                      items: subscriptions,
-                      recurringCandidates: regularRecurring,
-                      cardNames: _recurringCardNames,
-                      onRefresh: _refreshRecurring,
-                      onEdit: _editRecurring,
-                      onEnd: _endSubscription,
-                      onClassify: (item) => _setSubscriptionKind(
-                        item,
-                        subscription: true,
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: surface,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: border),
                       ),
-                      onMoveToRecurring: (item) => _setSubscriptionKind(
-                        item,
-                        subscription: false,
+                      child: TabBar(
+                        controller: _tabController,
+                        dividerColor: Colors.transparent,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          color: accent.withValues(
+                            alpha: isDark ? .18 : .10,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        labelColor: primary,
+                        unselectedLabelColor: secondary,
+                        labelStyle: AppTypography.label(
+                          context,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: primary,
+                        ),
+                        unselectedLabelStyle: AppTypography.label(
+                          context,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: secondary,
+                        ),
+                        tabs: const [
+                          Tab(text: 'transações'),
+                          Tab(text: 'assinaturas'),
+                          Tab(text: 'recorrências'),
+                        ],
                       ),
-                    ),
-                    _RecurringTab(
-                      items: regularRecurring,
-                      categories: _categories,
-                      isDark: isDark,
-                      onRefresh: _refresh,
-                      onEdit: _editRecurring,
-                      onRealize: _realizeRecurring,
-                      onToggle: _toggleRecurring,
-                      onDelete: _deleteRecurring,
                     ),
                   ],
                 ),
+              ),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? _ErrorState(
+                          message: _error!,
+                          onRetry: _retryInitialLoad,
+                        )
+                      : TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _TransactionsTabV3(
+                              transactions: _transactions,
+                              categoryById: _categoryById,
+                              filters: _filters,
+                              filterOptions: _filterOptions,
+                              searchController: _searchController,
+                              loading: _loadingTransactions,
+                              loadingMore: _loadingMore,
+                              hasMore: _hasMoreTransactions,
+                              loadMoreError: _loadMoreError,
+                              onSearchChanged: _onSearchChanged,
+                              onClearSearch: _clearSearch,
+                              onOpenFilters: _openFilters,
+                              onClearFilters: _clearAllFilters,
+                              onRemovePeriod: _removePeriodFilter,
+                              onRemoveTypes: _removeTypeFilter,
+                              onFiltersChanged: (filters) => _applyFilters(
+                                filters,
+                                syncSearchField: false,
+                              ),
+                              onRefresh: _refresh,
+                              onLoadMore: _loadMoreTransactions,
+                              onOpen: _openTransactionDetail,
+                              onEdit: _editTransaction,
+                              onDelete: _deleteTransaction,
+                            ),
+                            SubscriptionsTab(
+                              items: subscriptions,
+                              recurringCandidates: regularRecurring,
+                              cardNames: _recurringCardNames,
+                              onRefresh: _refreshRecurring,
+                              onEdit: _editRecurring,
+                              onEnd: _endSubscription,
+                              onClassify: (item) => _setSubscriptionKind(
+                                item,
+                                subscription: true,
+                              ),
+                              onMoveToRecurring: (item) => _setSubscriptionKind(
+                                item,
+                                subscription: false,
+                              ),
+                            ),
+                            _RecurringTab(
+                              items: regularRecurring,
+                              categories: _categories,
+                              isDark: isDark,
+                              onRefresh: _refresh,
+                              onEdit: _editRecurring,
+                              onRealize: _realizeRecurring,
+                              onToggle: _toggleRecurring,
+                              onDelete: _deleteRecurring,
+                            ),
+                          ],
+                        ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
