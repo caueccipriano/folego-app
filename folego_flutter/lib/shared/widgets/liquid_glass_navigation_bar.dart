@@ -28,11 +28,14 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     final items = <_NavItem>[
-      _NavItem(icon: AppIcons.home, label: l10n.home),
-      const _NavItem(icon: AppIcons.transactions, label: 'lançamentos'),
-      _NavItem(icon: AppIcons.plan, label: l10n.plan),
-      _NavItem(icon: AppIcons.wallet, label: l10n.wallet),
-      _NavItem(icon: AppIcons.profile, label: l10n.profile),
+      _NavItem(icon: AppIcons.home, label: l10n.home.toLowerCase()),
+      _NavItem(
+        icon: AppIcons.transactions,
+        label: l10n.transactions.toLowerCase(),
+      ),
+      _NavItem(icon: AppIcons.plan, label: l10n.plan.toLowerCase()),
+      _NavItem(icon: AppIcons.wallet, label: l10n.wallet.toLowerCase()),
+      _NavItem(icon: AppIcons.profile, label: l10n.profile.toLowerCase()),
     ];
 
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
