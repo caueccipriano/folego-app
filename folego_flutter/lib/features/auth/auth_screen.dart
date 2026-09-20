@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import 'auth_validation.dart';
@@ -603,7 +604,7 @@ class _DesktopBrandPanel extends StatelessWidget {
               height: 12,
               decoration: BoxDecoration(
                 color: purple,
-                borderRadius: BorderRadius.circular(99),
+                borderRadius: BorderRadius.circular(AppRadii.pill),
               ),
             ),
             const SizedBox(width: 10),
@@ -612,7 +613,7 @@ class _DesktopBrandPanel extends StatelessWidget {
               height: 12,
               decoration: BoxDecoration(
                 color: AppColors.lime,
-                borderRadius: BorderRadius.circular(99),
+                borderRadius: BorderRadius.circular(AppRadii.pill),
               ),
             ),
           ],
