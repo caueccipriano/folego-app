@@ -362,15 +362,15 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
         return ListView(
-          padding: const EdgeInsets.fromLTRB(0, 14, 0, 80),
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 72),
           children: [
             _ProjectionHeader(
               onBack: widget.onBack,
               onScenario: _openScenarioSettings,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             _ProjectionPlanModeToggle(onSummary: widget.onBack),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             if (wide)
               Row(
                 children: [
@@ -393,7 +393,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                 value: _horizon,
                 onChanged: _setHorizon,
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             if (!projection.hasProjectionInputs && _adjustments.isEmpty)
               _ProjectionEmptyState(onBack: widget.onBack)
             else ...[
@@ -487,10 +487,10 @@ class _ProjectionSimulateButton extends StatelessWidget {
         foregroundColor: brightness == Brightness.dark
             ? AppColors.darkPrimaryText
             : Colors.white,
-        minimumSize: const Size(0, 46),
+        minimumSize: const Size(0, 44),
         padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
+          horizontal: 14,
+          vertical: 10,
         ),
         shape: const StadiumBorder(),
       ),
@@ -684,7 +684,7 @@ class _ProjectionHero extends StatelessWidget {
 
     return Container(
       key: const ValueKey('projection-hero'),
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Color.alphaBlend(
           accent.withValues(alpha: brightness == Brightness.dark ? .12 : .08),
@@ -700,7 +700,7 @@ class _ProjectionHero extends StatelessWidget {
             'seu futuro financeiro',
             style: AppTypography.section(
               context,
-              fontSize: 19,
+              fontSize: 18,
               color: primary,
             ),
           ),
@@ -723,7 +723,7 @@ class _ProjectionHero extends StatelessWidget {
               Formatters.money(summary.endingBalance),
               style: AppTypography.money(
                 context,
-                fontSize: 38,
+                fontSize: 36,
                 color: summary.endingBalance < 0 ? alert : primary,
               ),
             ),
@@ -742,7 +742,7 @@ class _ProjectionHero extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -768,7 +768,7 @@ class _ProjectionHero extends StatelessWidget {
             ],
           ),
           if (critical != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
