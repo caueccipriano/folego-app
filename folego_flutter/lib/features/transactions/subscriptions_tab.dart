@@ -224,7 +224,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(22),
@@ -232,8 +232,8 @@ class _EmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(AppIcons.recurring, size: 34),
-          const SizedBox(height: 12),
+          const Icon(AppIcons.recurring, size: 28),
+          const SizedBox(height: 8),
           Text(
             'nenhuma assinatura ainda',
             style: AppTypography.section(context, fontSize: 16),
@@ -249,7 +249,7 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           if (canClassify) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: onClassify,
               icon: const Icon(AppIcons.add, size: 17),
@@ -288,6 +288,7 @@ class _SubscriptionCard extends StatelessWidget {
       if (next != null) 'próxima ${_shortDate(next)}',
       ?source,
       ?item.categoryName,
+      item.active ? 'ativa' : 'encerrada',
     ];
 
     return Semantics(
@@ -304,7 +305,7 @@ class _SubscriptionCard extends StatelessWidget {
         child: InkWell(
           onTap: onEdit,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 7, 10),
+            padding: const EdgeInsets.fromLTRB(11, 8, 6, 8),
             child: Row(
               children: [
                 Container(
@@ -358,15 +359,7 @@ class _SubscriptionCard extends StatelessWidget {
                           color: secondary,
                         ),
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        item.active ? 'ativa' : 'encerrada',
-                        style: AppTypography.label(
-                          context,
-                          fontSize: 10,
-                          color: secondary,
-                        ),
-                      ),
+
                     ],
                   ),
                 ),
