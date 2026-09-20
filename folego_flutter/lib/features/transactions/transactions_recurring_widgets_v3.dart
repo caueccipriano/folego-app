@@ -453,6 +453,7 @@ class _SheetAction {
 
 class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});
+
   final String message;
   final Future<void> Function() onRetry;
 
@@ -461,28 +462,10 @@ class _ErrorState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off_rounded, size: 46),
-            const SizedBox(height: 14),
-            Text(
-              'Não foi possível carregar os lançamentos.',
-              textAlign: TextAlign.center,
-              style: AppTypography.section(context, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppTypography.body(context, fontSize: 12),
-            ),
-            const SizedBox(height: 18),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('Tentar novamente'),
-            ),
-          ],
+        child: AppErrorState(
+          title: 'não consegui carregar os lançamentos',
+          description: message,
+          onRetry: onRetry,
         ),
       ),
     );
