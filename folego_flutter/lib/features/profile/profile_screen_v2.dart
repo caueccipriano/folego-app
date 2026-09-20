@@ -264,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               error: _identityError,
               onRetry: _loadIdentity,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _SettingsCard(
               children: [
                 _SettingsRow(
@@ -286,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _SettingsCard(
               children: [
                 _SettingsRow(
@@ -379,11 +379,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
     final mobileSections = <Widget>[
       _accountSection(),
-      const SizedBox(height: 10),
+      const SizedBox(height: 8),
       _preferencesSection(),
-      const SizedBox(height: 10),
+      const SizedBox(height: 8),
       _dataSection(),
-      const SizedBox(height: 10),
+      const SizedBox(height: 8),
       _logoutSection(),
     ];
 
@@ -395,7 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           fillHeight: true,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(0, 10, 0, 76),
+            padding: const EdgeInsets.fromLTRB(0, 8, 0, 68),
             children: [
               const AppPageHeader(
                 title: 'perfil',
