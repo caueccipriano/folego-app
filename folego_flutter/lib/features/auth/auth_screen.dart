@@ -71,6 +71,13 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
+  void _setRememberMe(bool value) {
+    setState(() => _rememberMe = value);
+    if (!value) {
+      AppPreferences.setRememberedEmail(null);
+    }
+  }
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -480,15 +487,15 @@ class _AuthScreenState extends State<AuthScreen> {
                     value: _rememberMe,
                     onChanged: _loading
                         ? null
-                        : (value) => setState(() => _rememberMe = value ?? false),
+                        : (value) => _setRememberMe(value ?? false),
                   ),
                   Expanded(
                     child: GestureDetector(
                       onTap: _loading
                           ? null
-                          : () => setState(() => _rememberMe = !_rememberMe),
+                          : () => _setRememberMe(!_rememberMe),
                       child: Text(
-                        'lembrar-me neste dispositivo',
+                        'lembrar usuário e senha',
                         style: AppTypography.body(
                           context,
                           fontSize: 12,
