@@ -94,6 +94,9 @@ class DesktopNavigationSidebar extends StatelessWidget {
     final secondaryText = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
     final width = compact ? 204.0 : 232.0;
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 160);
 
     return Material(
       key: const ValueKey('desktop-sidebar'),
@@ -141,7 +144,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                           hoverColor: accent.withValues(alpha: .07),
                           focusColor: accent.withValues(alpha: .10),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
+                            duration: motionDuration,
                             curve: Curves.easeOutCubic,
                             constraints: const BoxConstraints(minHeight: 48),
                             padding: const EdgeInsets.symmetric(horizontal: 13),
