@@ -420,7 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
       overflow: TextOverflow.ellipsis,
       style: AppTypography.display(
         context,
-        fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact ? 28 : 30,
+        fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact ? 24 : 28,
         color: primaryText,
       ),
     );
@@ -579,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildSectionHeader(
           title: 'último movimento',
-          subtitle: 'o que aconteceu por último',
+          subtitle: 'o registro mais recente da sua vida financeira',
         ),
         const SizedBox(height: 10),
         if (_recentUnavailable)
@@ -592,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         else if (latest == null)
           _buildCompactEmptyCard(
-            message: 'nenhum movimento recente',
+            message: 'nada por aqui ainda — quando você movimentar, eu organizo.',
             surface: surface,
             border: border,
             primaryText: primaryText,
