@@ -270,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final latest = _latestTransaction();
 
-    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 120;
+    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 88;
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
@@ -316,23 +316,23 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: AppScrollGutter.padding(
                 context,
-                top: 16,
+                top: 12,
                 bottom: bottomListPadding,
               ),
               children: [
                 header,
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   quickActions,
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   upcoming,
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   monthlyMoney,
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   projectionInsight,
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
@@ -896,8 +896,8 @@ class _QuickAction extends StatelessWidget {
             return null;
           }),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 52),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.compactCard),
               border: borderColor == null
