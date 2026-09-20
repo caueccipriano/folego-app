@@ -20,7 +20,7 @@ class _ProfileSection extends StatelessWidget {
           title: title,
           subtitle: subtitle,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         child,
       ],
     );
@@ -50,7 +50,7 @@ class _AccountHeader extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -65,8 +65,8 @@ class _AccountHeader extends StatelessWidget {
                 label: 'iniciais ${identity.initials}',
                 image: true,
                 child: Container(
-                  width: 54,
-                  height: 54,
+                  width: 48,
+                  height: 48,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: purple.withValues(alpha: .14),
@@ -77,7 +77,7 @@ class _AccountHeader extends StatelessWidget {
                     identity.initials,
                     style: AppTypography.section(
                       context,
-                      fontSize: 18,
+                      fontSize: 17,
                       color: purple,
                     ),
                   ),
@@ -94,7 +94,7 @@ class _AccountHeader extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.section(
                         context,
-                        fontSize: 17,
+                        fontSize: 16,
                         color: primary,
                       ),
                     ),
@@ -227,20 +227,20 @@ class _SettingsRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 58),
+            constraints: const BoxConstraints(minHeight: 54),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 9, 10, 9),
+              padding: const EdgeInsets.fromLTRB(11, 7, 9, 7),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 34,
+                    height: 34,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: .10),
                       borderRadius: BorderRadius.circular(AppRadii.control),
                     ),
-                    child: Icon(icon, size: 18, color: iconColor),
+                    child: Icon(icon, size: 17, color: iconColor),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -389,8 +389,8 @@ class _AppearanceOption extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.control),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 64),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            constraints: const BoxConstraints(minHeight: 56),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(
@@ -400,7 +400,7 @@ class _AppearanceOption extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 19, color: selected ? purple : primary),
+                Icon(icon, size: 18, color: selected ? purple : primary),
                 const SizedBox(height: 5),
                 Text(
                   label,
@@ -433,7 +433,7 @@ class _ChoiceSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
