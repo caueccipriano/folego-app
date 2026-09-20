@@ -194,19 +194,19 @@ class _WalletScreenState extends State<WalletScreen> {
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 20, 0, 150),
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 108),
               children: [
                 _buildHeader(brightness),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 if (_loading)
                   const AppLoadingState(label: 'organizando sua carteira')
                 else if (_error != null)
                   _WalletError(message: _error!, onRetry: _load)
                 else if (_overview != null) ...[
                   _buildPositionSummary(),
-                  const SizedBox(height: 20),
-                  _buildSelector(),
                   const SizedBox(height: 16),
+                  _buildSelector(),
+                  const SizedBox(height: 12),
                   _buildSelectedSection(),
                 ],
               ],
@@ -536,8 +536,8 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     return Container(
-      constraints: const BoxConstraints(minHeight: 108),
-      padding: const EdgeInsets.all(14),
+      constraints: const BoxConstraints(minHeight: 92),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -549,7 +549,7 @@ class _PositionMetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(metric.icon, size: 17, color: purple),
+              Icon(metric.icon, size: 16, color: purple),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -565,7 +565,7 @@ class _PositionMetricCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -619,7 +619,7 @@ class _WalletSection extends StatelessWidget {
           title: title,
           subtitle: description,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         child,
       ],
     );
