@@ -227,20 +227,20 @@ class _SettingsRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 54),
+            constraints: const BoxConstraints(minHeight: 50),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(11, 7, 9, 7),
+              padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
               child: Row(
                 children: [
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: 32,
+                    height: 32,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: .10),
                       borderRadius: BorderRadius.circular(AppRadii.control),
                     ),
-                    child: Icon(icon, size: 17, color: iconColor),
+                    child: Icon(icon, size: 16, color: iconColor),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
