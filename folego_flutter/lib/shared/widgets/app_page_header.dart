@@ -27,49 +27,72 @@ class AppPageHeader extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (leading != null) ...[
-              leading!,
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.display(
-                  context,
-                  fontSize: 28,
-                  color: primary,
-                ),
-              ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: 12),
-              trailing!,
-            ],
+    Widget titleRow({required bool includeTrailing}) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: 8),
           ],
-        ),
-        if (subtitle?.trim().isNotEmpty == true) ...[
-          const SizedBox(height: 5),
-          Padding(
-            padding: EdgeInsets.only(left: leading == null ? 0 : 56),
+          Expanded(
             child: Text(
-              subtitle!,
-              style: AppTypography.body(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.display(
                 context,
-                fontSize: 13,
-                color: secondary,
+                fontSize: 28,
+                color: primary,
               ),
             ),
           ),
+          if (includeTrailing && trailing != null) ...[
+            const SizedBox(width: 12),
+            trailing!,
+          ],
         ],
-      ],
+      );
+    }
+
+    Widget subtitleText() => Padding(
+          padding: EdgeInsets.only(left: leading == null ? 0 : 56),
+          child: Text(
+            subtitle!,
+            style: AppTypography.body(
+              context,
+              fontSize: 13,
+              color: secondary,
+            ),
+          ),
+        );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackTrailing =
+            trailing != null && leading != null && constraints.maxWidth < 390;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            titleRow(includeTrailing: !stackTrailing),
+            if (subtitle?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 5),
+              subtitleText(),
+            ],
+            if (stackTrailing) ...[
+              const SizedBox(height: 10),
+              Padding(
+                padding: EdgeInsets.only(left: leading == null ? 0 : 56),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: trailing!,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
