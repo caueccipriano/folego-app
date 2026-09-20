@@ -31,7 +31,7 @@ class AppSectionHeader extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: AppTypography.section(
             context,
-            fontSize: 20,
+            fontSize: 18,
             color: primary,
           ),
         );
@@ -42,7 +42,7 @@ class AppSectionHeader extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: AppTypography.body(
             context,
-            fontSize: 12,
+            fontSize: 11,
             color: secondary,
           ),
         );
@@ -68,7 +68,7 @@ class AppSectionHeader extends StatelessWidget {
                 ],
               ),
             if (subtitle?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               subtitleText(),
             ],
             if (stackTrailing) ...[
