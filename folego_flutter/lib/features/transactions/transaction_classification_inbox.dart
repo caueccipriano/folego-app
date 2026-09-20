@@ -4,6 +4,7 @@ import '../../core/entitlements/feature_entitlements.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/financial_display_text.dart';
 import '../../core/utils/formatters.dart';
@@ -15,6 +16,7 @@ import '../../data/repositories/folego_repository_automation.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
 import '../../shared/widgets/category_search_picker.dart';
+import '../../shared/widgets/app_loading_state.dart';
 
 class TransactionClassificationInbox extends StatefulWidget {
   const TransactionClassificationInbox({
@@ -119,7 +121,7 @@ class _TransactionClassificationInboxState
         ? _incomeCategories
         : _expenseCategories;
     if (categories.isEmpty) {
-      setState(() => _error = 'Nenhuma categoria disponível para este lançamento.');
+      setState(() => _error = 'nenhuma categoria disponível para este lançamento');
       return;
     }
 
@@ -155,7 +157,7 @@ class _TransactionClassificationInboxState
           content: Text(
             ruleCreated
                 ? 'Classificado em ${selected.breadcrumb} e regra preparada para próximas revisões.'
-                : 'Classificado em ${selected.breadcrumb}.',
+                : 'classificado em ${selected.breadcrumb}',
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -209,7 +211,7 @@ class _TransactionClassificationInboxState
       await widget.repository.createAutomationRule(
         spaceId: widget.spaceId,
         draft: AutomationRuleDraft(
-          name: 'Sempre: ${_shortLabel(description)}',
+          name: 'sempre: ${_shortLabel(description)}',
           matchField: AutomationMatchField.description,
           matchType: AutomationMatchType.contains,
           matchValue: description,
@@ -227,7 +229,7 @@ class _TransactionClassificationInboxState
     } catch (error) {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('A categoria foi salva, mas a regra não: ${_friendly(error)}')),
+        SnackBar(content: Text('a categoria foi salva, mas a regra não: ${_friendly(error)}')),
       );
       return false;
     }
@@ -303,7 +305,7 @@ class _TransactionClassificationInboxState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Classificar lançamentos',
+                          'classificar lançamentos',
                           style: AppTypography.section(
                             context,
                             fontSize: 21,
@@ -313,7 +315,7 @@ class _TransactionClassificationInboxState
                         const SizedBox(height: 3),
                         Text(
                           _items.isEmpty
-                              ? 'Tudo em dia por aqui.'
+                              ? 'tudo em dia por aqui'
                               : '${_items.length} pendente${_items.length == 1 ? '' : 's'} • escolha categoria e subcategoria',
                           style: AppTypography.body(
                             context,
@@ -325,7 +327,7 @@ class _TransactionClassificationInboxState
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Atualizar',
+                    tooltip: 'atualizar',
                     onPressed: _refreshing ? null : _refresh,
                     icon: _refreshing
                         ? const SizedBox(
@@ -336,7 +338,7 @@ class _TransactionClassificationInboxState
                         : Icon(AppIcons.refresh, color: secondaryText),
                   ),
                   IconButton(
-                    tooltip: 'Fechar',
+                    tooltip: 'fechar',
                     onPressed: () => Navigator.of(context).pop(_changed),
                     icon: Icon(AppIcons.close, color: secondaryText),
                   ),
@@ -351,7 +353,7 @@ class _TransactionClassificationInboxState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: purple.withValues(alpha: .08),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
                   border: Border.all(color: purple.withValues(alpha: .25)),
                 ),
                 child: Text(
@@ -365,7 +367,7 @@ class _TransactionClassificationInboxState
               ),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingState(label: 'organizando classificações')
                   : _items.isEmpty
                   ? _EmptyClassificationState(
                       surface: surface,
@@ -418,16 +420,16 @@ class _TransactionClassificationInboxState
   String _friendly(Object error) {
     final text = error.toString();
     if (text.contains('classification_failed')) {
-      return 'Não foi possível concluir a classificação.';
+      return 'não foi possível concluir a classificação';
     }
     if (text.contains('event_not_classifiable')) {
-      return 'Esse tipo de lançamento não usa categoria econômica.';
+      return 'esse tipo de lançamento não usa categoria econômica';
     }
     if (text.contains('category_kind_mismatch')) {
-      return 'Essa categoria não corresponde ao tipo do lançamento.';
+      return 'essa categoria não corresponde ao tipo do lançamento';
     }
     if (text.contains('category_not_selectable')) {
-      return 'Escolha uma categoria ativa e selecionável.';
+      return 'escolha uma categoria ativa e selecionável';
     }
     return text
         .replaceFirst('Exception: ', '')
@@ -464,12 +466,12 @@ class _ClassificationCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: saving ? null : onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
             border: Border.all(color: border),
           ),
           child: Row(
@@ -480,7 +482,7 @@ class _ClassificationCard extends StatelessWidget {
                 height: 42,
                 decoration: BoxDecoration(
                   color: purple.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
                 ),
                 child: Icon(
                   AppIcons.categoryUnclassified,
@@ -537,7 +539,7 @@ class _ClassificationCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'Escolher categoria',
+                          'escolher categoria',
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
@@ -573,21 +575,21 @@ class _ClassificationCard extends StatelessWidget {
   static String _eventLabel(String eventType) {
     switch (eventType) {
       case 'income':
-        return 'Entrada';
+        return 'entrada';
       case 'benefit_credit':
-        return 'Crédito de benefício';
+        return 'crédito de benefício';
       case 'reimbursement':
-        return 'Reembolso';
+        return 'reembolso';
       case 'card_purchase':
-        return 'Cartão';
+        return 'cartão';
       case 'benefit_expense':
-        return 'Benefício';
+        return 'benefício';
       case 'refund':
-        return 'Estorno';
+        return 'estorno';
       case 'debt_payment':
-        return 'Dívida';
+        return 'dívida';
       default:
-        return 'Saída';
+        return 'saída';
     }
   }
 
@@ -639,7 +641,7 @@ class _EmptyClassificationState extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(color: border),
           ),
           child: Column(
@@ -650,13 +652,13 @@ class _EmptyClassificationState extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: purple.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(AppRadii.compactCard),
                 ),
                 child: Icon(AppIcons.check, color: purple, size: 25),
               ),
               const SizedBox(height: 14),
               Text(
-                'Tudo classificado',
+                'tudo classificado',
                 style: AppTypography.section(
                   context,
                   fontSize: 18,
