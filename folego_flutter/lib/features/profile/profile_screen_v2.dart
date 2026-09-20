@@ -304,8 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _languageSection() => _ProfileSection(
         title: 'idioma',
-        subtitle:
-            'português está completo; outros idiomas entram quando estiverem prontos',
+        subtitle: 'idioma usado na interface',
         child: _LanguageCard(selected: _language, onSelected: _setLanguage),
       );
 
