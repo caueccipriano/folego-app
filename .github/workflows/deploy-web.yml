@@ -47,9 +47,11 @@ jobs:
       - name: Build web app
         run: flutter build web --release --base-href "/folego-app/"
 
-      - name: Version PWA cache
+      - name: Version PWA cache and app shell
         run: |
           sed -i "s/__FOLEGO_CACHE_VERSION__/${GITHUB_SHA}/g" build/web/folego_push_sw.js
+          sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/index.html
+          sed -i "s#main.dart.js#main.dart.js?v=${GITHUB_SHA}#g" build/web/flutter_bootstrap.js
 
       - name: Verify PWA artifact
         run: |
@@ -58,7 +60,10 @@ jobs:
           test -f build/web/folego_push_sw.js
           test -f build/web/folego_push_bridge.js
           grep -F "${GITHUB_SHA}" build/web/folego_push_sw.js
+          grep -F "${GITHUB_SHA}" build/web/index.html
+          grep -F "main.dart.js?v=${GITHUB_SHA}" build/web/flutter_bootstrap.js
           ! grep -F "__FOLEGO_CACHE_VERSION__" build/web/folego_push_sw.js
+          ! grep -F "__FOLEGO_BUILD_VERSION__" build/web/index.html
           grep -F 'href="/folego-app/"' build/web/index.html
           grep -F '"display": "standalone"' build/web/manifest.json
 
