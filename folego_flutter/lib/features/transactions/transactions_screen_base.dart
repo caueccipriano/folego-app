@@ -424,7 +424,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       await _refreshTransactions(clearVisible: false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lançamento atualizado.')),
+        const SnackBar(content: Text('lançamento atualizado')),
       );
     }
   }
@@ -437,7 +437,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          'Excluir lançamento?',
+          'excluir lançamento?',
           style: AppTypography.section(dialogContext, fontSize: 18),
         ),
         content: Text(
@@ -448,11 +448,11 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: const Text('cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Excluir'),
+            child: const Text('excluir'),
           ),
         ],
       ),
@@ -468,7 +468,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       await _refreshTransactions(clearVisible: false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lançamento excluído.')),
+        const SnackBar(content: Text('lançamento excluído')),
       );
     } catch (error) {
       if (!mounted) return;
@@ -509,7 +509,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            item.active ? 'Recorrência pausada.' : 'Recorrência reativada.',
+            item.active ? 'recorrência pausada' : 'recorrência reativada',
           ),
         ),
       );
@@ -539,8 +539,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         SnackBar(
           content: Text(
             subscription
-                ? 'Recorrência movida para assinaturas.'
-                : 'Assinatura movida para recorrências.',
+                ? 'recorrência movida para assinaturas'
+                : 'assinatura movida para recorrências',
           ),
         ),
       );
@@ -564,7 +564,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       await _refreshRecurring();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Acompanhamento encerrado.')),
+        const SnackBar(content: Text('acompanhamento encerrado')),
       );
     } catch (error) {
       if (!mounted) return;
@@ -581,22 +581,22 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          'Excluir recorrência?',
+          'excluir recorrência?',
           style: AppTypography.section(dialogContext, fontSize: 18),
         ),
         content: Text(
           '"${item.name}" deixará de ser considerado nos próximos períodos.\n\n'
-          'Os lançamentos que já aconteceram continuarão no histórico.',
+          'os lançamentos que já aconteceram continuarão no histórico',
           style: AppTypography.body(dialogContext, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: const Text('cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Excluir'),
+            child: const Text('excluir'),
           ),
         ],
       ),
@@ -610,7 +610,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       await _refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recorrência excluída.')),
+        const SnackBar(content: Text('recorrência excluída')),
       );
     } catch (error) {
       if (!mounted) return;
@@ -626,7 +626,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     if (!item.active) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Reative essa recorrência antes de realizá-la.'),
+          content: Text('reative essa recorrência antes de realizá-la'),
         ),
       );
       return;
@@ -637,7 +637,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Não há uma ocorrência válida para realizar no período desta recorrência.',
+            'não há uma ocorrência válida para realizar no período desta recorrência',
           ),
         ),
       );
@@ -654,10 +654,10 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       firstDate: item.startsOn,
       lastDate: item.endsOn ?? DateTime(2100, 12, 31),
       helpText: item.isIncome
-          ? 'Qual recebimento aconteceu?'
-          : 'Qual pagamento aconteceu?',
-      cancelText: 'Cancelar',
-      confirmText: 'Continuar',
+          ? 'qual recebimento aconteceu?'
+          : 'qual pagamento aconteceu?',
+      cancelText: 'cancelar',
+      confirmText: 'continuar',
     );
     if (dueDate == null || !mounted) return;
 
@@ -665,21 +665,21 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          item.isIncome ? 'Marcar como recebido?' : 'Marcar como pago?',
+          item.isIncome ? 'marcar como recebido?' : 'marcar como pago?',
         ),
         content: Text(
           '${item.name}\n\n${Formatters.money(item.amount)}\n'
           '${_formatDate(dueDate)}\n\n'
-          'O Fôlego trocará a previsão pelo lançamento real.',
+          'o Fôlego trocará a previsão pelo lançamento real',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: const Text('cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(item.isIncome ? 'Recebido' : 'Pago'),
+            child: Text(item.isIncome ? 'recebido' : 'pago'),
           ),
         ],
       ),
@@ -697,7 +697,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            item.isIncome ? 'Receita registrada.' : 'Gasto registrado.',
+            item.isIncome ? 'receita registrada' : 'gasto registrado',
           ),
         ),
       );
@@ -897,23 +897,23 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   String _friendlyError(Object error) {
     final text = error.toString();
     if (text.contains('invalid_occurrence')) {
-      return 'Essa data não corresponde a uma ocorrência prevista.';
+      return 'essa data não corresponde a uma ocorrência prevista';
     }
     if (text.contains('invalid_recurring_item')) {
-      return 'Essa recorrência não está ativa.';
+      return 'essa recorrência não está ativa';
     }
     if (text.contains('space_access_denied') ||
         text.contains('write_access_denied')) {
-      return 'Você não tem permissão para alterar esse espaço.';
+      return 'você não tem permissão para alterar esse espaço';
     }
     if (text.contains('transaction_type_not_deletable')) {
-      return 'Esse tipo de lançamento não pode ser excluído por aqui.';
+      return 'esse tipo de lançamento não pode ser excluído por aqui';
     }
     if (text.contains('transaction_not_confirmed')) {
-      return 'Esse lançamento não está disponível para exclusão.';
+      return 'esse lançamento não está disponível para exclusão';
     }
     if (text.contains('invalid_transaction')) {
-      return 'Não encontrei esse lançamento.';
+      return 'não encontrei esse lançamento';
     }
     return text
         .replaceFirst('Exception: ', '')
