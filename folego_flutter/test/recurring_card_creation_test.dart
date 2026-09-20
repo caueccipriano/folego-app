@@ -32,18 +32,18 @@ void main() {
           ),
         ),
       );
-      await _waitFor(tester, find.text('Criar recorrência'));
+      await _waitFor(tester, find.text('criar recorrência'));
 
       await tester.enterText(find.byType(TextField).at(0), 'Spotify');
       await tester.enterText(find.byType(TextField).at(1), '21,90');
-      await tester.tap(find.text('Cartão'));
+      await tester.tap(find.text('cartão'));
       await tester.pump();
 
       expect(find.text('Cartão principal'), findsOneWidget);
       expect(find.text('Conta ativa'), findsNothing);
 
-      await tester.ensureVisible(find.text('Criar recorrência'));
-      await tester.tap(find.text('Criar recorrência'));
+      await tester.ensureVisible(find.text('criar recorrência'));
+      await tester.tap(find.text('criar recorrência'));
       await tester.pump();
 
       expect(repository.createdAccountId, isNull);
@@ -77,15 +77,15 @@ void main() {
           ),
         ),
       );
-      await _waitFor(tester, find.text('Criar recorrência'));
+      await _waitFor(tester, find.text('criar recorrência'));
 
       await tester.enterText(find.byType(TextField).at(0), 'Academia');
       await tester.enterText(find.byType(TextField).at(1), '99,90');
 
       expect(find.text('Conta ativa'), findsOneWidget);
 
-      await tester.ensureVisible(find.text('Criar recorrência'));
-      await tester.tap(find.text('Criar recorrência'));
+      await tester.ensureVisible(find.text('criar recorrência'));
+      await tester.tap(find.text('criar recorrência'));
       await tester.pump();
 
       expect(repository.createdAccountId, 'account-1');
