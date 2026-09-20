@@ -143,6 +143,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadii.control),
                           hoverColor: accent.withValues(alpha: .07),
                           focusColor: accent.withValues(alpha: .10),
+                          highlightColor: accent.withValues(alpha: .10),
                           child: AnimatedContainer(
                             duration: motionDuration,
                             curve: Curves.easeOutCubic,
