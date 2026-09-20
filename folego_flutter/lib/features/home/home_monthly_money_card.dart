@@ -29,6 +29,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
@@ -405,7 +406,6 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final muted = AppColors.background(brightness);
-    final border = AppColors.border(brightness);
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final amount = data.subtract && data.amount > 0
