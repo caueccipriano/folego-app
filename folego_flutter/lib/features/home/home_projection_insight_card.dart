@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/projection_model.dart';
@@ -42,12 +43,12 @@ class HomeProjectionInsightCard extends StatelessWidget {
       child: InkWell(
         key: const ValueKey('home-projection-insight'),
         onTap: onOpen,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(color: border),
           ),
           child: Row(
@@ -57,7 +58,7 @@ class HomeProjectionInsightCard extends StatelessWidget {
                 height: 46,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
                 ),
                 child: Icon(AppIcons.chartLine, color: accent, size: 22),
               ),
