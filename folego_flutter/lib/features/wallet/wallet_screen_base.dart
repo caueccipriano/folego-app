@@ -1443,6 +1443,7 @@ class _WalletSectionChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
   });
+
   final String label;
   final int count;
   final IconData icon;
@@ -1468,54 +1469,58 @@ class _WalletSectionChip extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-        child: AnimatedContainer(
-          duration: motionDuration,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? purple.withValues(alpha: .13) : surface,
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: Border.all(
-              color: selected ? purple.withValues(alpha: .45) : border,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 17, color: selected ? purple : secondary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTypography.label(
-                  context,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? primary : secondary,
-                ),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          child: AnimatedContainer(
+            duration: motionDuration,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? purple.withValues(alpha: .13) : surface,
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              border: Border.all(
+                color: selected ? purple.withValues(alpha: .45) : border,
               ),
-              const SizedBox(width: 6),
-              Container(
-                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? purple.withValues(alpha: .16)
-                      : border.withValues(alpha: .55),
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                ),
-                child: Text(
-                  '$count',
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 17, color: selected ? purple : secondary),
+                const SizedBox(width: 6),
+                Text(
+                  label,
                   style: AppTypography.label(
                     context,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: selected ? purple : secondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? primary : secondary,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? purple.withValues(alpha: .16)
+                        : border.withValues(alpha: .55),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? purple : secondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
