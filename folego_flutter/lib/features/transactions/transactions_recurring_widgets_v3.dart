@@ -77,7 +77,7 @@ class _RecurringTab extends StatelessWidget {
               'suas recorrências',
               style: AppTypography.section(context, fontSize: 18),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 3),
             Text(
               'edite ou pause o que se repete no seu mês',
               style: AppTypography.body(
@@ -142,7 +142,7 @@ class _RecurringCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(12, 9, 6, 9),
+      padding: const EdgeInsets.fromLTRB(11, 8, 5, 8),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -195,7 +195,7 @@ class _RecurringCard extends StatelessWidget {
                     color: primaryText,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     Expanded(
@@ -246,8 +246,8 @@ class _RecurringCard extends StatelessWidget {
             onTap: () => _showRecurringActions(context),
             borderRadius: BorderRadius.circular(14),
             child: Container(
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: secondaryText.withValues(alpha: .07),
