@@ -38,7 +38,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Lançamentos'), findsOneWidget);
+    expect(find.text('lançamentos'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'buscar lançamento'), findsOneWidget);
     expect(find.byKey(const ValueKey('transaction-filter-button')), findsOneWidget);
     expect(tester.takeException(), isNull);
