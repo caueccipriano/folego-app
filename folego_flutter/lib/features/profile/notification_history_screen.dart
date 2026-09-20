@@ -6,9 +6,14 @@ import '../../core/notifications/notification_history_cache.dart';
 import '../../core/notifications/notification_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
+import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 
 class NotificationHistoryScreen extends StatefulWidget {
   const NotificationHistoryScreen({
@@ -104,193 +109,197 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(title: const Text('histórico de alertas')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(AppIcons.warning, size: 38),
-                        const SizedBox(height: 12),
-                        Text(_error!),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: _load,
-                          child: const Text('tentar de novo'),
-                        ),
-                      ],
-                    ),
+      body: SafeArea(
+        child: AppContentContainer.list(
+          fillHeight: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: AppPageHeader(
+                  title: 'histórico de alertas',
+                  subtitle: 'avisos que o Fôlego já enviou para você',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(AppIcons.back),
                   ),
-                )
-              : Column(
-                  children: [
-                    if (_usingOfflineCache)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        color: AppColors.surface(brightness),
-                        child: Row(
-                          children: [
-                            Icon(
-                              AppIcons.warning,
-                              size: 17,
-                              color: AppColors.secondaryText(brightness),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'sem conexão · mostrando a última cópia salva',
-                                style: AppTypography.label(
-                                  context,
-                                  fontSize: 10,
-                                  color: AppColors.secondaryText(brightness),
+                ),
+              ),
+              Expanded(
+                child: _loading
+                    ? const AppLoadingState(label: 'organizando seu histórico')
+                    : _error != null
+                        ? AppErrorState(
+                            title: 'não consegui carregar seu histórico',
+                            description: _error,
+                            onRetry: _load,
+                          )
+                        : Column(
+                            children: [
+                              if (_usingOfflineCache)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface(brightness),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.control,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.border(brightness),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        AppIcons.warning,
+                                        size: 17,
+                                        color: AppColors.secondaryText(brightness),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'sem conexão · mostrando a última cópia salva',
+                                          style: AppTypography.label(
+                                            context,
+                                            fontSize: 10,
+                                            color: AppColors.secondaryText(brightness),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    Expanded(
-                      child: AppContentContainer.list(
-                        fillHeight: true,
-                        child: RefreshIndicator(
-                          onRefresh: _load,
-                          child: _items.isEmpty
-                              ? ListView(
-                                  padding: AppScrollGutter.padding(
-                                    context,
-                                    top: 80,
-                                    bottom: 60,
-                                  ),
-                                  children: [
-                                    const Icon(
-                                      AppIcons.notifications,
-                                      size: 42,
-                                    ),
-                                    const SizedBox(height: 14),
-                                    Text(
-                                      'nenhum alerta enviado ainda',
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.section(
-                                        context,
-                                        fontSize: 17,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'quando o Fôlego te avisar sobre limites, vencimentos ou o resumo diário, ele aparece aqui.',
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.body(
-                                        context,
-                                        fontSize: 12,
-                                        color: AppColors.secondaryText(
-                                          brightness,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : ListView.separated(
-                                  key: const ValueKey(
-                                    'notification-history-list',
-                                  ),
-                                  padding: AppScrollGutter.padding(
-                                    context,
-                                    top: 16,
-                                    bottom: 48,
-                                  ),
-                                  itemCount: _items.length,
-                                  separatorBuilder: (_, _) =>
-                                      const SizedBox(height: 10),
-                                  itemBuilder: (context, index) {
-                                    final item = _items[index];
-                                    return Material(
-                                      color: AppColors.surface(brightness),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(18),
-                                        side: BorderSide(
-                                          color: AppColors.border(brightness),
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(15),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Icon(
-                                              _iconFor(item.kind),
-                                              size: 21,
-                                              color: AppColors.primaryPurple(
-                                                brightness,
-                                              ),
+                              if (_usingOfflineCache) const SizedBox(height: 10),
+                              Expanded(
+                                child: RefreshIndicator(
+                                  onRefresh: _load,
+                                  child: _items.isEmpty
+                                      ? ListView(
+                                          padding: AppScrollGutter.padding(
+                                            context,
+                                            top: 70,
+                                            bottom: 60,
+                                          ),
+                                          children: const [
+                                            AppEmptyState(
+                                              icon: AppIcons.notifications,
+                                              title: 'nenhum alerta enviado ainda',
+                                              description:
+                                                  'quando o Fôlego te avisar sobre limites, vencimentos ou o resumo diário, ele aparece aqui',
                                             ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    item.title,
-                                                    style:
-                                                        AppTypography.section(
-                                                      context,
-                                                      fontSize: 14,
-                                                    ),
+                                          ],
+                                        )
+                                      : ListView.separated(
+                                          key: const ValueKey(
+                                            'notification-history-list',
+                                          ),
+                                          padding: AppScrollGutter.padding(
+                                            context,
+                                            top: 8,
+                                            bottom: 48,
+                                          ),
+                                          itemCount: _items.length,
+                                          separatorBuilder: (_, _) =>
+                                              const SizedBox(height: 10),
+                                          itemBuilder: (context, index) {
+                                            final item = _items[index];
+                                            return Material(
+                                              color: AppColors.surface(brightness),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  AppRadii.compactCard,
+                                                ),
+                                                side: BorderSide(
+                                                  color: AppColors.border(
+                                                    brightness,
                                                   ),
-                                                  if (item.body.isNotEmpty) ...[
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      item.body,
-                                                      style:
-                                                          AppTypography.body(
-                                                        context,
-                                                        fontSize: 11,
-                                                        color: AppColors
-                                                            .secondaryText(
-                                                          brightness,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                  const SizedBox(height: 7),
-                                                  Text(
-                                                    _when(
-                                                      context,
-                                                      item.deliveredAt,
-                                                    ),
-                                                    style: AppTypography.label(
-                                                      context,
-                                                      fontSize: 10,
-                                                      color: AppColors
-                                                          .secondaryText(
+                                                ),
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(15),
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Icon(
+                                                      _iconFor(item.kind),
+                                                      size: 21,
+                                                      color:
+                                                          AppColors.primaryPurple(
                                                         brightness,
                                                       ),
                                                     ),
-                                                  ),
-                                                ],
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            item.title,
+                                                            style:
+                                                                AppTypography.section(
+                                                              context,
+                                                              fontSize: 14,
+                                                            ),
+                                                          ),
+                                                          if (item.body.isNotEmpty) ...[
+                                                            const SizedBox(height: 4),
+                                                            Text(
+                                                              item.body,
+                                                              style:
+                                                                  AppTypography.body(
+                                                                context,
+                                                                fontSize: 11,
+                                                                color: AppColors
+                                                                    .secondaryText(
+                                                                  brightness,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                          const SizedBox(height: 7),
+                                                          Text(
+                                                            _when(
+                                                              context,
+                                                              item.deliveredAt,
+                                                            ),
+                                                            style:
+                                                                AppTypography.label(
+                                                              context,
+                                                              fontSize: 10,
+                                                              color: AppColors
+                                                                  .secondaryText(
+                                                                brightness,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                            );
+                                          },
                                         ),
-                                      ),
-                                    );
-                                  },
                                 ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                              ),
+                            ],
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
+
 }
