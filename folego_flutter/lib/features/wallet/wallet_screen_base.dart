@@ -641,7 +641,7 @@ class _ResponsiveWalletGrid extends StatelessWidget {
           AppLayoutSize.expanded => 2,
           AppLayoutSize.wide => 3,
         };
-        const spacing = 12.0;
+        const spacing = 10.0;
         final width =
             (constraints.maxWidth - spacing * (columns - 1)) / columns;
         return Wrap(
