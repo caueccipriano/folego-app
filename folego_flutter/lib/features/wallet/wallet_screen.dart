@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
-import '../../core/theme/app_icons.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'debt_form_sheet.dart';
 import 'wallet_instrument_management.dart';
@@ -69,26 +68,16 @@ class _WalletScreenState extends State<WalletScreen> {
       domain: AppRealtimeDomain.wallet,
       identity: (widget.spaceId, _localRevision),
       builder: (key) {
-        final content = Stack(
-          key: ValueKey(desktop ? 'wallet-desktop-layout' : 'wallet-mobile-layout'),
-          children: [
-            base.WalletScreen(
-              key: key,
-              repository: widget.repository,
-              spaceId: widget.spaceId,
-            ),
-            Positioned(
-              right: desktop ? 32 : 18,
-              bottom: desktop ? 32 : 104,
-              child: FloatingActionButton.extended(
-                key: const ValueKey('wallet-add-action'),
-                heroTag: 'wallet-add-instrument',
-                onPressed: _addInstrument,
-                icon: const Icon(AppIcons.add, size: 19),
-                label: const Text('adicionar'),
-              ),
-            ),
-          ],
+        final content = KeyedSubtree(
+          key: ValueKey(
+            desktop ? 'wallet-desktop-layout' : 'wallet-mobile-layout',
+          ),
+          child: base.WalletScreen(
+            key: key,
+            repository: widget.repository,
+            spaceId: widget.spaceId,
+            onAddRequested: _addInstrument,
+          ),
         );
 
         if (!desktop) return content;
