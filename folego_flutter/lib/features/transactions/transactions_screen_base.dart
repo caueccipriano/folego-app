@@ -816,7 +816,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                     ),
                     const SizedBox(height: 10),
                     Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         color: surface,
                         borderRadius: BorderRadius.circular(AppRadii.compactCard),
@@ -830,7 +830,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                           color: accent.withValues(
                             alpha: isDark ? .18 : .10,
                           ),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadii.control),
                         ),
                         labelColor: primary,
                         unselectedLabelColor: secondary,
@@ -1049,7 +1049,7 @@ class _TransactionsTabV3 extends StatelessWidget {
       fillHeight: true,
       child: Column(
         children: [
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 430;
@@ -1138,7 +1138,7 @@ class _TransactionsTabV3 extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           if (loading) const LinearProgressIndicator(minHeight: 2),
           Expanded(child: _buildList(context)),
         ],
