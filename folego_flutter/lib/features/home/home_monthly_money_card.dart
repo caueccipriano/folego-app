@@ -81,7 +81,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'gastos feitos em $monthName',
+                      'um retrato simples de $monthName',
                       style: AppTypography.body(
                         context,
                         fontSize: 12,
@@ -99,25 +99,34 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          Text(
-            'gastos feitos no mês',
-            style: AppTypography.label(context, color: secondary),
-          ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              Formatters.money(value.spendingNet),
-              key: const ValueKey('monthly-spending-net'),
-              style: AppTypography.money(
-                context,
-                fontSize: 34,
-                color: primary,
+          _MonthlyHeadlineGrid(
+            items: [
+              _MonthlyHeadlineData(
+                label: 'receitas reais',
+                value: Formatters.money(value.realIncome),
+                valueColor: AppColors.positiveText(brightness),
               ),
-            ),
+              _MonthlyHeadlineData(
+                label: 'gastos feitos no mês',
+                value: Formatters.money(value.spendingNet),
+                valueColor: primary,
+                valueKey: const ValueKey('monthly-spending-net'),
+              ),
+              _MonthlyHeadlineData(
+                label: 'resultado econômico',
+                value: _signedMoney(value.economicResult),
+                valueColor: value.economicResult < 0
+                    ? AppColors.expenseText(brightness)
+                    : primary,
+              ),
+            ],
           ),
           const SizedBox(height: 18),
+          Text(
+            'de onde vieram os gastos',
+            style: AppTypography.label(context, color: secondary),
+          ),
+          const SizedBox(height: 10),
           _MetricGrid(
             items: [
               _MetricData(
@@ -143,21 +152,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          Divider(color: border),
-          const SizedBox(height: 14),
-          _SummaryRow(
-            label: 'receitas reais',
-            value: Formatters.money(value.realIncome),
-            valueColor: AppColors.positiveText(brightness),
-          ),
-          const SizedBox(height: 11),
-          _SummaryRow(
-            label: 'resultado econômico',
-            value: _signedMoney(value.economicResult),
-            valueColor: primary,
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
@@ -170,6 +165,111 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               iconAlignment: IconAlignment.end,
               label: const Text('ver composição'),
               style: TextButton.styleFrom(foregroundColor: purple),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+class _MonthlyHeadlineData {
+  const _MonthlyHeadlineData({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.valueKey,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+  final Key? valueKey;
+}
+
+class _MonthlyHeadlineGrid extends StatelessWidget {
+  const _MonthlyHeadlineGrid({required this.items});
+
+  final List<_MonthlyHeadlineData> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 560;
+        if (!compact) {
+          return Row(
+            children: [
+              for (var i = 0; i < items.length; i++) ...[
+                Expanded(child: _MonthlyHeadlineTile(data: items[i])),
+                if (i != items.length - 1) const SizedBox(width: 10),
+              ],
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _MonthlyHeadlineTile(data: items[0])),
+                const SizedBox(width: 10),
+                Expanded(child: _MonthlyHeadlineTile(data: items[1])),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _MonthlyHeadlineTile(data: items[2]),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MonthlyHeadlineTile extends StatelessWidget {
+  const _MonthlyHeadlineTile({required this.data});
+
+  final _MonthlyHeadlineData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final muted = AppColors.background(brightness);
+    final border = AppColors.border(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: muted,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: border.withValues(alpha: .72)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            data.label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.label(
+              context,
+              fontSize: 10,
+              color: secondary,
+            ),
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              data.value,
+              key: data.valueKey,
+              style: AppTypography.money(
+                context,
+                fontSize: 18,
+                color: data.valueColor,
+              ),
             ),
           ),
         ],
