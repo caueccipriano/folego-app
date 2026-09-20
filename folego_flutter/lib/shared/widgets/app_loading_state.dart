@@ -8,9 +8,11 @@ class AppLoadingState extends StatelessWidget {
   const AppLoadingState({
     super.key,
     this.label = 'organizando seus dados',
+    this.compact = false,
   });
 
   final String label;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,10 @@ class AppLoadingState extends StatelessWidget {
       label: label,
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 72),
+          padding: EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: compact ? 24 : 72,
+        ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
