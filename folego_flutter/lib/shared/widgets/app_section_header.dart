@@ -25,40 +25,57 @@ class AppSectionHeader extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+    Widget titleText() => Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.section(
+            context,
+            fontSize: 20,
+            color: primary,
+          ),
+        );
+
+    Widget subtitleText() => Text(
+          subtitle!,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.body(
+            context,
+            fontSize: 12,
+            color: secondary,
+          ),
+        );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackTrailing = trailing != null && constraints.maxWidth < 340;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                title,
-                style: AppTypography.section(
-                  context,
-                  fontSize: 20,
-                  color: primary,
-                ),
-              ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: 10),
+            if (stackTrailing) ...[
+              titleText(),
+              const SizedBox(height: 8),
               trailing!,
+            ] else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: titleText()),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 10),
+                    trailing!,
+                  ],
+                ],
+              ),
+            if (subtitle?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 4),
+              subtitleText(),
             ],
           ],
-        ),
-        if (subtitle?.trim().isNotEmpty == true) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle!,
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: secondary,
-            ),
-          ),
-        ],
-      ],
+        );
+      },
     );
   }
 }
