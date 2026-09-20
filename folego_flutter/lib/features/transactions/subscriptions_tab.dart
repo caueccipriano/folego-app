@@ -53,7 +53,7 @@ class SubscriptionsTab extends StatelessWidget {
                 : 'subscriptions-desktop-layout',
           ),
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(0, 18, 0, 120),
+          padding: const EdgeInsets.fromLTRB(0, 14, 0, 98),
           children: [
             _Header(
               monthlyEquivalent: monthly,
@@ -61,7 +61,7 @@ class SubscriptionsTab extends StatelessWidget {
               canClassify: recurringCandidates.any((item) => item.isExpense),
               onClassify: () => _pickRecurring(context),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             if (items.isEmpty)
               _EmptyState(
                 canClassify: recurringCandidates.any((item) => item.isExpense),
@@ -163,10 +163,10 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Wrap(
@@ -181,12 +181,12 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   'assinaturas',
-                  style: AppTypography.section(context, fontSize: 20),
+                  style: AppTypography.section(context, fontSize: 18),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 5),
                 Text(
                   '${Formatters.money(monthlyEquivalent)} / mês',
-                  style: AppTypography.money(context, fontSize: 24),
+                  style: AppTypography.money(context, fontSize: 22),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -303,24 +303,24 @@ class _SubscriptionCard extends StatelessWidget {
         child: InkWell(
           onTap: onEdit,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(15, 14, 8, 14),
+            padding: const EdgeInsets.fromLTRB(12, 10, 7, 10),
             child: Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primaryPurple(brightness).withValues(alpha: .10),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadii.control),
                   ),
                   child: Icon(
                     AppIcons.recurring,
                     color: AppColors.primaryPurple(brightness),
-                    size: 22,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +357,7 @@ class _SubscriptionCard extends StatelessWidget {
                           color: secondary,
                         ),
                       ),
-                      const SizedBox(height: 7),
+                      const SizedBox(height: 5),
                       Text(
                         item.active ? 'ativa' : 'encerrada',
                         style: AppTypography.label(
