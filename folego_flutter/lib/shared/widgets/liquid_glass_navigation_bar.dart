@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -65,7 +66,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                       colors: [highlight, surface, lower],
                       stops: const [0, .30, 1],
                     ),
-                    borderRadius: BorderRadius.circular(32),
+                    borderRadius: BorderRadius.circular(AppRadii.navigation),
                     border: Border.all(
                       color: isDark
                           ? Colors.white.withValues(alpha: .14)
@@ -132,6 +133,9 @@ class _Destination extends StatelessWidget {
 
     final selectedTop = Colors.white.withValues(alpha: isDark ? .12 : .64);
     final selectedBottom = activePurple.withValues(alpha: isDark ? .16 : .13);
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
 
     return Semantics(
       selected: selected,
@@ -141,9 +145,9 @@ class _Destination extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadii.feature),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: motionDuration,
             curve: Curves.easeOutCubic,
             margin: const EdgeInsets.symmetric(horizontal: 2),
             decoration: BoxDecoration(
@@ -154,7 +158,7 @@ class _Destination extends StatelessWidget {
                       colors: [selectedTop, selectedBottom],
                     )
                   : null,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadii.feature),
               border: Border.all(
                 color: selected
                     ? Colors.white.withValues(alpha: isDark ? .14 : .62)
@@ -191,16 +195,7 @@ class _Destination extends StatelessWidget {
                     ),
                   ),
                 ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: selected ? 4 : 0,
-                  height: selected ? 4 : 0,
-                  margin: const EdgeInsets.only(top: 3),
-                  decoration: BoxDecoration(
-                    color: activePurple.withValues(alpha: .92),
-                    shape: BoxShape.circle,
-                  ),
-                ),
+                const SizedBox(height: 3),
               ],
             ),
           ),
