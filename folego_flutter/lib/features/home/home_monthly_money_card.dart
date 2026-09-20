@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/monthly_money_summary.dart';
@@ -39,7 +40,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadii.feature),
           border: Border.all(color: border),
         ),
         child: Text(
@@ -62,7 +63,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -243,7 +244,7 @@ class _MonthlyHeadlineTile extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: muted,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: border.withValues(alpha: .72)),
       ),
       child: Column(
@@ -358,7 +359,7 @@ class _MetricTile extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: muted,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: border.withValues(alpha: .7)),
       ),
       child: Column(
