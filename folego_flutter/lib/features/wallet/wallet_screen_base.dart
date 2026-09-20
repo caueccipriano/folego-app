@@ -8,6 +8,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/error_translator.dart';
 import '../../data/models/wallet_detail.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
@@ -74,7 +75,7 @@ class _WalletScreenState extends State<WalletScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString();
+        _error = ErrorTranslator.forDisplay(error);
       });
     }
   }
@@ -98,7 +99,7 @@ class _WalletScreenState extends State<WalletScreen> {
       if (!mounted) return;
       setState(() {
         _installmentsLoading = false;
-        _installmentsError = error.toString();
+        _installmentsError = ErrorTranslator.forDisplay(error);
       });
     }
   }
@@ -388,10 +389,12 @@ class _WalletScreenState extends State<WalletScreen> {
       title: 'suas contas',
       description: 'saldo, reserva e dinheiro realmente disponível',
       child: accounts.isEmpty
-          ? const _WalletEmpty(
+          ? _WalletEmpty(
               icon: AppIcons.account,
               title: 'nenhuma conta por aqui',
-              description: 'suas contas aparecerão nesta seção',
+              description: 'adicione sua primeira conta para acompanhar o saldo',
+              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
               children: accounts
@@ -412,10 +415,12 @@ class _WalletScreenState extends State<WalletScreen> {
       title: 'seus cartões',
       description: 'o que está em aberto e quanto limite ainda existe',
       child: cards.isEmpty
-          ? const _WalletEmpty(
+          ? _WalletEmpty(
               icon: AppIcons.creditCard,
               title: 'nenhum cartão por aqui',
-              description: 'seus cartões de crédito aparecerão nesta seção',
+              description: 'adicione um cartão para acompanhar fatura e limite',
+              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
               children: cards
@@ -439,10 +444,12 @@ class _WalletScreenState extends State<WalletScreen> {
       title: 'seus benefícios',
       description: 'vale, alimentação e outros benefícios separados das contas',
       child: benefits.isEmpty
-          ? const _WalletEmpty(
+          ? _WalletEmpty(
               icon: AppIcons.benefit,
               title: 'nenhum benefício por aqui',
-              description: 'seus saldos de benefício aparecerão nesta seção',
+              description: 'adicione vale ou benefício sem misturar com dinheiro',
+              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
               children: benefits
@@ -463,10 +470,12 @@ class _WalletScreenState extends State<WalletScreen> {
       title: 'suas dívidas',
       description: 'o que você deve e quanto ainda falta pagar',
       child: debts.isEmpty
-          ? const _WalletEmpty(
+          ? _WalletEmpty(
               icon: AppIcons.debt,
               title: 'nenhuma dívida por aqui',
-              description: 'obrigações ativas aparecerão nesta seção',
+              description: 'adicione uma dívida para acompanhar o que falta pagar',
+              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
               children: debts
@@ -1384,10 +1393,14 @@ class _WalletEmpty extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
+    this.actionLabel,
+    this.onAction,
   });
   final IconData icon;
   final String title;
   final String description;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -1395,6 +1408,13 @@ class _WalletEmpty extends StatelessWidget {
       icon: icon,
       title: title,
       description: description,
+      action: actionLabel == null || onAction == null
+          ? null
+          : FilledButton.icon(
+              onPressed: onAction,
+              icon: const Icon(AppIcons.add, size: 17),
+              label: Text(actionLabel!),
+            ),
     );
   }
 }
