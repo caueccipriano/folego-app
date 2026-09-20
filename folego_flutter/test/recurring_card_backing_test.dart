@@ -45,13 +45,13 @@ void main() {
         ),
       ),
     );
-    await _waitFor(tester, find.text('Salvar recorrência'));
+    await _waitFor(tester, find.text('salvar recorrência'));
 
     expect(find.text('Cartão principal'), findsOneWidget);
     expect(find.text('Conta ativa'), findsNothing);
 
-    await tester.ensureVisible(find.text('Salvar recorrência'));
-    await tester.tap(find.text('Salvar recorrência'));
+    await tester.ensureVisible(find.text('salvar recorrência'));
+    await tester.tap(find.text('salvar recorrência'));
     await tester.pump();
 
     expect(repository.savedAccountId, isNull);
@@ -82,13 +82,13 @@ void main() {
         ),
       ),
     );
-    await _waitFor(tester, find.text('Salvar recorrência'));
+    await _waitFor(tester, find.text('salvar recorrência'));
 
     expect(find.text('Conta ativa'), findsOneWidget);
     expect(repository.walletOverviewCalls, 0);
 
-    await tester.ensureVisible(find.text('Salvar recorrência'));
-    await tester.tap(find.text('Salvar recorrência'));
+    await tester.ensureVisible(find.text('salvar recorrência'));
+    await tester.tap(find.text('salvar recorrência'));
     await tester.pump();
 
     expect(repository.savedAccountId, 'account-1');
@@ -129,15 +129,15 @@ void main() {
         ),
       ),
     );
-    await _waitFor(tester, find.text('Salvar recorrência'));
+    await _waitFor(tester, find.text('salvar recorrência'));
 
     await tester.tap(find.text('Cartão principal'));
     await tester.pump();
     await tester.tap(find.text('Cartão secundário').last);
     await tester.pump();
 
-    await tester.ensureVisible(find.text('Salvar recorrência'));
-    await tester.tap(find.text('Salvar recorrência'));
+    await tester.ensureVisible(find.text('salvar recorrência'));
+    await tester.tap(find.text('salvar recorrência'));
     await tester.pump();
 
     expect(repository.savedAccountId, isNull);
@@ -162,21 +162,21 @@ void main() {
         ),
       ),
     );
-    await _waitFor(tester, find.text('Salvar recorrência'));
+    await _waitFor(tester, find.text('salvar recorrência'));
 
     expect(
-      find.text('Cartão atual (inativo ou indisponível)'),
+      find.text('cartão atual (inativo ou indisponível)'),
       findsOneWidget,
     );
     expect(
       find.text(
-        'Este cartão não aparece mais entre os cartões ativos. O vínculo atual será preservado.',
+        'este cartão não aparece mais entre os cartões ativos. o vínculo atual será preservado',
       ),
       findsOneWidget,
     );
 
-    await tester.ensureVisible(find.text('Salvar recorrência'));
-    await tester.tap(find.text('Salvar recorrência'));
+    await tester.ensureVisible(find.text('salvar recorrência'));
+    await tester.tap(find.text('salvar recorrência'));
     await tester.pump();
 
     expect(repository.savedAccountId, isNull);
