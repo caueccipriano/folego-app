@@ -88,7 +88,7 @@ class _RecurringTab extends StatelessWidget {
                 ).colorScheme.onSurface.withValues(alpha: .58),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             ...items.map(
               (item) => _RecurringCard(
                 item: item,
@@ -141,11 +141,11 @@ class _RecurringCard extends StatelessWidget {
         : primaryText;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(16, 15, 8, 15),
+      margin: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.fromLTRB(13, 11, 7, 11),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: border),
       ),
       child: Row(
@@ -153,11 +153,11 @@ class _RecurringCard extends StatelessWidget {
           CategoryIconBadge(
             icon: visual.icon,
             color: visual.color,
-            size: 46,
-            iconSize: 23,
-            radius: 15,
+            size: 42,
+            iconSize: 21,
+            radius: AppRadii.control,
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class _RecurringCard extends StatelessWidget {
                     color: secondaryText,
                   ),
                 ),
-                const SizedBox(height: 9),
+                const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 9,
@@ -218,7 +218,7 @@ class _RecurringCard extends StatelessWidget {
                     color: item.active
                         ? AppPalette.green.withValues(alpha: .13)
                         : secondaryText.withValues(alpha: .08),
-                    borderRadius: BorderRadius.circular(99),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
                   ),
                   child: Text(
                     item.active ? 'ativa' : 'pausada',
