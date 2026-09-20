@@ -12,6 +12,7 @@ import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_empty_state.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_detail_screen.dart';
 
@@ -1359,42 +1360,10 @@ class _WalletEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final purple = AppColors.primaryPurple(brightness);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        children: [
-          _CardIcon(icon: icon, color: purple),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryText(brightness),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              color: AppColors.secondaryText(brightness),
-            ),
-          ),
-        ],
-      ),
+    return AppEmptyState(
+      icon: icon,
+      title: title,
+      description: description,
     );
   }
 }
