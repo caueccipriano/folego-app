@@ -6,6 +6,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_goal.dart';
+import '../../shared/widgets/app_sheet_handle.dart';
 import 'goals_widgets.dart';
 
 class GoalFormResult {
@@ -148,16 +149,7 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: border,
-                      borderRadius: BorderRadius.circular(AppRadii.pill),
-                    ),
-                  ),
-                ),
+                const AppSheetHandle(),
                 const SizedBox(height: 22),
                 Text(
                   editing ? 'editar meta' : 'nova meta',
@@ -177,7 +169,7 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
                   decoration: const InputDecoration(labelText: 'nome da meta'),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Informe o nome da meta.';
+                      return 'informe o nome da meta';
                     }
                     return null;
                   },
@@ -194,7 +186,7 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
                   ),
                   validator: (value) {
                     if (Formatters.parseMoney(value ?? '') <= 0) {
-                      return 'Informe um valor maior que zero.';
+                      return 'informe um valor maior que zero';
                     }
                     return null;
                   },
@@ -343,16 +335,7 @@ class _GoalContributionSheetState extends State<_GoalContributionSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: border,
-                      borderRadius: BorderRadius.circular(AppRadii.pill),
-                    ),
-                  ),
-                ),
+                const AppSheetHandle(),
                 const SizedBox(height: 22),
                 Text(
                   'fazer aporte',
@@ -370,7 +353,7 @@ class _GoalContributionSheetState extends State<_GoalContributionSheet> {
                   ),
                   validator: (value) {
                     if (Formatters.parseMoney(value ?? '') <= 0) {
-                      return 'Informe um valor maior que zero.';
+                      return 'informe um valor maior que zero';
                     }
                     return null;
                   },
