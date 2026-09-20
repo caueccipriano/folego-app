@@ -121,7 +121,7 @@ class HomeFinancialHero extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'você pode gastar',
+              'quanto você pode gastar',
               style: AppTypography.body(
                 context,
                 fontSize: compact ? 13 : 14,
@@ -186,7 +186,7 @@ class HomeFinancialHero extends StatelessWidget {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      'benefícios ficam fora desta conta',
+                      'benefícios não entram neste valor',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(
@@ -208,7 +208,7 @@ class HomeFinancialHero extends StatelessWidget {
                     ),
                     onPressed: () => _showExplanation(context),
                     icon: const Icon(AppIcons.info, size: 15),
-                    label: const Text('entenda'),
+                    label: const Text('como funciona'),
                   ),
                 ],
               )
@@ -223,7 +223,7 @@ class HomeFinancialHero extends StatelessWidget {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      'dinheiro disponível, sem benefícios',
+                      'benefícios não entram neste valor',
                       style: AppTypography.label(
                         context,
                         fontSize: 11,
@@ -240,7 +240,7 @@ class HomeFinancialHero extends StatelessWidget {
                     ),
                     onPressed: () => _showExplanation(context),
                     icon: const Icon(AppIcons.info, size: 16),
-                    label: const Text('como chegamos nisso?'),
+                    label: const Text('como funciona'),
                   ),
                 ],
               ),
