@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../data/models/account_item.dart';
@@ -13,6 +14,8 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/category_search_picker.dart';
 
 class TransactionEditSheet extends StatefulWidget {
@@ -172,9 +175,9 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
       initialDate: _occurredAt,
       firstDate: DateTime(2000, 1, 1),
       lastDate: DateTime(2100, 12, 31),
-      helpText: 'Data do lançamento',
-      cancelText: 'Cancelar',
-      confirmText: 'Selecionar',
+      helpText: 'data do lançamento',
+      cancelText: 'cancelar',
+      confirmText: 'selecionar',
     );
     if (selected == null || !mounted) return;
     setState(() {
@@ -257,13 +260,13 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                       height: 4,
                       decoration: BoxDecoration(
                         color: border,
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
                       ),
                     ),
                   ),
                   const SizedBox(height: 22),
                   Text(
-                    'Editar lançamento',
+                    'editar lançamento',
                     style: AppTypography.section(
                       context,
                       fontSize: 20,
@@ -272,7 +275,7 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    _isIncome ? 'Ajuste os dados desta receita.' : 'Ajuste os dados deste gasto.',
+                    _isIncome ? 'ajuste os dados desta receita' : 'ajuste os dados deste gasto',
                     style: AppTypography.body(
                       context,
                       fontSize: 12,
@@ -281,36 +284,43 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                   ),
                   const SizedBox(height: 24),
                   if (_loading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 44),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
+                    const AppLoadingState(label: 'carregando dados do lançamento')
                   else if (_error != null)
-                    _buildError(primaryText, secondaryText)
+                    AppErrorState(
+                      title: 'não consegui carregar os dados para edição',
+                      description: _error,
+                      onRetry: () async {
+                        setState(() {
+                          _loading = true;
+                          _error = null;
+                        });
+                        await _loadChoices();
+                      },
+                    )
                   else ...[
                     TextFormField(
                       controller: _amountController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Valor', prefixText: 'R\$ '),
+                      decoration: const InputDecoration(labelText: 'valor', prefixText: 'R\$ '),
                       validator: (value) {
                         final amount = _parseMoney(value ?? '');
-                        return amount == null || amount <= 0 ? 'Digite um valor válido.' : null;
+                        return amount == null || amount <= 0 ? 'digite um valor válido' : null;
                       },
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _descriptionController,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(labelText: 'Descrição'),
+                      decoration: const InputDecoration(labelText: 'descrição'),
                       validator: (value) => value == null || value.trim().isEmpty
-                          ? 'Digite uma descrição.'
+                          ? 'digite uma descrição'
                           : null,
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedAccountId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Conta'),
+                      decoration: const InputDecoration(labelText: 'conta'),
                       items: _accounts
                           .map(
                             (account) => DropdownMenuItem(
@@ -320,14 +330,14 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                           )
                           .toList(),
                       onChanged: (value) => setState(() => _selectedAccountId = value),
-                      validator: (value) => value == null ? 'Escolha uma conta.' : null,
+                      validator: (value) => value == null ? 'escolha uma conta' : null,
                     ),
                     const SizedBox(height: 14),
                     InkWell(
                       onTap: _pickCategory,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       child: InputDecorator(
-                        decoration: const InputDecoration(labelText: 'Categoria'),
+                        decoration: const InputDecoration(labelText: 'categoria'),
                         child: Row(
                           children: [
                             CategoryIconBadge(
@@ -340,7 +350,7 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                category?.breadcrumb ?? 'Sem categoria',
+                                category?.breadcrumb ?? 'sem categoria',
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.body(context, fontSize: 13),
                               ),
@@ -353,9 +363,9 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                     const SizedBox(height: 14),
                     InkWell(
                       onTap: _pickDate,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                       child: InputDecorator(
-                        decoration: const InputDecoration(labelText: 'Data'),
+                        decoration: const InputDecoration(labelText: 'data'),
                         child: Text(
                           _formatDate(_occurredAt),
                           style: AppTypography.body(context, fontSize: 14, color: primaryText),
@@ -375,7 +385,7 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Salvar alterações'),
+                          : const Text('salvar alterações'),
                     ),
                   ],
                 ],
@@ -387,46 +397,6 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
     );
   }
 
-  Widget _buildError(Color primaryText, Color secondaryText) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Não consegui carregar os dados para edição.',
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: primaryText,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(context, fontSize: 11, color: secondaryText),
-          ),
-          const SizedBox(height: 14),
-          OutlinedButton(
-            onPressed: () {
-              setState(() {
-                _loading = true;
-                _error = null;
-              });
-              _loadChoices();
-            },
-            child: const Text('Tentar novamente'),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _friendlyError(Object error) {
     return error
