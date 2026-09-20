@@ -1075,7 +1075,10 @@ class _TransactionsTabV3 extends StatelessWidget {
 
   Widget _buildList(BuildContext context) {
     if (loading && transactions.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState(
+        label: 'carregando lançamentos',
+        compact: true,
+      );
     }
 
     if (transactions.isEmpty) {
