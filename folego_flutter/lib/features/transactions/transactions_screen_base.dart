@@ -26,6 +26,7 @@ import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
