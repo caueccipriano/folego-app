@@ -305,12 +305,12 @@ class _SubscriptionCard extends StatelessWidget {
         child: InkWell(
           onTap: onEdit,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(11, 8, 6, 8),
+            padding: const EdgeInsets.fromLTRB(10, 7, 5, 7),
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primaryPurple(brightness).withValues(alpha: .10),
@@ -319,7 +319,7 @@ class _SubscriptionCard extends StatelessWidget {
                   child: Icon(
                     AppIcons.recurring,
                     color: AppColors.primaryPurple(brightness),
-                    size: 20,
+                    size: 19,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -348,7 +348,7 @@ class _SubscriptionCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         details.join(' · '),
                         maxLines: 2,
