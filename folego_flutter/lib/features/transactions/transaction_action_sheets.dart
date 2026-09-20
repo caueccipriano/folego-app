@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
@@ -11,6 +12,7 @@ import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../shared/widgets/category_search_picker.dart';
+import '../../shared/widgets/app_loading_state.dart';
 
 class CardPurchaseEditSheet extends StatefulWidget {
   const CardPurchaseEditSheet({super.key, required this.repository, required this.detail});
@@ -134,7 +136,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
       error: _error,
       onSave: _loading ? null : _save,
       children: [
-        if (_loading) const Center(child: Padding(padding: EdgeInsets.all(28), child: CircularProgressIndicator())) else ...[
+        if (_loading) const AppLoadingState(label: 'carregando dados') else ...[
           TextField(
             controller: _amount,
             enabled: _financialEditable,
@@ -284,7 +286,7 @@ class _BenefitExpenseEditSheetState extends State<BenefitExpenseEditSheet> {
     return _ActionSheetFrame(
       title: 'editar gasto com benefício', saving: _saving, error: _error, onSave: _loading ? null : _save,
       children: [
-        if (_loading) const Center(child: Padding(padding: EdgeInsets.all(28), child: CircularProgressIndicator())) else ...[
+        if (_loading) const AppLoadingState(label: 'carregando dados') else ...[
           TextField(controller: _amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'valor', prefixText: 'R\$ ')),
           const SizedBox(height: 12),
           TextField(controller: _description, decoration: const InputDecoration(labelText: 'descrição')),
@@ -396,7 +398,7 @@ class _TransferEditSheetState extends State<TransferEditSheet> {
     return _ActionSheetFrame(
       title: 'editar transferência', saving: _saving, error: _error, onSave: _loading ? null : _save,
       children: [
-        if (_loading) const Center(child: Padding(padding: EdgeInsets.all(28), child: CircularProgressIndicator())) else ...[
+        if (_loading) const AppLoadingState(label: 'carregando dados') else ...[
           TextField(controller: _amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'valor', prefixText: 'R\$ ')),
           const SizedBox(height: 12),
           TextField(controller: _description, decoration: const InputDecoration(labelText: 'descrição')),
@@ -477,7 +479,7 @@ class _InfoBox extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.background(brightness),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Text(text, style: AppTypography.body(context, fontSize: 10, color: AppColors.secondaryText(brightness))),
