@@ -1332,10 +1332,11 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _buildCategoriesEmpty(Brightness brightness) {
-    return const AppEmptyState(
+    return AppEmptyState(
       icon: AppIcons.categoryUnclassified,
       title: 'nenhuma categoria disponível para planejamento',
       description: 'ative ou crie categorias para começar a definir seus limites',
+      accentColor: AppColors.primaryPurple(brightness),
     );
   }
 
