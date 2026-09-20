@@ -4,12 +4,17 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_goal.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_goals.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import 'goal_detail_screen.dart';
 import 'goal_form_sheet.dart';
 import 'goals_widgets.dart';
@@ -137,35 +142,23 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 _Header(onCreate: _saving ? null : _createGoal),
                 const SizedBox(height: 22),
                 if (_loading && _goals.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 84),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
+                  const AppLoadingState(label: 'organizando suas metas')
                 else if (_error != null && _goals.isEmpty)
-                  _ErrorState(message: _error!, onRetry: _load)
+                  AppErrorState(
+                    title: 'não consegui carregar suas metas',
+                    description: _error,
+                    onRetry: _load,
+                  )
                 else if (_active.isEmpty && _completed.isEmpty)
                   GoalEmptyState(onCreate: _createGoal)
                 else ...[
                   _SummaryCard(goals: _active),
                   const SizedBox(height: 28),
-                  Text(
-                    'metas ativas',
-                    style: AppTypography.section(
-                      context,
-                      fontSize: 20,
-                      color: primary,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _active.isEmpty
+                  AppSectionHeader(
+                    title: 'metas ativas',
+                    subtitle: _active.isEmpty
                         ? 'nenhuma meta ativa agora'
                         : 'o que você está tornando possível',
-                    style: AppTypography.body(
-                      context,
-                      fontSize: 12,
-                      color: secondary,
-                    ),
                   ),
                   const SizedBox(height: 14),
                   if (_active.isEmpty)
@@ -231,52 +224,26 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            IconButton(
-              tooltip: 'voltar',
-              onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(AppIcons.back),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                'metas',
-                style: AppTypography.display(
-                  context,
-                  fontSize: 28,
-                  color: primary,
-                ),
-              ),
-            ),
-            FilledButton.icon(
-              onPressed: onCreate,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 42),
-                backgroundColor: purple,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-              ),
-              icon: const Icon(AppIcons.add, size: 18),
-              label: const Text('nova meta'),
-            ),
-          ],
+    return AppPageHeader(
+      title: 'metas',
+      subtitle: 'acumule para um objetivo sem misturar com o orçamento do mês',
+      leading: IconButton(
+        tooltip: 'voltar',
+        onPressed: () => Navigator.of(context).maybePop(),
+        icon: const Icon(AppIcons.back),
+      ),
+      trailing: FilledButton.icon(
+        onPressed: onCreate,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 42),
+          backgroundColor: purple,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
         ),
-        const SizedBox(height: 6),
-        Padding(
-          padding: const EdgeInsets.only(left: 52),
-          child: Text(
-            'acumule para um objetivo sem misturar com o orçamento do mês',
-            style: AppTypography.body(context, fontSize: 12, color: secondary),
-          ),
-        ),
-      ],
+        icon: const Icon(AppIcons.add, size: 18),
+        label: const Text('nova meta'),
+      ),
     );
   }
 }
@@ -301,7 +268,7 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Row(
@@ -311,7 +278,7 @@ class _SummaryCard extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               color: purple.withValues(alpha: .11),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: Icon(AppIcons.goals, color: purple, size: 25),
           ),
@@ -348,7 +315,7 @@ class _SummaryCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             decoration: BoxDecoration(
               color: purple.withValues(alpha: .08),
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppRadii.pill),
             ),
             child: Text(
               '${goals.length} ativa${goals.length == 1 ? '' : 's'}',
