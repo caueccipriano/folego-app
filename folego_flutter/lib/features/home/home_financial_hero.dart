@@ -73,6 +73,20 @@ String homeFolegoContextLabel(FolegoSnapshot snapshot) {
   return 'valor disponível até o próximo recebimento';
 }
 
+
+String homeFolegoVoiceLabel(FolegoSnapshot snapshot) {
+  if (snapshot.spendablePool <= 0 || snapshot.shortfall > 0) {
+    return 'seu espaço está apertado agora';
+  }
+
+  return switch (snapshot.status.trim().toLowerCase()) {
+    'sem_folga' => 'seu espaço está apertado agora',
+    'atencao' || 'atenção' => 'vale acompanhar os próximos dias de perto',
+    'ok' || 'tranquilo' => 'você está respirando bem até o próximo recebimento',
+    _ => 'seu fôlego está atualizado com o que temos agora',
+  };
+}
+
 class HomeFinancialHero extends StatelessWidget {
   const HomeFinancialHero({super.key, required this.snapshot});
 
@@ -106,6 +120,7 @@ class HomeFinancialHero extends StatelessWidget {
       label:
           'valor disponível para gastar até o próximo recebimento: ${Formatters.money(spendable)}',
       child: Container(
+        key: const ValueKey('home-spendable-pool'),
         width: double.infinity,
         padding: EdgeInsets.fromLTRB(
           compact ? 18 : 22,
@@ -133,13 +148,23 @@ class HomeFinancialHero extends StatelessWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                Formatters.money(spendable),
-                key: const ValueKey('home-spendable-pool'),
-                style: AppTypography.money(
-                  context,
-                  fontSize: compact ? 44 : 52,
-                  color: AppColors.lime,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: .985, end: 1).animate(animation),
+                    child: child,
+                  ),
+                ),
+                child: Text(
+                  Formatters.money(spendable),
+                  key: ValueKey('home-spendable-pool-$spendable'),
+                  style: AppTypography.money(
+                    context,
+                    fontSize: compact ? 44 : 52,
+                    color: AppColors.lime,
+                  ),
                 ),
               ),
             ),
@@ -152,6 +177,24 @@ class HomeFinancialHero extends StatelessWidget {
                 fontSize: compact ? 12 : 13,
                 fontWeight: FontWeight.w600,
                 color: onPurple.withValues(alpha: .94),
+              ),
+            ),
+            SizedBox(height: compact ? 9 : 10),
+            Container(
+              key: const ValueKey('home-folego-voice'),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: AppColors.darkBackground.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+              ),
+              child: Text(
+                homeFolegoVoiceLabel(snapshot),
+                style: AppTypography.label(
+                  context,
+                  fontSize: compact ? 10 : 11,
+                  fontWeight: FontWeight.w700,
+                  color: onPurple.withValues(alpha: .90),
+                ),
               ),
             ),
             if (showBudgetAction) ...[
