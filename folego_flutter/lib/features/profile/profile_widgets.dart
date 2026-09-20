@@ -467,24 +467,7 @@ class _LanguageCard extends StatelessWidget {
           selected: selected == AppLanguagePreference.portugueseBrazil,
           onTap: () => onSelected(AppLanguagePreference.portugueseBrazil),
         ),
-        _ChoiceDivider(),
-        const _LanguageOption(
-          label: 'English',
-          subtitle: 'tradução completa em preparação',
-          icon: AppIcons.language,
-          selected: false,
-          enabled: false,
-          badge: 'em breve',
-        ),
-        _ChoiceDivider(),
-        const _LanguageOption(
-          label: 'Español',
-          subtitle: 'traducción completa en preparación',
-          icon: AppIcons.language,
-          selected: false,
-          enabled: false,
-          badge: 'em breve',
-        ),
+
       ],
     );
   }
