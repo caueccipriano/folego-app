@@ -47,7 +47,7 @@ class AppErrorState extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: expense.withValues(alpha: .10),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: Icon(icon, size: 22, color: expense),
           ),
