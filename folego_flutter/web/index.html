@@ -66,7 +66,7 @@
       // broken build even after GitHub Pages had deployed a fixed version.
       // We clear only Folego's old shell caches and preserve the registration
       // so an existing push subscription is not destroyed.
-      const repairVersion = 'ios-pwa-geometry-20260919-v3';
+      const repairVersion = '__FOLEGO_BUILD_VERSION__';
       const repairKey = 'folego-pwa-repair-version';
 
       let alreadyRepaired = false;
@@ -123,6 +123,6 @@
   </script>
   <script src="folego_ios_zoom_fix.js"></script>
   <script src="folego_push_bridge.js"></script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=__FOLEGO_BUILD_VERSION__" async></script>
 </body>
 </html>
