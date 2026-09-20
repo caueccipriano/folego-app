@@ -45,35 +45,42 @@ class HomeProjectionInsightCard extends StatelessWidget {
         onTap: onOpen,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Ink(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(color: border),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(AppRadii.control),
-                ),
-                child: Icon(AppIcons.chartLine, color: accent, size: 22),
-              ),
-              const SizedBox(width: 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Icon(AppIcons.chartLine, color: accent, size: 17),
+                        const SizedBox(width: 7),
+                        Text(
+                          'projeção',
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      'fechamento previsto de ${_monthName(current.month)}',
+                      'mantendo o ritmo atual, ${_monthName(current.month)} fecha em',
                       style: AppTypography.body(
                         context,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: secondary,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -81,14 +88,14 @@ class HomeProjectionInsightCard extends StatelessWidget {
                       Formatters.money(current.closingProjected),
                       style: AppTypography.money(
                         context,
-                        fontSize: 18,
+                        fontSize: 21,
                         color: current.closingProjected < 0
                             ? AppColors.expenseText(brightness)
                             : primary,
                       ),
                     ),
                     if (next != null && nextDelta != null) ...[
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 6),
                       Text(
                         _nextMonthCopy(next, nextDelta),
                         style: AppTypography.label(
@@ -104,21 +111,14 @@ class HomeProjectionInsightCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Column(
-                children: [
-                  Text(
-                    'ver projeção',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: accent,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Icon(AppIcons.chevronRight, size: 18, color: accent),
-                ],
+              const SizedBox(width: 10),
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Icon(
+                  AppIcons.chevronRight,
+                  size: 20,
+                  color: secondary,
+                ),
               ),
             ],
           ),
@@ -131,10 +131,10 @@ class HomeProjectionInsightCard extends StatelessWidget {
 String _nextMonthCopy(ProjectionMonth next, double delta) {
   final month = _monthName(next.month);
   if (delta.abs() < .01) {
-    return '$month fica estável · fecha em ${Formatters.money(next.closingProjected)}';
+    return '$month segue estável · ${Formatters.money(next.closingProjected)}';
   }
-  final direction = delta > 0 ? 'melhora' : 'piora';
-  return '$month $direction ${Formatters.money(delta.abs())} · fecha em ${Formatters.money(next.closingProjected)}';
+  final direction = delta > 0 ? 'ganha' : 'perde';
+  return '$month $direction ${Formatters.money(delta.abs())} de fôlego · fecha em ${Formatters.money(next.closingProjected)}';
 }
 
 String _monthName(DateTime value) {
