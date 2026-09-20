@@ -20,7 +20,7 @@ class _ProfileSection extends StatelessWidget {
           title: title,
           subtitle: subtitle,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         child,
       ],
     );
@@ -50,7 +50,7 @@ class _AccountHeader extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -65,25 +65,25 @@ class _AccountHeader extends StatelessWidget {
                 label: 'iniciais ${identity.initials}',
                 image: true,
                 child: Container(
-                  width: 62,
-                  height: 62,
+                  width: 54,
+                  height: 54,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: purple.withValues(alpha: .14),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadii.compactCard),
                     border: Border.all(color: purple.withValues(alpha: .22)),
                   ),
                   child: Text(
                     identity.initials,
                     style: AppTypography.section(
                       context,
-                      fontSize: 20,
+                      fontSize: 18,
                       color: purple,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +94,7 @@ class _AccountHeader extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.section(
                         context,
-                        fontSize: 18,
+                        fontSize: 17,
                         color: primary,
                       ),
                     ),
@@ -227,22 +227,22 @@ class _SettingsRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 64),
+            constraints: const BoxConstraints(minHeight: 58),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 9, 10, 9),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: .10),
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
                     ),
-                    child: Icon(icon, size: 20, color: iconColor),
+                    child: Icon(icon, size: 18, color: iconColor),
                   ),
-                  const SizedBox(width: 11),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,8 +389,8 @@ class _AppearanceOption extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.control),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 76),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 11),
+            constraints: const BoxConstraints(minHeight: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(
@@ -400,8 +400,8 @@ class _AppearanceOption extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 21, color: selected ? purple : primary),
-                const SizedBox(height: 7),
+                Icon(icon, size: 19, color: selected ? purple : primary),
+                const SizedBox(height: 5),
                 Text(
                   label,
                   textAlign: TextAlign.center,
@@ -413,8 +413,8 @@ class _AppearanceOption extends StatelessWidget {
                   ),
                 ),
                 if (selected) ...[
-                  const SizedBox(height: 4),
-                  Icon(AppIcons.check, size: 14, color: purple),
+                  const SizedBox(height: 2),
+                  Icon(AppIcons.check, size: 12, color: purple),
                 ],
               ],
             ),
@@ -433,7 +433,7 @@ class _ChoiceSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Container(
-      padding: const EdgeInsets.all(7),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
