@@ -24,10 +24,12 @@ class WalletScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.onAddRequested,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  final VoidCallback? onAddRequested;
 
   @override
   State<WalletScreen> createState() => _WalletScreenState();
@@ -223,16 +225,36 @@ class _WalletScreenState extends State<WalletScreen> {
     return AppPageHeader(
       title: 'carteira',
       subtitle: 'contas, cartões, benefícios e dívidas num só lugar',
-      trailing: IconButton(
-        tooltip: 'atualizar',
-        onPressed: _load,
-        style: IconButton.styleFrom(
-          minimumSize: const Size(42, 42),
-          backgroundColor: surface,
-          foregroundColor: secondary,
-          side: BorderSide(color: border),
-        ),
-        icon: const Icon(AppIcons.refresh, size: 19),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'atualizar',
+            onPressed: _load,
+            style: IconButton.styleFrom(
+              minimumSize: const Size(42, 42),
+              backgroundColor: surface,
+              foregroundColor: secondary,
+              side: BorderSide(color: border),
+            ),
+            icon: const Icon(AppIcons.refresh, size: 19),
+          ),
+          if (widget.onAddRequested != null) ...[
+            const SizedBox(width: 6),
+            IconButton(
+              key: const ValueKey('wallet-add-action'),
+              tooltip: 'adicionar',
+              onPressed: widget.onAddRequested,
+              style: IconButton.styleFrom(
+                minimumSize: const Size(42, 42),
+                backgroundColor: surface,
+                foregroundColor: secondary,
+                side: BorderSide(color: border),
+              ),
+              icon: const Icon(AppIcons.add, size: 20),
+            ),
+          ],
+        ],
       ),
     );
   }
