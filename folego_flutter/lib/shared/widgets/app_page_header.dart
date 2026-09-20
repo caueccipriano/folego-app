@@ -57,12 +57,15 @@ class AppPageHeader extends StatelessWidget {
         ),
         if (subtitle?.trim().isNotEmpty == true) ...[
           const SizedBox(height: 5),
-          Text(
-            subtitle!,
-            style: AppTypography.body(
-              context,
-              fontSize: 13,
-              color: secondary,
+          Padding(
+            padding: EdgeInsets.only(left: leading == null ? 0 : 56),
+            child: Text(
+              subtitle!,
+              style: AppTypography.body(
+                context,
+                fontSize: 13,
+                color: secondary,
+              ),
             ),
           ),
         ],
