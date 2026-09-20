@@ -1219,7 +1219,12 @@ class _TransactionCardV3 extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final amountColor = item.isIncome
         ? AppColors.positiveText(brightness)
-        : primary;
+        : item.isExpense
+            ? AppColors.expenseText(brightness)
+            : primary;
+    final categoryLabel = item.categoryName?.trim().isNotEmpty == true
+        ? item.categoryName!.trim()
+        : transactionEventTypeLabel(item.eventType);
     final hasDetailActions = onEdit != null || onDelete != null;
 
     return Semantics(
@@ -1268,7 +1273,7 @@ class _TransactionCardV3 extends StatelessWidget {
                       const SizedBox(height: 5),
                       Text(
                         [
-                          transactionEventTypeLabel(item.eventType),
+                          categoryLabel,
                           _formatDate(item.occurredAt),
                           if (item.accountName != null) item.accountName!,
                         ].join(' • '),
