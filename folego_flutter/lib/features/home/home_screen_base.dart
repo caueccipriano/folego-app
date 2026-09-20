@@ -295,7 +295,6 @@ class _HomeScreenState extends State<HomeScreen> {
       surface: surface,
       border: border,
       primaryText: primaryText,
-      secondaryText: secondaryText,
       primaryPurple: primaryPurple,
     );
     final quickActions = _buildQuickActions(
@@ -527,7 +526,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color surface,
     required Color border,
     required Color primaryText,
-    required Color secondaryText,
     required Color primaryPurple,
   }) {
     final pending = _upcomingEvents
