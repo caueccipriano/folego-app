@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/reflection_visuals.dart';
 import '../../data/models/transaction_reflection.dart';
@@ -97,7 +98,7 @@ class _ReflectionFormSheetState extends State<ReflectionFormSheet> {
     final brightness = Theme.of(context).brightness;
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(AppRadii.sheet),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
