@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -228,6 +229,24 @@ class _WalletScreenState extends State<WalletScreen> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          IconButton(
+            key: const ValueKey('wallet-privacy-toggle'),
+            tooltip: FinancialPrivacy.hidden.value
+                ? 'mostrar valores'
+                : 'ocultar valores',
+            onPressed: FinancialPrivacy.toggle,
+            style: IconButton.styleFrom(
+              minimumSize: const Size(42, 42),
+              backgroundColor: surface,
+              foregroundColor: secondary,
+              side: BorderSide(color: border),
+            ),
+            icon: Icon(
+              FinancialPrivacy.hidden.value ? AppIcons.eyeOff : AppIcons.eye,
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 6),
           IconButton(
             tooltip: 'atualizar',
             onPressed: _load,
