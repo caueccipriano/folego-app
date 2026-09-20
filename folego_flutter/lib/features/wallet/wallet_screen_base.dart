@@ -282,10 +282,10 @@ class _WalletScreenState extends State<WalletScreen> {
     final summary = _overview!.summary;
     final metrics = [
       _PositionMetric(
-        label: 'dinheiro em contas',
-        value: summary.totalCash,
+        label: 'disponível agora',
+        value: summary.availableCash,
         icon: AppIcons.account,
-        subtitle: '${Formatters.money(summary.availableCash)} disponível para gastar',
+        subtitle: '${Formatters.money(summary.totalCash)} no total das contas',
       ),
       _PositionMetric(
         label: 'benefícios',
@@ -386,7 +386,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final accounts = _overview!.paymentAccounts;
     return _WalletSection(
       title: 'suas contas',
-      description: 'seu dinheiro disponível em contas e reservas',
+      description: 'saldo, reserva e dinheiro realmente disponível',
       child: accounts.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.account,
@@ -410,7 +410,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final cards = _overview!.cards;
     return _WalletSection(
       title: 'seus cartões',
-      description: 'fatura e limite de cada cartão',
+      description: 'o que está em aberto e quanto limite ainda existe',
       child: cards.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.creditCard,
