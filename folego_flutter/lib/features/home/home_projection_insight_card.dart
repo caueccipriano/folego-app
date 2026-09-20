@@ -33,6 +33,9 @@ class HomeProjectionInsightCard extends StatelessWidget {
     final accent = AppColors.primaryPurple(brightness);
     final current = value.months.first;
     final next = value.months.length > 1 ? value.months[1] : null;
+    final nextDelta = next == null
+        ? null
+        : next.closingProjected - current.closingProjected;
 
     return Material(
       color: Colors.transparent,
@@ -83,14 +86,17 @@ class HomeProjectionInsightCard extends StatelessWidget {
                             : primary,
                       ),
                     ),
-                    if (next != null) ...[
+                    if (next != null && nextDelta != null) ...[
                       const SizedBox(height: 5),
                       Text(
-                        'próximo mês: ${Formatters.money(next.closingProjected)}',
+                        _nextMonthCopy(next, nextDelta),
                         style: AppTypography.label(
                           context,
                           fontSize: 10,
-                          color: secondary,
+                          fontWeight: FontWeight.w600,
+                          color: nextDelta < 0
+                              ? AppColors.expenseText(brightness)
+                              : secondary,
                         ),
                       ),
                     ],
@@ -119,6 +125,15 @@ class HomeProjectionInsightCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _nextMonthCopy(ProjectionMonth next, double delta) {
+  final month = _monthName(next.month);
+  if (delta.abs() < .01) {
+    return '$month fica estável · fecha em ${Formatters.money(next.closingProjected)}';
+  }
+  final direction = delta > 0 ? 'melhora' : 'piora';
+  return '$month $direction ${Formatters.money(delta.abs())} · fecha em ${Formatters.money(next.closingProjected)}';
 }
 
 String _monthName(DateTime value) {
