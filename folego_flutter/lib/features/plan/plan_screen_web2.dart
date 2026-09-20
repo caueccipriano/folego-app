@@ -14,6 +14,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 
@@ -981,29 +982,13 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _buildCategories(Brightness brightness) {
-    final primaryText = AppColors.primaryText(brightness);
-    final secondaryText = AppColors.secondaryText(brightness);
-
     return Column(
       key: const ValueKey('plan-categories'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'categorias',
-          style: AppTypography.section(
-            context,
-            fontSize: 20,
-            color: primaryText,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'toque para ver quanto ainda cabe em cada subcategoria',
-          style: AppTypography.body(
-            context,
-            fontSize: 12,
-            color: secondaryText,
-          ),
+        const AppSectionHeader(
+          title: 'categorias',
+          subtitle: 'toque para ver quanto ainda cabe em cada subcategoria',
         ),
         const SizedBox(height: 14),
         if (_parents.isEmpty)
