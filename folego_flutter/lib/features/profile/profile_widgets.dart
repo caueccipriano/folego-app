@@ -67,7 +67,7 @@ class _AccountHeader extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -190,7 +190,7 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -293,7 +293,7 @@ class _SettingsRow extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.border(brightness).withValues(alpha: .35),
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
                       ),
                       child: Text(
                         trailingLabel!,
@@ -398,15 +398,15 @@ class _AppearanceOption extends StatelessWidget {
       label: label,
       child: Material(
         color: selected ? purple.withValues(alpha: .11) : AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           child: Container(
             constraints: const BoxConstraints(minHeight: 76),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 11),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(
                 color: selected ? purple.withValues(alpha: .45) : border,
               ),
@@ -573,7 +573,7 @@ class _LanguageOption extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.border(brightness).withValues(alpha: .35),
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
                       ),
                       child: Text(
                         badge!,
@@ -616,7 +616,7 @@ class _ChoiceSurface extends StatelessWidget {
       padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: child,
@@ -662,7 +662,7 @@ class _AboutCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: border),
       ),
       child: Row(
