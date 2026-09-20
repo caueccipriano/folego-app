@@ -5,12 +5,17 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/debt_detail.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_debts.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import 'debt_form_sheet.dart';
 import 'debt_payment_sheet.dart';
 
@@ -143,51 +148,53 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final debt = _detail?.debt ?? widget.debt;
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(
-        title: Text(
-          'dívida',
-          style: AppTypography.display(
-            context,
-            fontSize: 22,
-            color: AppColors.primaryText(brightness),
+      body: SafeArea(
+        child: AppContentContainer.list(
+          fillHeight: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: AppPageHeader(
+                  title: debt.name,
+                  subtitle: _detail == null
+                      ? 'detalhes da dívida'
+                      : '${debt.creditor} · ${debtTypeLabel(debt.debtType)}',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(AppIcons.back),
+                  ),
+                  trailing: _detail?.debt.isActive == true
+                      ? IconButton(
+                          tooltip: 'editar',
+                          onPressed: _edit,
+                          icon: const Icon(AppIcons.edit),
+                        )
+                      : null,
+                ),
+              ),
+              Expanded(child: _buildBody(brightness)),
+            ],
           ),
         ),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        actions: [
-          if (_detail?.debt.isActive == true)
-            IconButton(
-              tooltip: 'editar',
-              onPressed: _edit,
-              icon: const Icon(AppIcons.edit),
-            ),
-        ],
-      ),
-      body: AppContentContainer.list(
-        fillHeight: true,
-        child: _buildBody(brightness),
       ),
     );
   }
 
   Widget _buildBody(Brightness brightness) {
     if (_loading && _detail == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState(label: 'organizando os detalhes da dívida');
     }
     if (_error != null && _detail == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(AppIcons.warning, size: 40),
-            const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 14),
-            FilledButton(onPressed: _load, child: const Text('tentar novamente')),
-          ],
-        ),
+      return AppErrorState(
+        title: 'não consegui carregar esta dívida',
+        description: _error,
+        onRetry: _load,
       );
     }
 
@@ -204,16 +211,7 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(0, 16, 0, 44),
         children: [
-          Text(
-            debt.name,
-            style: AppTypography.display(context, fontSize: 28, color: primary),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            '${debt.creditor} · ${debtTypeLabel(debt.debtType)}',
-            style: AppTypography.body(context, fontSize: 13, color: secondary),
-          ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 4),
           _DebtAmountCard(detail: detail),
           const SizedBox(height: 14),
           _DebtProgressCard(detail: detail),
@@ -329,7 +327,7 @@ class _DebtAmountCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.primaryPurple(brightness),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,7 +360,7 @@ class _DebtProgressCard extends StatelessWidget {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
@@ -405,7 +403,7 @@ class _InstallmentCard extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Row(
@@ -452,7 +450,7 @@ class _PaymentCard extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Row(
@@ -482,29 +480,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppTypography.section(
-            context,
-            fontSize: 18,
-            color: AppColors.primaryText(brightness),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          subtitle,
-          style: AppTypography.body(
-            context,
-            fontSize: 11,
-            color: AppColors.secondaryText(brightness),
-          ),
-        ),
-      ],
-    );
+    return AppSectionHeader(title: title, subtitle: subtitle);
   }
 }
 
@@ -520,7 +496,7 @@ class _MetaChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Row(
@@ -545,7 +521,7 @@ class _InfoBox extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Text(text, style: AppTypography.body(context, fontSize: 11)),
