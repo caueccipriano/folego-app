@@ -57,6 +57,10 @@ class TransactionsScreenV3 extends StatefulWidget {
     this.pageLoader,
     this.optionsLoader,
     this.initialFilters,
+    this.onImportRequested,
+    this.onClassificationRequested,
+    this.pendingClassificationCount = 0,
+    this.pendingClassificationLoading = false,
   });
 
   final FolegoRepository repository;
@@ -64,6 +68,10 @@ class TransactionsScreenV3 extends StatefulWidget {
   final TransactionPageLoader? pageLoader;
   final TransactionFilterOptionsLoader? optionsLoader;
   final TransactionFilters? initialFilters;
+  final VoidCallback? onImportRequested;
+  final VoidCallback? onClassificationRequested;
+  final int pendingClassificationCount;
+  final bool pendingClassificationLoading;
 
   @override
   State<TransactionsScreenV3> createState() => _TransactionsScreenV3State();
@@ -737,9 +745,74 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const AppPageHeader(
+                    AppPageHeader(
                       title: 'lançamentos',
                       subtitle: 'movimentações, assinaturas e recorrências',
+                      trailing: widget.onImportRequested == null &&
+                              widget.onClassificationRequested == null
+                          ? null
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (widget.onImportRequested != null)
+                                  IconButton(
+                                    key: const ValueKey(
+                                      'statement-import-entry',
+                                    ),
+                                    tooltip: 'importar extrato',
+                                    onPressed: widget.onImportRequested,
+                                    style: IconButton.styleFrom(
+                                      minimumSize: const Size(42, 42),
+                                      backgroundColor: surface,
+                                      foregroundColor: secondary,
+                                      side: BorderSide(color: border),
+                                    ),
+                                    icon: const Icon(
+                                      AppIcons.receipt,
+                                      size: 19,
+                                    ),
+                                  ),
+                                if (widget.onImportRequested != null &&
+                                    widget.onClassificationRequested != null)
+                                  const SizedBox(width: 6),
+                                if (widget.onClassificationRequested != null)
+                                  IconButton(
+                                    key: const ValueKey(
+                                      'transaction-classification-inbox',
+                                    ),
+                                    tooltip:
+                                        widget.pendingClassificationLoading
+                                            ? 'classificar lançamentos'
+                                            : widget.pendingClassificationCount >
+                                                    0
+                                                ? 'classificar ${widget.pendingClassificationCount} pendentes'
+                                                : 'classificar lançamentos',
+                                    onPressed:
+                                        widget.onClassificationRequested,
+                                    style: IconButton.styleFrom(
+                                      minimumSize: const Size(42, 42),
+                                      backgroundColor: surface,
+                                      foregroundColor: secondary,
+                                      side: BorderSide(color: border),
+                                    ),
+                                    icon: Badge(
+                                      isLabelVisible:
+                                          !widget.pendingClassificationLoading &&
+                                              widget.pendingClassificationCount >
+                                                  0,
+                                      label: Text(
+                                        '${widget.pendingClassificationCount}',
+                                      ),
+                                      child: Icon(
+                                        widget.pendingClassificationCount > 0
+                                            ? AppIcons.categoryUnclassified
+                                            : AppIcons.check,
+                                        size: 19,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                     ),
                     const SizedBox(height: 14),
                     Container(
