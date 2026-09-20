@@ -25,6 +25,7 @@ import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_empty_state.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
@@ -1055,35 +1056,15 @@ class _TransactionsTabV3 extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(0, 70, 0, 120),
           children: [
-            Icon(
-              filtered ? AppIcons.search : AppIcons.transactions,
-              size: 44,
-              color: AppColors.secondaryText(Theme.of(context).brightness),
+            AppEmptyState(
+              icon: filtered ? AppIcons.search : AppIcons.transactions,
+              title: filtered
+                  ? 'nenhum lançamento por aqui'
+                  : 'nenhum lançamento ainda',
+              description: filtered
+                  ? 'tente ajustar os filtros ou a busca'
+                  : 'seus gastos, receitas e movimentações aparecerão aqui',
             ),
-            const SizedBox(height: 14),
-            Text(
-              filtered ? 'nenhum lançamento por aqui' : 'nenhum lançamento ainda',
-              textAlign: TextAlign.center,
-              style: AppTypography.body(
-                context,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            if (filtered) ...[
-              const SizedBox(height: 7),
-              Text(
-                'tente ajustar os filtros ou a busca',
-                textAlign: TextAlign.center,
-                style: AppTypography.body(
-                  context,
-                  fontSize: 12,
-                  color: AppColors.secondaryText(
-                    Theme.of(context).brightness,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       );
