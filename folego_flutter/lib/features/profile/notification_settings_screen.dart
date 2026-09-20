@@ -7,9 +7,13 @@ import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 import 'notification_history_screen.dart';
 import 'notification_settings_data_source.dart';
 
@@ -321,45 +325,70 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final prefs = _preferences;
+
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(title: const Text('notificações')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : prefs == null
-              ? _errorState()
-              : AppContentContainer.list(
-                  fillHeight: true,
-                  child: ListView(
-                    key: const ValueKey('notification-settings-list'),
-                    padding: AppScrollGutter.padding(
-                      context,
-                      top: 16,
-                      bottom: 56,
-                    ),
-                    children: [
-                      _statusCard(brightness),
-                      if (_error != null) ...[
-                        const SizedBox(height: 12),
-                        _InlineSaveError(message: _error!),
-                      ],
-                      const SizedBox(height: 16),
-                      _masterSection(prefs),
-                      const SizedBox(height: 16),
-                      _typesSection(prefs),
-                      const SizedBox(height: 16),
-                      _realtimeSection(prefs),
-                      const SizedBox(height: 16),
-                      _timingSection(prefs),
-                      const SizedBox(height: 16),
-                      _dailySummarySection(prefs),
-                      const SizedBox(height: 16),
-                      _quietHoursSection(prefs),
-                      const SizedBox(height: 16),
-                      _historySection(),
-                    ],
+      body: SafeArea(
+        child: AppContentContainer.list(
+          fillHeight: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                child: AppPageHeader(
+                  title: 'notificações',
+                  subtitle: 'lembretes, horários e alertas do seu dinheiro',
+                  leading: IconButton(
+                    tooltip: 'voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(AppIcons.back),
                   ),
                 ),
+              ),
+              Expanded(
+                child: _loading
+                    ? const AppLoadingState(label: 'organizando suas notificações')
+                    : prefs == null
+                        ? AppErrorState(
+                            title: 'não consegui abrir suas notificações',
+                            description: _error,
+                            onRetry: _load,
+                          )
+                        : ListView(
+                            key: const ValueKey('notification-settings-list'),
+                            padding: AppScrollGutter.padding(
+                              context,
+                              top: 8,
+                              bottom: 56,
+                            ),
+                            children: [
+                              _statusCard(brightness),
+                              if (_error != null) ...[
+                                const SizedBox(height: 12),
+                                _InlineSaveError(message: _error!),
+                              ],
+                              const SizedBox(height: 16),
+                              _masterSection(prefs),
+                              const SizedBox(height: 16),
+                              _typesSection(prefs),
+                              const SizedBox(height: 16),
+                              _realtimeSection(prefs),
+                              const SizedBox(height: 16),
+                              _timingSection(prefs),
+                              const SizedBox(height: 16),
+                              _dailySummarySection(prefs),
+                              const SizedBox(height: 16),
+                              _quietHoursSection(prefs),
+                              const SizedBox(height: 16),
+                              _historySection(),
+                            ],
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -707,7 +736,7 @@ class _NotificationSettingsScreenState
     return Material(
       color: AppColors.surface(brightness),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         side: BorderSide(color: AppColors.border(brightness)),
       ),
       child: Padding(
@@ -746,24 +775,7 @@ class _NotificationSettingsScreenState
     );
   }
 
-  Widget _errorState() => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(AppIcons.warning, size: 40),
-              const SizedBox(height: 12),
-              Text(_error ?? 'não consegui abrir notificações'),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: _load,
-                child: const Text('tentar de novo'),
-              ),
-            ],
-          ),
-        ),
-      );
+
 }
 
 class _SettingsSection extends StatelessWidget {
@@ -783,7 +795,7 @@ class _SettingsSection extends StatelessWidget {
     return Material(
       color: AppColors.surface(brightness),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         side: BorderSide(color: AppColors.border(brightness)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -824,7 +836,7 @@ class _InlineSaveError extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadii.control),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
