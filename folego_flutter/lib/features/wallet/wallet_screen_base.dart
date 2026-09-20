@@ -244,7 +244,7 @@ class _WalletScreenState extends State<WalletScreen> {
         ),
         const SizedBox(height: 5),
         Text(
-          'onde está seu dinheiro, seu crédito e suas obrigações',
+          'contas, cartões, benefícios e dívidas num só lugar',
           style: AppTypography.body(
             context,
             fontSize: 13,
@@ -361,7 +361,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final accounts = _overview!.paymentAccounts;
     return _WalletSection(
       title: 'suas contas',
-      description: 'dinheiro em contas e reservas, sem misturar benefícios',
+      description: 'seu dinheiro disponível em contas e reservas',
       child: accounts.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.account,
@@ -385,7 +385,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final cards = _overview!.cards;
     return _WalletSection(
       title: 'seus cartões',
-      description: 'crédito, limite e fatura em cada cartão',
+      description: 'fatura e limite de cada cartão',
       child: cards.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.creditCard,
@@ -412,7 +412,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final benefits = _overview!.benefits;
     return _WalletSection(
       title: 'seus benefícios',
-      description: 'saldos finalísticos separados do dinheiro das contas',
+      description: 'vale, alimentação e outros benefícios separados das contas',
       child: benefits.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.benefit,
@@ -436,7 +436,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final debts = _overview!.debts;
     return _WalletSection(
       title: 'suas dívidas',
-      description: 'obrigações ativas e quanto ainda falta pagar',
+      description: 'o que você deve e quanto ainda falta pagar',
       child: debts.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.debt,
@@ -500,7 +500,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return _WalletSection(
       title: 'parcelas',
-      description: 'compromissos parcelados em aberto e concluídos',
+      description: 'o que ainda falta das compras parceladas',
       child: content,
     );
   }
