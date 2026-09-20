@@ -10,6 +10,7 @@ class _RecurringTab extends StatelessWidget {
     required this.onRealize,
     required this.onToggle,
     required this.onDelete,
+    required this.onAdd,
   });
 
   final List<RecurringItem> items;
@@ -20,6 +21,7 @@ class _RecurringTab extends StatelessWidget {
   final Future<void> Function(RecurringItem) onRealize;
   final Future<void> Function(RecurringItem) onToggle;
   final Future<void> Function(RecurringItem) onDelete;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +51,7 @@ class _RecurringTab extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Para criar uma, volte para a Home e registre um Gasto ou Receita escolhendo uma repetição.',
+                'crie por aqui sem precisar voltar para a Home',
                 textAlign: TextAlign.center,
                 style: AppTypography.body(
                   context,
@@ -57,6 +59,15 @@ class _RecurringTab extends StatelessWidget {
                   color: Theme.of(
                     context,
                   ).colorScheme.onSurface.withValues(alpha: .58),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Center(
+                child: FilledButton.icon(
+                  key: const ValueKey('recurring-empty-add'),
+                  onPressed: onAdd,
+                  icon: const Icon(AppIcons.add, size: 17),
+                  label: const Text('nova recorrência'),
                 ),
               ),
             ],
