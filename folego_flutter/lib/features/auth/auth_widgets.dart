@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 
 class AuthBrandMark extends StatelessWidget {
@@ -31,7 +32,7 @@ class AuthBrandMark extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     color: purple,
-                    borderRadius: BorderRadius.circular(99),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
                   ),
                 ),
               ),
@@ -43,7 +44,7 @@ class AuthBrandMark extends StatelessWidget {
                   height: 10,
                   decoration: BoxDecoration(
                     color: AppColors.lime,
-                    borderRadius: BorderRadius.circular(99),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
                   ),
                 ),
               ),
@@ -192,7 +193,7 @@ class AuthErrorMessage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadii.control),
           border: Border.all(color: border),
         ),
         child: Row(
@@ -275,7 +276,7 @@ class AuthSuccessMessage extends StatelessWidget {
           height: 52,
           decoration: BoxDecoration(
             color: purple.withValues(alpha: .12),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
           ),
           child: Icon(AppIcons.check, color: purple),
         ),
