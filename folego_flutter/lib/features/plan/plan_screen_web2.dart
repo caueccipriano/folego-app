@@ -12,6 +12,7 @@ import '../../data/models/budget_overview_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/app_page_header.dart';
 
 typedef PlanBudgetLoader =
     Future<List<BudgetOverviewItem>> Function({
@@ -304,8 +305,7 @@ class _PlanScreenState extends State<PlanScreen> {
             final surface = AppColors.surface(brightness);
             final border = AppColors.border(brightness);
             final primaryText = AppColors.primaryText(brightness);
-            final secondaryText = AppColors.secondaryText(brightness);
-            final accent = AppColors.primaryPurple(brightness);
+                    final accent = AppColors.primaryPurple(brightness);
             final parentName = item.parentName ?? item.categoryName;
             final familyColor = CategoryVisuals.colorFor(
               category: parentName,
@@ -751,27 +751,9 @@ class _PlanScreenState extends State<PlanScreen> {
       ),
     );
 
-    final title = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'plano',
-          style: AppTypography.display(
-            context,
-            fontSize: 28,
-            color: primaryText,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          'seu limite, seus gastos e o que ainda cabe neste mês',
-          style: AppTypography.body(
-            context,
-            fontSize: 13,
-            color: secondaryText,
-          ),
-        ),
-      ],
+    const title = AppPageHeader(
+      title: 'plano',
+      subtitle: 'seu limite, seus gastos e o que ainda cabe neste mês',
     );
 
     if (compact) {
