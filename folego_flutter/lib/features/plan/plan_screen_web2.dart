@@ -713,7 +713,6 @@ class _PlanScreenState extends State<PlanScreen> {
 
   Widget _buildHeader(Brightness brightness, AppLayoutSize layout) {
     final primaryText = AppColors.primaryText(brightness);
-    final secondaryText = AppColors.secondaryText(brightness);
     final compact = layout == AppLayoutSize.compact;
 
     final monthPicker = Container(
