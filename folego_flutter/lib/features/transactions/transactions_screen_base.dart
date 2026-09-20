@@ -1097,6 +1097,13 @@ class _TransactionsTabV3 extends StatelessWidget {
               description: filtered
                   ? 'tente ajustar os filtros ou a busca'
                   : 'seus gastos, receitas e movimentações aparecerão aqui',
+              action: filtered
+                  ? TextButton.icon(
+                      onPressed: onClearFilters,
+                      icon: const Icon(AppIcons.close, size: 17),
+                      label: const Text('limpar busca e filtros'),
+                    )
+                  : null,
             ),
           ],
         ),
