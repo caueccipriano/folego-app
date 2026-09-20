@@ -12,6 +12,7 @@ import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import 'card_invoice_payment_sheet.dart';
@@ -587,26 +588,12 @@ class _WalletSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTypography.section(
-            context,
-            fontSize: 20,
-            color: AppColors.primaryText(brightness),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          description,
-          style: AppTypography.body(
-            context,
-            fontSize: 12,
-            color: AppColors.secondaryText(brightness),
-          ),
+        AppSectionHeader(
+          title: title,
+          subtitle: description,
         ),
         const SizedBox(height: 14),
         child,
