@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_goal.dart';
@@ -153,7 +154,7 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
                     height: 4,
                     decoration: BoxDecoration(
                       color: border,
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
                   ),
                 ),
@@ -348,7 +349,7 @@ class _GoalContributionSheetState extends State<_GoalContributionSheet> {
                     height: 4,
                     decoration: BoxDecoration(
                       color: border,
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
                   ),
                 ),
@@ -396,7 +397,7 @@ class _GoalContributionSheetState extends State<_GoalContributionSheet> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: purple.withValues(alpha: .08),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadii.control),
                     border: Border.all(color: purple.withValues(alpha: .16)),
                   ),
                   child: Text(
