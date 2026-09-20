@@ -44,6 +44,7 @@ class PlanScreen extends StatefulWidget {
     this.loadOverride,
     this.saveOverride,
     this.onProjectionRequested,
+    this.onFlexibleBudgetRequested,
   });
 
   final FolegoRepository repository;
@@ -55,6 +56,7 @@ class PlanScreen extends StatefulWidget {
   final Object? refreshToken;
 
   final VoidCallback? onProjectionRequested;
+  final VoidCallback? onFlexibleBudgetRequested;
 
   @visibleForTesting
   final PlanBudgetLoader? loadOverride;
@@ -920,6 +922,18 @@ class _PlanScreenState extends State<PlanScreen> {
                 color: secondaryText,
               ),
             ),
+          if (widget.onFlexibleBudgetRequested != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('plan-open-flex-budget'),
+                onPressed: widget.onFlexibleBudgetRequested,
+                icon: const Icon(AppIcons.plan, size: 17),
+                label: const Text('teto flexível'),
+              ),
+            ),
+          ],
         ],
       ),
     );
