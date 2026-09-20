@@ -371,10 +371,28 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
             const SizedBox(height: 14),
             _ProjectionPlanModeToggle(onSummary: widget.onBack),
             const SizedBox(height: 18),
-            _HorizonSelector(
-              value: _horizon,
-              onChanged: _setHorizon,
-            ),
+            if (wide)
+              Row(
+                children: [
+                  Expanded(
+                    child: _HorizonSelector(
+                      value: _horizon,
+                      onChanged: _setHorizon,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _ProjectionSimulateButton(
+                    brightness: brightness,
+                    accent: accent,
+                    onPressed: _openSimulation,
+                  ),
+                ],
+              )
+            else
+              _HorizonSelector(
+                value: _horizon,
+                onChanged: _setHorizon,
+              ),
             const SizedBox(height: 16),
             if (!projection.hasProjectionInputs && _adjustments.isEmpty)
               _ProjectionEmptyState(onBack: widget.onBack)
@@ -384,28 +402,17 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                 simulated: _simulated != null,
                 baseEndingBalance: _base?.summary.endingBalance,
               ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  key: const ValueKey('projection-simulate-change'),
-                  onPressed: _openSimulation,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: brightness == Brightness.dark
-                        ? AppColors.darkPrimaryText
-                        : Colors.white,
-                    minimumSize: const Size(0, 46),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: const StadiumBorder(),
+              if (!wide) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _ProjectionSimulateButton(
+                    brightness: brightness,
+                    accent: accent,
+                    onPressed: _openSimulation,
                   ),
-                  icon: const Icon(AppIcons.adjustments, size: 18),
-                  label: const Text('simular mudança'),
                 ),
-              ),
+              ],
               const SizedBox(height: 18),
               AppSectionHeader(
                 title: 'saldo projetado',
@@ -455,6 +462,40 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _ProjectionSimulateButton extends StatelessWidget {
+  const _ProjectionSimulateButton({
+    required this.brightness,
+    required this.accent,
+    required this.onPressed,
+  });
+
+  final Brightness brightness;
+  final Color accent;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      key: const ValueKey('projection-simulate-change'),
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: accent,
+        foregroundColor: brightness == Brightness.dark
+            ? AppColors.darkPrimaryText
+            : Colors.white,
+        minimumSize: const Size(0, 46),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        shape: const StadiumBorder(),
+      ),
+      icon: const Icon(AppIcons.adjustments, size: 18),
+      label: const Text('simular mudança'),
     );
   }
 }
