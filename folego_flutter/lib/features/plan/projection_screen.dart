@@ -9,6 +9,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
+import '../../data/models/financial_space.dart';
 import '../../data/models/projection_model.dart';
 import '../../data/models/recurring_item.dart';
 import '../../data/repositories/folego_repository.dart';
@@ -17,6 +18,7 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../transactions/recurring_form_sheet.dart';
 
 class ProjectionScreen extends StatefulWidget {
   const ProjectionScreen({
@@ -244,6 +246,26 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     _expenseCategories = values[1] as List<CategoryItem>;
   }
 
+  Future<void> _addRecurringFromEmptyProjection() async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      builder: (_) => RecurringFormSheet(
+        space: FinancialSpace(
+          id: widget.spaceId,
+          name: 'Minhas Finanças',
+        ),
+        repository: widget.repository,
+      ),
+    );
+    if (saved == true && mounted) {
+      _recurringItems = null;
+      await _load();
+    }
+  }
+
   Future<void> _openSimulation() async {
     try {
       await _ensureSimulationSources();
@@ -393,7 +415,10 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
               ),
             const SizedBox(height: 12),
             if (!projection.hasProjectionInputs && _adjustments.isEmpty)
-              _ProjectionEmptyState(onBack: widget.onBack)
+              _ProjectionEmptyState(
+                onBack: widget.onBack,
+                onAddRecurring: _addRecurringFromEmptyProjection,
+              )
             else ...[
               _ProjectionHero(
                 projection: projection,
@@ -1748,9 +1773,13 @@ class _CompareValue extends StatelessWidget {
 }
 
 class _ProjectionEmptyState extends StatelessWidget {
-  const _ProjectionEmptyState({required this.onBack});
+  const _ProjectionEmptyState({
+    required this.onBack,
+    required this.onAddRecurring,
+  });
 
   final VoidCallback onBack;
+  final VoidCallback onAddRecurring;
 
   @override
   Widget build(BuildContext context) {
@@ -1759,10 +1788,23 @@ class _ProjectionEmptyState extends StatelessWidget {
       title: 'a projeção precisa conhecer seus compromissos',
       description:
           'cadastre receitas e despesas recorrentes, parcelas ou dívidas. aí o Fôlego consegue mostrar como os próximos meses provavelmente fecham',
-      action: OutlinedButton.icon(
-        onPressed: onBack,
-        icon: const Icon(AppIcons.back, size: 17),
-        label: const Text('voltar ao planejamento'),
+      action: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          FilledButton.icon(
+            key: const ValueKey('projection-empty-add-recurring'),
+            onPressed: onAddRecurring,
+            icon: const Icon(AppIcons.add, size: 17),
+            label: const Text('cadastrar recorrência'),
+          ),
+          OutlinedButton.icon(
+            onPressed: onBack,
+            icon: const Icon(AppIcons.back, size: 17),
+            label: const Text('voltar ao planejamento'),
+          ),
+        ],
       ),
     );
   }
