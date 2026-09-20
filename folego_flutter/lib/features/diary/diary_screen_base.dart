@@ -6,6 +6,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/theme/reflection_visuals.dart';
@@ -14,6 +15,9 @@ import '../../data/models/transaction_reflection.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_diary.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
 import '../transactions/transactions_screen.dart';
 import 'reflection_form_sheet.dart';
 
@@ -161,8 +165,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: const [
-                      SizedBox(height: 280),
-                      Center(child: CircularProgressIndicator()),
+                      AppLoadingState(label: 'organizando seu diário'),
                     ],
                   )
                 : ListView(
@@ -218,32 +221,18 @@ class _DiaryScreenState extends State<DiaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'diário',
-                style: AppTypography.display(
-                  context,
-                  fontSize: 28,
-                  color: AppColors.primaryText(brightness),
-                ),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: _openTransactions,
-              icon: const Icon(AppIcons.transactions, size: 18),
-              label: const Text('ver lançamentos'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'como você tem se relacionado com seus gastos?',
-          style: AppTypography.body(
-            context,
-            fontSize: 12,
-            color: AppColors.secondaryText(brightness),
+        AppPageHeader(
+          title: 'diário',
+          subtitle: 'como você tem se relacionado com seus gastos?',
+          leading: IconButton(
+            tooltip: 'voltar',
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(AppIcons.back),
+          ),
+          trailing: TextButton.icon(
+            onPressed: _openTransactions,
+            icon: const Icon(AppIcons.transactions, size: 18),
+            label: const Text('ver lançamentos'),
           ),
         ),
         const SizedBox(height: 16),
@@ -253,7 +242,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.surface(brightness),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(color: AppColors.border(brightness)),
             ),
             child: Row(
@@ -350,7 +339,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               color: AppColors.background(brightness).withValues(alpha: .55),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: Text(
               summary.insight,
@@ -616,17 +605,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Widget _errorCard(Brightness brightness) {
-    return _card(
-      brightness,
-      child: Column(
-        children: [
-          const Icon(AppIcons.warning, size: 30),
-          const SizedBox(height: 10),
-          Text(_error!, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: _load, child: const Text('tentar novamente')),
-        ],
-      ),
+    return AppErrorState(
+      title: 'não consegui carregar seu diário',
+      description: _error,
+      onRetry: _load,
     );
   }
 
@@ -636,7 +618,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: child,
