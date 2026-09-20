@@ -636,7 +636,7 @@ class _PlanScreenState extends State<PlanScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(0, 12, 0, 92),
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 76),
         children: [
           _buildHeader(brightness, layout),
           if (_refreshing) ...[
@@ -649,7 +649,7 @@ class _PlanScreenState extends State<PlanScreen> {
             const SizedBox(height: 12),
             _buildNoPlan(brightness),
           ],
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           _buildCategories(brightness),
         ],
       ),
@@ -946,7 +946,7 @@ class _PlanScreenState extends State<PlanScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: purple.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -997,7 +997,7 @@ class _PlanScreenState extends State<PlanScreen> {
           title: 'categorias',
           subtitle: 'toque para ver quanto ainda cabe em cada subcategoria',
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         if (_parents.isEmpty)
           _buildCategoriesEmpty(brightness)
         else
