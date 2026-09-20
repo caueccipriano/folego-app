@@ -6,11 +6,17 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/category_tag.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/app_section_header.dart';
 import 'financial_organization_data_source.dart';
 
 class FinancialOrganizationScreen extends StatefulWidget {
@@ -335,31 +341,90 @@ class _FinancialOrganizationScreenState
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final surface = AppColors.surface(brightness);
+    final border = AppColors.border(brightness);
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    final accent = AppColors.primaryPurple(brightness);
+    final isDark = brightness == Brightness.dark;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: AppColors.background(brightness),
-        appBar: AppBar(
-          title: Text(
-            'organização',
-            style: AppTypography.display(
-              context,
-              fontSize: 24,
-              color: AppColors.primaryText(brightness),
-            ),
-          ),
-          bottom: const TabBar(
-            tabs: [Tab(text: 'Categorias'), Tab(text: 'Marcadores')],
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppContentContainer.dashboard(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppPageHeader(
+                        title: 'organização',
+                        subtitle: 'categorias e marcadores do seu dinheiro',
+                        leading: IconButton(
+                          tooltip: 'voltar',
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          icon: const Icon(AppIcons.back),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: surface,
+                          borderRadius: BorderRadius.circular(AppRadii.compactCard),
+                          border: Border.all(color: border),
+                        ),
+                        child: TabBar(
+                          dividerColor: Colors.transparent,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          indicator: BoxDecoration(
+                            color: accent.withValues(alpha: isDark ? .18 : .10),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          labelColor: primary,
+                          unselectedLabelColor: secondary,
+                          labelStyle: AppTypography.label(
+                            context,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: primary,
+                          ),
+                          unselectedLabelStyle: AppTypography.label(
+                            context,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: secondary,
+                          ),
+                          tabs: const [
+                            Tab(text: 'categorias'),
+                            Tab(text: 'marcadores'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _spaceLoading && _space == null
+                    ? const AppLoadingState(label: 'organizando suas categorias')
+                    : _spaceError != null && _space == null
+                        ? AppErrorState(
+                            title: 'não consegui abrir sua organização',
+                            description: _spaceError,
+                            onRetry: _loadSpaceAndSections,
+                          )
+                        : TabBarView(
+                            children: [_categoriesTab(), _markersTab()],
+                          ),
+              ),
+            ],
           ),
         ),
-        body: _spaceLoading && _space == null
-            ? const Center(child: CircularProgressIndicator())
-            : _spaceError != null && _space == null
-                ? _ErrorState(
-                    message: _spaceError!,
-                    onRetry: _loadSpaceAndSections,
-                  )
-                : TabBarView(children: [_categoriesTab(), _markersTab()]),
       ),
     );
   }
@@ -422,12 +487,12 @@ class _FinancialOrganizationScreenState
               spacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('Despesas'),
+                  label: const Text('despesas'),
                   selected: _categoryKind == 'expense',
                   onSelected: (_) => setState(() => _categoryKind = 'expense'),
                 ),
                 ChoiceChip(
-                  label: const Text('Receitas'),
+                  label: const Text('receitas'),
                   selected: _categoryKind == 'income',
                   onSelected: (_) => setState(() => _categoryKind = 'income'),
                 ),
@@ -554,12 +619,7 @@ class _SectionLoading extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Semantics(
-          label: label,
-          child: const CircularProgressIndicator(),
-        ),
-      );
+  Widget build(BuildContext context) => AppLoadingState(label: label);
 }
 
 class _InlineSectionError extends StatelessWidget {
@@ -574,7 +634,7 @@ class _InlineSectionError extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Padding(
@@ -614,17 +674,9 @@ class _Toolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondary = AppColors.secondaryText(Theme.of(context).brightness);
-    final copy = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTypography.section(context, fontSize: 21)),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: AppTypography.body(context, fontSize: 12, color: secondary),
-        ),
-      ],
+    final copy = AppSectionHeader(
+      title: title,
+      subtitle: subtitle,
     );
     final action = FilledButton.icon(
       key: actionKey,
@@ -671,7 +723,7 @@ class _CategoryTreeGroup extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final decoration = BoxDecoration(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadii.card),
       border: Border.all(color: AppColors.border(brightness)),
     );
     final rootLine = _CategoryLine(
@@ -879,35 +931,12 @@ class _CompactEmpty extends StatelessWidget {
   final Widget? action;
 
   @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 30, color: AppColors.secondaryText(brightness)),
-          const SizedBox(height: 10),
-          Text(title, style: AppTypography.section(context, fontSize: 16)),
-          const SizedBox(height: 5),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: AppColors.secondaryText(brightness),
-            ),
-          ),
-          if (action != null) ...[const SizedBox(height: 10), action!],
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppEmptyState(
+        icon: icon,
+        title: title,
+        description: text,
+        action: action,
+      );
 }
 
 class _CategoryDraft {
@@ -949,7 +978,7 @@ class _CategoryEditorState extends State<_CategoryEditor> {
     final brightness = Theme.of(context).brightness;
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadii.feature),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1040,7 +1069,7 @@ class _MarkerEditorState extends State<_MarkerEditor> {
     final brightness = Theme.of(context).brightness;
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadii.feature),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1085,27 +1114,15 @@ class _MarkerEditorState extends State<_MarkerEditor> {
 
 class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});
+
   final String message;
   final Future<void> Function() onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(AppIcons.warning, size: 36),
-              const SizedBox(height: 10),
-              Text(message, textAlign: TextAlign.center),
-              const SizedBox(height: 14),
-              OutlinedButton(
-                onPressed: onRetry,
-                child: const Text('tentar novamente'),
-              ),
-            ],
-          ),
-        ),
+  Widget build(BuildContext context) => AppErrorState(
+        title: 'não consegui carregar esta área',
+        description: message,
+        onRetry: onRetry,
       );
 }
 
