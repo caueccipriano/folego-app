@@ -74,6 +74,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   bool _loading = true;
   bool _saving = false;
+  bool _showMore = false;
   String? _error;
 
   bool get _isExpense => widget.initialType == 'expense';
@@ -672,17 +673,17 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         const SizedBox(height: 16),
                         _moneyField(),
                         const SizedBox(height: 12),
+                        _detailsSection(),
+                        const SizedBox(height: 12),
                         _categoryField(brightness),
                         const SizedBox(height: 14),
                         _paymentSection(brightness),
-                        const SizedBox(height: 14),
-                        _detailsSection(),
-                        if (_canReflect) ...[
-                          const SizedBox(height: 14),
-                          _reflectionSection(brightness),
+                        const SizedBox(height: 10),
+                        _moreDetailsToggle(brightness),
+                        if (_showMore) ...[
+                          const SizedBox(height: 10),
+                          _advancedDetails(brightness),
                         ],
-                        const SizedBox(height: 14),
-                        _recurrenceSection(brightness),
                         if (_error != null) ...[
                           const SizedBox(height: 14),
                           Text(
@@ -984,23 +985,55 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   Widget _detailsSection() {
-    return Column(
-      children: [
-        TextField(
-          controller: _description,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'descrição',
-            hintText: 'ex.: almoço, mercado, curso',
+    return TextField(
+      controller: _description,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: const InputDecoration(
+        labelText: 'o que foi?',
+        hintText: 'ex.: almoço, mercado, curso',
+      ),
+    );
+  }
+
+  Widget _moreDetailsToggle(Brightness brightness) {
+    return TextButton.icon(
+      onPressed: () => setState(() => _showMore = !_showMore),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.secondaryText(brightness),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        alignment: Alignment.centerLeft,
+      ),
+      icon: Icon(
+        _showMore ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+        size: 19,
+      ),
+      label: Text(_showMore ? 'menos detalhes' : 'mais detalhes'),
+    );
+  }
+
+  Widget _advancedDetails(Brightness brightness) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.background(brightness).withValues(alpha: .34),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          OutlinedButton.icon(
+            onPressed: _pickDate,
+            icon: const Icon(AppIcons.calendar, size: 18),
+            label: Text('data · \${_formatDate(_date)}'),
           ),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: _pickDate,
-          icon: const Icon(AppIcons.calendar, size: 18),
-          label: Text(_formatDate(_date)),
-        ),
-      ],
+          if (_canReflect) ...[
+            const SizedBox(height: 14),
+            _reflectionSection(brightness),
+          ],
+          const SizedBox(height: 14),
+          _recurrenceSection(brightness),
+        ],
+      ),
     );
   }
 
