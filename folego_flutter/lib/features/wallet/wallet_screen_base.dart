@@ -4,6 +4,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/wallet_detail.dart';
@@ -512,7 +513,7 @@ class _PositionMetricCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
@@ -930,7 +931,7 @@ class _CreditCardCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppRadii.pill),
               child: LinearProgressIndicator(
                 value: ratio.clamp(0.0, 1.0).toDouble(),
                 minHeight: 7,
@@ -1067,7 +1068,7 @@ class _DebtCard extends StatelessWidget {
           if (progress != null && debt.originalAmount != null) ...[
             const SizedBox(height: 13),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppRadii.pill),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 7,
@@ -1185,7 +1186,7 @@ class _InstallmentCard extends StatelessWidget {
             ),
             const SizedBox(height: 13),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppRadii.pill),
               child: LinearProgressIndicator(
                 value: item.progress,
                 minHeight: 7,
@@ -1275,15 +1276,15 @@ class _InteractiveWalletCard extends StatelessWidget {
     final border = AppColors.border(brightness);
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(AppRadii.card),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(AppRadii.card),
             border: Border.all(
               color: accentColor?.withValues(alpha: .24) ?? border,
             ),
@@ -1330,7 +1331,7 @@ class _StatusPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: tone.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
         border: Border.all(color: tone.withValues(alpha: .16)),
       ),
       child: Text(
@@ -1365,7 +1366,7 @@ class _WalletEmpty extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
@@ -1433,7 +1434,7 @@ class _WalletSectionError extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.compactCard),
         border: Border.all(color: expense.withValues(alpha: .24)),
       ),
       child: Column(
@@ -1481,7 +1482,7 @@ class _WalletError extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border(brightness)),
       ),
       child: Column(
@@ -1545,13 +1546,13 @@ class _WalletSectionChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: selected ? purple.withValues(alpha: .13) : surface,
-            borderRadius: BorderRadius.circular(99),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
             border: Border.all(
               color: selected ? purple.withValues(alpha: .45) : border,
             ),
