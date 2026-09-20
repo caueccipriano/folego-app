@@ -368,9 +368,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
               onBack: widget.onBack,
               onScenario: _openScenarioSettings,
             ),
-            const SizedBox(height: 10),
-            _ProjectionPlanModeToggle(onSummary: widget.onBack),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             if (wide)
               Row(
                 children: [
@@ -413,7 +411,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               AppSectionHeader(
                 title: 'saldo projetado',
                 subtitle: _simulated == null
@@ -425,20 +423,20 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                 base: _base!,
                 simulated: _simulated,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _MonthCarousel(
                 months: projection.months,
                 selectedIndex: _selectedMonth,
                 onTap: _openMonthDetail,
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               _ProjectionViewToggle(
                 categories: _showCategories,
                 onChanged: (value) {
                   setState(() => _showCategories = value);
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               if (_showCategories)
                 _ProjectionCategories(
                   projection: projection,
@@ -457,7 +455,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   onPersist: _addSimulationToPlanning,
                 ),
               ],
-              const SizedBox(height: 36),
+              const SizedBox(height: 28),
             ],
           ],
         );
@@ -552,66 +550,6 @@ class _ProjectionHeader extends StatelessWidget {
             icon: const Icon(AppIcons.adjustments),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProjectionPlanModeToggle extends StatelessWidget {
-  const _ProjectionPlanModeToggle({required this.onSummary});
-
-  final VoidCallback onSummary;
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final surface = AppColors.surface(brightness);
-    final border = AppColors.border(brightness);
-    final accent = AppColors.primaryPurple(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-
-    Widget item(String label, bool selected, VoidCallback? onTap) {
-      return Expanded(
-        child: Material(
-          color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AppTypography.label(
-                  context,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? accent : secondary,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 320),
-      child: Container(
-        key: const ValueKey('projection-plan-mode-toggle'),
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(AppRadii.control),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          children: [
-            item('resumo', false, onSummary),
-            item('projeção', true, null),
-          ],
-        ),
       ),
     );
   }
