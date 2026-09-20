@@ -269,12 +269,12 @@ class _WalletScreenState extends State<WalletScreen> {
         icon: AppIcons.benefit,
       ),
       _PositionMetric(
-        label: 'faturas',
+        label: 'faturas em aberto',
         value: summary.totalCardInvoice,
         icon: AppIcons.creditCard,
       ),
       _PositionMetric(
-        label: 'dívidas',
+        label: 'dívidas restantes',
         value: summary.totalDebtRemaining,
         icon: AppIcons.debt,
       ),
