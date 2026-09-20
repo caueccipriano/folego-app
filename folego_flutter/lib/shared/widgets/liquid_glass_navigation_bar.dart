@@ -155,7 +155,7 @@ class _Destination extends StatelessWidget {
           child: AnimatedContainer(
             duration: motionDuration,
             curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
+            margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
               gradient: selected
                   ? LinearGradient(
