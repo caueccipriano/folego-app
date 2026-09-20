@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -114,7 +115,7 @@ class HomeFinancialHero extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: primaryPurple,
-          borderRadius: BorderRadius.circular(compact ? 24 : 28),
+          borderRadius: BorderRadius.circular(compact ? AppRadii.feature : AppRadii.sheet),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +294,7 @@ class _TimingPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: AppColors.darkBackground.withValues(alpha: .14),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadii.control),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
