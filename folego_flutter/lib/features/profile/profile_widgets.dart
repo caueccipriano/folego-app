@@ -13,26 +13,12 @@ class _ProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTypography.section(
-            context,
-            fontSize: 17,
-            color: AppColors.primaryText(brightness),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: AppTypography.body(
-            context,
-            fontSize: 11,
-            color: AppColors.secondaryText(brightness),
-          ),
+        AppSectionHeader(
+          title: title,
+          subtitle: subtitle,
         ),
         const SizedBox(height: 12),
         child,
