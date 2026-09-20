@@ -291,6 +291,17 @@ void main() {
       );
     });
 
+    test('home voice reflects canonical snapshot state', () {
+      expect(
+        homeFolegoVoiceLabel(_snapshot(spendablePool: 600)),
+        'você está respirando bem até o próximo recebimento',
+      );
+      expect(
+        homeFolegoVoiceLabel(_snapshot(spendablePool: 0, dailyFolego: 0)),
+        'seu espaço está apertado agora',
+      );
+    });
+
     testWidgets('hero lays out across required responsive widths', (tester) async {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       for (final width in const <double>[
