@@ -1379,7 +1379,7 @@ class _Metric extends StatelessWidget {
     final border = AppColors.border(brightness);
     return Container(
       constraints: const BoxConstraints(minWidth: 118),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .38),
         borderRadius: BorderRadius.circular(AppRadii.control),
@@ -1404,7 +1404,7 @@ class _Metric extends StatelessWidget {
               value,
               style: AppTypography.money(
                 context,
-                fontSize: 14,
+                fontSize: 13,
                 color: AppColors.primaryText(brightness),
               ),
             ),
