@@ -82,7 +82,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'um retrato simples de $monthName',
+                      'o essencial de $monthName, sem ruído',
                       style: AppTypography.body(
                         context,
                         fontSize: 12,
@@ -164,7 +164,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
               ),
               icon: const Icon(AppIcons.chevronRight, size: 17),
               iconAlignment: IconAlignment.end,
-              label: const Text('ver composição'),
+              label: const Text('entender os números'),
               style: TextButton.styleFrom(foregroundColor: purple),
             ),
           ),
@@ -245,7 +245,7 @@ class _MonthlyHeadlineTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: muted,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
-        border: Border.all(color: border.withValues(alpha: .72)),
+        border: null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +419,7 @@ class _MetricTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: muted,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
-        border: Border.all(color: border.withValues(alpha: .7)),
+        border: null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
