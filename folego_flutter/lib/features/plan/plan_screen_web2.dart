@@ -636,20 +636,20 @@ class _PlanScreenState extends State<PlanScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(0, 22, 0, 140),
+        padding: const EdgeInsets.fromLTRB(0, 20, 0, 140),
         children: [
           _buildHeader(brightness, layout),
           if (_refreshing) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(minHeight: 2),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           _buildSummary(brightness),
           if (_budgetedCount == 0) ...[
             const SizedBox(height: 16),
             _buildNoPlan(brightness),
           ],
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
           _buildCategories(brightness),
         ],
       ),
