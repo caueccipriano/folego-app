@@ -350,8 +350,8 @@ class _CompactMetricTile extends StatelessWidget {
         : Formatters.money(data.amount);
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 54),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 50),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
         color: muted,
         borderRadius: BorderRadius.circular(AppRadii.control),
