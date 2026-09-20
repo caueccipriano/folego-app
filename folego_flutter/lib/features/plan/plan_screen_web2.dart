@@ -18,6 +18,7 @@ import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/app_sheet_handle.dart';
 
 typedef PlanBudgetLoader =
     Future<List<BudgetOverviewItem>> Function({
@@ -337,7 +338,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   decoration: BoxDecoration(
                     color: surface,
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(28),
+                      top: Radius.circular(AppRadii.sheet),
                     ),
                     border: Border.all(color: border),
                   ),
@@ -346,16 +347,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Center(
-                          child: Container(
-                            width: 44,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: border,
-                              borderRadius: BorderRadius.circular(AppRadii.pill),
-                            ),
-                          ),
-                        ),
+                        const AppSheetHandle(),
                         const SizedBox(height: 20),
                         Row(
                           children: [
@@ -364,7 +356,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               color: familyColor,
                               size: 46,
                               iconSize: 22,
-                              radius: 14,
+                              radius: AppRadii.control,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1376,7 +1368,7 @@ class _Metric extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .38),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: border.withValues(alpha: .75)),
       ),
       child: Column(
