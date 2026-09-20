@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
-import '../../core/theme/app_icons.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_filters.dart';
 import '../../data/models/transaction_item.dart';
@@ -181,52 +180,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final layout = AppBreakpoints.of(context);
     final desktop =
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
-    final screen = impl.TransactionsScreenV3(
+    final content = impl.TransactionsScreenV3(
       key: ValueKey<String>(widget.space?.id ?? 'primary-space'),
       repository: widget.repository,
       space: widget.space,
       initialFilters: widget.initialFilters,
-    );
-
-    final content = Stack(
-      children: [
-        Positioned.fill(child: screen),
-        Positioned(
-          right: 16,
-          bottom: 84,
-          child: SafeArea(
-            child: FloatingActionButton.small(
-              key: const ValueKey('statement-import-entry'),
-              heroTag: 'transaction-import-statement',
-              tooltip: 'importar extrato',
-              onPressed: _openImport,
-              child: const Icon(AppIcons.receipt),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: SafeArea(
-            child: FloatingActionButton.extended(
-              heroTag: 'transaction-classification-inbox',
-              onPressed: _openClassificationInbox,
-              icon: Icon(
-                _pending.isEmpty && !_loadingPending
-                    ? AppIcons.check
-                    : AppIcons.categoryUnclassified,
-              ),
-              label: Text(
-                _loadingPending
-                    ? 'Classificar'
-                    : _pending.isEmpty
-                        ? 'Classificar'
-                        : 'Classificar (${_pending.length})',
-              ),
-            ),
-          ),
-        ),
-      ],
+      onImportRequested: _openImport,
+      onClassificationRequested: _openClassificationInbox,
+      pendingClassificationCount: _pending.length,
+      pendingClassificationLoading: _loadingPending,
     );
 
     if (!desktop) return content;
