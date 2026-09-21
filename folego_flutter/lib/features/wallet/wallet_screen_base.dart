@@ -144,7 +144,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final selectedCard = card;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (selectedCard!.invoiceId != null &&
+      if (selectedCard.invoiceId != null &&
           selectedCard.invoiceId != target.invoiceId) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
