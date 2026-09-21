@@ -1851,7 +1851,20 @@ class _ProjectionSimulationSheetState
   bool _freeRecurring = true;
   String _freeComponent = 'direct_expense';
   RecurringItem? _subscription;
+  RecurringItem? _salarySource;
   CategoryItem? _category;
+
+  @override
+  void initState() {
+    super.initState();
+    final candidates = _salaryCandidates;
+    if (candidates.length == 1) {
+      _salarySource = candidates.single;
+      _salary.text = candidates.single.amount
+          .toStringAsFixed(2)
+          .replaceAll('.', ',');
+    }
+  }
 
   @override
   void dispose() {
@@ -1871,6 +1884,18 @@ class _ProjectionSimulationSheetState
       .where((item) => item.active && item.isExpense)
       .toList(growable: false);
 
+  List<RecurringItem> get _salaryCandidates => widget.recurringItems
+      .where(
+        (item) =>
+            item.active &&
+            item.isIncome &&
+            item.frequency == 'monthly' &&
+            item.certainty == 'confirmed' &&
+            !item.startsOn.isAfter(_startsOn) &&
+            (item.endsOn == null || !item.endsOn!.isBefore(_startsOn)),
+      )
+      .toList(growable: false);
+
   List<CategoryItem> get _leafCategories => widget.categories
       .where((item) => item.parentId != null)
       .toList(growable: false);
@@ -1882,7 +1907,15 @@ class _ProjectionSimulationSheetState
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-    if (picked != null) setState(() => _startsOn = picked);
+    if (picked != null) {
+      setState(() {
+        _startsOn = picked;
+        final source = _salarySource;
+        if (source != null && !_salaryCandidates.contains(source)) {
+          _salarySource = null;
+        }
+      });
+    }
   }
 
   void _submit() {
@@ -1901,11 +1934,7 @@ class _ProjectionSimulationSheetState
           _invalid('preencha pelo menos um custo e uma quantidade de parcelas');
           return;
         }
-        final end = DateTime(
-          _startsOn.year,
-          _startsOn.month + months - 1,
-          _startsOn.day,
-        );
+        final end = projectionMonthlyEndDate(_startsOn, months);
         result = [
           if (entry > 0)
             ProjectionAdjustment(
@@ -1955,12 +1984,29 @@ class _ProjectionSimulationSheetState
           _invalid('informe o novo valor mensal');
           return;
         }
+
+        final candidates = _salaryCandidates;
+        final source = _salarySource;
+        if (candidates.isNotEmpty && source == null) {
+          _invalid('selecione qual renda mensal será substituída');
+          return;
+        }
+
+        final delta = projectionReplacementDelta(
+          currentAmount: source?.amount ?? 0,
+          newAmount: amount,
+        );
+        if (delta.abs() < .005) {
+          _invalid('o novo valor é igual ao atual');
+          return;
+        }
+
         result = [
           ProjectionAdjustment(
             id: '$idBase-salary',
-            name: 'novo salário',
+            name: source == null ? 'nova renda mensal' : 'alterar ${source.name}',
             component: 'income',
-            amountDelta: amount,
+            amountDelta: delta,
             frequency: 'monthly',
             startsOn: _startsOn,
           ),
@@ -2164,8 +2210,57 @@ class _ProjectionSimulationSheetState
           _moneyField(_ipva, 'IPVA anual'),
         ];
       case _SimulationTemplate.salary:
+        final candidates = _salaryCandidates;
         return [
-          _moneyField(_salary, 'nova renda mensal'),
+          if (candidates.isNotEmpty) ...[
+            DropdownButtonFormField<RecurringItem>(
+              initialValue:
+                  candidates.contains(_salarySource) ? _salarySource : null,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'renda mensal atual',
+              ),
+              items: candidates
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(
+                        '${item.name} · ${Formatters.money(item.amount)}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                setState(() {
+                  _salarySource = value;
+                  if (value != null) {
+                    _salary.text = value.amount
+                        .toStringAsFixed(2)
+                        .replaceAll('.', ',');
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+          _moneyField(
+            _salary,
+            candidates.isEmpty ? 'nova renda mensal' : 'novo valor mensal',
+          ),
+          if (candidates.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'o Fôlego simula apenas a diferença para não somar o salário antigo duas vezes',
+              style: AppTypography.label(
+                context,
+                fontSize: 9,
+                color: AppColors.secondaryText(
+                  Theme.of(context).brightness,
+                ),
+              ),
+            ),
+          ],
         ];
       case _SimulationTemplate.cancelSubscription:
         return [
