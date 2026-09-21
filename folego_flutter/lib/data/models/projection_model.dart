@@ -210,6 +210,33 @@ class ProjectionResult {
   }
 }
 
+DateTime projectionMonthlyEndDate(DateTime startsOn, int occurrences) {
+  if (occurrences <= 0) {
+    throw ArgumentError.value(
+      occurrences,
+      'occurrences',
+      'A quantidade de ocorrências deve ser maior que zero.',
+    );
+  }
+
+  final targetMonth = DateTime(
+    startsOn.year,
+    startsOn.month + occurrences - 1,
+    1,
+  );
+  final lastDay = DateTime(targetMonth.year, targetMonth.month + 1, 0).day;
+  final day = startsOn.day > lastDay ? lastDay : startsOn.day;
+
+  return DateTime(targetMonth.year, targetMonth.month, day);
+}
+
+double projectionReplacementDelta({
+  required double currentAmount,
+  required double newAmount,
+}) {
+  return newAmount - currentAmount;
+}
+
 class ProjectionAdjustment {
   const ProjectionAdjustment({
     required this.id,
