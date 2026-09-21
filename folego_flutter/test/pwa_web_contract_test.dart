@@ -35,6 +35,24 @@ void main() {
       expect(flutterBootstrap, greaterThan(pushBridge));
     });
 
+    test('approved piggy bank stays canonical across app branding', () {
+      final logo = File('web/icons/folego-logo.svg').readAsStringSync();
+      final index = File('web/index.html').readAsStringSync();
+      final auth = File(
+        'lib/features/auth/auth_widgets.dart',
+      ).readAsStringSync();
+      final workflow = File(
+        '../.github/workflows/deploy-web.yml',
+      ).readAsStringSync();
+
+      expect(logo, contains('Fôlego — porquinho'));
+      expect(logo, contains('data:image/png;base64,'));
+      expect(index, contains('icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(auth, contains("'web/icons/Icon-512.png'"));
+      expect(workflow, contains('web/icons/folego-logo.svg'));
+    });
+
     test('manifest is installable inside the GitHub Pages app scope', () {
       final manifest =
           jsonDecode(File('web/manifest.json').readAsStringSync())
