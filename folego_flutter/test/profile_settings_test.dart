@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -224,6 +225,40 @@ void main() {
       expect(info.appName, 'Fôlego');
       expect(info.version, '0.1.0');
       expect(info.versionLabel, 'versão 0.1.0 · build 1');
+    });
+  });
+
+  group('Profile account-dialog contracts', () {
+    test('email and password errors stay inline and destructive dialogs scroll', () {
+      final source = File(
+        'lib/features/profile/profile_screen_v2.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('errorText: emailError'));
+      expect(source, contains('errorText: passwordError'));
+      expect(source, contains('errorText: confirmationError'));
+      expect(source, contains('setDialogState(() => emailError = error)'));
+      expect(source, contains('siga as confirmações enviadas por e-mail'));
+
+      final changeEmail = source.indexOf('Future<void> _changeEmail()');
+      final changePassword = source.indexOf('Future<void> _changePassword()');
+      final deleteAccount = source.indexOf('Future<void> _deleteAccount()');
+
+      expect(changeEmail, greaterThanOrEqualTo(0));
+      expect(changePassword, greaterThan(changeEmail));
+      expect(deleteAccount, greaterThan(changePassword));
+
+      final emailBlock = source.substring(changeEmail, changePassword);
+      final passwordBlock = source.substring(changePassword, deleteAccount);
+      final deleteBlock = source.substring(
+        deleteAccount,
+        source.indexOf('Future<void> _confirmSignOut()', deleteAccount),
+      );
+
+      expect(emailBlock, contains('scrollable: true'));
+      expect(passwordBlock, contains('scrollable: true'));
+      expect(deleteBlock, contains('scrollable: true'));
+      expect(deleteBlock, contains("typed == 'APAGAR'"));
     });
   });
 
