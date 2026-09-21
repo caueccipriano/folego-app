@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_content_container.dart';
+import '../../core/navigation/push_route.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
@@ -58,6 +59,7 @@ class TransactionsScreenV3 extends StatefulWidget {
     this.pageLoader,
     this.optionsLoader,
     this.initialFilters,
+    this.initialPushRoute,
     this.onImportRequested,
     this.onClassificationRequested,
     this.pendingClassificationCount = 0,
@@ -69,6 +71,7 @@ class TransactionsScreenV3 extends StatefulWidget {
   final TransactionPageLoader? pageLoader;
   final TransactionFilterOptionsLoader? optionsLoader;
   final TransactionFilters? initialFilters;
+  final String? initialPushRoute;
   final VoidCallback? onImportRequested;
   final VoidCallback? onClassificationRequested;
   final int pendingClassificationCount;
@@ -104,6 +107,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   String? _error;
   String? _loadMoreError;
   int _transactionLoadGeneration = 0;
+  bool _openedPushTarget = false;
 
   Map<String, CategoryItem> get _categoryById => {
     for (final category in _categories) category.id: category,
@@ -116,7 +120,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     _tabController = TabController(length: 3, vsync: this);
     _searchController = TextEditingController(text: _filters.search);
     _bindRealtime();
-    _loadInitial();
+    unawaited(_loadInitial().then((_) => _openPushTargetIfNeeded()));
   }
 
   void _bindRealtime() {
@@ -186,6 +190,47 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         _error = _friendlyError(error);
       });
     }
+  }
+
+  Future<void> _openPushTargetIfNeeded() async {
+    if (_openedPushTarget || !mounted || _loading) return;
+    final target = pushRecurringRouteTarget(widget.initialPushRoute);
+    if (target == null) return;
+
+    _openedPushTarget = true;
+    final tabIndex = target.subscription ? 1 : 2;
+    if (_tabController.index != tabIndex) {
+      _tabController.index = tabIndex;
+    }
+
+    RecurringItem? item;
+    for (final candidate in _recurringItems) {
+      if (candidate.id == target.itemId) {
+        item = candidate;
+        break;
+      }
+    }
+
+    if (item == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              target.subscription
+                  ? 'essa assinatura não está mais disponível'
+                  : 'essa recorrência não está mais disponível',
+            ),
+          ),
+        );
+      });
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_editRecurring(item!));
+    });
   }
 
   Future<TransactionFilterOptions> _loadFilterOptions(String spaceId) {
