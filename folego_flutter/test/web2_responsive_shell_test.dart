@@ -14,6 +14,26 @@ import 'package:folego/l10n/app_localizations.dart';
 import 'package:folego/shared/widgets/responsive_navigation_shell.dart';
 
 void main() {
+  testWidgets('320px keeps every mobile navigation target tappable', (tester) async {
+    await _pumpShell(tester, const Size(320, 700));
+
+    final nav = find.byKey(const ValueKey('mobile-liquid-nav'));
+    expect(nav, findsOneWidget);
+    final navRect = tester.getRect(nav);
+
+    for (var index = 0; index < 5; index++) {
+      final target = find.byKey(ValueKey('mobile-nav-destination-$index'));
+      final rect = tester.getRect(target);
+      expect(rect.width, greaterThanOrEqualTo(44));
+      expect(rect.height, greaterThanOrEqualTo(44));
+      expect(navRect.contains(rect.center), isTrue);
+      await tester.tapAt(rect.center);
+      await tester.pump();
+      expect(find.byKey(ValueKey('page-$index')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('width below 600 keeps bottom navigation', (tester) async {
     await _pumpShell(tester, const Size(390, 844));
     expect(find.byKey(const ValueKey('mobile-bottom-navigation')), findsOneWidget);
