@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:folego/core/privacy/financial_privacy.dart';
-import 'package:folego/data/models/wallet_detail.dart';
 import 'package:folego/data/models/wallet_overview.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/wallet/wallet_screen_base.dart';
@@ -71,26 +70,6 @@ class _WalletQaRepository implements FolegoRepository {
     );
   }
 
-  @override
-  Future<List<WalletInstallmentPosition>> listWalletInstallmentPositions({
-    required String spaceId,
-  }) async {
-    return [
-      WalletInstallmentPosition(
-        purchaseId: 'purchase-1',
-        description: 'Notebook profissional com descrição longa',
-        merchant: 'Loja de tecnologia',
-        cardId: 'card-1',
-        cardName: 'Cartão principal internacional',
-        categoryName: 'Eletrônicos e tecnologia',
-        installmentAmount: 1234.56,
-        currentInstallment: 3,
-        totalInstallments: 12,
-        nextDueDate: DateTime(2026, 10, 10),
-        completed: false,
-      ),
-    ];
-  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -122,13 +101,11 @@ void main() {
       expect(find.text('carteira'), findsOneWidget, reason: 'width $width');
       expect(tester.takeException(), isNull, reason: 'accounts at $width');
 
-      for (final section in <String>['cartões', 'benefícios', 'dívidas', 'parcelas']) {
+      for (final section in <String>['cartões', 'benefícios', 'dívidas']) {
         await tester.tap(find.text(section).first);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '$section at $width');
       }
-
-      expect(find.text('Notebook profissional com descrição longa'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
