@@ -213,42 +213,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final controller = TextEditingController(
       text: widget.client.auth.currentUser?.email ?? _identity.email,
     );
+    String? emailError;
     final email = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          'alterar e-mail',
-          style: AppTypography.section(dialogContext, fontSize: 18),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.emailAddress,
-          autocorrect: false,
-          decoration: const InputDecoration(
-            labelText: 'novo e-mail',
-            hintText: 'voce@exemplo.com',
-          ),
-          onSubmitted: (value) {
-            if (AuthValidation.email(value) == null) {
-              Navigator.of(dialogContext).pop(value.trim());
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          void submitEmail() {
+            final error = AuthValidation.email(controller.text);
+            if (error != null) {
+              setDialogState(() => emailError = error);
+              return;
             }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('cancelar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (AuthValidation.email(controller.text) == null) {
-                Navigator.of(dialogContext).pop(controller.text.trim());
-              }
-            },
-            child: const Text('continuar'),
-          ),
-        ],
+            Navigator.of(dialogContext).pop(controller.text.trim());
+          }
+
+          return AlertDialog(
+            scrollable: true,
+            title: Text(
+              'alterar e-mail',
+              style: AppTypography.section(dialogContext, fontSize: 18),
+            ),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: 'novo e-mail',
+                hintText: 'voce@exemplo.com',
+                errorText: emailError,
+              ),
+              onChanged: (_) {
+                if (emailError != null) {
+                  setDialogState(() => emailError = null);
+                }
+              },
+              onSubmitted: (_) => submitEmail(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('cancelar'),
+              ),
+              FilledButton(
+                onPressed: submitEmail,
+                child: const Text('continuar'),
+              ),
+            ],
+          );
+        },
       ),
     );
     controller.dispose();
@@ -261,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'pedido enviado para $email · confirme a alteração pelo e-mail',
+            'pedido enviado para $email · siga as confirmações enviadas por e-mail',
           ),
         ),
       );
@@ -282,11 +296,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmation = TextEditingController();
     var obscure = true;
     var obscureConfirmation = true;
+    String? passwordError;
+    String? confirmationError;
 
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
+          scrollable: true,
           title: Text(
             'alterar senha',
             style: AppTypography.section(dialogContext, fontSize: 18),
@@ -301,11 +318,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 autocorrect: false,
                 decoration: InputDecoration(
                   labelText: 'nova senha',
+                  errorText: passwordError,
                   suffixIcon: IconButton(
                     onPressed: () => setDialogState(() => obscure = !obscure),
                     icon: Icon(obscure ? AppIcons.eye : AppIcons.eyeOff),
                   ),
                 ),
+                onChanged: (_) {
+                  if (passwordError != null || confirmationError != null) {
+                    setDialogState(() {
+                      passwordError = null;
+                      confirmationError = null;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 10),
               TextField(
@@ -314,6 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 autocorrect: false,
                 decoration: InputDecoration(
                   labelText: 'confirmar nova senha',
+                  errorText: confirmationError,
                   suffixIcon: IconButton(
                     onPressed: () => setDialogState(
                       () => obscureConfirmation = !obscureConfirmation,
@@ -323,6 +350,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                onChanged: (_) {
+                  if (confirmationError != null) {
+                    setDialogState(() => confirmationError = null);
+                  }
+                },
               ),
             ],
           ),
@@ -333,27 +365,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             FilledButton(
               onPressed: () {
-                final passwordError = AuthValidation.password(
+                final nextPasswordError = AuthValidation.password(
                   password.text,
                   enforceMinimum: true,
                 );
-                final confirmationError = AuthValidation.passwordConfirmation(
+                final nextConfirmationError =
+                    AuthValidation.passwordConfirmation(
                   confirmation.text,
                   password.text,
                 );
-                if (passwordError == null && confirmationError == null) {
+                if (nextPasswordError == null &&
+                    nextConfirmationError == null) {
                   Navigator.of(dialogContext).pop(password.text);
-                } else {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        passwordError ??
-                            confirmationError ??
-                            'confira a nova senha',
-                      ),
-                    ),
-                  );
+                  return;
                 }
+                setDialogState(() {
+                  passwordError = nextPasswordError;
+                  confirmationError = nextConfirmationError;
+                });
               },
               child: const Text('salvar'),
             ),
@@ -391,6 +420,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
+          scrollable: true,
           title: Text(
             'apagar sua conta?',
             style: AppTypography.section(dialogContext, fontSize: 18),
