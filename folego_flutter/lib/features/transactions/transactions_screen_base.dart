@@ -193,7 +193,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   }
 
   Future<void> _openPushTargetIfNeeded() async {
-    if (_openedPushTarget || !mounted || _loading) return;
+    if (_openedPushTarget || !mounted || _loading || _error != null) return;
     final target = pushRecurringRouteTarget(widget.initialPushRoute);
     if (target == null) return;
 
@@ -346,7 +346,10 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     ]);
   }
 
-  Future<void> _retryInitialLoad() => _loadInitial();
+  Future<void> _retryInitialLoad() async {
+    await _loadInitial();
+    await _openPushTargetIfNeeded();
+  }
 
   Future<void> _loadMoreTransactions() async {
     final space = _space;
