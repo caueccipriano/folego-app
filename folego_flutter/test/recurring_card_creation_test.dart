@@ -54,6 +54,49 @@ void main() {
     }
   });
 
+  testWidgets('new monthly recurrence follows changed start date until schedule is customized', (tester) async {
+    final repository = _FakeFolegoRepository();
+
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RecurringFormSheet(
+              space: space,
+              repository: repository,
+            ),
+          ),
+        ),
+      );
+      await _waitFor(tester, find.text('criar recorrência'));
+
+      await tester.enterText(find.byType(TextField).at(0), 'Salário');
+      await tester.enterText(find.byType(TextField).at(1), '6000,00');
+
+      await tester.ensureVisible(find.text('começa em'));
+      await tester.tap(find.text('começa em'));
+      await tester.pumpAndSettle();
+
+      final currentDay = DateTime.now().day;
+      final targetDay = currentDay == 15 ? 16 : 15;
+      await tester.tap(find.text('$targetDay').last);
+      await tester.tap(find.text('selecionar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('dia $targetDay'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('criar recorrência'));
+      await tester.tap(find.text('criar recorrência'));
+      await tester.pump();
+
+      expect(repository.createdMonthlyDays, [targetDay]);
+      expect(repository.createdStartsOn?.day, targetDay);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+  });
+
   testWidgets('new recurring expense keeps account destination exclusive', (
     tester,
   ) async {
@@ -107,6 +150,8 @@ Future<void> _waitFor(WidgetTester tester, Finder finder) async {
 class _FakeFolegoRepository implements FolegoRepository {
   String? createdAccountId;
   String? createdCardId;
+  List<int>? createdMonthlyDays;
+  DateTime? createdStartsOn;
 
   @override
   Future<List<AccountItem>> listAccounts(String spaceId) async => const [
@@ -156,6 +201,8 @@ class _FakeFolegoRepository implements FolegoRepository {
   }) async {
     createdAccountId = accountId;
     createdCardId = cardId;
+    createdMonthlyDays = monthlyDays;
+    createdStartsOn = startsOn;
     return 'recurring-created';
   }
 
