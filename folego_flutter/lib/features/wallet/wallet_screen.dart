@@ -13,10 +13,12 @@ class WalletScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.initialPushRoute,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  final String? initialPushRoute;
 
   @override
   State<WalletScreen> createState() => _WalletScreenState();
@@ -76,6 +78,7 @@ class _WalletScreenState extends State<WalletScreen> {
             key: key,
             repository: widget.repository,
             spaceId: widget.spaceId,
+            initialPushRoute: widget.initialPushRoute,
             onAddRequested: _addInstrument,
           ),
         );
