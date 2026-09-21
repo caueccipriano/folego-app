@@ -305,6 +305,7 @@ void main() {
     testWidgets('hero lays out across required responsive widths', (tester) async {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       for (final width in const <double>[
+        320,
         375,
         390,
         430,
