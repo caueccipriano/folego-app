@@ -73,7 +73,8 @@ class _RecurringFormSheetState extends State<RecurringFormSheet> {
   int _monthOfYear = 1;
   
   final Set<int> _monthlyDays = <int>{};
-bool _monthlyLastDay = false;
+  bool _monthlyLastDay = false;
+  bool _monthlyScheduleCustomized = false;
 
   DateTime _startsOn = DateTime.now();
   DateTime? _endsOn;
@@ -131,6 +132,7 @@ if (_monthlyDays.isEmpty && item.dayOfMonth != null) {
 }
 
 _monthlyLastDay = item.monthlyLastDay;
+      _monthlyScheduleCustomized = true;
 
       _startsOn = item.startsOn;
       _endsOn = item.endsOn;
@@ -141,7 +143,8 @@ _monthlyLastDay = item.monthlyLastDay;
       _monthOfYear = _startsOn.month;
 
       _monthlyDays.add(_startsOn.day);
-_monthlyLastDay = false;
+      _monthlyLastDay = false;
+      _monthlyScheduleCustomized = false;
     }
 
     _load();
@@ -348,6 +351,7 @@ Future<void> _pickMonthlyDay() async {
 
   setState(() {
     _monthlyDays.add(selectedDay);
+    _monthlyScheduleCustomized = true;
 
     final sorted = _monthlyDays.toList()..sort();
     _dayOfMonth = sorted.first;
@@ -393,6 +397,11 @@ Future<void> _pickMonthlyDay() async {
         case 'monthly':
         default:
           _dayOfMonth = selected.day;
+          if (!_monthlyScheduleCustomized) {
+            _monthlyDays
+              ..clear()
+              ..add(selected.day);
+          }
       }
 
       if (_endsOn != null && _endsOn!.isBefore(_startsOn)) {
@@ -460,6 +469,11 @@ Future<void> _pickMonthlyDay() async {
         case 'monthly':
         default:
           _dayOfMonth = _startsOn.day;
+          if (!_monthlyScheduleCustomized) {
+            _monthlyDays
+              ..clear()
+              ..add(_startsOn.day);
+          }
       }
     });
   }
@@ -926,6 +940,7 @@ if (_frequency == 'monthly') ...[
           onDeleted: () {
             setState(() {
               _monthlyDays.remove(day);
+              _monthlyScheduleCustomized = true;
             });
           },
         ),
@@ -937,6 +952,7 @@ if (_frequency == 'monthly') ...[
         onSelected: (selected) {
           setState(() {
             _monthlyLastDay = selected;
+            _monthlyScheduleCustomized = true;
           });
         },
       ),
