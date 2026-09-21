@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/notifications/notification_adapter_factory.dart';
+import '../../core/navigation/push_route.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
@@ -28,6 +29,7 @@ int homeIndexForPushRoute(String? route) {
   }
   if (route.startsWith('/transactions')) return 1;
   if (route.startsWith('/plan')) return 2;
+  if (pushWalletDebtId(route) != null || pushWalletInvoiceTarget(route) != null) return 3;
   if (route.startsWith('/wallet')) return 3;
   if (route.startsWith('/profile')) return 4;
   return 0;
@@ -168,18 +170,24 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
       builder: (context, hidden, child) {
+        final pushRoute = Uri.base.queryParameters['push_route'];
         final pages = [
           HomeScreen(space: widget.space, repository: widget.repository),
           TransactionsScreen(
             repository: widget.repository,
             space: widget.space,
+            initialPushRoute: pushRoute,
           ),
           PlanScreen(
             repository: widget.repository,
             spaceId: widget.space.id,
             projectionOpenToken: _projectionRequestToken,
           ),
-          WalletScreen(repository: widget.repository, spaceId: widget.space.id),
+          WalletScreen(
+            repository: widget.repository,
+            spaceId: widget.space.id,
+            initialPushRoute: pushRoute,
+          ),
           ProfileScreen(
             client: Supabase.instance.client,
             repository: widget.repository,
