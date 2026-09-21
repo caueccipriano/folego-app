@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
+import '../../core/navigation/push_route.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -26,11 +29,13 @@ class WalletScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.initialPushRoute,
     this.onAddRequested,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  final String? initialPushRoute;
   final VoidCallback? onAddRequested;
 
   @override
@@ -46,6 +51,7 @@ class _WalletScreenState extends State<WalletScreen> {
   bool _installmentsLoading = false;
   String? _installmentsError;
   List<WalletInstallmentPosition>? _installmentPositions;
+  bool _openedPushTarget = false;
 
   @override
   void initState() {
@@ -71,6 +77,7 @@ class _WalletScreenState extends State<WalletScreen> {
       if (_section == 4 || _installmentPositions != null) {
         await _loadInstallments();
       }
+      unawaited(_openPushTargetIfNeeded(overview));
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -78,6 +85,75 @@ class _WalletScreenState extends State<WalletScreen> {
         _error = ErrorTranslator.forDisplay(error);
       });
     }
+  }
+
+  Future<void> _openPushTargetIfNeeded(WalletOverview overview) async {
+    if (_openedPushTarget || !mounted) return;
+
+    final debtId = pushWalletDebtId(widget.initialPushRoute);
+    final invoiceTarget = pushWalletInvoiceTarget(widget.initialPushRoute);
+    if (debtId == null && invoiceTarget == null) return;
+
+    _openedPushTarget = true;
+
+    if (debtId != null) {
+      WalletDebt? debt;
+      for (final candidate in overview.debts) {
+        if (candidate.id == debtId) {
+          debt = candidate;
+          break;
+        }
+      }
+      if (debt == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('essa dívida não está mais disponível')),
+          );
+        });
+        return;
+      }
+
+      if (_section != 3) setState(() => _section = 3);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_openDebt(debt!));
+      });
+      return;
+    }
+
+    final target = invoiceTarget!;
+    WalletCard? card;
+    for (final candidate in overview.cards) {
+      if (candidate.id == target.cardId) {
+        card = candidate;
+        break;
+      }
+    }
+    if (card == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('esse cartão não está mais disponível')),
+        );
+      });
+      return;
+    }
+
+    if (_section != 1) setState(() => _section = 1);
+    final selectedCard = card;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (selectedCard!.invoiceId != null &&
+          selectedCard.invoiceId != target.invoiceId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('essa fatura mudou; abrindo o cartão atualizado'),
+          ),
+        );
+      }
+      unawaited(_openCard(selectedCard));
+    });
   }
 
   Future<void> _loadInstallments() async {
