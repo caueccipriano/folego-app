@@ -73,6 +73,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   int _weekday = DateTime.now().weekday % 7;
   final Set<int> _monthlyDays = <int>{};
   bool _monthlyLastDay = false;
+  bool _monthlyScheduleCustomized = false;
 
   bool _loading = true;
   bool _saving = false;
@@ -439,9 +440,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       if (_repeat == 'weekly' || _repeat == 'biweekly') {
         _weekday = _postgresWeekday(selected);
       }
-      if (_repeat == 'monthly' && _monthlyDays.isEmpty) {
-        _monthlyDays.add(selected.day);
+      if (_repeat == 'monthly') {
         _dayOfMonth = selected.day;
+        if (!_monthlyScheduleCustomized) {
+          _monthlyDays
+            ..clear()
+            ..add(selected.day);
+        }
       }
       if (_repeat == 'yearly') {
         _dayOfMonth = selected.day;
@@ -477,6 +482,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     if (selected == null || !mounted) return;
     setState(() {
       _monthlyDays.add(selected);
+      _monthlyScheduleCustomized = true;
       _dayOfMonth = (_monthlyDays.toList()..sort()).first;
     });
   }
@@ -496,7 +502,13 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         case 'biweekly':
           _weekday = _postgresWeekday(_date);
         case 'monthly':
-          if (_monthlyDays.isEmpty) _monthlyDays.add(_date.day);
+          if (!_monthlyScheduleCustomized) {
+            _monthlyDays
+              ..clear()
+              ..add(_date.day);
+          } else if (_monthlyDays.isEmpty) {
+            _monthlyDays.add(_date.day);
+          }
           _dayOfMonth = (_monthlyDays.toList()..sort()).first;
         case 'yearly':
           _dayOfMonth = _date.day;
@@ -1266,7 +1278,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                   label: Text('dia $day'),
                   onDeleted: _monthlyDays.length == 1 && !_monthlyLastDay
                       ? null
-                      : () => setState(() => _monthlyDays.remove(day)),
+                      : () => setState(() {
+                          _monthlyDays.remove(day);
+                          _monthlyScheduleCustomized = true;
+                        }),
                 ),
               ),
               ActionChip(
@@ -1277,7 +1292,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               FilterChip(
                 selected: _monthlyLastDay,
                 label: const Text('último dia'),
-                onSelected: (value) => setState(() => _monthlyLastDay = value),
+                onSelected: (value) => setState(() {
+                  _monthlyLastDay = value;
+                  _monthlyScheduleCustomized = true;
+                }),
               ),
             ],
           ),
