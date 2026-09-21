@@ -127,7 +127,7 @@ _monthlyDays
   ..clear()
   ..addAll(item.monthlyDays);
 
-if (_monthlyDays.isEmpty && item.dayOfMonth != null) {
+if (_monthlyDays.isEmpty && item.dayOfMonth != null && !item.monthlyLastDay) {
   _monthlyDays.add(item.dayOfMonth!);
 }
 
@@ -523,15 +523,23 @@ Future<void> _pickMonthlyDay() async {
       return;
     }
 
+    if (_frequency == 'monthly' && _monthlyDays.isEmpty && !_monthlyLastDay) {
+      setState(() {
+        _error = 'selecione pelo menos um dia do mês';
+      });
+      return;
+    }
+
     setState(() {
       _saving = true;
       _error = null;
     });
 
     try {
-      final dayOfMonth = _frequency == 'monthly' || _frequency == 'yearly'
-          ? _dayOfMonth
-          : null;
+      final sortedMonthlyDays = _monthlyDays.toList()..sort();
+      final dayOfMonth = _frequency == 'monthly'
+          ? (sortedMonthlyDays.isEmpty ? null : sortedMonthlyDays.first)
+          : _frequency == 'yearly' ? _dayOfMonth : null;
 
       final weekday = _frequency == 'weekly' || _frequency == 'biweekly'
           ? _weekday

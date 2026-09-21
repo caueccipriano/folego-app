@@ -506,10 +506,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             _monthlyDays
               ..clear()
               ..add(_date.day);
-          } else if (_monthlyDays.isEmpty) {
+          } else if (_monthlyDays.isEmpty && !_monthlyLastDay) {
             _monthlyDays.add(_date.day);
           }
-          _dayOfMonth = (_monthlyDays.toList()..sort()).first;
+          if (_monthlyDays.isNotEmpty) {
+            _dayOfMonth = (_monthlyDays.toList()..sort()).first;
+          }
         case 'yearly':
           _dayOfMonth = _date.day;
           _monthOfYear = _date.month;
@@ -678,9 +680,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       accountId: accountId,
       cardId: cardId,
       categoryId: _categoryId,
-      dayOfMonth: _repeat == 'monthly' || _repeat == 'yearly'
-          ? _dayOfMonth
-          : null,
+      dayOfMonth: _repeat == 'monthly'
+          ? (monthlyDays!.isEmpty ? null : monthlyDays.first)
+          : _repeat == 'yearly' ? _dayOfMonth : null,
       monthlyDays: monthlyDays,
       monthlyLastDay: _repeat == 'monthly' ? _monthlyLastDay : false,
       weekday: _repeat == 'weekly' || _repeat == 'biweekly' ? _weekday : null,
