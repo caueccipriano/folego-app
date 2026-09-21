@@ -63,6 +63,32 @@ void main() {
     expect(projection.months.single.categories.single.name, 'Alimentação');
   });
 
+  test('replacement delta changes income instead of double counting it', () {
+    expect(
+      projectionReplacementDelta(currentAmount: 6000, newAmount: 8000),
+      2000,
+    );
+    expect(
+      projectionReplacementDelta(currentAmount: 6000, newAmount: 5000),
+      -1000,
+    );
+  });
+
+  test('monthly projection end date clamps day 31 in short months', () {
+    expect(
+      projectionMonthlyEndDate(DateTime(2027, 1, 31), 2),
+      DateTime(2027, 2, 28),
+    );
+    expect(
+      projectionMonthlyEndDate(DateTime(2028, 1, 31), 2),
+      DateTime(2028, 2, 29),
+    );
+    expect(
+      projectionMonthlyEndDate(DateTime(2026, 9, 30), 36),
+      DateTime(2029, 8, 30),
+    );
+  });
+
   test('serializes simulation without ledger semantics', () {
     final adjustment = ProjectionAdjustment(
       id: 'car',
