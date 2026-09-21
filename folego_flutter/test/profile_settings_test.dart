@@ -113,6 +113,19 @@ void main() {
     });
   });
 
+  group('Remembered login email', () {
+    test('persists trimmed email and clears it safely', () async {
+      final store = _MemoryPreferenceStore();
+      final repository = AppPreferenceRepository(store);
+
+      await repository.saveRememberedEmail('  teste@example.com ');
+      expect(await repository.loadRememberedEmail(), 'teste@example.com');
+
+      await repository.saveRememberedEmail(null);
+      expect(await repository.loadRememberedEmail(), isNull);
+    });
+  });
+
   group('Profile identity', () {
     test('shows full name and two initials when available', () {
       const identity = ProfileIdentity(
