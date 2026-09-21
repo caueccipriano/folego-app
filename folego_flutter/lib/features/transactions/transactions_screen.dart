@@ -20,11 +20,13 @@ class TransactionsScreen extends StatefulWidget {
     required this.repository,
     this.space,
     this.initialFilters,
+    this.initialPushRoute,
   });
 
   final FolegoRepository repository;
   final FinancialSpace? space;
   final TransactionFilters? initialFilters;
+  final String? initialPushRoute;
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -185,6 +187,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       repository: widget.repository,
       space: widget.space,
       initialFilters: widget.initialFilters,
+      initialPushRoute: widget.initialPushRoute,
       onImportRequested: _openImport,
       onClassificationRequested: _openClassificationInbox,
       pendingClassificationCount: _pending.length,
