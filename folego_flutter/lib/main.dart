@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/supabase_config.dart';
+import 'core/subscriptions/subscription_service.dart';
 import 'data/repositories/folego_repository.dart';
 
 Future<void> main() async {
@@ -15,6 +16,8 @@ Future<void> main() async {
   );
 
   final client = Supabase.instance.client;
+  await SubscriptionService.initialize(client);
+
   runApp(
     FolegoApp(
       client: client,
