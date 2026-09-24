@@ -1,0 +1,44 @@
+name: iOS release validation
+
+on:
+  push:
+    branches:
+      - release/folego-v1
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/ios-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: folego-v1-ios-release
+  cancel-in-progress: true
+
+jobs:
+  ios-simulator:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: folego_flutter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Generate native scaffolds
+        run: ./scripts/bootstrap_flutter.sh
+
+      - name: Build iOS simulator
+        run: flutter build ios --simulator --no-codesign --release
