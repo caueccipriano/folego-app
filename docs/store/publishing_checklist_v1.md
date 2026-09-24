@@ -54,3 +54,12 @@ A tela de exclusão informa que apagar a conta não cancela automaticamente uma 
 - suporte público funcional;
 - screenshots finais sem dados pessoais;
 - nenhuma alegação de resultado financeiro garantido.
+
+## Segurança administrativa antes da loja
+- publicar `legal_site/` em domínio público independente do repositório;
+- validar Política, Termos, Suporte e Exclusão em navegador anônimo;
+- tornar `folego-app` privado;
+- confirmar que as URLs legais continuam funcionando após a mudança de visibilidade;
+- habilitar Leaked Password Protection no Supabase Auth;
+- executar nova auditoria Supabase/GitHub;
+- manter EN/ES ocultos até a cobertura de interface chegar a 100%.
