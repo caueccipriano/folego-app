@@ -50,5 +50,51 @@
   "firstUseTipPlanBody": "quando houver histórico e orçamento, o Fôlego mostra mais contexto sem inventar um número antes da hora.",
   "firstUseTipExploreTitle": "explore no seu ritmo",
   "firstUseTipExploreBody": "as outras áreas continuam disponíveis pela navegação. você também pode lançar receita ou gasto direto por aqui.",
-  "firstUseCalculationPending": "o Fôlego só calcula quanto está livre quando tiver dados suficientes — até lá, não inventa números."
+  "firstUseCalculationPending": "o Fôlego só calcula quanto está livre quando tiver dados suficientes — até lá, não inventa números.",
+  "authIntroTitle": "Seu saldo não é o que você pode gastar.",
+  "authIntroBody": "Um diário financeiro simples pra dar mais espaço às suas escolhas.",
+  "authLoginTitle": "Bom te ver de novo.",
+  "authLoginSubtitle": "Entre para continuar seu diário financeiro.",
+  "authSignUpTitle": "Crie seu espaço.",
+  "authSignUpSubtitle": "Poucos dados. O resto a gente organiza depois.",
+  "authRecoveryTitle": "Recupere seu acesso.",
+  "authRecoverySubtitle": "Informe seu e-mail para receber as instruções.",
+  "authFirstName": "Nome",
+  "authLastName": "Sobrenome",
+  "authEmail": "E-mail",
+  "authConfirmEmail": "Confirmar e-mail",
+  "authPassword": "Senha",
+  "authConfirmPassword": "Confirmar senha",
+  "authPasswordHint": "Pelo menos {count} caracteres",
+  "@authPasswordHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authRememberEmail": "lembrar meu e-mail",
+  "authForgotPassword": "Esqueci minha senha",
+  "authRememberPrivacy": "o Fôlego guarda seu e-mail; a senha fica com o iPhone ou navegador",
+  "authEntering": "Entrando...",
+  "authEnter": "Entrar",
+  "authCreating": "Criando...",
+  "authCreateAccount": "Criar conta",
+  "authSending": "Enviando...",
+  "authSendInstructions": "Enviar instruções",
+  "authBackToLogin": "Voltar para entrar",
+  "authCheckEmailTitle": "Confira seu e-mail.",
+  "authCheckEmailBody": "Enviamos uma confirmação para:",
+  "authResending": "Reenviando...",
+  "authResendEmail": "Reenviar e-mail",
+  "authWrongEmail": "Usei o e-mail errado",
+  "authRecoverySentTitle": "Dá uma olhada no e-mail.",
+  "authRecoverySentBody": "Se esse e-mail estiver cadastrado, você receberá as instruções.",
+  "authAlreadyHaveAccount": "Já tem conta?",
+  "authNoAccountYet": "Ainda não tem conta?",
+  "authSignIn": "Entrar",
+  "authSignUp": "Criar conta",
+  "authShowPassword": "Mostrar senha",
+  "authHidePassword": "Ocultar senha",
+  "authConfirmationResent": "Novo e-mail de confirmação enviado."
 }
