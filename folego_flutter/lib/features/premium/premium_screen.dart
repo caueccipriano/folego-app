@@ -156,7 +156,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           _running
                               ? 'aguarde…'
                               : storeReady
-                                  ? 'começar 7 dias grátis'
+                                  ? 'ver oferta Premium'
                                   : 'assinatura disponível na versão da loja',
                         ),
                       )
@@ -192,7 +192,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Cancele quando quiser pela loja. O teste e a cobrança só começam após sua confirmação no checkout.',
+              'Cancele quando quiser pela loja. A loja confirma sua elegibilidade ao teste, o preço e a cobrança antes de concluir a assinatura.',
               style: AppTypography.body(
                 context,
                 fontSize: 11,
