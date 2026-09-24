@@ -6,6 +6,7 @@ import 'app.dart';
 import 'core/config/supabase_config.dart';
 import 'core/preferences/app_preferences.dart';
 import 'core/privacy/financial_privacy.dart';
+import 'core/subscriptions/subscription_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/folego_repository.dart';
 
@@ -21,5 +22,7 @@ Future<void> main() async {
   );
 
   final client = Supabase.instance.client;
+  await SubscriptionService.initialize(client);
+  await SubscriptionService(client).refreshAccess();
   runApp(FolegoApp(client: client, repository: FolegoRepository(client)));
 }
