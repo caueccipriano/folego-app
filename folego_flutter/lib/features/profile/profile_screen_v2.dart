@@ -708,7 +708,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _SettingsRow(
               icon: AppIcons.logout,
               title: _signingOut ? 'saindo…' : 'sair do Fôlego',
-              subtitle: 'seus dados e seu onboarding não são apagados',
+              subtitle: 'seus dados e sua configuração inicial não são apagados',
               destructive: true,
               enabled: !_signingOut,
               trailing: _signingOut
