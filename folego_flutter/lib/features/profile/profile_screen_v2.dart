@@ -634,7 +634,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SettingsRow(
                   icon: Icons.workspace_premium_rounded,
                   title: 'Fôlego Premium',
-                  subtitle: '7 dias grátis · depois R\$ 9,90/mês',
+                  subtitle: '7 dias grátis para elegíveis · R\$ 9,90/mês',
                   onTap: _openPremium,
                 ),
                 _SettingsRow(
