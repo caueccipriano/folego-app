@@ -24,6 +24,7 @@ import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../auth/auth_validation.dart';
+import '../premium/premium_screen.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
@@ -153,7 +154,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _openPremium() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PremiumScreen()),
+    );
+  }
+
   Future<void> _openAutomationRules() async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'automações inteligentes',
+    );
+    if (!unlocked || !mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AutomationRulesScreen(
@@ -165,6 +177,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _exportData(BuildContext anchorContext) async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'exportação dos seus dados em CSV',
+    );
+    if (!unlocked || !mounted) return;
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
@@ -607,6 +624,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
+                _SettingsRow(
+                  icon: Icons.workspace_premium_rounded,
+                  title: 'Fôlego Premium',
+                  subtitle: '7 dias grátis · depois R\$ 9,90/mês',
+                  onTap: _openPremium,
+                ),
                 _SettingsRow(
                   icon: AppIcons.notifications,
                   title: 'notificações',
