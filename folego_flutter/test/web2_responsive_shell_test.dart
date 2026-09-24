@@ -157,7 +157,7 @@ void main() {
     final hero = tester.getTopLeft(find.text('te sobra pra gastar'));
     final action = tester.getTopLeft(find.text('gasto'));
     final expenses = tester.getTopLeft(find.text('seu mês até agora'));
-    final upcoming = tester.getTopLeft(find.text('próximos dias'));
+    final upcoming = tester.getTopLeft(find.text('próximos movimentos'));
     expect(action.dx, greaterThan(hero.dx));
     expect((action.dy - hero.dy).abs(), lessThan(140));
     expect(upcoming.dx, greaterThan(expenses.dx));
