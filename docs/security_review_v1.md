@@ -12,6 +12,8 @@ Data: 24/09/2026
 - A leitura de Premium usa o RPC `get_my_premium_grant()` com contexto do usuário autenticado.
 - Logs de autenticação e detalhes opcionais foram reduzidos para tipo do erro em modo de debug, sem imprimir e-mail, token, JWT ou stack trace completo.
 - Exclusão de conta é iniciável dentro do aplicativo.
+- A função `delete-account` exige JWT válido, resolve o usuário pela sessão autenticada e só então usa a chave administrativa no servidor.
+- A exclusão foi conferida contra as FKs: `financial_spaces.owner_id` e os dados financeiros associados usam `ON DELETE CASCADE`; o único vínculo direto com `auth.users` em `automation_rules.created_by` usa `RESTRICT` e é limpo explicitamente antes da remoção da conta.
 
 ## Avisos do linter avaliados
 
