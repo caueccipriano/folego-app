@@ -70,6 +70,17 @@ jobs:
       - name: Compile Android debug APK
         run: flutter build apk --debug
 
+      - name: Compile Android release app bundle
+        run: flutter build appbundle --release
+
+      - name: Upload Android release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-1.0.0-android-aab
+          path: folego_flutter/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Legacy full-suite snapshot
         continue-on-error: true
         run: flutter test -r expanded
