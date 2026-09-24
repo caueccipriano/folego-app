@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/subscriptions/subscription_access.dart';
 import '../../core/subscriptions/subscription_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 Future<bool> openPremiumUpgrade(
   BuildContext context, {
@@ -66,7 +68,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = 'não consegui concluir a ação na loja agora. tente novamente em instantes.';
+        _error = AppLocalizations.of(context)!.premiumStoreError;
       });
     } finally {
       if (mounted) setState(() => _running = false);
@@ -76,27 +78,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
   @override
   Widget build(BuildContext context) {
     final access = SubscriptionService.accessNotifier.value;
+    final l10n = AppLocalizations.of(context)!;
     final brightness = Theme.of(context).brightness;
     final secondary = AppColors.secondaryText(brightness);
     final storeReady = SubscriptionService.isConfigured;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fôlego Premium')),
+      appBar: AppBar(title: Text(l10n.premiumTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           children: [
             Text(
               access.hasPremium
-                  ? 'seu Fôlego está completo'
-                  : 'mais visão. menos trabalho manual.',
+                  ? l10n.premiumCompleteTitle
+                  : l10n.premiumPitchTitle,
               style: AppTypography.display(context, fontSize: 30),
             ),
             const SizedBox(height: 8),
             Text(
               widget.feature == null
-                  ? 'desbloqueie recursos avançados para planejar e automatizar.'
-                  : '${widget.feature} faz parte do Fôlego Premium.',
+                  ? l10n.premiumDefaultSubtitle
+                  : l10n.premiumFeatureSubtitle(widget.feature!),
               style: AppTypography.body(
                 context,
                 fontSize: 14,
@@ -104,25 +107,25 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
             const SizedBox(height: 22),
-            const _Feature(
+            _Feature(
               icon: Icons.auto_graph_rounded,
-              title: 'projeções futuras',
-              body: 'antecipe cenários e veja o impacto das próximas decisões.',
+              title: l10n.premiumProjectionTitle,
+              body: l10n.premiumProjectionBody,
             ),
-            const _Feature(
+            _Feature(
               icon: Icons.auto_awesome_rounded,
-              title: 'automações',
-              body: 'reduza classificações repetitivas e trabalho manual.',
+              title: l10n.premiumAutomationTitle,
+              body: l10n.premiumAutomationBody,
             ),
-            const _Feature(
+            _Feature(
               icon: Icons.upload_file_rounded,
-              title: 'importação CSV e OFX',
-              body: 'traga extratos para revisão sem digitar tudo de novo.',
+              title: l10n.premiumImportTitle,
+              body: l10n.premiumImportBody,
             ),
-            const _Feature(
+            _Feature(
               icon: Icons.download_rounded,
-              title: 'exportação de dados',
-              body: 'leve uma cópia em CSV sempre que quiser.',
+              title: l10n.premiumExportTitle,
+              body: l10n.premiumExportBody,
             ),
             const SizedBox(height: 18),
             Card(
@@ -132,14 +135,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      access.label,
+                      _accessLabel(access, l10n),
                       style: AppTypography.section(context, fontSize: 18),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       access.hasPremium
-                          ? _activeCopy(access)
-                          : '${SubscriptionService.trialLabel} · depois ${SubscriptionService.monthlyPriceLabel}',
+                          ? _activeCopy(access, l10n)
+                          : '${SubscriptionService.trialLabel} · ${SubscriptionService.monthlyPriceLabel}',
                       style: AppTypography.body(
                         context,
                         fontSize: 13,
@@ -154,10 +157,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             : null,
                         child: Text(
                           _running
-                              ? 'aguarde…'
+                              ? l10n.premiumWait
                               : storeReady
-                                  ? 'ver oferta Premium'
-                                  : 'assinatura disponível na versão da loja',
+                                  ? l10n.premiumViewOffer
+                                  : l10n.premiumStoreOnly,
                         ),
                       )
                     else if (access.kind == SubscriptionAccessKind.premium ||
@@ -166,7 +169,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         onPressed: storeReady && !_running
                             ? () => _run(_subscriptions.presentCustomerCenter)
                             : null,
-                        child: const Text('gerenciar assinatura'),
+                        child: Text(l10n.premiumManage),
                       ),
                     if (storeReady) ...[
                       const SizedBox(height: 8),
@@ -174,7 +177,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         onPressed: _running
                             ? null
                             : () => _run(_subscriptions.restorePurchases),
-                        child: const Text('restaurar compras'),
+                        child: Text(l10n.premiumRestore),
                       ),
                     ],
                     if (_error != null) ...[
@@ -192,7 +195,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Cancele quando quiser pela loja. A loja confirma sua elegibilidade ao teste, o preço e a cobrança antes de concluir a assinatura.',
+              l10n.premiumDisclaimer,
               style: AppTypography.body(
                 context,
                 fontSize: 11,
@@ -205,28 +208,37 @@ class _PremiumScreenState extends State<PremiumScreen> {
     );
   }
 
-  String _activeCopy(SubscriptionAccess access) {
+  String _activeCopy(SubscriptionAccess access, AppLocalizations l10n) {
     final expiresAt = access.expiresAt;
     if (access.kind == SubscriptionAccessKind.lifetime) {
-      return 'acesso vitalício ativo';
+      return l10n.premiumLifetimeActive;
     }
     if (access.kind == SubscriptionAccessKind.complimentary) {
       return expiresAt == null
-          ? 'cortesia ativa'
-          : 'cortesia ativa até ${_date(expiresAt)}';
+          ? l10n.premiumComplimentaryActive
+          : l10n.premiumComplimentaryUntil(_date(context, expiresAt));
     }
     if (access.kind == SubscriptionAccessKind.trial) {
       return expiresAt == null
-          ? 'seu teste grátis está ativo'
-          : 'teste grátis ativo até ${_date(expiresAt)}';
+          ? l10n.premiumTrialActive
+          : l10n.premiumTrialUntil(_date(context, expiresAt));
     }
     return expiresAt == null
-        ? 'assinatura ativa'
-        : 'assinatura ativa até ${_date(expiresAt)}';
+        ? l10n.premiumSubscriptionActive
+        : l10n.premiumSubscriptionUntil(_date(context, expiresAt));
   }
 
-  String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+  String _date(BuildContext context, DateTime value) =>
+      DateFormat.yMd(Localizations.localeOf(context).toLanguageTag()).format(value);
+
+  String _accessLabel(SubscriptionAccess access, AppLocalizations l10n) =>
+      switch (access.kind) {
+        SubscriptionAccessKind.free => l10n.premiumFreeLabel,
+        SubscriptionAccessKind.trial => l10n.premiumTrialLabel,
+        SubscriptionAccessKind.premium => l10n.premiumPaidLabel,
+        SubscriptionAccessKind.complimentary => l10n.premiumComplimentaryLabel,
+        SubscriptionAccessKind.lifetime => l10n.premiumLifetimeLabel,
+      };
 }
 
 class _Feature extends StatelessWidget {
