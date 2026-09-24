@@ -79,9 +79,8 @@ if plist.exists():
 PY
 
 # Brand native shells: generate store-quality launcher assets from the canonical icon.
-dart run flutter_launcher_icons
-
 flutter pub get
+dart run flutter_launcher_icons
 flutter analyze
 
 echo
