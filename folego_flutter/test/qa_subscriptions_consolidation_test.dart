@@ -79,7 +79,7 @@ void main() {
       expect(source, contains('mover para recorrências'));
       expect(source, contains('onEdit'));
       expect(transactions, contains('TabController(length: 3'));
-      expect(transactions, contains("Tab(text: 'Assinaturas')"));
+      expect(transactions, contains("Tab(text: 'assinaturas')"));
       expect(transactions, contains('_subscriptionIds'));
     });
 
