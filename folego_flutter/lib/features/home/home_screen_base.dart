@@ -793,13 +793,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  Text(
-                    'ver todos',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: primaryPurple,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 64),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'ver todos',
+                        maxLines: 1,
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: primaryPurple,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 3),
@@ -896,12 +904,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          '$sign${Formatters.money(event.amount.abs())}',
-          style: AppTypography.money(
-            context,
-            fontSize: 11,
-            color: amountColor,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 108),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              '$sign${Formatters.money(event.amount.abs())}',
+              maxLines: 1,
+              style: AppTypography.money(
+                context,
+                fontSize: 11,
+                color: amountColor,
+              ),
+            ),
           ),
         ),
       ],
