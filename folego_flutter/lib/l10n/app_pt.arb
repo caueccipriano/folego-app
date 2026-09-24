@@ -96,5 +96,65 @@
   "authSignUp": "Criar conta",
   "authShowPassword": "Mostrar senha",
   "authHidePassword": "Ocultar senha",
-  "authConfirmationResent": "Novo e-mail de confirmação enviado."
+  "authConfirmationResent": "Novo e-mail de confirmação enviado.",
+  "premiumTitle": "Fôlego Premium",
+  "premiumCompleteTitle": "seu Fôlego está completo",
+  "premiumPitchTitle": "mais visão. menos trabalho manual.",
+  "premiumDefaultSubtitle": "desbloqueie recursos avançados para planejar e automatizar.",
+  "premiumFeatureSubtitle": "{feature} faz parte do Fôlego Premium.",
+  "@premiumFeatureSubtitle": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      }
+    }
+  },
+  "premiumProjectionTitle": "projeções futuras",
+  "premiumProjectionBody": "antecipe cenários e veja o impacto das próximas decisões.",
+  "premiumAutomationTitle": "automações",
+  "premiumAutomationBody": "reduza classificações repetitivas e trabalho manual.",
+  "premiumImportTitle": "importação CSV e OFX",
+  "premiumImportBody": "traga extratos para revisão sem digitar tudo de novo.",
+  "premiumExportTitle": "exportação de dados",
+  "premiumExportBody": "leve uma cópia em CSV sempre que quiser.",
+  "premiumWait": "aguarde…",
+  "premiumViewOffer": "ver oferta Premium",
+  "premiumStoreOnly": "assinatura disponível na versão da loja",
+  "premiumManage": "gerenciar assinatura",
+  "premiumRestore": "restaurar compras",
+  "premiumDisclaimer": "Cancele quando quiser pela loja. A loja confirma sua elegibilidade ao teste, o preço e a cobrança antes de concluir a assinatura.",
+  "premiumStoreError": "não consegui concluir a ação na loja agora. tente novamente em instantes.",
+  "premiumFreeLabel": "Fôlego Free",
+  "premiumTrialLabel": "Premium · teste grátis",
+  "premiumPaidLabel": "Fôlego Premium",
+  "premiumComplimentaryLabel": "Premium · cortesia",
+  "premiumLifetimeLabel": "Premium · vitalício",
+  "premiumLifetimeActive": "acesso vitalício ativo",
+  "premiumComplimentaryActive": "cortesia ativa",
+  "premiumComplimentaryUntil": "cortesia ativa até {date}",
+  "premiumTrialActive": "seu teste grátis está ativo",
+  "premiumTrialUntil": "teste grátis ativo até {date}",
+  "premiumSubscriptionActive": "assinatura ativa",
+  "premiumSubscriptionUntil": "assinatura ativa até {date}",
+  "@premiumComplimentaryUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@premiumTrialUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@premiumSubscriptionUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }
