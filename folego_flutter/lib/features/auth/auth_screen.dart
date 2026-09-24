@@ -436,7 +436,7 @@ class _AuthScreenState extends State<AuthScreen> {
               AuthTextField(
                 controller: _passwordController,
                 label: 'Senha',
-                hint: _isSignUp ? 'Pelo menos 6 caracteres' : null,
+                hint: _isSignUp ? 'Pelo menos ${AuthValidation.minimumPasswordLength} caracteres' : null,
                 focusNode: _passwordFocus,
                 textInputAction: _isSignUp
                     ? TextInputAction.next
