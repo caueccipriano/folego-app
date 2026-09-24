@@ -57,6 +57,13 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
+      - name: Verify legal web resources
+        run: |
+          test -f build/web/legal/privacy.html
+          test -f build/web/legal/terms.html
+          test -f build/web/legal/account-deletion.html
+          test -f build/web/legal/support.html
+
       - name: Generate native scaffolds
         run: bash scripts/bootstrap_flutter.sh
 
