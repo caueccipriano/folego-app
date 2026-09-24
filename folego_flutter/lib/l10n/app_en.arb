@@ -6,5 +6,20 @@
   "plan": "Plan",
   "wallet": "Wallet",
   "profile": "Profile",
-  "newExpense": "New expense"
+  "newExpense": "New expense",
+  "onboardingSkip": "skip",
+  "onboardingSignOut": "sign out",
+  "onboardingBack": "back",
+  "onboardingContinue": "continue",
+  "onboardingEnter": "enter Fôlego",
+  "onboardingNoNeedSetup": "you don't need to set everything up now",
+  "onboardingStep1Title": "your balance isn't what you can spend",
+  "onboardingStep1Body": "Fôlego looks at what you have, upcoming commitments, your budget, and your next income before showing what is truly free to spend.",
+  "onboardingStep2Title": "organize where your money is",
+  "onboardingStep2Body": "accounts, cards, benefits, and debts stay in one place — without mixing bank balances with credit limits.",
+  "onboardingStep3Title": "track it without turning life into a spreadsheet",
+  "onboardingStep3Body": "record expenses, income, and recurring items quickly. the app keeps things organized without adding bureaucracy.",
+  "onboardingStep4Title": "how much can you spend today?",
+  "onboardingStep4Body": "that's the question behind Fôlego. you can start now and set up your finances at your own pace.",
+  "onboardingStepLabel": "step {position} of {total}: {title}"
 }
