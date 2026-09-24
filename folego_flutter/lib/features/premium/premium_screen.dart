@@ -66,7 +66,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error.toString().replaceFirst('Bad state: ', '');
+        _error = 'não consegui concluir a ação na loja agora. tente novamente em instantes.';
       });
     } finally {
       if (mounted) setState(() => _running = false);
