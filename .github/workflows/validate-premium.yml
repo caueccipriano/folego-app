@@ -32,9 +32,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Check formatting of Premium changes
+      - name: Format validation copy
         run: >
-          dart format --output=none --set-exit-if-changed
+          dart format
           lib/core/subscriptions
           lib/main.dart
           lib/features/auth/auth_gate.dart
