@@ -11,6 +11,7 @@ import '../../data/models/home_expense_summary.dart';
 import '../../data/models/onboarding_state.dart';
 import '../../data/models/transaction_filters.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../../l10n/app_localizations.dart';
 import '../transactions/transactions_screen.dart';
 import '../transactions/recurring_form_sheet.dart';
 import 'quick_register_sheet.dart';
@@ -210,21 +211,22 @@ class _FirstUseHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final l10n = AppLocalizations.of(context)!;
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     final needsAccount = !setup.hasAccount;
 
     final title = needsAccount
-        ? '1. adicione uma conta'
-        : '2. cadastre sua renda recorrente';
+        ? l10n.firstUseAccountTitle
+        : l10n.firstUseIncomeTitle;
     final text = needsAccount
-        ? 'comece dizendo onde seu dinheiro fica. pode ser sua conta principal; cartões, dívidas e orçamento ficam para depois.'
-        : 'agora diga quando o dinheiro costuma entrar, como salário ou outra renda recorrente. se preferir, registre uma receita ou gasto avulso e continue no seu ritmo.';
+        ? l10n.firstUseAccountBody
+        : l10n.firstUseIncomeBody;
 
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
-      appBar: AppBar(title: const Text('início')),
+      appBar: AppBar(title: Text(l10n.home.toLowerCase())),
       body: AppContentContainer.dashboard(
         child: ListView(
           padding: const EdgeInsets.only(top: 10, bottom: 32),
@@ -281,7 +283,7 @@ class _FirstUseHome extends StatelessWidget {
                   if (needsAccount)
                     Semantics(
                       button: true,
-                      label: 'adicionar conta',
+                      label: l10n.firstUseAddAccount,
                       child: FilledButton.icon(
                         key: const ValueKey('first-use-add-account'),
                         onPressed: creatingAccount ? null : onAddAccount,
@@ -291,7 +293,7 @@ class _FirstUseHome extends StatelessWidget {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(AppIcons.add),
-                        label: const Text('adicionar conta'),
+                        label: Text(l10n.firstUseAddAccount),
                       ),
                     )
                   else ...[
@@ -299,7 +301,7 @@ class _FirstUseHome extends StatelessWidget {
                       key: const ValueKey('first-use-add-recurring-income'),
                       onPressed: onAddRecurringIncome,
                       icon: const Icon(AppIcons.income),
-                      label: const Text('cadastrar salário ou receita recorrente'),
+                      label: Text(l10n.firstUseAddRecurringIncome),
                     ),
                     const SizedBox(height: 9),
                     Row(
@@ -309,7 +311,7 @@ class _FirstUseHome extends StatelessWidget {
                             key: const ValueKey('first-use-register-income'),
                             onPressed: onRegisterIncome,
                             icon: const Icon(AppIcons.income, size: 18),
-                            label: const Text('receita avulsa'),
+                            label: Text(l10n.firstUseOneOffIncome),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -318,7 +320,7 @@ class _FirstUseHome extends StatelessWidget {
                             key: const ValueKey('first-use-register-expense'),
                             onPressed: onRegisterExpense,
                             icon: const Icon(AppIcons.expense, size: 18),
-                            label: const Text('gasto avulso'),
+                            label: Text(l10n.firstUseOneOffExpense),
                           ),
                         ),
                       ],
@@ -329,30 +331,30 @@ class _FirstUseHome extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'depois, explore no seu ritmo',
+              l10n.firstUseAfterTitle,
               style: AppTypography.section(context, fontSize: 17),
             ),
             const SizedBox(height: 12),
-            const _FirstUseTip(
+            _FirstUseTip(
               icon: AppIcons.transactions,
-              title: 'registre quando fizer sentido',
-              text: 'gastos e receitas podem entrar aos poucos. nada de preencher uma planilha inteira antes de começar.',
+              title: l10n.firstUseTipTrackTitle,
+              text: l10n.firstUseTipTrackBody,
             ),
             const SizedBox(height: 10),
-            const _FirstUseTip(
+            _FirstUseTip(
               icon: AppIcons.plan,
-              title: 'o plano cresce com seus dados',
-              text: 'quando houver histórico e orçamento, o Fôlego mostra mais contexto sem inventar um número antes da hora.',
+              title: l10n.firstUseTipPlanTitle,
+              text: l10n.firstUseTipPlanBody,
             ),
             const SizedBox(height: 10),
-            const _FirstUseTip(
+            _FirstUseTip(
               icon: AppIcons.wallet,
-              title: 'explore no seu ritmo',
-              text: 'as outras áreas continuam disponíveis pela navegação. e agora você também pode lançar receita ou gasto direto por aqui.',
+              title: l10n.firstUseTipExploreTitle,
+              text: l10n.firstUseTipExploreBody,
             ),
             const SizedBox(height: 18),
             Text(
-              'o Fôlego só calcula quanto está livre quando tiver dados suficientes — até lá, não inventa números.',
+              l10n.firstUseCalculationPending,
               style: AppTypography.label(context, color: secondary),
             ),
             const SizedBox(height: 4),
