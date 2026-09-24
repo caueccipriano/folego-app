@@ -28,9 +28,9 @@
 Criar assinatura mensal de R$ 9,90 e configurar oferta de 7 dias grátis, quando permitido pela conta/país.
 
 URLs planejadas após o deploy Web:
-- Privacidade: `https://caueccipriano.github.io/folego-app/legal/privacy.html`
-- Exclusão de conta: `https://caueccipriano.github.io/folego-app/legal/account-deletion.html`
-- Suporte: `https://caueccipriano.github.io/folego-app/legal/support.html`
+- Privacidade: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=privacy`
+- Exclusão de conta: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=delete-account`
+- Suporte: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=support`
 
 Preencher Segurança dos dados a partir de `docs/store/google_play_data_safety.md`.
 
