@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/subscriptions/subscription_service.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../bootstrap/bootstrap_screen.dart';
 import 'auth_screen.dart';
@@ -30,6 +31,7 @@ class _AuthGateState extends State<AuthGate> {
     super.initState();
     _session = widget.client.auth.currentSession;
     _subscription = widget.client.auth.onAuthStateChange.listen((event) {
+      SubscriptionService.syncUser(event.session?.user.id);
       if (!mounted) return;
       setState(() => _session = event.session);
     });
