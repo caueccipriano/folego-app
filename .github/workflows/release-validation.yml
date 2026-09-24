@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - release/folego-v1
+    paths:
+      - 'folego_flutter/**'
+      - 'supabase/**'
+      - '.github/workflows/release-validation.yml'
   workflow_dispatch:
 
 permissions:
