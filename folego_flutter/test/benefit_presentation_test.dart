@@ -214,14 +214,6 @@ class _BenefitRepository implements FolegoRepository {
   Future<List<RecurringItem>> listRecurringItems(String spaceId) async => const [];
 
   @override
-  Future<Set<String>> listSubscriptionRecurringIds(String spaceId) async =>
-      const <String>{};
-
-  @override
-  Future<Map<String, String>> listRecurringCardNames(String spaceId) async =>
-      const <String, String>{};
-
-  @override
   Future<ProjectionResult> getProjection({
     required String spaceId,
     int horizonMonths = 12,
