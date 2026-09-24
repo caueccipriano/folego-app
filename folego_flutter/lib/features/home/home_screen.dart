@@ -216,11 +216,11 @@ class _FirstUseHome extends StatelessWidget {
     final needsAccount = !setup.hasAccount;
 
     final title = needsAccount
-        ? 'seu Fôlego ainda não tem de onde partir'
-        : 'falta saber quando entra dinheiro';
+        ? '1. adicione uma conta'
+        : '2. cadastre sua renda recorrente';
     final text = needsAccount
-        ? 'adicione onde seu dinheiro fica. não precisa cadastrar cartões, dívidas ou orçamento agora.'
-        : 'sua conta já está aqui. cadastre seu salário ou outra receita recorrente agora — ou registre gastos e receitas avulsas sem sair desta tela.';
+        ? 'comece dizendo onde seu dinheiro fica. pode ser sua conta principal; cartões, dívidas e orçamento ficam para depois.'
+        : 'agora diga quando o dinheiro costuma entrar, como salário ou outra renda recorrente. se preferir, registre uma receita ou gasto avulso e continue no seu ritmo.';
 
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
@@ -281,7 +281,7 @@ class _FirstUseHome extends StatelessWidget {
                   if (needsAccount)
                     Semantics(
                       button: true,
-                      label: 'adicionar onde seu dinheiro fica',
+                      label: 'adicionar conta',
                       child: FilledButton.icon(
                         key: const ValueKey('first-use-add-account'),
                         onPressed: creatingAccount ? null : onAddAccount,
@@ -291,7 +291,7 @@ class _FirstUseHome extends StatelessWidget {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(AppIcons.add),
-                        label: const Text('adicionar onde seu dinheiro fica'),
+                        label: const Text('adicionar conta'),
                       ),
                     )
                   else ...[
@@ -309,7 +309,7 @@ class _FirstUseHome extends StatelessWidget {
                             key: const ValueKey('first-use-register-income'),
                             onPressed: onRegisterIncome,
                             icon: const Icon(AppIcons.income, size: 18),
-                            label: const Text('receita'),
+                            label: const Text('receita avulsa'),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -318,7 +318,7 @@ class _FirstUseHome extends StatelessWidget {
                             key: const ValueKey('first-use-register-expense'),
                             onPressed: onRegisterExpense,
                             icon: const Icon(AppIcons.expense, size: 18),
-                            label: const Text('gasto'),
+                            label: const Text('gasto avulso'),
                           ),
                         ),
                       ],
@@ -329,7 +329,7 @@ class _FirstUseHome extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'por enquanto, é só isso',
+              'depois, explore no seu ritmo',
               style: AppTypography.section(context, fontSize: 17),
             ),
             const SizedBox(height: 12),
@@ -352,7 +352,7 @@ class _FirstUseHome extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'nenhum valor financeiro é concluído enquanto faltar configuração suficiente.',
+              'o Fôlego só calcula quanto está livre quando tiver dados suficientes — até lá, não inventa números.',
               style: AppTypography.label(context, color: secondary),
             ),
             const SizedBox(height: 4),
