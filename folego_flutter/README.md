@@ -1,5 +1,7 @@
 # Fôlego
 
+> **Código proprietário.** A visibilidade do repositório não concede licença para copiar, distribuir, reutilizar ou criar trabalhos derivados do Fôlego. Consulte o arquivo `LICENSE`.
+
 **Saiba quanto você realmente pode gastar hoje sem apertar amanhã.**
 
 Release candidate: **1.0.0+1**.
