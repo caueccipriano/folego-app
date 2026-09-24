@@ -40,8 +40,8 @@ void main() {
     final auth =
         File('lib/features/auth/auth_screen.dart').readAsStringSync();
 
-    expect(auth, isNot(contains("Auth action failed: $error")));
-    expect(auth, isNot(contains("stackTrace")));
-    expect(auth, contains("error.runtimeType"));
+    expect(auth, isNot(contains(r'Auth action failed: $error')));
+    expect(auth, isNot(contains('stackTrace')));
+    expect(auth, contains('error.runtimeType'));
   });
 }
