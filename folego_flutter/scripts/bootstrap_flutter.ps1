@@ -65,9 +65,8 @@ if (Test-Path $InfoPlist) {
   Set-Content -Path $InfoPlist -Value $PlistContent -NoNewline
 }
 
-dart run flutter_launcher_icons
-
 flutter pub get
+dart run flutter_launcher_icons
 flutter analyze
 
 Write-Host ""
