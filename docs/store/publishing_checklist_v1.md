@@ -9,7 +9,7 @@
 - política de privacidade, termos, suporte e recurso Web de exclusão;
 - copy da Google Play e App Store;
 - rascunhos Data Safety e App Privacy;
-- CI Android/Web e validação iOS Simulator;
+- CI Android/Web e validação de build iOS release sem assinatura;
 - QA de entitlement, projeções, recorrências e notificações.
 
 ## Dados que precisam existir nas contas das lojas
@@ -21,7 +21,7 @@
 - produtos de assinatura e oferta de teste;
 - projeto RevenueCat ligado aos produtos das duas lojas;
 - chaves públicas RevenueCat inseridas como secrets/build defines;
-- chave de assinatura Android;
+- chave de assinatura Android para a build final da Play Store;
 - certificados/profiles Apple.
 
 ## Google Play
