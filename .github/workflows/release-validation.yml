@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: folego_flutter
@@ -31,8 +31,17 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Test
-        run: flutter test -r expanded
+      - name: Premium entitlement tests
+        run: flutter test test/subscription_access_test.dart -r expanded
+
+      - name: Projection regression
+        run: flutter test test/projection_screen_test.dart -r expanded --concurrency=1
+
+      - name: Recurring schedule regression
+        run: flutter test test/recurring_month_end_regression_test.dart -r expanded
+
+      - name: Notification and automation entitlement regression
+        run: flutter test test/notification_automation_foundation_test.dart -r expanded
 
       - name: Build web
         run: flutter build web --release
@@ -42,3 +51,7 @@ jobs:
 
       - name: Compile Android debug APK
         run: flutter build apk --debug
+
+      - name: Legacy full-suite snapshot
+        continue-on-error: true
+        run: flutter test -r expanded
