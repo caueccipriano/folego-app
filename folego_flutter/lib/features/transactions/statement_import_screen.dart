@@ -644,13 +644,56 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       const SizedBox(height: 10),
       TextField(controller: _search, onChanged: (_) => setState(() {}), decoration: const InputDecoration(prefixIcon: Icon(AppIcons.search), labelText: 'buscar neste lote')),
       const SizedBox(height: 10),
-      SingleChildScrollView(scrollDirection: Axis.horizontal, child: SegmentedButton<_ReviewFilter>(segments: const [
-        ButtonSegment(value: _ReviewFilter.all, label: Text('todos')),
-        ButtonSegment(value: _ReviewFilter.selected, label: Text('selecionados')),
-        ButtonSegment(value: _ReviewFilter.duplicates, label: Text('duplicados')),
-        ButtonSegment(value: _ReviewFilter.pending, label: Text('pendentes')),
-        ButtonSegment(value: _ReviewFilter.errors, label: Text('com erro')),
-      ], selected: <_ReviewFilter>{_reviewFilter}, onSelectionChanged: (value) => setState(() => _reviewFilter = value.first))),
+      if (desktop)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<_ReviewFilter>(
+            segments: const [
+              ButtonSegment(value: _ReviewFilter.all, label: Text('todos')),
+              ButtonSegment(
+                value: _ReviewFilter.selected,
+                label: Text('selecionados'),
+              ),
+              ButtonSegment(
+                value: _ReviewFilter.duplicates,
+                label: Text('duplicados'),
+              ),
+              ButtonSegment(
+                value: _ReviewFilter.pending,
+                label: Text('pendentes'),
+              ),
+              ButtonSegment(
+                value: _ReviewFilter.errors,
+                label: Text('com erro'),
+              ),
+            ],
+            selected: <_ReviewFilter>{_reviewFilter},
+            onSelectionChanged: (value) =>
+                setState(() => _reviewFilter = value.first),
+          ),
+        )
+      else
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: const [
+              (_ReviewFilter.all, 'todos'),
+              (_ReviewFilter.selected, 'selecionados'),
+              (_ReviewFilter.duplicates, 'duplicados'),
+              (_ReviewFilter.pending, 'pendentes'),
+              (_ReviewFilter.errors, 'com erro'),
+            ].map((option) {
+              return ChoiceChip(
+                label: Text(option.$2),
+                selected: _reviewFilter == option.$1,
+                onSelected: (_) =>
+                    setState(() => _reviewFilter = option.$1),
+              );
+            }).toList(growable: false),
+          ),
+        ),
       const SizedBox(height: 10),
       _BulkBar(categories: _expenseCategories, selectedCategoryId: _bulkCategoryId, onChanged: (value) => setState(() => _bulkCategoryId = value), onApply: _applyBulkCategory, onIncludeAll: () => setState(() => _rows = _rows.map((row) => row.copyWith(decision: row.duplicateState == StatementImportDuplicateState.exactDuplicate || row.duplicateState == StatementImportDuplicateState.alreadyImported ? StatementImportDecision.ignore : StatementImportDecision.include)).toList(growable: false)), onIgnoreSelected: () => setState(() => _rows = _rows.map((row) => row.selected ? row.copyWith(decision: StatementImportDecision.ignore) : row).toList(growable: false))),
     ]);
