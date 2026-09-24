@@ -70,8 +70,8 @@ jobs:
       - name: Compile Android debug APK
         run: flutter build apk --debug
 
-      - name: Compile Android release app bundle
-        run: flutter build appbundle --release
+      - name: Compile obfuscated Android release app bundle
+        run: flutter build appbundle --release --obfuscate --split-debug-info=/tmp/folego-android-symbols
 
       - name: Upload Android release candidate
         uses: actions/upload-artifact@v4
