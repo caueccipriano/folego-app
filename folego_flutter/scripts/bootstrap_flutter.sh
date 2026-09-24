@@ -51,6 +51,36 @@ path.write_text(content)
 PY
 fi
 
+# Brand native shells consistently for store builds.
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+manifest = Path("android/app/src/main/AndroidManifest.xml")
+if manifest.exists():
+    value = manifest.read_text()
+    value = re.sub(r'android:label="[^"]*"', 'android:label="Fôlego"', value, count=1)
+    manifest.write_text(value)
+
+plist = Path("ios/Runner/Info.plist")
+if plist.exists():
+    value = plist.read_text()
+    value = re.sub(
+        r'(<key>CFBundleDisplayName</key>\s*<string>)[^<]*(</string>)',
+        r'\1Fôlego\2',
+        value,
+    )
+    value = re.sub(
+        r'(<key>CFBundleName</key>\s*<string>)[^<]*(</string>)',
+        r'\1Fôlego\2',
+        value,
+    )
+    plist.write_text(value)
+PY
+
+# Brand native shells: generate store-quality launcher assets from the canonical icon.
+dart run flutter_launcher_icons
+
 flutter pub get
 flutter analyze
 
