@@ -37,3 +37,18 @@ Antes de publicar:
 3. testar RLS com dois usuários distintos;
 4. testar Trial/Premium/Cortesia/Vitalício;
 5. revisar Data Safety/App Privacy contra os SDKs da build exata.
+
+## Auditoria adicional — 24/09/2026
+
+- As **39 tabelas** do schema `public` estão com RLS habilitada.
+- As policies expostas ao cliente usam o papel `authenticated`; as exceções servidor-only revisadas possuem condição `false` para acesso do cliente.
+- O app usa a chave **publishable** moderna do Supabase, não uma chave administrativa.
+- Nenhum arquivo de assinatura, `.env`, chave privada, `key.properties`, `google-services.json` ou `GoogleService-Info.plist` foi encontrado na árvore atual da release.
+- O repositório continua **público**. Licença proprietária, CODEOWNERS, Dependabot, `.gitignore` e checks de higiene reduzem risco operacional, mas **não escondem o código-fonte**. Tornar o repositório privado é o único controle efetivo contra leitura/clonagem pública.
+- Na verificação atual, o repositório não tinha forks, stars ou watchers registrados. Isso não prova que ninguém tenha baixado o código enquanto esteve público.
+
+### Pendências externas que continuam bloqueando o selo de segurança da v1
+
+1. Tornar o repositório de código privado e manter apenas os recursos públicos necessários em uma superfície separada.
+2. Habilitar **Leaked Password Protection** no Supabase Auth.
+3. Depois da troca de visibilidade, revisar Pages/URLs legais para garantir que Política, Termos, Suporte e Exclusão continuem públicos sem reexpor o código-fonte.
