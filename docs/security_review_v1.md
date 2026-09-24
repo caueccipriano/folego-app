@@ -52,3 +52,15 @@ Antes de publicar:
 1. Tornar o repositório de código privado e manter apenas os recursos públicos necessários em uma superfície separada.
 2. Habilitar **Leaked Password Protection** no Supabase Auth.
 3. Depois da troca de visibilidade, revisar Pages/URLs legais para garantir que Política, Termos, Suporte e Exclusão continuem públicos sem reexpor o código-fonte.
+
+## Hardening adicional do banco — 24/09/2026
+
+- O papel anônimo (`anon`) ficou sem privilégios diretos em tabelas do schema `public`.
+- O papel anônimo ficou sem `EXECUTE` em RPCs do schema `public`.
+- O papel anônimo ficou sem uso das sequences públicas revisadas.
+- Os privilégios de `authenticated` foram reduzidos: `TRUNCATE`, `REFERENCES` e `TRIGGER` foram removidos das tabelas públicas; permanecem apenas as operações de dados necessárias e ainda sujeitas a RLS/policies.
+- Default privileges de objetos criados pelo papel `postgres` foram endurecidos para não conceder acesso automático a `anon`, nem privilégios de tabela desnecessários a `authenticated`.
+- Uma simulação com um JWT de usuário autenticado inexistente retornou **zero linhas** para perfis, espaços financeiros, contas, lançamentos, cartões e concessões Premium.
+- As funções de configuração e entrega de push que acessam material de servidor permanecem executáveis apenas por `service_role`.
+
+Observação: os default privileges pertencentes a `supabase_admin` não puderam ser alterados pela sessão de migração do projeto. Isso não reabriu objetos atuais; os grants efetivos atuais foram revisados e endurecidos. Novos objetos continuam exigindo revisão de grants/RLS no checklist de segurança.
