@@ -26,14 +26,22 @@ Só incluir EN ou ES em `productionSupportedLocales` quando:
 ## Proteção automática
 `test/localization_release_guard_test.dart` garante que os arquivos ARB mantenham as mesmas chaves e que idiomas ainda incompletos não sejam expostos por engano.
 
-## Próxima sequência de migração
-1. onboarding e first-use;
-2. autenticação;
-3. paywall Premium;
-4. shell/navegação;
-5. Home;
-6. Lançamentos;
-7. Plano;
-8. Carteira;
-9. Perfil e configurações;
-10. mensagens de erro e fluxos secundários.
+## Progresso da migração
+Concluído no workspace PT-BR/EN/ES:
+- shell/navegação principal;
+- onboarding;
+- primeiro uso;
+- autenticação visual principal;
+- paywall/tela Premium.
+
+Ainda pendente antes de liberar EN/ES:
+- validações e mensagens de erro de autenticação;
+- Home após configuração;
+- Lançamentos;
+- Plano;
+- Carteira;
+- Perfil e configurações;
+- notificações e fluxos secundários;
+- revisão final de moeda, datas e pluralização.
+
+EN/ES continuam deliberadamente fora de `productionSupportedLocales` até esse checklist chegar a 100%.
