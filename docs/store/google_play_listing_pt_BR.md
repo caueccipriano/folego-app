@@ -69,9 +69,9 @@ Não posicionar como:
 7. **Metas que cabem na vida real.**
 8. **Seus dados. Seu controle.**
 
-## Assets pendentes
-- ícone final 512 × 512;
-- feature graphic 1024 × 500;
+## Assets
+- ícone 512 × 512: preparado a partir do asset canônico do Fôlego;
+- feature graphic 1024 × 500: pendente;
 - screenshots finais de telefone;
 - texto alternativo individual para cada screenshot;
 - revisão visual em Android físico antes do upload.
