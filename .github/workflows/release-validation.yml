@@ -38,6 +38,9 @@ jobs:
       - name: Premium entitlement tests
         run: flutter test test/subscription_access_test.dart -r expanded
 
+      - name: Premium release contracts
+        run: flutter test test/premium_release_contract_test.dart -r expanded
+
       - name: Projection regression
         run: flutter test test/projection_screen_test.dart -r expanded --concurrency=1
 
