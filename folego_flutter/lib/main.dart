@@ -6,6 +6,7 @@ import 'app.dart';
 import 'core/config/supabase_config.dart';
 import 'core/preferences/app_preferences.dart';
 import 'core/privacy/financial_privacy.dart';
+import 'core/security/secure_session_storage.dart';
 import 'core/subscriptions/subscription_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/folego_repository.dart';
@@ -19,6 +20,9 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.publishableKey,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: SecureSessionStorage(),
+    ),
   );
 
   final client = Supabase.instance.client;
