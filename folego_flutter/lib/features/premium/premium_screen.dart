@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/subscriptions/subscription_access.dart';
@@ -229,7 +228,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   String _date(BuildContext context, DateTime value) =>
-      DateFormat.yMd(Localizations.localeOf(context).toLanguageTag()).format(value);
+      MaterialLocalizations.of(context).formatShortDate(value);
 
   String _accessLabel(SubscriptionAccess access, AppLocalizations l10n) =>
       switch (access.kind) {
