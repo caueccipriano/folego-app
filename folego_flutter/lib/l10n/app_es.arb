@@ -21,5 +21,21 @@
   "onboardingStep3Body": "anota gastos, ingresos y recurrencias de forma rápida. la app organiza tu rutina sin volverla burocrática.",
   "onboardingStep4Title": "¿cuánto puedes gastar hoy?",
   "onboardingStep4Body": "esa es la pregunta que guía Fôlego. puedes empezar ahora y configurar tus finanzas a tu ritmo.",
-  "onboardingStepLabel": "paso {position} de {total}: {title}"
+  "onboardingStepLabel": "paso {position} de {total}: {title}",
+  "firstUseAccountTitle": "1. agrega una cuenta",
+  "firstUseIncomeTitle": "2. agrega tus ingresos recurrentes",
+  "firstUseAccountBody": "empieza diciendo dónde está tu dinero. tu cuenta principal es suficiente; tarjetas, deudas y presupuesto pueden esperar.",
+  "firstUseIncomeBody": "ahora indica cuándo suele entrar dinero, como salario u otro ingreso recurrente. también puedes registrar un ingreso o gasto puntual y seguir a tu ritmo.",
+  "firstUseAddAccount": "agregar cuenta",
+  "firstUseAddRecurringIncome": "agregar salario o ingreso recurrente",
+  "firstUseOneOffIncome": "ingreso puntual",
+  "firstUseOneOffExpense": "gasto puntual",
+  "firstUseAfterTitle": "después, explora a tu ritmo",
+  "firstUseTipTrackTitle": "registra cuando tenga sentido",
+  "firstUseTipTrackBody": "los gastos e ingresos pueden añadirse poco a poco. no necesitas completar una hoja de cálculo entera antes de empezar.",
+  "firstUseTipPlanTitle": "el plan crece con tus datos",
+  "firstUseTipPlanBody": "cuando haya historial y presupuesto, Fôlego muestra más contexto sin inventar un número antes de tiempo.",
+  "firstUseTipExploreTitle": "explora a tu ritmo",
+  "firstUseTipExploreBody": "las otras áreas siguen disponibles en la navegación. también puedes registrar un ingreso o gasto directamente desde aquí.",
+  "firstUseCalculationPending": "Fôlego solo calcula cuánto está libre cuando tiene datos suficientes — hasta entonces, no inventa números."
 }
