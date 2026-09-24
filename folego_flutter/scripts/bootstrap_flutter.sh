@@ -27,14 +27,28 @@ fi
 # RevenueCat Paywalls no Android precisam de FlutterFragmentActivity.
 MAIN_ACTIVITY="$(find android/app/src/main -name MainActivity.kt -print -quit 2>/dev/null || true)"
 if [[ -n "$MAIN_ACTIVITY" ]]; then
-  sed -i 's/import io\.flutter\.embedding\.android\.FlutterActivity/import io.flutter.embedding.android.FlutterFragmentActivity/' "$MAIN_ACTIVITY"
-  sed -E -i 's/class MainActivity[[:space:]]*:[[:space:]]*FlutterActivity\(\)/class MainActivity : FlutterFragmentActivity()/' "$MAIN_ACTIVITY"
+  python3 - "$MAIN_ACTIVITY" <<'PY'
+from pathlib import Path
+import re
+import sys
 
-  if grep -q 'FlutterActivity' "$MAIN_ACTIVITY"; then
-    echo "Falha ao migrar MainActivity para FlutterFragmentActivity:"
-    cat "$MAIN_ACTIVITY"
-    exit 1
-  fi
+path = Path(sys.argv[1])
+content = path.read_text()
+content = content.replace(
+    "import io.flutter.embedding.android.FlutterActivity",
+    "import io.flutter.embedding.android.FlutterFragmentActivity",
+)
+content = re.sub(
+    r"class\s+MainActivity\s*:\s*FlutterActivity\(\)",
+    "class MainActivity : FlutterFragmentActivity()",
+    content,
+)
+if "FlutterActivity" in content:
+    print("Falha ao migrar MainActivity para FlutterFragmentActivity:")
+    print(content)
+    raise SystemExit(1)
+path.write_text(content)
+PY
 fi
 
 flutter pub get
