@@ -312,9 +312,7 @@ void main() {
 }
 
 Future<void> _flush(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 20));
-  await tester.pump();
+  await tester.pumpAndSettle();
 }
 
 UpcomingFinancialEvent _event(
