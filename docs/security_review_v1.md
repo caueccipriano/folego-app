@@ -51,7 +51,7 @@ Antes de publicar:
 
 1. Tornar o repositório de código privado e manter apenas os recursos públicos necessários em uma superfície separada.
 2. Habilitar **Leaked Password Protection** no Supabase Auth.
-3. Depois da troca de visibilidade, revisar Pages/URLs legais para garantir que Política, Termos, Suporte e Exclusão continuem públicos sem reexpor o código-fonte.
+3. A superfície legal pública já foi desacoplada do GitHub Pages em uma Edge Function pública do Supabase. Depois da troca de visibilidade, validar apenas se o PWA Web também precisa continuar público; as URLs de Privacidade, Termos, Suporte e Exclusão não dependem mais do repositório público.
 
 ## Hardening adicional do banco — 24/09/2026
 
@@ -64,3 +64,6 @@ Antes de publicar:
 - As funções de configuração e entrega de push que acessam material de servidor permanecem executáveis apenas por `service_role`.
 
 Observação: os default privileges pertencentes a `supabase_admin` não puderam ser alterados pela sessão de migração do projeto. Isso não reabriu objetos atuais; os grants efetivos atuais foram revisados e endurecidos. Novos objetos continuam exigindo revisão de grants/RLS no checklist de segurança.
+
+### Superfície pública independente do código
+A Edge Function `folego-public` serve páginas públicas de Privacidade, Termos, Suporte e Exclusão de conta. A exclusão externa autentica o usuário diretamente contra o Supabase Auth e chama a função protegida `delete-account`; a página pública não contém chave administrativa.
