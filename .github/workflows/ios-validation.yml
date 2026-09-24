@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ios-simulator:
+  ios-release:
     runs-on: macos-latest
     defaults:
       run:
@@ -42,5 +42,5 @@ jobs:
           chmod +x scripts/bootstrap_flutter.sh
           ./scripts/bootstrap_flutter.sh
 
-      - name: Build iOS simulator
-        run: flutter build ios --simulator --no-codesign --release
+      - name: Build iOS release without signing
+        run: flutter build ios --no-codesign --release
