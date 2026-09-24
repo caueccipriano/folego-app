@@ -568,12 +568,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildCheckEmail(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthSuccessMessage(
-          title: AppLocalizations.of(context)!.authCheckEmailTitle,
-          body: AppLocalizations.of(context)!.authCheckEmailBody,
+          title: l10n.authCheckEmailTitle,
+          body: l10n.authCheckEmailBody,
           detail: _pendingEmail,
         ),
         const SizedBox(height: 24),
@@ -583,7 +584,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ],
         OutlinedButton(
           onPressed: _resending ? null : _resendConfirmation,
-          child: Text(_resending ? AppLocalizations.of(context)!.authResending : AppLocalizations.of(context)!.authResendEmail),
+          child: Text(_resending ? l10n.authResending : l10n.authResendEmail),
         ),
         const SizedBox(height: 8),
         TextButton(
@@ -598,7 +599,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     if (mounted) _emailFocus.requestFocus();
                   });
                 },
-          child: Text(AppLocalizations.of(context)!.authWrongEmail),
+          child: Text(l10n.authWrongEmail),
         ),
         TextButton(
           onPressed: _resending ? null : () => _backToLogin(),
@@ -609,12 +610,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildRecoverySent(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthSuccessMessage(
-          title: AppLocalizations.of(context)!.authRecoverySentTitle,
-          body: AppLocalizations.of(context)!.authRecoverySentBody,
+          title: l10n.authRecoverySentTitle,
+          body: l10n.authRecoverySentBody,
           detail: _pendingEmail,
         ),
         const SizedBox(height: 24),
@@ -685,7 +687,7 @@ class _DesktopBrandPanel extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
-            AppLocalizations.of(context)!.authIntroTitle.replaceFirst(' o que ', ' o que\n'),
+            AppLocalizations.of(context)!.authIntroTitle,
             style: AppTypography.display(
               context,
               fontSize: 42,
