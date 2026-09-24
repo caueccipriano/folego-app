@@ -2,6 +2,8 @@
 
 **Saiba quanto você realmente pode gastar hoje sem apertar amanhã.**
 
+Release candidate: **1.0.0+1**.
+
 Aplicativo de organização financeira pessoal em Flutter, com backend Supabase e arquitetura preparada para assinatura Premium via RevenueCat.
 
 ## Produto v1
