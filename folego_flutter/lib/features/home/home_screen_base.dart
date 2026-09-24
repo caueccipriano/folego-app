@@ -621,7 +621,8 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(24),
           child: AppErrorState(
             title: 'não consegui carregar seu resumo financeiro',
-            description: _error,
+            description:
+                'confira sua conexão e tente novamente em alguns segundos.',
             onRetry: _load,
           ),
         ),
