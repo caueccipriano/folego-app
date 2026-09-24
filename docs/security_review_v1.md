@@ -68,3 +68,20 @@ Observação: os default privileges pertencentes a `supabase_admin` não puderam
 
 ### Hospedagem pública
 Foi testada uma alternativa via Edge Function, mas o domínio padrão de Edge Functions do Supabase reescreve respostas HTML para `text/plain`. Por isso, a função de teste foi reduzida a um endpoint JSON e **não** é usada como URL de política/exclusão. As URLs de loja permanecem no GitHub Pages até existir uma hospedagem HTML pública separada ou custom domain apropriado.
+
+## Estado operacional final — 24/09/2026
+
+- O site legal estático separado foi preparado em `legal_site/`, com CSP, bloqueio de framing, `nosniff`, Referrer-Policy e Permissions-Policy.
+- A publicação desse site em Vercel está bloqueada apenas pela autenticação GitHub↔Vercel no navegador.
+- O repositório `caueccipriano/folego-app` permanece público até que a superfície legal esteja publicada e validada em URL independente.
+- O repositório atualmente registra 0 forks, 0 stars e 0 watchers. Isso reduz o sinal de exposição ativa, mas não prova ausência de clones/downloads.
+- O Supabase continua reportando somente uma pendência de configuração Auth diretamente relevante ao lançamento: **Leaked Password Protection Disabled**.
+- As advertências de `SECURITY DEFINER` foram revisadas e são intencionais porque os RPCs expostos fazem autorização de espaço explicitamente antes da operação.
+
+### Próximas ações administrativas já definidas
+1. autenticar GitHub/Vercel em um perfil de navegador persistente;
+2. publicar e validar `legal_site/`;
+3. atualizar URLs legais das lojas para a URL Vercel;
+4. tornar o repositório privado;
+5. ativar Leaked Password Protection no Supabase Auth;
+6. reexecutar a auditoria final de segurança e somente então fechar o PR de release.
