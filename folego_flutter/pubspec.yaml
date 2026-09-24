@@ -23,6 +23,8 @@ dependencies:
   share_plus: ^11.1.0
   file_picker: ^10.0.0
   crypto: ^3.0.0
+  purchases_flutter: ^10.10.0
+  purchases_ui_flutter: ^10.10.0
 
 dev_dependencies:
   flutter_test:
