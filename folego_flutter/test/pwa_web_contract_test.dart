@@ -22,7 +22,8 @@ void main() {
       expect(index, isNot(contains('position: fixed !important')));
       expect(index, isNot(contains('height: 100dvh !important')));
       expect(index, contains('Do not size or position flutter-view here.'));
-      expect(index, contains('ios-pwa-geometry-20260919-v3'));
+      expect(index, contains('__FOLEGO_BUILD_VERSION__'));
+      expect(index, contains('folego-pwa-repair-version'));
       expect(index, contains('folego-shell-'));
       expect(index, isNot(contains(r'</script>\n')));
 
@@ -94,7 +95,9 @@ void main() {
       expect(worker, contains('self.clients.openWindow'));
       expect(worker, contains('__FOLEGO_CACHE_VERSION__'));
       expect(worker, isNot(contains("addEventListener('fetch'")));
-      expect(worker, isNot(contains('main.dart.js')));
+      expect(worker, isNot(contains("addEventListener('fetch'")));
+      expect(worker, isNot(contains("cache.add('main.dart.js')")));
+      expect(worker, isNot(contains('caches.match(request)')));
       expect(bridge, contains('updateViaCache'));
       expect(bridge, contains('DOMContentLoaded'));
       expect(bridge, contains('registration.update()'));
