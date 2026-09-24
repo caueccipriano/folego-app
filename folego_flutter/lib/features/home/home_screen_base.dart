@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
@@ -73,7 +74,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       return await future;
     } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+      if (kDebugMode) {
+        debugPrint('Home optional section failed ($label: ${error.runtimeType})');
+      }
       return null;
     }
   }
@@ -86,7 +89,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       return await call();
     } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+      if (kDebugMode) {
+        debugPrint('Home optional section failed ($label: ${error.runtimeType})');
+      }
       return null;
     }
   }
