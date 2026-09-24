@@ -21,5 +21,21 @@
   "onboardingStep3Body": "record expenses, income, and recurring items quickly. the app keeps things organized without adding bureaucracy.",
   "onboardingStep4Title": "how much can you spend today?",
   "onboardingStep4Body": "that's the question behind Fôlego. you can start now and set up your finances at your own pace.",
-  "onboardingStepLabel": "step {position} of {total}: {title}"
+  "onboardingStepLabel": "step {position} of {total}: {title}",
+  "firstUseAccountTitle": "1. add an account",
+  "firstUseIncomeTitle": "2. add your recurring income",
+  "firstUseAccountBody": "start by telling Fôlego where your money lives. your main account is enough; cards, debts, and budgets can come later.",
+  "firstUseIncomeBody": "now tell Fôlego when money usually comes in, such as salary or other recurring income. you can also add a one-off income or expense and keep going at your own pace.",
+  "firstUseAddAccount": "add account",
+  "firstUseAddRecurringIncome": "add salary or recurring income",
+  "firstUseOneOffIncome": "one-off income",
+  "firstUseOneOffExpense": "one-off expense",
+  "firstUseAfterTitle": "then explore at your own pace",
+  "firstUseTipTrackTitle": "record things when it makes sense",
+  "firstUseTipTrackBody": "expenses and income can be added gradually. you do not need to fill out a whole spreadsheet before getting started.",
+  "firstUseTipPlanTitle": "the plan grows with your data",
+  "firstUseTipPlanBody": "once there is history and a budget, Fôlego shows more context without inventing a number too early.",
+  "firstUseTipExploreTitle": "explore at your own pace",
+  "firstUseTipExploreBody": "the other areas remain available in navigation. you can also add income or an expense right from here.",
+  "firstUseCalculationPending": "Fôlego only calculates what is free to spend when there is enough data — until then, it does not invent a number."
 }
