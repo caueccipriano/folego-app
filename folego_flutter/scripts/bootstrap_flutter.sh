@@ -9,16 +9,14 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# O pacote entregue contém o código do Fôlego, mas não carrega os diretórios
-# gerados pelo Flutter SDK. Criamos os runners nativos em uma pasta temporária
-# para não sobrescrever lib/, pubspec.yaml ou qualquer código do projeto.
+# Gera runners nativos sem sobrescrever o código Dart do Fôlego.
 if [[ ! -d android || ! -d ios ]]; then
   TMP_DIR="$(mktemp -d)"
   trap 'rm -rf "$TMP_DIR"' EXIT
 
   flutter create "$TMP_DIR/folego_shell" \
     --project-name folego \
-    --org br.com.folego \
+    --org com.caueccipriano \
     --platforms android,ios
 
   [[ -d android ]] || cp -R "$TMP_DIR/folego_shell/android" ./android
@@ -26,9 +24,17 @@ if [[ ! -d android || ! -d ios ]]; then
   [[ -f .metadata ]] || cp "$TMP_DIR/folego_shell/.metadata" ./.metadata
 fi
 
+# RevenueCat Paywalls no Android precisam de FlutterFragmentActivity.
+MAIN_ACTIVITY="$(find android/app/src/main -name MainActivity.kt -print -quit 2>/dev/null || true)"
+if [[ -n "$MAIN_ACTIVITY" ]]; then
+  sed -i 's/import io.flutter.embedding.android.FlutterActivity/import io.flutter.embedding.android.FlutterFragmentActivity/' "$MAIN_ACTIVITY"
+  sed -i 's/class MainActivity: FlutterActivity()/class MainActivity: FlutterFragmentActivity()/' "$MAIN_ACTIVITY"
+fi
+
 flutter pub get
 flutter analyze
 
 echo
-echo "Base nativa pronta. Para executar:"
+echo "Base nativa pronta. Package Android: com.caueccipriano.folego"
+echo "Para executar:"
 echo "  flutter run"
