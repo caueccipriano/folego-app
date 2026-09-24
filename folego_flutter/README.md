@@ -1,5 +1,7 @@
 # Fôlego — Flutter v0.1
 
+> **Código proprietário.** A visibilidade do repositório não concede licença para copiar, distribuir, reutilizar ou criar trabalhos derivados do Fôlego. Consulte o arquivo `LICENSE`.
+
 Primeira base mobile do **Fôlego**, conectada ao backend Supabase já construído para o produto.
 
 > **Promessa:** saiba quanto você realmente pode gastar hoje sem apertar amanhã.
