@@ -42,5 +42,5 @@ jobs:
           chmod +x scripts/bootstrap_flutter.sh
           ./scripts/bootstrap_flutter.sh
 
-      - name: Build iOS release without signing
-        run: flutter build ios --no-codesign --release
+      - name: Build obfuscated iOS release without signing
+        run: flutter build ios --no-codesign --release --obfuscate --split-debug-info=/tmp/folego-ios-symbols
