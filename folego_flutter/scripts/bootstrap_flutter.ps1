@@ -37,6 +37,20 @@ if ($MainActivity) {
   Set-Content -Path $MainActivity.FullName -Value $Content -NoNewline
 }
 
+$GradleCandidates = @(
+  (Join-Path $Root "android\app\build.gradle.kts"),
+  (Join-Path $Root "android\app\build.gradle")
+)
+foreach ($GradleFile in $GradleCandidates) {
+  if (Test-Path $GradleFile) {
+    $GradleContent = Get-Content $GradleFile -Raw
+    $GradleContent = $GradleContent.Replace("minSdk = flutter.minSdkVersion", "minSdk = 24")
+    $GradleContent = $GradleContent.Replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 24")
+    $GradleContent = $GradleContent.Replace("minSdkVersion = flutter.minSdkVersion", "minSdkVersion = 24")
+    Set-Content -Path $GradleFile -Value $GradleContent -NoNewline
+  }
+}
+
 $Manifest = Join-Path $Root "android\app\src\main\AndroidManifest.xml"
 if (Test-Path $Manifest) {
   $ManifestContent = Get-Content $Manifest -Raw
