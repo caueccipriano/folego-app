@@ -51,6 +51,23 @@ path.write_text(content)
 PY
 fi
 
+# Keep the native minimum aligned with the secure storage dependency.
+python3 - <<'PY'
+from pathlib import Path
+
+for candidate in (
+    Path("android/app/build.gradle.kts"),
+    Path("android/app/build.gradle"),
+):
+    if not candidate.exists():
+        continue
+    value = candidate.read_text()
+    value = value.replace("minSdk = flutter.minSdkVersion", "minSdk = 24")
+    value = value.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 24")
+    value = value.replace("minSdkVersion = flutter.minSdkVersion", "minSdkVersion = 24")
+    candidate.write_text(value)
+PY
+
 # Brand native shells consistently for store builds.
 python3 - <<'PY'
 from pathlib import Path
