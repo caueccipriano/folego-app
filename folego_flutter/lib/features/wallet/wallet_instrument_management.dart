@@ -83,7 +83,7 @@ String walletManagementFriendlyError(Object error) {
   if (text.contains('write_access_denied') || text.contains('42501')) {
     return 'você não tem permissão para alterar este espaço financeiro';
   }
-  return text.replaceFirst('Exception: ', '');
+  return 'não deu pra salvar agora. confira os dados e tente novamente.';
 }
 
 Future<WalletAddAction?> showWalletAddAction(BuildContext context) {
