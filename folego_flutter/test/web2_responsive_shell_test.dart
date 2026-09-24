@@ -138,8 +138,7 @@ void main() {
       space: const FinancialSpace(id: 'space', name: 'Casa'),
       repository: _HomeSnapshotFailureRepository(),
     )));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(
       find.text('não consegui carregar seu resumo financeiro'),
@@ -154,8 +153,7 @@ void main() {
       space: const FinancialSpace(id: 'space', name: 'Casa'),
       repository: _HomeRepository(),
     )));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
     final hero = tester.getTopLeft(find.text('te sobra pra gastar'));
     final action = tester.getTopLeft(find.text('gasto'));
     final expenses = tester.getTopLeft(find.text('seu mês até agora'));
