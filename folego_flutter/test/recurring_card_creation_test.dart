@@ -64,6 +64,7 @@ void main() {
             body: RecurringFormSheet(
               space: space,
               repository: repository,
+              initialType: 'income',
             ),
           ),
         ),
