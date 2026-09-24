@@ -58,3 +58,7 @@ Finance.
 6. Projeções Premium.
 7. Metas.
 8. Perfil e privacidade.
+
+## URLs públicas preparadas
+- Privacidade: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=privacy`
+- Suporte: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=support`
