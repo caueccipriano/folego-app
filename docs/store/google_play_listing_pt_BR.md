@@ -75,3 +75,10 @@ Não posicionar como:
 - screenshots finais de telefone;
 - texto alternativo individual para cada screenshot;
 - revisão visual em Android físico antes do upload.
+
+## URLs públicas independentes do repositório
+- Política de Privacidade: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=privacy`
+- Exclusão de conta: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=delete-account`
+- Suporte: `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-public?page=support`
+
+A página externa de exclusão autentica o usuário no navegador e inicia a exclusão sem exigir que o app esteja instalado.
