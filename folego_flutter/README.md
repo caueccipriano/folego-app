@@ -144,3 +144,6 @@ No Supabase hospedado, confirmação de e-mail costuma estar habilitada. Nesta v
 6. notificações;
 7. RevenueCat / Free x Plus;
 8. identidade visual final, ícone, splash e publicação nas lojas.
+
+
+<!-- deploy-recovery 2026-09-24: republish canonical PWA branch after main overwrote GitHub Pages -->
