@@ -238,7 +238,7 @@ class _WalletAddMenu extends StatelessWidget {
                 key: const ValueKey('wallet-add-debt'),
                 icon: AppIcons.debt,
                 title: 'dívida',
-                subtitle: 'usa o fluxo Debt 2.0 já existente',
+                subtitle: 'acompanhe parcelas, saldo e pagamentos',
                 onTap: () => Navigator.of(context).pop(WalletAddAction.debt),
               ),
             ],
@@ -439,8 +439,8 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
                     ? (_benefit ? 'editar benefício' : 'editar conta')
                     : (_benefit ? 'novo benefício' : 'nova conta'),
                 subtitle: _benefit
-                    ? 'benefício continua separado de cash'
-                    : 'saldo atual continua vindo do ledger',
+                    ? 'benefícios ficam separados do saldo bancário'
+                    : 'o saldo é atualizado pelos lançamentos da conta',
               ),
               const SizedBox(height: 18),
               TextField(
@@ -477,15 +477,15 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
                     labelText: _benefit ? 'saldo inicial do benefício' : 'saldo inicial',
                     prefixText: 'R\$ ',
                     helperText: _benefit
-                        ? 'registrado como opening balance na dimensão benefit'
-                        : 'registrado como opening balance, nunca como receita',
+                        ? 'informe o saldo disponível hoje neste benefício'
+                        : 'informe quanto existe hoje nessa conta; esse valor define o ponto de partida e não será contado como receita',
                   ),
                 ),
               ] else ...[
                 const SizedBox(height: 14),
                 _InfoNote(
                   icon: AppIcons.info,
-                  text: 'o saldo não é editável aqui. correções de saldo devem passar pelo fluxo canônico de ajuste/reconciliação.',
+                  text: 'para corrigir o saldo, registre um ajuste. assim o histórico continua consistente.',
                 ),
               ],
               if (!_benefit) ...[
@@ -497,8 +497,8 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
                   title: const Text('incluir no dinheiro disponível'),
                   subtitle: Text(
                     protected
-                        ? '${walletAccountTypeLabel(_type)} é protegido por definição'
-                        : 'afeta apenas a leitura de saldo disponível, não o saldo da conta',
+                        ? '${walletAccountTypeLabel(_type)} fica separado do dinheiro livre para gastar'
+                        : 'ative quando esse saldo realmente puder ser usado nos gastos do dia a dia',
                   ),
                 ),
               ],
