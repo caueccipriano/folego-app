@@ -26,10 +26,14 @@ if ($MainActivity) {
     "import io.flutter.embedding.android.FlutterActivity",
     "import io.flutter.embedding.android.FlutterFragmentActivity"
   )
-  $Content = $Content.Replace(
-    "class MainActivity: FlutterActivity()",
-    "class MainActivity: FlutterFragmentActivity()"
+  $Content = [regex]::Replace(
+    $Content,
+    "class\s+MainActivity\s*:\s*FlutterActivity\(\)",
+    "class MainActivity : FlutterFragmentActivity()"
   )
+  if ($Content -match "FlutterActivity") {
+    throw "Falha ao migrar MainActivity para FlutterFragmentActivity"
+  }
   Set-Content -Path $MainActivity.FullName -Value $Content -NoNewline
 }
 
