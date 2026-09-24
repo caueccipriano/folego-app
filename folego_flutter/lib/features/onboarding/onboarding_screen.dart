@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
@@ -21,33 +22,6 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  static const _steps = <_IntroStep>[
-    _IntroStep(
-      icon: AppIcons.wallet,
-      title: 'seu saldo não é o que você pode gastar',
-      body:
-          'o Fôlego cruza o que você tem com compromissos, orçamento e a próxima entrada antes de mostrar quanto está realmente livre.',
-    ),
-    _IntroStep(
-      icon: AppIcons.account,
-      title: 'organize onde seu dinheiro está',
-      body:
-          'contas, cartões, benefícios e dívidas ficam no mesmo lugar — sem misturar saldo bancário com limite de crédito.',
-    ),
-    _IntroStep(
-      icon: AppIcons.transactions,
-      title: 'anote sem virar planilha',
-      body:
-          'registre gastos, receitas e recorrências de um jeito rápido. o app organiza a rotina sem transformar tudo em burocracia.',
-    ),
-    _IntroStep(
-      icon: AppIcons.flame,
-      title: 'quanto dá pra gastar hoje?',
-      body:
-          'essa é a pergunta que guia o Fôlego. você pode entrar agora e configurar suas finanças no seu ritmo.',
-    ),
-  ];
-
   int _step = 0;
   bool _finishing = false;
   bool _signingOut = false;
@@ -75,8 +49,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final current = _steps[_step];
-    final last = _step == _steps.length - 1;
+    final l10n = AppLocalizations.of(context)!;
+    final steps = <_IntroStep>[
+      _IntroStep(
+        icon: AppIcons.wallet,
+        title: l10n.onboardingStep1Title,
+        body: l10n.onboardingStep1Body,
+      ),
+      _IntroStep(
+        icon: AppIcons.account,
+        title: l10n.onboardingStep2Title,
+        body: l10n.onboardingStep2Body,
+      ),
+      _IntroStep(
+        icon: AppIcons.transactions,
+        title: l10n.onboardingStep3Title,
+        body: l10n.onboardingStep3Body,
+      ),
+      _IntroStep(
+        icon: AppIcons.flame,
+        title: l10n.onboardingStep4Title,
+        body: l10n.onboardingStep4Body,
+      ),
+    ];
+    final current = steps[_step];
+    final last = _step == steps.length - 1;
 
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
@@ -89,17 +86,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Row(
                 children: [
                   Text(
-                    'Fôlego',
+                    l10n.appName,
                     style: AppTypography.section(context, fontSize: 20),
                   ),
                   const Spacer(),
                   TextButton(
                     key: const ValueKey('onboarding-skip'),
                     onPressed: _finishing ? null : _finish,
-                    child: const Text('pular'),
+                    child: Text(l10n.onboardingSkip),
                   ),
                   IconButton(
-                    tooltip: 'sair da conta',
+                    tooltip: l10n.onboardingSignOut,
                     onPressed: _signingOut ? null : _signOut,
                     icon: _signingOut
                         ? const SizedBox.square(
@@ -112,12 +109,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 18),
               Row(
-                children: List.generate(_steps.length, (index) {
+                children: List.generate(steps.length, (index) {
                   final active = index <= _step;
                   return Expanded(
                     child: Padding(
                       padding: EdgeInsets.only(
-                        right: index == _steps.length - 1 ? 0 : 6,
+                        right: index == steps.length - 1 ? 0 : 6,
                       ),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
@@ -141,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     key: ValueKey(_step),
                     step: current,
                     position: _step + 1,
-                    total: _steps.length,
+                    total: steps.length,
                   ),
                 ),
               ),
@@ -155,7 +152,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ? null
                             : () => setState(() => _step -= 1),
                         icon: const Icon(AppIcons.back),
-                        label: const Text('voltar'),
+                        label: Text(l10n.onboardingBack),
                       ),
                     ),
                   if (_step > 0) const SizedBox(width: 10),
@@ -174,14 +171,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(last ? AppIcons.check : AppIcons.forward),
-                      label: Text(last ? 'entrar no Fôlego' : 'continuar'),
+                      label: Text(last ? l10n.onboardingEnter : l10n.onboardingContinue),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                'você não precisa configurar tudo agora',
+                l10n.onboardingNoNeedSetup,
                 textAlign: TextAlign.center,
                 style: AppTypography.label(
                   context,
@@ -217,7 +214,7 @@ class _IntroCard extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
 
     return Semantics(
-      label: 'passo $position de $total: ${step.title}',
+      label: AppLocalizations.of(context)!.onboardingStepLabel(position, total, step.title),
       child: Center(
         child: Container(
           width: double.infinity,
