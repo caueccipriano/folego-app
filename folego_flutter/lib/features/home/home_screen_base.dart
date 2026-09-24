@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = 'não consegui carregar seu resumo financeiro';
       });
     }
   }
