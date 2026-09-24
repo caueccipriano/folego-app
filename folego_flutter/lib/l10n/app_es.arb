@@ -6,5 +6,20 @@
   "plan": "Plan",
   "wallet": "Cartera",
   "profile": "Perfil",
-  "newExpense": "Nuevo gasto"
+  "newExpense": "Nuevo gasto",
+  "onboardingSkip": "saltar",
+  "onboardingSignOut": "cerrar sesión",
+  "onboardingBack": "volver",
+  "onboardingContinue": "continuar",
+  "onboardingEnter": "entrar a Fôlego",
+  "onboardingNoNeedSetup": "no necesitas configurarlo todo ahora",
+  "onboardingStep1Title": "tu saldo no es lo que puedes gastar",
+  "onboardingStep1Body": "Fôlego combina lo que tienes con tus compromisos, presupuesto y próxima entrada antes de mostrar cuánto está realmente libre.",
+  "onboardingStep2Title": "organiza dónde está tu dinero",
+  "onboardingStep2Body": "cuentas, tarjetas, beneficios y deudas quedan en un solo lugar — sin mezclar saldo bancario con límite de crédito.",
+  "onboardingStep3Title": "registra sin convertirlo en una hoja de cálculo",
+  "onboardingStep3Body": "anota gastos, ingresos y recurrencias de forma rápida. la app organiza tu rutina sin volverla burocrática.",
+  "onboardingStep4Title": "¿cuánto puedes gastar hoy?",
+  "onboardingStep4Body": "esa es la pregunta que guía Fôlego. puedes empezar ahora y configurar tus finanzas a tu ritmo.",
+  "onboardingStepLabel": "paso {position} de {total}: {title}"
 }
