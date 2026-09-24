@@ -27,6 +27,7 @@ import '../auth/auth_validation.dart';
 import '../premium/premium_screen.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
+import 'legal_privacy_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 
@@ -140,6 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute<void>(
         builder: (_) => FinancialOrganizationScreen(repository: widget.repository),
       ),
+    );
+  }
+
+  Future<void> _openLegalPrivacy() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const LegalPrivacyScreen()),
     );
   }
 
@@ -659,6 +666,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _SettingsCard(
               children: [
+                _SettingsRow(
+                  icon: AppIcons.privacy,
+                  title: 'privacidade e termos',
+                  subtitle: 'dados, exclusão da conta e uso do aplicativo',
+                  onTap: _openLegalPrivacy,
+                ),
                 Builder(
                   builder: (exportContext) => _SettingsRow(
                     icon: AppIcons.exportData,
