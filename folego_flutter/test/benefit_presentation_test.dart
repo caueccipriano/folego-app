@@ -46,7 +46,7 @@ void main() {
 
     expect(find.text('Almoço no Flash'), findsOneWidget);
     expect(
-      find.text('gasto de benefício • 17/09/2026 • Flash'),
+      find.text('Alimentação • 17/09/2026 • Flash'),
       findsOneWidget,
     );
   });
