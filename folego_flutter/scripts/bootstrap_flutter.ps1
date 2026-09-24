@@ -37,6 +37,36 @@ if ($MainActivity) {
   Set-Content -Path $MainActivity.FullName -Value $Content -NoNewline
 }
 
+$Manifest = Join-Path $Root "android\app\src\main\AndroidManifest.xml"
+if (Test-Path $Manifest) {
+  $ManifestContent = Get-Content $Manifest -Raw
+  $ManifestContent = [regex]::Replace(
+    $ManifestContent,
+    'android:label="[^"]*"',
+    'android:label="Fôlego"',
+    1
+  )
+  Set-Content -Path $Manifest -Value $ManifestContent -NoNewline
+}
+
+$InfoPlist = Join-Path $Root "ios\Runner\Info.plist"
+if (Test-Path $InfoPlist) {
+  $PlistContent = Get-Content $InfoPlist -Raw
+  $PlistContent = [regex]::Replace(
+    $PlistContent,
+    '(<key>CFBundleDisplayName</key>\s*<string>)[^<]*(</string>)',
+    '$1Fôlego$2'
+  )
+  $PlistContent = [regex]::Replace(
+    $PlistContent,
+    '(<key>CFBundleName</key>\s*<string>)[^<]*(</string>)',
+    '$1Fôlego$2'
+  )
+  Set-Content -Path $InfoPlist -Value $PlistContent -NoNewline
+}
+
+dart run flutter_launcher_icons
+
 flutter pub get
 flutter analyze
 
