@@ -302,7 +302,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       if (mounted) {
         AppSnackbars.show(
           context,
-          'não consegui salvar: ${error.toString().replaceFirst('Exception: ', '')}',
+          'não consegui salvar agora. confira os dados e tente novamente.',
         );
       }
     } finally {
