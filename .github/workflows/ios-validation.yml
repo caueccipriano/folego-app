@@ -38,7 +38,9 @@ jobs:
         run: flutter analyze
 
       - name: Generate native scaffolds
-        run: ./scripts/bootstrap_flutter.sh
+        run: |
+          chmod +x scripts/bootstrap_flutter.sh
+          ./scripts/bootstrap_flutter.sh
 
       - name: Build iOS simulator
         run: flutter build ios --simulator --no-codesign --release
