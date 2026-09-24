@@ -454,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita.',
+                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita. se houver uma assinatura ativa pela loja, ela não é cancelada automaticamente; cancele a renovação na Google Play ou App Store para evitar novas cobranças.',
                 style: AppTypography.body(
                   dialogContext,
                   fontSize: 12,
