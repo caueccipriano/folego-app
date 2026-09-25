@@ -1,0 +1,66 @@
+name: Android signing pipeline dry run
+
+on:
+  push:
+    branches: [release/secure-play-bundle-20260925]
+    paths:
+      - 'folego_flutter/scripts/configure_release_signing.py'
+      - '.github/workflows/play-signing-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-with-throwaway-ci-key:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate temporary Android app shell
+        run: bash scripts/bootstrap_flutter.sh
+
+      - name: Create disposable local test keystore (never for Play)
+        run: |
+          keytool -genkeypair -noprompt \
+            -alias probe -keyalg RSA -keysize 2048 -validity 1 \
+            -storetype PKCS12 -keystore "$RUNNER_TEMP/ci-probe.jks" \
+            -storepass "ci-signing-probe-only" \
+            -keypass "ci-signing-probe-only" \
+            -dname "CN=Disposable CI Probe, O=Not For Distribution"
+          {
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/ci-probe.jks"
+            printf 'storePassword=ci-signing-probe-only\n'
+            printf 'keyAlias=probe\n'
+            printf 'keyPassword=ci-signing-probe-only\n'
+          } > android/key.properties
+
+      - name: Apply the exact production signing patch
+        run: python3 scripts/configure_release_signing.py .
+
+      - name: Confirm Android release bundle compiles and signs
+        run: |
+          flutter build appbundle --release \
+            --dart-define=REVENUECAT_ANDROID_API_KEY=goog_build_probe_NOT_REAL
+          test -s build/app/outputs/bundle/release/app-release.aab
+          jarsigner -verify build/app/outputs/bundle/release/app-release.aab \
+            > "$RUNNER_TEMP/probe-signature-result.txt" 2>&1
+          grep -q 'jar verified' "$RUNNER_TEMP/probe-signature-result.txt"
+
+      - name: Wipe local probe key and discard output
+        if: always()
+        run: |
+          rm -f android/key.properties "$RUNNER_TEMP/ci-probe.jks"
+          rm -rf build/app/outputs/bundle
