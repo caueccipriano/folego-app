@@ -147,6 +147,46 @@ jobs:
       - name: Add SPA fallback
         run: cp build/web/index.html build/web/404.html
 
+      - name: Stage build for cross-device QA
+        run: |
+          rm -rf ../qa-site
+          mkdir -p ../qa-site/folego-app
+          cp -R build/web/. ../qa-site/folego-app/
+
+      - name: Set up Node for browser QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright QA dependencies
+        working-directory: qa
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        working-directory: qa
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run pre-deploy cross-device QA
+        working-directory: qa
+        env:
+          QA_BASE_URL: http://127.0.0.1:4173/folego-app/
+        run: |
+          python3 -m http.server 4173 --directory ../qa-site >/tmp/folego-qa-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          npx playwright test tests/public-shell.spec.ts
+
+      - name: Upload browser QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-predeploy-browser-qa-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            qa/playwright-report/
+            qa/test-results/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
