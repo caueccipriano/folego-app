@@ -1304,7 +1304,7 @@ class _ProjectionInsights extends StatelessWidget {
           if (installmentEnd != null) ...[
             const SizedBox(height: 8),
             Text(
-              'A partir de ${_monthYear(installmentEnd.month)}, as parcelas de cartão já conhecidas deixam de aparecer neste horizonte.',
+              'a partir de ${_monthYear(installmentEnd.month)}, as parcelas de cartão já conhecidas deixam de aparecer neste horizonte.',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -1365,15 +1365,20 @@ class _CategoryMonthList extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
     final surface = AppColors.surface(brightness);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     if (month.categories.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: border),
-        ),
+        padding: compact
+            ? const EdgeInsets.symmetric(vertical: 8)
+            : const EdgeInsets.all(18),
+        decoration: compact
+            ? null
+            : BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: border),
+              ),
         child: Text(
           'nenhuma categoria prevista em ${_monthYear(month.month)}',
           style: AppTypography.body(
@@ -1395,13 +1400,24 @@ class _CategoryMonthList extends StatelessWidget {
         const SizedBox(height: 10),
         ...month.categories.map(
           (category) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(AppRadii.control),
-              border: Border.all(color: border),
+            margin: EdgeInsets.only(bottom: compact ? 0 : 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 4 : 14,
+              vertical: 12,
             ),
+            decoration: compact
+                ? BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: border.withValues(alpha: .72),
+                      ),
+                    ),
+                  )
+                : BoxDecoration(
+                    color: surface,
+                    borderRadius: BorderRadius.circular(AppRadii.control),
+                    border: Border.all(color: border),
+                  ),
             child: Row(
               children: [
                 const Icon(AppIcons.categoryOther, size: 18),
