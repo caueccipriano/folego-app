@@ -1,0 +1,89 @@
+name: Android prelaunch candidate
+
+on:
+  push:
+    branches:
+      - release/android-prelaunch-20260925
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/android-prelaunch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-prelaunch-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-test-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: folego_flutter
+
+    steps:
+      - name: Checkout release candidate
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Premium entitlement tests
+        run: flutter test test/subscription_access_test.dart test/premium_release_contract_test.dart -r expanded
+
+      - name: Generate Android native files and branded icons
+        run: bash scripts/bootstrap_flutter.sh
+
+      - name: Verify package ID and app name
+        run: |
+          grep -R -F 'com.caueccipriano.folego' android/app/build.gradle* android/app/src/main/kotlin
+          grep -F 'android:label="Fôlego"' android/app/src/main/AndroidManifest.xml
+          if ! grep -R -F 'FlutterFragmentActivity' android/app/src/main/kotlin; then
+            echo 'Missing FlutterFragmentActivity for RevenueCat paywalls'
+            exit 1
+          fi
+
+      - name: Build installable Android debug candidate
+        run: flutter build apk --debug
+
+      - name: Build Android release candidate bundle
+        run: flutter build appbundle --release --obfuscate --split-debug-info=/tmp/folego-test-symbols
+
+      - name: Validate candidate files
+        run: |
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          test -s build/app/outputs/bundle/release/app-release.aab
+
+      - name: Upload Android debug APK for device testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-android-debug-testing
+          path: folego_flutter/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Upload non-production Android app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-android-bundle-test-candidate
+          path: folego_flutter/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 7
+          if-no-files-found: error
