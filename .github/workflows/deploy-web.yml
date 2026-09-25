@@ -61,6 +61,18 @@ jobs:
             test/app_breakpoints_test.dart \
             test/auth_widgets_test.dart
 
+      - name: Flutter public auth integration smoke
+        run: |
+          chromedriver --port=4444 >/tmp/chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid"' EXIT
+
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/auth_public_flow_test.dart \
+            -d web-server \
+            --browser-name=chrome
+
       - name: Build web app
         run: flutter build web --release --base-href "/folego-app/"
 
