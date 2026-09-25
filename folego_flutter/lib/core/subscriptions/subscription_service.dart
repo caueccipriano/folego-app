@@ -25,6 +25,15 @@ class SubscriptionService {
 
   static bool _configured = false;
 
+  // The RevenueCat Test Store is only for locally installed debug APKs.
+  // Never allow its public SDK key in a production/release binary.
+  static bool isTestStoreKey(String key) => key.startsWith('test_');
+  static bool get isTestStoreBuild =>
+      supportsNativeStore &&
+      isTestStoreKey(defaultTargetPlatform == TargetPlatform.android
+          ? androidApiKey
+          : iosApiKey);
+
   static bool get supportsNativeStore =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
@@ -37,6 +46,12 @@ class SubscriptionService {
         ? androidApiKey
         : iosApiKey;
     if (apiKey.trim().isEmpty) return;
+    if (apiKey.startsWith('sk_')) {
+      throw StateError('RevenueCat secret API keys must not be embedded in apps.');
+    }
+    if (kReleaseMode && isTestStoreKey(apiKey)) {
+      throw StateError('Never ship a RevenueCat Test Store key in a release.');
+    }
 
     if (kDebugMode) await Purchases.setLogLevel(LogLevel.debug);
     final configuration = PurchasesConfiguration(apiKey)
