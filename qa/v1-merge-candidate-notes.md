@@ -1,15 +1,9 @@
-# Fôlego v1 — consolidated QA candidate
+# OBSOLETO — NÃO PUBLICAR NEM MESCLAR ESTA BRANCH
 
-Created on 2026-09-25 to validate the premium v1 candidate against the current responsive PWA branch.
+Este rascunho de auditoria é **substituído** pelo candidato comercial integrado de [PR #9](https://github.com/caueccipriano/folego-app/pull/9), já em teste na branch `qa/premium-native-integration-20260925`.
 
-This branch has a merge commit with both `feat/transactions-recurring` and `release/folego-v1` as parents. It is intentionally separate from both branches and is **not production**.
+A branch `qa/folego-v1-merge-20260925` foi criada sobre um `base_sha` antigo do snapshot da PR3 (484553c), enquanto a base ativa avançou até 90bb3fb. Ela **não** representa a versão mais recente da PWA e não deve ser usada para deploy, CI de release ou merge. Nenhum deploy foi disparado por esta branch.
 
-## Validation gate
-- Flutter analysis and stable regressions.
-- Chromium and WebKit cross-device UI checks, including mobile viewport.
-- Free/Premium entitlement, recurring billing and projection tests.
-- Android/iOS release compilation on the release branch, not implied by this QA branch.
-- Real RevenueCat/Play Store payments and account verification must be validated with store credentials and sandbox transactions before publishing.
+A PR #9 é a fonte atual de QA, com checks por commit exato. A PR3 permanece draft e com conflitos. Nenhuma delas deve ser publicada antes do sucesso dos checks obrigatórios e da verificação dos pagamentos sandbox.
 
-## Integration checks
-The merged result currently prefers the premium-release implementation for six files concurrently modified in both branches; this is an intentional test candidate, **not proof that the mobile layouts are correct**. Validate each affected surface. Preserve the current live PWA until the QA gate is green.
+Este arquivo existe para registrar o cuidado e evitar retrabalho ou a promoção acidental de uma branch obsoleta.
