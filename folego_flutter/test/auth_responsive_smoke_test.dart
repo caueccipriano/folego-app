@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/l10n/app_localizations.dart';
 
 import 'package:folego/core/layout/app_breakpoints.dart';
 import 'package:folego/features/auth/auth_widgets.dart';
@@ -15,7 +16,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         debugShowCheckedModeBanner: false,
         home: _AuthSmokeHarness(),
       ),
