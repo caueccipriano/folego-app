@@ -721,16 +721,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  bool _hasUrgentUpcoming() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    for (final event in _upcomingEvents) {
-      if (!event.isPending || !event.isExpense) continue;
-      final day = DateTime(event.dueDate.year, event.dueDate.month, event.dueDate.day);
-      if (day.difference(today).inDays <= 2) return true;
-    }
-    return false;
-  }
 
   Widget _buildUpcomingCard({
     required Color surface,
