@@ -313,7 +313,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 : 'ocultar valores',
             onPressed: FinancialPrivacy.toggle,
             style: IconButton.styleFrom(
-              minimumSize: const Size(42, 42),
+              minimumSize: const Size(44, 44),
               backgroundColor: surface,
               foregroundColor: secondary,
               side: BorderSide(color: border),
@@ -331,7 +331,7 @@ class _WalletScreenState extends State<WalletScreen> {
               tooltip: 'adicionar',
               onPressed: widget.onAddRequested,
               style: IconButton.styleFrom(
-                minimumSize: const Size(42, 42),
+                minimumSize: const Size(44, 44),
                 backgroundColor: surface,
                 foregroundColor: secondary,
                 side: BorderSide(color: border),
@@ -381,7 +381,6 @@ class _WalletScreenState extends State<WalletScreen> {
               _PositionMetricCard(metric: metrics.first, emphasized: true),
               const SizedBox(height: spacing),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var i = 1; i < metrics.length; i++) ...[
                     Expanded(child: _PositionMetricCard(metric: metrics[i])),
