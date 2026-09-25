@@ -353,19 +353,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     pulse,
                   ],
                   const SizedBox(height: 12),
-                  if (_hasUrgentUpcoming()) ...[
-                    upcoming,
-                    const SizedBox(height: 10),
-                    quickActions,
-                  ] else ...[
-                    quickActions,
-                    const SizedBox(height: 10),
-                    projectionInsight,
-                  ],
-                  const SizedBox(height: 10),
-                  if (_hasUrgentUpcoming()) projectionInsight else upcoming,
-                  const SizedBox(height: 10),
+                  quickActions,
+                  const SizedBox(height: 12),
                   monthlyMoney,
+                  const SizedBox(height: 10),
+                  upcoming,
+                  const SizedBox(height: 10),
+                  projectionInsight,
                   const SizedBox(height: 14),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
@@ -552,12 +546,6 @@ class _HomeScreenState extends State<HomeScreen> {
       copy = 'seu espaço está no limite · confira os próximos movimentos antes de gastar';
     }
 
-    if (copy == null &&
-        snapshot.dailyFolego != null &&
-        snapshot.dailyFolego! > 0) {
-      copy =
-          'ritmo de referência · ${Formatters.money(snapshot.dailyFolego!)} por dia até o próximo recebimento';
-    }
 
     if (copy == null) return const SizedBox.shrink();
 
