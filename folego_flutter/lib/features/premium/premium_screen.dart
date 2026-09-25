@@ -143,7 +143,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           ? _activeCopy(access, l10n)
                           : SubscriptionService.isTestStoreBuild
                               ? 'Ambiente de teste · sem cobrança real ou teste grátis de 7 dias'
-                              : '${SubscriptionService.trialLabel} · ${SubscriptionService.monthlyPriceLabel}',
+                              : 'Confira o preço e a disponibilidade do teste grátis no checkout da loja.',
                       style: AppTypography.body(
                         context,
                         fontSize: 13,
