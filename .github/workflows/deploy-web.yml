@@ -102,6 +102,18 @@ jobs:
           test -f build/web/icons/Icon-180.png
           grep -F '"display": "standalone"' build/web/manifest.json
 
+      - name: Verify publishable legal documents
+        run: |
+          test -s build/web/legal/privacy.html
+          test -s build/web/legal/terms.html
+          test -s build/web/legal/account-deletion.html
+          test -s build/web/legal/support.html
+          grep -F 'Seus dados, com contexto.' build/web/legal/privacy.html
+          grep -F 'Termos simples para um app financeiro simples.' build/web/legal/terms.html
+          grep -F 'Você controla sua conta.' build/web/legal/account-deletion.html
+          grep -F 'Como podemos ajudar?' build/web/legal/support.html
+          ! grep -F 'flutter_bootstrap.js' build/web/legal/privacy.html
+
       - name: Add SPA fallback
         run: cp build/web/index.html build/web/404.html
 
