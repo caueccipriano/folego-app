@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - qa/playwright-mobile-web
-      - feat/transactions-recurring
     paths:
       - 'folego_flutter/**'
       - 'qa/**'
       - '.github/workflows/qa-playwright.yml'
+      - '.github/workflows/deploy-web.yml'
   pull_request:
     paths:
       - 'folego_flutter/**'
