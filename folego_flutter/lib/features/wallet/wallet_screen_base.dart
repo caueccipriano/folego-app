@@ -323,18 +323,7 @@ class _WalletScreenState extends State<WalletScreen> {
               size: 19,
             ),
           ),
-          const SizedBox(width: 6),
-          IconButton(
-            tooltip: 'atualizar',
-            onPressed: _load,
-            style: IconButton.styleFrom(
-              minimumSize: const Size(42, 42),
-              backgroundColor: surface,
-              foregroundColor: secondary,
-              side: BorderSide(color: border),
-            ),
-            icon: const Icon(AppIcons.refresh, size: 19),
-          ),
+
           if (widget.onAddRequested != null) ...[
             const SizedBox(width: 6),
             IconButton(
@@ -384,13 +373,27 @@ class _WalletScreenState extends State<WalletScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final layout = AppBreakpoints.fromWidth(constraints.maxWidth);
-        final columns = switch (layout) {
-          AppLayoutSize.compact => 2,
-          AppLayoutSize.medium => 4,
-          AppLayoutSize.expanded => 4,
-          AppLayoutSize.wide => 4,
-        };
         const spacing = 10.0;
+        if (layout == AppLayoutSize.compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _PositionMetricCard(metric: metrics.first, emphasized: true),
+              const SizedBox(height: spacing),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 1; i < metrics.length; i++) ...[
+                    Expanded(child: _PositionMetricCard(metric: metrics[i])),
+                    if (i != metrics.length - 1)
+                      const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+            ],
+          );
+        }
+        const columns = 4;
         final width =
             (constraints.maxWidth - spacing * (columns - 1)) / columns;
         return Wrap(
@@ -422,23 +425,37 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(sections.length, (index) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final chips = List.generate(sections.length, (index) {
           final section = sections[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: _WalletSectionChip(
-              label: section.$1,
-              count: section.$3,
-              icon: section.$2,
-              selected: _section == index,
-              onTap: () => _selectSection(index),
-            ),
+          return _WalletSectionChip(
+            label: section.$1,
+            count: section.$3,
+            icon: section.$2,
+            selected: _section == index,
+            onTap: () => _selectSection(index),
           );
-        }),
-      ),
+        });
+        if (constraints.maxWidth < AppBreakpoints.medium) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: chips,
+          );
+        }
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var index = 0; index < chips.length; index++) ...[
+                chips[index],
+                if (index != chips.length - 1) const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -630,8 +647,9 @@ class _PositionMetric {
 }
 
 class _PositionMetricCard extends StatelessWidget {
-  const _PositionMetricCard({required this.metric});
+  const _PositionMetricCard({required this.metric, this.emphasized = false});
   final _PositionMetric metric;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
@@ -640,8 +658,8 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     return Container(
-      constraints: const BoxConstraints(minHeight: 84),
-      padding: const EdgeInsets.all(10),
+      constraints: BoxConstraints(minHeight: emphasized ? 104 : 84),
+      padding: EdgeInsets.all(emphasized ? 14 : 10),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -677,7 +695,7 @@ class _PositionMetricCard extends StatelessWidget {
               Formatters.money(metric.value),
               style: AppTypography.money(
                 context,
-                fontSize: 15,
+                fontSize: emphasized ? 24 : 15,
                 color: metric.value < 0
                     ? AppColors.expenseText(brightness)
                     : primary,
