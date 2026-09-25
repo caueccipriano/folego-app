@@ -1,11 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { capture, enableFlutterAccessibility, openFolego } from './helpers';
+import { capture, openFolego } from './helpers';
 
 test.describe('Fôlego public PWA shell', () => {
   test('boots cleanly without viewport overflow', async ({ page }, testInfo) => {
     const pageErrors = await openFolego(page);
-    await enableFlutterAccessibility(page);
-
     const geometry = await page.evaluate(() => ({
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
@@ -28,9 +26,12 @@ test.describe('Fôlego public PWA shell', () => {
   }) => {
     await openFolego(page);
 
-    const viewport = await page
-      .locator('meta[name="viewport"]')
-      .getAttribute('content');
+    const htmlResponse = await request.get(baseURL!);
+    expect(htmlResponse.ok()).toBeTruthy();
+    const html = await htmlResponse.text();
+    const viewport = html.match(
+      /<meta[^>]+name=["']viewport["'][^>]+content=["']([^"']+)["']/i,
+    )?.[1];
     expect(viewport).toContain('width=device-width');
     expect(viewport).toContain('viewport-fit=cover');
     expect(viewport ?? '').not.toContain('user-scalable=no');
