@@ -16,6 +16,8 @@ void main() {
     expect(app, contains('SubscriptionEntitlementProvider(access)'));
     expect(main, contains('if (kIsWeb)'));
     expect(main, contains('localStorage: SecureSessionStorage()'));
+    expect(main, contains('addPostFrameCallback'));
+    expect(main.indexOf('runApp('), lessThan(main.indexOf('unawaited(_refreshPremiumAfterLaunch')));
   });
 
   test('native paywalls gate only advanced features, not core money entry', () {
