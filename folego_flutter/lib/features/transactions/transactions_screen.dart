@@ -10,6 +10,7 @@ import '../../data/models/transaction_filters.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
+import '../premium/premium_screen.dart';
 import 'statement_import_screen.dart';
 import 'transaction_classification_inbox.dart';
 import 'transactions_screen_base.dart' as impl;
@@ -116,6 +117,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Future<void> _openImport() async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'importação de extratos CSV e OFX',
+    );
+    if (!unlocked || !mounted) return;
     final space = await _resolveSpace();
     if (space == null || !mounted) return;
     await Navigator.of(context).push<bool>(

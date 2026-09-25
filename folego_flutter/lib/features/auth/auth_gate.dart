@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/subscriptions/subscription_service.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../bootstrap/bootstrap_screen.dart';
 import 'auth_screen.dart';
@@ -28,6 +29,7 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _session = widget.client.auth.currentSession;
+    unawaited(_syncSubscription(_session));
     _subscription = widget.client.auth.onAuthStateChange.listen(
       (event) {
         if (!mounted) return;
@@ -39,6 +41,7 @@ class _AuthGateState extends State<AuthGate> {
             _passwordRecovery = false;
           }
         });
+        unawaited(_syncSubscription(event.session));
       },
       onError: (Object error, StackTrace _) {
         if (kDebugMode) {
@@ -46,6 +49,17 @@ class _AuthGateState extends State<AuthGate> {
         }
       },
     );
+  }
+
+  Future<void> _syncSubscription(Session? session) async {
+    try {
+      await SubscriptionService.syncUser(session?.user.id);
+      await SubscriptionService(widget.client).refreshAccess();
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Premium state sync failed (${error.runtimeType})');
+      }
+    }
   }
 
   @override

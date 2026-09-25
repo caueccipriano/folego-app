@@ -1,7 +1,7 @@
 name: folego
 description: Fôlego — quanto você realmente pode gastar hoje sem apertar amanhã.
 publish_to: 'none'
-version: 0.9.0+1
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.9.0 <4.0.0'
@@ -19,6 +19,9 @@ dependencies:
   google_fonts: ^8.2.1
   tabler_icons_plus: ^3.46.0
   shared_preferences: ^2.5.5
+  flutter_secure_storage: ^10.3.4
+  purchases_flutter: ^10.10.0
+  purchases_ui_flutter: ^10.10.0
   package_info_plus: ^8.3.1
   share_plus: ^11.1.0
   file_picker: ^10.0.0
@@ -31,9 +34,16 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   generate: true
   assets:
     - web/icons/Icon-512.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "web/icons/Icon-512.png"
+  remove_alpha_ios: true

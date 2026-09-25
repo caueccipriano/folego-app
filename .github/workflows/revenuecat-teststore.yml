@@ -1,0 +1,109 @@
+name: RevenueCat Test Store Android
+
+on:
+  push:
+    branches:
+      - qa/premium-native-integration-20260925
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/revenuecat-teststore.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revenuecat-test-store-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve Flutter packages
+        run: flutter pub get
+
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: RevenueCat key isolation and Premium contracts
+        run: >
+          flutter test
+          test/revenuecat_test_store_guard_test.dart
+          test/subscription_access_test.dart
+          test/premium_release_contract_test.dart
+
+  build-test-store:
+    # Test Store keys are deliberately never accepted by release/AAB workflows.
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      RC_TEST_STORE_PUBLIC_KEY: ${{ secrets.REVENUECAT_TEST_STORE_PUBLIC_KEY }}
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verify Test Store key is configured
+        shell: bash
+        run: |
+          if [[ "$RC_TEST_STORE_PUBLIC_KEY" != test_* ]]; then
+            echo "::error::Add a RevenueCat Test Store public SDK key (test_ prefix) to the GitHub Actions secret REVENUECAT_TEST_STORE_PUBLIC_KEY."
+            exit 1
+          fi
+
+      - name: Create ephemeral Flutter defines
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          target = Path(os.environ['RUNNER_TEMP']) / 'folego-rc-test-store.json'
+          target.write_text(json.dumps({
+              'REVENUECAT_ANDROID_API_KEY': os.environ['RC_TEST_STORE_PUBLIC_KEY']
+          }))
+          target.chmod(0o600)
+          PY
+
+      - name: Generate Android shell and icons
+        run: bash scripts/bootstrap_flutter.sh
+
+      - name: Build debug APK with Test Store (never for Google Play upload)
+        run: >
+          flutter build apk --debug
+          --dart-define-from-file="$RUNNER_TEMP/folego-rc-test-store.json"
+
+      - name: Check APK
+        run: test -s build/app/outputs/flutter-apk/app-debug.apk
+
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-revenuecat-test-store-debug-apk
+          path: folego_flutter/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error
