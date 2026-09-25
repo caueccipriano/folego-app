@@ -37,7 +37,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Criar conta'), findsOneWidget);
-    expect(find.text('Já tenho conta'), findsOneWidget);
+    expect(find.text('Já tem conta?'), findsOneWidget);
+    expect(find.text('Entrar'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
