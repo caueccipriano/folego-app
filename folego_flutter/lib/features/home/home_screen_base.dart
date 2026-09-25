@@ -476,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 height: 184,
                 decoration: BoxDecoration(
-                  color: surface,
+                  color: AppColors.primaryPurple(brightness).withValues(alpha: .18),
                   borderRadius: BorderRadius.circular(AppRadii.feature),
                   border: Border.all(color: border),
                 ),
