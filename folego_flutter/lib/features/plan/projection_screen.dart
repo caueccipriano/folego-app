@@ -552,6 +552,7 @@ class _ProjectionHeader extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
     final surface = AppColors.surface(brightness);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     return AppPageHeader(
       title: 'projeção',
@@ -564,24 +565,26 @@ class _ProjectionHeader extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              border: Border.all(color: border),
-            ),
-            child: Text(
-              'atual',
-              style: AppTypography.label(
-                context,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: secondary,
+          if (!compact) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                border: Border.all(color: border),
+              ),
+              child: Text(
+                'atual',
+                style: AppTypography.label(
+                  context,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: secondary,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 6),
+            const SizedBox(width: 6),
+          ],
           IconButton(
             key: const ValueKey('projection-scenario-settings'),
             tooltip: 'ajustar cenário',
@@ -1258,7 +1261,7 @@ class _ProjectionInsights extends StatelessWidget {
     }
     final text = critical == null
         ? 'seu menor saldo projetado ocorre em ${_monthYear(minMonth.month)}'
-        : 'Em ${_monthYear(critical.month)}, o fechamento projetado fica em ${Formatters.money(critical.closingBalance)}.';
+        : 'em ${_monthYear(critical.month)}, o fechamento projetado fica em ${Formatters.money(critical.closingBalance)}.';
 
     ProjectionMonth? installmentEnd;
     for (var i = 1; i < months.length; i++) {
@@ -1269,18 +1272,24 @@ class _ProjectionInsights extends StatelessWidget {
       }
     }
 
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
+
     return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
+      padding: compact
+          ? const EdgeInsets.symmetric(vertical: 4)
+          : const EdgeInsets.all(18),
+      decoration: compact
+          ? null
+          : BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: border),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'leitura do cenário',
+            'o que isso significa',
             style: AppTypography.section(context, fontSize: 17),
           ),
           const SizedBox(height: 9),
