@@ -1,0 +1,97 @@
+name: Cross-device Playwright QA
+
+on:
+  push:
+    branches:
+      - 'qa/**'
+    paths:
+      - 'folego_flutter/**'
+      - 'qa/**'
+      - '.github/workflows/qa-playwright.yml'
+      - '.github/workflows/deploy-web.yml'
+  pull_request:
+    paths:
+      - 'folego_flutter/**'
+      - 'qa/**'
+      - '.github/workflows/qa-playwright.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FOLEGO_E2E_EMAIL: ${{ secrets.FOLEGO_E2E_EMAIL }}
+      FOLEGO_E2E_PASSWORD: ${{ secrets.FOLEGO_E2E_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+
+      - name: Analyze Flutter
+        working-directory: folego_flutter
+        run: flutter analyze
+
+      - name: Run stable Flutter preflight
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/app_breakpoints_test.dart \
+            test/auth_widgets_test.dart \
+            test/auth_responsive_smoke_test.dart
+
+      - name: Audit legacy responsive stress tests
+        continue-on-error: true
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/web2_responsive_shell_test.dart \
+            test/ux_polish_stability_test.dart \
+            test/wallet_qa_mobile_stress_test.dart \
+            test/statement_import_qa_mobile_stress_test.dart
+
+      - name: Build QA web app
+        working-directory: folego_flutter
+        run: flutter build web --release --base-href "/"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install QA dependencies
+        working-directory: qa
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        working-directory: qa
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run cross-device Playwright QA
+        working-directory: qa
+        run: npx playwright test
+
+      - name: Upload QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-cross-device-qa-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            qa/playwright-report/
+            qa/test-results/

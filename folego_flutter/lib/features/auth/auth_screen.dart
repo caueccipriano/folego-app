@@ -487,28 +487,40 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ],
             if (_view == _AuthView.login) ...[
-              Row(
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 0,
                 children: [
-                  Checkbox(
-                    key: const ValueKey('auth-remember-me'),
-                    value: _rememberMe,
-                    onChanged: _loading
-                        ? null
-                        : (value) => _setRememberMe(value ?? false),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _loading
-                          ? null
-                          : () => _setRememberMe(!_rememberMe),
-                      child: Text(
-                        l10n.authRememberEmail,
-                        style: AppTypography.body(
-                          context,
-                          fontSize: 12,
-                          color: secondary,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 210),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          key: const ValueKey('auth-remember-me'),
+                          value: _rememberMe,
+                          onChanged: _loading
+                              ? null
+                              : (value) => _setRememberMe(value ?? false),
                         ),
-                      ),
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: _loading
+                                ? null
+                                : () => _setRememberMe(!_rememberMe),
+                            child: Text(
+                              l10n.authRememberEmail,
+                              style: AppTypography.body(
+                                context,
+                                fontSize: 12,
+                                color: secondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   TextButton(

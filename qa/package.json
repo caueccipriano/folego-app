@@ -1,0 +1,15 @@
+{
+  "name": "folego-qa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cross-device Playwright QA for the Fôlego Flutter PWA",
+  "scripts": {
+    "test": "playwright test",
+    "test:public": "playwright test tests/public-shell.spec.ts",
+    "test:auth": "playwright test tests/authenticated.spec.ts",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0"
+  }
+}

@@ -74,7 +74,7 @@ class AppPageHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final stackTrailing =
-            trailing != null && leading != null && constraints.maxWidth < 390;
+            trailing != null && leading != null && constraints.maxWidth < 430;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

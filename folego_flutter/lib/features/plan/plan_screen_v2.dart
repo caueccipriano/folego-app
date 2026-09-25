@@ -853,7 +853,7 @@ class _PlanScreenState extends State<PlanScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'parents resumem; limites são definidos somente nas subcategorias',
+          'categorias principais resumem; limites são definidos nas subcategorias',
           style: AppTypography.body(
             context,
             fontSize: 12,
@@ -877,6 +877,7 @@ class _PlanScreenState extends State<PlanScreen> {
   ) {
     final children = _childrenOf(parent);
     final expanded = _expandedParents.contains(parent.categoryId);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
@@ -944,18 +945,20 @@ class _PlanScreenState extends State<PlanScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              parent.hasBudget
-                                  ? '${Formatters.money(parent.actualAmount)} gastos no total'
-                                  : parent.hasActivity
-                                      ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
-                                      : 'sem limites nas subcategorias',
+                              parent.hasBudget && compact
+                                  ? '${Formatters.money(budgetedActual)} de ${Formatters.money(parent.plannedAmount)}'
+                                  : parent.hasBudget
+                                      ? '${Formatters.money(parent.actualAmount)} gastos no total'
+                                      : parent.hasActivity
+                                          ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
+                                          : 'sem limites nas subcategorias',
                               style: AppTypography.label(
                                 context,
                                 fontSize: 10,
                                 color: secondaryText,
                               ),
                             ),
-                            if (parent.hasBudget) ...[
+                            if (parent.hasBudget && !compact) ...[
                               const SizedBox(height: 2),
                               Text(
                                 '${Formatters.money(budgetedActual)} de ${Formatters.money(parent.plannedAmount)} nos limites definidos',
@@ -987,7 +990,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       if (children.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         AnimatedRotation(
-                          duration: const Duration(milliseconds: 180),
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 180),
                           turns: expanded ? .25 : 0,
                           child: Icon(
                             AppIcons.chevronRight,

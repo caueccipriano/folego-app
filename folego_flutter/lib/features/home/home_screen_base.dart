@@ -358,19 +358,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     pulse,
                   ],
                   const SizedBox(height: 12),
-                  if (_hasUrgentUpcoming()) ...[
-                    upcoming,
-                    const SizedBox(height: 10),
-                    quickActions,
-                  ] else ...[
-                    quickActions,
-                    const SizedBox(height: 10),
-                    projectionInsight,
-                  ],
-                  const SizedBox(height: 10),
-                  if (_hasUrgentUpcoming()) projectionInsight else upcoming,
-                  const SizedBox(height: 10),
+                  quickActions,
+                  const SizedBox(height: 12),
                   monthlyMoney,
+                  const SizedBox(height: 10),
+                  upcoming,
+                  const SizedBox(height: 10),
+                  projectionInsight,
                   const SizedBox(height: 14),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
@@ -456,7 +450,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHomeSkeleton() {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
-    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness).withValues(alpha: .14);
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
@@ -487,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 height: 184,
                 decoration: BoxDecoration(
-                  color: surface,
+                  color: AppColors.primaryPurple(brightness).withValues(alpha: .18),
                   borderRadius: BorderRadius.circular(AppRadii.feature),
                   border: Border.all(color: border),
                 ),
@@ -557,12 +550,6 @@ class _HomeScreenState extends State<HomeScreen> {
       copy = 'seu espaço está no limite · confira os próximos movimentos antes de gastar';
     }
 
-    if (copy == null &&
-        snapshot.dailyFolego != null &&
-        snapshot.dailyFolego! > 0) {
-      copy =
-          'ritmo de referência · ${Formatters.money(snapshot.dailyFolego!)} por dia até o próximo recebimento';
-    }
 
     if (copy == null) return const SizedBox.shrink();
 
@@ -739,16 +726,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  bool _hasUrgentUpcoming() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    for (final event in _upcomingEvents) {
-      if (!event.isPending || !event.isExpense) continue;
-      final day = DateTime(event.dueDate.year, event.dueDate.month, event.dueDate.day);
-      if (day.difference(today).inDays <= 2) return true;
-    }
-    return false;
-  }
 
   Widget _buildUpcomingCard({
     required Color surface,

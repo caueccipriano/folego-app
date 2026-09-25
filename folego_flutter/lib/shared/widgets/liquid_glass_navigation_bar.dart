@@ -127,12 +127,7 @@ class _Destination extends StatelessWidget {
     final inactiveColor = isDark
         ? AppColors.darkSecondaryText
         : AppColors.lightSecondaryText;
-    final activeForeground = isDark
-        ? AppColors.darkPrimaryText
-        : AppColors.lightPrimaryText;
-
-    final selectedTop = Colors.white.withValues(alpha: isDark ? .12 : .64);
-    final selectedBottom = activePurple.withValues(alpha: isDark ? .16 : .13);
+    final activeForeground = activePurple;
     final motionDuration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : const Duration(milliseconds: 180);
@@ -157,20 +152,10 @@ class _Destination extends StatelessWidget {
             curve: Curves.easeOutCubic,
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
-              gradient: selected
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [selectedTop, selectedBottom],
-                    )
-                  : null,
+              color: selected
+                  ? activePurple.withValues(alpha: isDark ? .14 : .10)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadii.feature),
-              border: Border.all(
-                color: selected
-                    ? Colors.white.withValues(alpha: isDark ? .14 : .62)
-                    : Colors.transparent,
-                width: .8,
-              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -194,7 +179,7 @@ class _Destination extends StatelessWidget {
                     maxLines: 1,
                     style: AppTypography.label(
                       context,
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight:
                           selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? activeForeground : inactiveColor,

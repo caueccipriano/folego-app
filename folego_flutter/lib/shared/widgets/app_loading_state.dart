@@ -25,9 +25,9 @@ class AppLoadingState extends StatelessWidget {
       child: Center(
         child: Padding(
           padding: EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: compact ? 24 : 72,
-        ),
+            horizontal: 24,
+            vertical: compact ? 24 : 72,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

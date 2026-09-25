@@ -580,8 +580,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _accountSection() => _ProfileSection(
-        title: 'sua conta',
-        subtitle: 'sua identidade e preferências do Fôlego',
+        title: 'conta',
+        subtitle: 'acesso e organização',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -660,7 +660,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _dataSection() => _ProfileSection(
         title: 'dados e aplicativo',
-        subtitle: 'exportação e informações desta instalação',
+        subtitle: 'exportação, versão e informações',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -702,7 +702,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _logoutSection() => _ProfileSection(
         title: 'sessão',
-        subtitle: 'acesso neste dispositivo',
+        subtitle: 'segurança e acesso neste dispositivo',
         child: _SettingsCard(
           children: [
             _SettingsRow(
@@ -746,11 +746,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
     final mobileSections = <Widget>[
       _accountSection(),
-      const SizedBox(height: 8),
+      const SizedBox(height: 16),
       _preferencesSection(),
-      const SizedBox(height: 8),
+      const SizedBox(height: 16),
       _dataSection(),
-      const SizedBox(height: 8),
+      const SizedBox(height: 20),
       _logoutSection(),
     ];
 

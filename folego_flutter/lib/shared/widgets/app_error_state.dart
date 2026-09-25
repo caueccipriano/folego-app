@@ -29,7 +29,11 @@ class AppErrorState extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Container(
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      explicitChildNodes: true,
+      child: Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
@@ -83,6 +87,7 @@ class AppErrorState extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

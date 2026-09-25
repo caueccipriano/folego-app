@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
+
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -382,6 +384,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final compact = constraints.maxWidth < AppBreakpoints.medium;
         final wide = constraints.maxWidth >= 900;
         return ListView(
           padding: const EdgeInsets.fromLTRB(0, 12, 0, 72),
@@ -423,18 +426,29 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
               _ProjectionHero(
                 projection: projection,
                 simulated: _simulated != null,
+                compact: compact,
                 baseEndingBalance: _base?.summary.endingBalance,
               ),
               if (!wide) ...[
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _ProjectionSimulateButton(
-                    brightness: brightness,
-                    accent: accent,
-                    onPressed: _openSimulation,
+                if (compact)
+                  SizedBox(
+                    width: double.infinity,
+                    child: _ProjectionSimulateButton(
+                      brightness: brightness,
+                      accent: accent,
+                      onPressed: _openSimulation,
+                    ),
+                  )
+                else
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _ProjectionSimulateButton(
+                      brightness: brightness,
+                      accent: accent,
+                      onPressed: _openSimulation,
+                    ),
                   ),
-                ),
               ],
               const SizedBox(height: 14),
               AppSectionHeader(
@@ -538,6 +552,7 @@ class _ProjectionHeader extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
     final surface = AppColors.surface(brightness);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     return AppPageHeader(
       title: 'projeção',
@@ -550,24 +565,26 @@ class _ProjectionHeader extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              border: Border.all(color: border),
-            ),
-            child: Text(
-              'atual',
-              style: AppTypography.label(
-                context,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: secondary,
+          if (!compact) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                border: Border.all(color: border),
+              ),
+              child: Text(
+                'atual',
+                style: AppTypography.label(
+                  context,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: secondary,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 6),
+            const SizedBox(width: 6),
+          ],
           IconButton(
             key: const ValueKey('projection-scenario-settings'),
             tooltip: 'ajustar cenário',
@@ -627,11 +644,13 @@ class _ProjectionHero extends StatelessWidget {
   const _ProjectionHero({
     required this.projection,
     required this.simulated,
+    required this.compact,
     this.baseEndingBalance,
   });
 
   final ProjectionResult projection;
   final bool simulated;
+  final bool compact;
   final double? baseEndingBalance;
 
   @override
@@ -694,7 +713,7 @@ class _ProjectionHero extends StatelessWidget {
           if (simulated && baseEndingBalance != null) ...[
             const SizedBox(height: 7),
             Text(
-              'diferença vs. antes: ${_signedMoney(summary.endingBalance - baseEndingBalance!)}',
+              'diferença em relação ao cenário atual: ${_signedMoney(summary.endingBalance - baseEndingBalance!)}',
               style: AppTypography.body(
                 context,
                 fontSize: 11,
@@ -706,30 +725,49 @@ class _ProjectionHero extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _HeroStat(
-                  label: 'menor saldo',
-                  value: Formatters.money(summary.minimumBalance),
+          if (compact)
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroStat(
+                    label: 'menor saldo',
+                    value: Formatters.money(summary.minimumBalance),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HeroStat(
-                  label: 'maior saldo',
-                  value: Formatters.money(summary.maximumBalance),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _HeroStat(
+                    label: 'economia projetada',
+                    value: Formatters.money(summary.projectedSavings),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HeroStat(
-                  label: 'economia projetada',
-                  value: Formatters.money(summary.projectedSavings),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroStat(
+                    label: 'menor saldo',
+                    value: Formatters.money(summary.minimumBalance),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroStat(
+                    label: 'maior saldo',
+                    value: Formatters.money(summary.maximumBalance),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroStat(
+                    label: 'economia projetada',
+                    value: Formatters.money(summary.projectedSavings),
+                  ),
+                ),
+              ],
+            ),
           if (critical != null) ...[
             const SizedBox(height: 9),
             Align(
@@ -1223,7 +1261,7 @@ class _ProjectionInsights extends StatelessWidget {
     }
     final text = critical == null
         ? 'seu menor saldo projetado ocorre em ${_monthYear(minMonth.month)}'
-        : 'Em ${_monthYear(critical.month)}, o fechamento projetado fica em ${Formatters.money(critical.closingBalance)}.';
+        : 'em ${_monthYear(critical.month)}, o fechamento projetado fica em ${Formatters.money(critical.closingBalance)}.';
 
     ProjectionMonth? installmentEnd;
     for (var i = 1; i < months.length; i++) {
@@ -1234,18 +1272,24 @@ class _ProjectionInsights extends StatelessWidget {
       }
     }
 
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
+
     return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
+      padding: compact
+          ? const EdgeInsets.symmetric(vertical: 4)
+          : const EdgeInsets.all(18),
+      decoration: compact
+          ? null
+          : BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: border),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'leitura do cenário',
+            'o que isso significa',
             style: AppTypography.section(context, fontSize: 17),
           ),
           const SizedBox(height: 9),
@@ -1260,7 +1304,7 @@ class _ProjectionInsights extends StatelessWidget {
           if (installmentEnd != null) ...[
             const SizedBox(height: 8),
             Text(
-              'A partir de ${_monthYear(installmentEnd.month)}, as parcelas de cartão já conhecidas deixam de aparecer neste horizonte.',
+              'a partir de ${_monthYear(installmentEnd.month)}, as parcelas de cartão já conhecidas deixam de aparecer neste horizonte.',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -1321,15 +1365,20 @@ class _CategoryMonthList extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
     final surface = AppColors.surface(brightness);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     if (month.categories.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: border),
-        ),
+        padding: compact
+            ? const EdgeInsets.symmetric(vertical: 8)
+            : const EdgeInsets.all(18),
+        decoration: compact
+            ? null
+            : BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: border),
+              ),
         child: Text(
           'nenhuma categoria prevista em ${_monthYear(month.month)}',
           style: AppTypography.body(
@@ -1351,13 +1400,24 @@ class _CategoryMonthList extends StatelessWidget {
         const SizedBox(height: 10),
         ...month.categories.map(
           (category) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(AppRadii.control),
-              border: Border.all(color: border),
+            margin: EdgeInsets.only(bottom: compact ? 0 : 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 4 : 14,
+              vertical: 12,
             ),
+            decoration: compact
+                ? BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: border.withValues(alpha: .72),
+                      ),
+                    ),
+                  )
+                : BoxDecoration(
+                    color: surface,
+                    borderRadius: BorderRadius.circular(AppRadii.control),
+                    border: Border.all(color: border),
+                  ),
             child: Row(
               children: [
                 const Icon(AppIcons.categoryOther, size: 18),
@@ -1470,8 +1530,8 @@ class _ProjectionMonthDetail extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             isCurrentMonth
-                ? 'realizado + ainda previsto = fechamento'
-                : 'fechamento projetado e compromissos previstos',
+                ? 'o que já aconteceu + o que ainda está previsto'
+                : 'saldo projetado e compromissos previstos',
             style: AppTypography.body(
               context,
               fontSize: 11,

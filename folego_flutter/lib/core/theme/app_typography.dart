@@ -126,7 +126,7 @@ abstract final class AppTypography {
       ),
       labelSmall: GoogleFonts.manrope(
         textStyle: manrope.labelSmall,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
         height: 1.20,
         color: secondaryText,
@@ -186,9 +186,10 @@ abstract final class AppTypography {
     FontStyle? fontStyle,
     Color? color,
   }) {
+    final effectiveFontSize = fontSize < 11 ? 11.0 : fontSize;
     return GoogleFonts.manrope(
       textStyle: Theme.of(context).textTheme.bodyMedium,
-      fontSize: fontSize,
+      fontSize: effectiveFontSize,
       fontWeight: fontWeight,
       fontStyle: fontStyle,
       height: 1.45,
@@ -202,9 +203,10 @@ abstract final class AppTypography {
     FontWeight fontWeight = FontWeight.w500,
     Color? color,
   }) {
+    final effectiveFontSize = fontSize < 11 ? 11.0 : fontSize;
     return GoogleFonts.manrope(
       textStyle: Theme.of(context).textTheme.labelMedium,
-      fontSize: fontSize,
+      fontSize: effectiveFontSize,
       fontWeight: fontWeight,
       height: 1.20,
       color: color,

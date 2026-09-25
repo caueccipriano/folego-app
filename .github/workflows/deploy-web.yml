@@ -46,13 +46,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends librsvg2-bin
           rsvg-convert -w 512 -h 512 web/icons/folego-logo.svg -o web/icons/Icon-512.png
-          cp web/icons/Icon-512.png web/icons/Icon-maskable-512.png
+          rsvg-convert -w 512 -h 512 web/icons/folego-logo-maskable.svg -o web/icons/Icon-maskable-512.png
           rsvg-convert -w 192 -h 192 web/icons/folego-logo.svg -o web/icons/Icon-192.png
-          cp web/icons/Icon-192.png web/icons/Icon-maskable-192.png
+          rsvg-convert -w 192 -h 192 web/icons/folego-logo-maskable.svg -o web/icons/Icon-maskable-192.png
+          rsvg-convert -w 180 -h 180 web/icons/folego-logo.svg -o web/icons/Icon-180.png
           rsvg-convert -w 64 -h 64 web/icons/folego-logo.svg -o web/favicon.png
 
       - name: Analyze
         run: flutter analyze
+
+      - name: Stable responsive preflight
+        run: |
+          flutter test \
+            test/app_breakpoints_test.dart \
+            test/auth_widgets_test.dart \
+            test/auth_responsive_smoke_test.dart
+
+      - name: Flutter public auth integration smoke
+        run: |
+          chromedriver --port=4444 >/tmp/chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid"' EXIT
+
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/auth_public_flow_test.dart \
+            -d web-server \
+            --browser-name=chrome
 
       - name: Build web app
         run: flutter build web --release --base-href "/folego-app/"
@@ -79,10 +99,51 @@ jobs:
           grep -F "${GITHUB_SHA}" build/web/index.html
           test -f build/web/icons/Icon-512.png
           test -f build/web/icons/Icon-192.png
+          test -f build/web/icons/Icon-180.png
           grep -F '"display": "standalone"' build/web/manifest.json
 
       - name: Add SPA fallback
         run: cp build/web/index.html build/web/404.html
+
+      - name: Stage build for cross-device QA
+        run: |
+          rm -rf ../qa-site
+          mkdir -p ../qa-site/folego-app
+          cp -R build/web/. ../qa-site/folego-app/
+
+      - name: Set up Node for browser QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright QA dependencies
+        working-directory: qa
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        working-directory: qa
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run pre-deploy cross-device QA
+        working-directory: qa
+        env:
+          QA_BASE_URL: http://127.0.0.1:4173/folego-app/
+        run: |
+          python3 -m http.server 4173 --directory ../qa-site >/tmp/folego-qa-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          npx playwright test tests/public-shell.spec.ts
+
+      - name: Upload browser QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-predeploy-browser-qa-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            qa/playwright-report/
+            qa/test-results/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

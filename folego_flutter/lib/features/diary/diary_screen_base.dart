@@ -579,11 +579,11 @@ class _DiaryScreenState extends State<DiaryScreen> {
                         const SizedBox(height: 2),
                         Text(
                           '${entry.displayCategory} · ${_dateLabel(entry.occurredAt)} · ${Formatters.money(entry.amount.abs())}',
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.label(
                             context,
-                            fontSize: 9,
+                            fontSize: 11,
                             color: AppColors.secondaryText(brightness),
                           ),
                         ),
