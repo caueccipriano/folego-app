@@ -141,7 +141,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Text(
                       access.hasPremium
                           ? _activeCopy(access, l10n)
-                          : '${SubscriptionService.trialLabel} · ${SubscriptionService.monthlyPriceLabel}',
+                          : SubscriptionService.isTestStoreBuild
+                              ? 'Ambiente de teste · sem cobrança real ou teste grátis de 7 dias'
+                              : '${SubscriptionService.trialLabel} · ${SubscriptionService.monthlyPriceLabel}',
                       style: AppTypography.body(
                         context,
                         fontSize: 13,
