@@ -278,6 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final snapshot = _snapshot!;
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
+    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -444,7 +445,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHomeSkeleton() {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
-    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness).withValues(alpha: .14);
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
