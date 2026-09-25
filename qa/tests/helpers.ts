@@ -15,7 +15,9 @@ export async function openFolego(page: Page) {
 export async function enableFlutterAccessibility(page: Page) {
   const button = page.getByRole('button', { name: /enable accessibility/i });
   if (await button.count()) {
-    await button.first().click();
+    await button.first().evaluate((element) => {
+      (element as HTMLElement).click();
+    });
     await page.waitForTimeout(250);
   }
 }
