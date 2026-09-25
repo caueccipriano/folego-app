@@ -30,12 +30,8 @@ class AppEmptyState extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: [
-        title,
-        if (description?.trim().isNotEmpty == true) description!,
-      ].join('. '),
-      child: ExcludeSemantics(
-        child: Container(
+      explicitChildNodes: true,
+      child: Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
@@ -87,7 +83,6 @@ class AppEmptyState extends StatelessWidget {
         ],
       ),
     ),
-      ),
     );
   }
 }
