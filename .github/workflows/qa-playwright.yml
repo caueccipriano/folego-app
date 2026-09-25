@@ -3,7 +3,7 @@ name: Cross-device Playwright QA
 on:
   push:
     branches:
-      - qa/playwright-mobile-web
+      - 'qa/**'
     paths:
       - 'folego_flutter/**'
       - 'qa/**'
@@ -51,7 +51,8 @@ jobs:
         run: |
           flutter test \
             test/app_breakpoints_test.dart \
-            test/auth_widgets_test.dart
+            test/auth_widgets_test.dart \
+            test/auth_responsive_smoke_test.dart
 
       - name: Audit legacy responsive stress tests
         continue-on-error: true
