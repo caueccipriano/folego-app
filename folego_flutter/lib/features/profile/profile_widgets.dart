@@ -113,7 +113,7 @@ class _AccountHeader extends StatelessWidget {
                     ],
                     const SizedBox(height: 3),
                     Text(
-                      'conta pessoal do Fôlego',
+                      'conta pessoal',
                       style: AppTypography.label(
                         context,
                         fontSize: 9,
@@ -220,19 +220,21 @@ class _SettingsRow extends StatelessWidget {
       button: onTap != null,
       enabled: enabled,
       label: title,
-      child: Material(
+      value: subtitle,
+      child: ExcludeSemantics(
+        child: Material(
         color: AppColors.surface(brightness),
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 50),
+            constraints: const BoxConstraints(minHeight: 56),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
               child: Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 34,
+                    height: 34,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: .10),
@@ -259,7 +261,7 @@ class _SettingsRow extends StatelessWidget {
                           subtitle,
                           style: AppTypography.body(
                             context,
-                            fontSize: 10,
+                            fontSize: 11,
                             color: secondary,
                           ),
                         ),
@@ -276,6 +278,7 @@ class _SettingsRow extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
