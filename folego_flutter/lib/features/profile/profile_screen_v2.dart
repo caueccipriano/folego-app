@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,9 +25,11 @@ import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../auth/auth_validation.dart';
+import '../premium/premium_screen.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
+import 'legal_privacy_screen.dart';
 import 'profile_actions.dart';
 
 part 'profile_widgets.dart';
@@ -142,6 +145,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _openLegalPrivacy() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const LegalPrivacyScreen()),
+    );
+  }
+
+  Future<void> _openPremium() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PremiumScreen()),
+    );
+  }
+
   Future<void> _openNotificationSettings() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -154,6 +169,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _openAutomationRules() async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'automações inteligentes',
+    );
+    if (!unlocked || !mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AutomationRulesScreen(
@@ -165,6 +185,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _exportData(BuildContext anchorContext) async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'exportação dos seus dados em CSV',
+    );
+    if (!unlocked || !mounted) return;
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
@@ -607,6 +632,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
+                if (!kIsWeb)
+                  _SettingsRow(
+                    icon: Icons.workspace_premium_rounded,
+                    title: 'Fôlego Premium',
+                    subtitle: 'preço e teste grátis confirmados pela loja',
+                    onTap: _openPremium,
+                  ),
                 _SettingsRow(
                   icon: AppIcons.notifications,
                   title: 'notificações',
@@ -636,6 +668,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _SettingsCard(
               children: [
+                _SettingsRow(
+                  icon: AppIcons.privacy,
+                  title: 'privacidade e termos',
+                  subtitle: 'seus dados e exclusão de conta',
+                  onTap: _openLegalPrivacy,
+                ),
                 Builder(
                   builder: (exportContext) => _SettingsRow(
                     icon: AppIcons.exportData,
