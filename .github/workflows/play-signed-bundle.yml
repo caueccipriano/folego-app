@@ -1,0 +1,138 @@
+name: Prepare secure Google Play bundle
+
+on:
+  push:
+    branches: [release/secure-play-bundle-20260925]
+    paths:
+      - 'folego_flutter/scripts/configure_release_signing.py'
+      - 'folego_flutter/scripts/test_release_signing.py'
+      - '.github/workflows/play-signed-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-signing-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check upload-key signing patch without credentials
+        working-directory: folego_flutter
+        run: python3 -m unittest discover -s scripts -p test_release_signing.py -v
+
+  signed-candidate:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate-signing-script
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    defaults:
+      run:
+        working-directory: folego_flutter
+    env:
+      RC_GOOGLE_PUBLIC_KEY: ${{ secrets.REVENUECAT_GOOGLE_PUBLIC_KEY }}
+      PLAY_UPLOAD_KEYSTORE_BASE64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_BASE64 }}
+      PLAY_UPLOAD_STORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_STORE_PASSWORD }}
+      PLAY_UPLOAD_KEY_ALIAS: ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+      PLAY_UPLOAD_KEY_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEY_PASSWORD }}
+      PRIVATE_REPO: ${{ github.event.repository.private }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require real Google Play config and private repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PRIVATE_REPO" != true ]]; then
+            echo "::error::Move legal pages to independent hosting and make repo private before signing."
+            exit 1
+          fi
+          if [[ "$RC_GOOGLE_PUBLIC_KEY" != goog_* ]]; then
+            echo "::error::RevenueCat Google Play public SDK key required; test keys forbidden."
+            exit 1
+          fi
+          for secret_name in PLAY_UPLOAD_KEYSTORE_BASE64 PLAY_UPLOAD_STORE_PASSWORD PLAY_UPLOAD_KEY_ALIAS PLAY_UPLOAD_KEY_PASSWORD; do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Upload signing credential missing: $secret_name"
+              exit 1
+            fi
+          done
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate native app shell and check source
+        run: bash scripts/bootstrap_flutter.sh
+
+      - name: Write secrets into temporary signing inputs
+        run: |
+          python3 - <<'PY'
+          import os
+          import json
+          import base64
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          binary = base64.b64decode(os.environ["PLAY_UPLOAD_KEYSTORE_BASE64"], validate=True)
+          if len(binary) < 100:
+              raise SystemExit("Upload keystore is invalid or unexpectedly small")
+          keystore = temp / "folego-upload.jks"
+          keystore.write_bytes(binary)
+          keystore.chmod(0o600)
+
+          def safe_property(value):
+              if "\n" in value or "\r" in value:
+                  raise SystemExit("Invalid signing secret: newline")
+              return value.replace("\\", "\\\\").replace(":", "\\:").replace("=", "\\=")
+
+          values = {
+              "storeFile": str(keystore),
+              "storePassword": os.environ["PLAY_UPLOAD_STORE_PASSWORD"],
+              "keyAlias": os.environ["PLAY_UPLOAD_KEY_ALIAS"],
+              "keyPassword": os.environ["PLAY_UPLOAD_KEY_PASSWORD"],
+          }
+          props = Path("android/key.properties")
+          props.write_text("".join(f"{key}={safe_property(value)}\n" for key, value in values.items()))
+          props.chmod(0o600)
+          defines = temp / "folego-play.json"
+          defines.write_text(json.dumps({
+              "REVENUECAT_ANDROID_API_KEY": os.environ["RC_GOOGLE_PUBLIC_KEY"]
+          }))
+          defines.chmod(0o600)
+          PY
+
+      - name: Configure ephemeral upload-key signing
+        run: python3 scripts/configure_release_signing.py .
+
+      - name: Build signed store candidate
+        run: >
+          flutter build appbundle --release --obfuscate
+          --dart-define-from-file="$RUNNER_TEMP/folego-play.json"
+          --split-debug-info="$RUNNER_TEMP/folego-symbols"
+
+      - name: Verify Android bundle has valid upload key signature
+        run: |
+          test -s build/app/outputs/bundle/release/app-release.aab
+          jarsigner -verify build/app/outputs/bundle/release/app-release.aab \
+            > "$RUNNER_TEMP/signature-check.txt" 2>&1
+          grep -q "jar verified" "$RUNNER_TEMP/signature-check.txt"
+
+      - name: Save temporary private repository signed candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-signed-play-candidate
+          path: folego_flutter/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Wipe temporary material
+        if: always()
+        run: |
+          rm -f android/key.properties \
+            "$RUNNER_TEMP/folego-upload.jks" \
+            "$RUNNER_TEMP/folego-play.json"
