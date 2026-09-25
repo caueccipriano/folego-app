@@ -8,15 +8,22 @@ This directory contains the browser-level QA layer for the Flutter PWA.
 - Android-like Chromium at 412x915 and 360x800
 - Tablet at 768x1024
 - Desktop at 1440x900
+- Dark mode on iPhone 15 Pro, Android Pixel and desktop
 - PWA manifest, service worker and viewport metadata
 - Horizontal overflow after boot and resize
 - Runtime page errors
 - Automatic screenshots per project
 - Optional authenticated navigation smoke test
 
-## Run locally
+## QA layers
 
-Build the Flutter app with a root base href first:
+1. **Flutter preflight** — breakpoints, auth widgets and responsive auth smoke at compact/wide sizes.
+2. **Flutter web integration** — production deploy runs the public auth flow through `flutter drive` + ChromeDriver.
+3. **Playwright** — WebKit/Chromium matrix across iPhone, Android, tablet and desktop before Pages upload.
+
+The production workflow tests the exact `/folego-app/` artifact that will be uploaded. GitHub Pages is only reached after the browser gate passes.
+
+## Run locally
 
 ```bash
 cd folego_flutter
@@ -38,10 +45,8 @@ secrets:
 Without them, authenticated tests are skipped while all public QA remains
 mandatory.
 
-## Screenshots
+## Screenshots and traces
 
-Every test run writes screenshots, traces and videos to `qa/test-results`.
-GitHub Actions uploads them as artifacts so mobile/desktop regressions can be
+Playwright writes screenshots, traces and failure videos to `qa/test-results`.
+GitHub Actions uploads the QA artifacts for 14 days, so regressions can be
 reviewed without an external browser service.
-
-CI note: every push to the QA branch runs this matrix before promotion.
