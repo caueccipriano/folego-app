@@ -644,13 +644,56 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       const SizedBox(height: 10),
       TextField(controller: _search, onChanged: (_) => setState(() {}), decoration: const InputDecoration(prefixIcon: Icon(AppIcons.search), labelText: 'buscar neste lote')),
       const SizedBox(height: 10),
-      SingleChildScrollView(scrollDirection: Axis.horizontal, child: SegmentedButton<_ReviewFilter>(segments: const [
-        ButtonSegment(value: _ReviewFilter.all, label: Text('todos')),
-        ButtonSegment(value: _ReviewFilter.selected, label: Text('selecionados')),
-        ButtonSegment(value: _ReviewFilter.duplicates, label: Text('duplicados')),
-        ButtonSegment(value: _ReviewFilter.pending, label: Text('pendentes')),
-        ButtonSegment(value: _ReviewFilter.errors, label: Text('com erro')),
-      ], selected: <_ReviewFilter>{_reviewFilter}, onSelectionChanged: (value) => setState(() => _reviewFilter = value.first))),
+      if (desktop)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<_ReviewFilter>(
+            segments: const [
+              ButtonSegment(value: _ReviewFilter.all, label: Text('todos')),
+              ButtonSegment(
+                value: _ReviewFilter.selected,
+                label: Text('selecionados'),
+              ),
+              ButtonSegment(
+                value: _ReviewFilter.duplicates,
+                label: Text('duplicados'),
+              ),
+              ButtonSegment(
+                value: _ReviewFilter.pending,
+                label: Text('pendentes'),
+              ),
+              ButtonSegment(
+                value: _ReviewFilter.errors,
+                label: Text('com erro'),
+              ),
+            ],
+            selected: <_ReviewFilter>{_reviewFilter},
+            onSelectionChanged: (value) =>
+                setState(() => _reviewFilter = value.first),
+          ),
+        )
+      else
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: const [
+              (_ReviewFilter.all, 'todos'),
+              (_ReviewFilter.selected, 'selecionados'),
+              (_ReviewFilter.duplicates, 'duplicados'),
+              (_ReviewFilter.pending, 'pendentes'),
+              (_ReviewFilter.errors, 'com erro'),
+            ].map((option) {
+              return ChoiceChip(
+                label: Text(option.$2),
+                selected: _reviewFilter == option.$1,
+                onSelected: (_) =>
+                    setState(() => _reviewFilter = option.$1),
+              );
+            }).toList(growable: false),
+          ),
+        ),
       const SizedBox(height: 10),
       _BulkBar(categories: _expenseCategories, selectedCategoryId: _bulkCategoryId, onChanged: (value) => setState(() => _bulkCategoryId = value), onApply: _applyBulkCategory, onIncludeAll: () => setState(() => _rows = _rows.map((row) => row.copyWith(decision: row.duplicateState == StatementImportDuplicateState.exactDuplicate || row.duplicateState == StatementImportDuplicateState.alreadyImported ? StatementImportDecision.ignore : StatementImportDecision.include)).toList(growable: false)), onIgnoreSelected: () => setState(() => _rows = _rows.map((row) => row.selected ? row.copyWith(decision: StatementImportDecision.ignore) : row).toList(growable: false))),
     ]);
@@ -860,4 +903,4 @@ String _typeLabel(StatementImportFinalType type) => switch (type) { StatementImp
 String? _duplicateLabel(StatementImportDuplicateState state) => switch (state) { StatementImportDuplicateState.exactDuplicate => 'duplicata exata · ignorada por padrão', StatementImportDuplicateState.alreadyImported => 'já importado · ignorado por padrão', StatementImportDuplicateState.possibleDuplicate => 'possível duplicata · revisar', StatementImportDuplicateState.unique => null };
 String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 String _friendly(Object error) { if (error is StatementImportParseException) return error.message; return _friendlyServerError(error.toString().replaceFirst('Exception: ', '')); }
-String _friendlyServerError(String value) { if (value.contains('import_row_limit_exceeded')) return 'o arquivo ultrapassa o limite de 2.000 linhas'; if (value.contains('import_payload_too_large')) return 'o lote ficou grande demais para processar com segurança'; if (value.contains('invalid_import_source')) return 'a conta/cartão escolhido não é válido para este espaço'; if (value.contains('import_type_requires_review')) return 'alguns itens ainda precisam de um tipo financeiro seguro'; if (value.contains('transfer_requires_counterpart')) return 'transferência precisa da outra conta'; if (value.contains('card_payment_requires_invoice')) return 'pagamento de cartão precisa da fatura relacionada'; if (value.contains('benefit_cannot_pay_card')) return 'benefício não pode ser usado para pagar fatura'; if (value.contains('invalid_category')) return 'uma categoria precisa ser revisada'; return value.replaceAll('PostgrestException(message: ', '').split(', code:').first; }
+String _friendlyServerError(String value) { if (value.contains('import_row_limit_exceeded')) return 'o arquivo ultrapassa o limite de 2.000 linhas'; if (value.contains('import_payload_too_large')) return 'o lote ficou grande demais para processar com segurança'; if (value.contains('invalid_import_source')) return 'a conta/cartão escolhido não é válido para este espaço'; if (value.contains('import_type_requires_review')) return 'alguns itens ainda precisam de um tipo financeiro seguro'; if (value.contains('transfer_requires_counterpart')) return 'transferência precisa da outra conta'; if (value.contains('card_payment_requires_invoice')) return 'pagamento de cartão precisa da fatura relacionada'; if (value.contains('benefit_cannot_pay_card')) return 'benefício não pode ser usado para pagar fatura'; if (value.contains('invalid_category')) return 'uma categoria precisa ser revisada'; return 'não consegui processar este item agora. revise os dados e tente novamente.'; }

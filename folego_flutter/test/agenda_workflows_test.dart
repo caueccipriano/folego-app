@@ -264,7 +264,7 @@ void main() {
     await _flush(tester);
     await tester.tap(find.text('Dívida teste'));
     await _flush(tester);
-    expect(find.text('dívida'), findsOneWidget);
+    expect(find.text('detalhes da dívida'), findsOneWidget);
     expect(find.text('Dívida teste'), findsWidgets);
   });
 
@@ -303,18 +303,16 @@ void main() {
       ),
     );
     await _flush(tester);
-    expect(find.text('próximos dias'), findsOneWidget);
+    expect(find.text('próximos movimentos'), findsOneWidget);
     expect(find.textContaining('Internet'), findsOneWidget);
-    await tester.tap(find.text('próximos dias'));
+    await tester.tap(find.text('próximos movimentos'));
     await _flush(tester);
     expect(find.text('agenda'), findsOneWidget);
   });
 }
 
 Future<void> _flush(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 20));
-  await tester.pump();
+  await tester.pumpAndSettle();
 }
 
 UpcomingFinancialEvent _event(

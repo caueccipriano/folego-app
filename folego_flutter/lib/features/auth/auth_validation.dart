@@ -1,5 +1,5 @@
 abstract final class AuthValidation {
-  static const int minimumPasswordLength = 8;
+  static const int minimumPasswordLength = 10;
 
   static final RegExp _emailPattern = RegExp(
     r'^[^\s@]+@[^\s@]+\.[^\s@]+$',

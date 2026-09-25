@@ -99,7 +99,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = 'não consegui carregar este planejamento agora';
       });
     }
   }
@@ -201,7 +201,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       if (mounted) {
         AppSnackbars.show(
           context,
-          'não consegui salvar: ${error.toString().replaceFirst('Exception: ', '')}',
+          'não consegui salvar agora. confira os dados e tente novamente.',
         );
       }
     } finally {
@@ -302,7 +302,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       if (mounted) {
         AppSnackbars.show(
           context,
-          'não consegui salvar: ${error.toString().replaceFirst('Exception: ', '')}',
+          'não consegui salvar agora. confira os dados e tente novamente.',
         );
       }
     } finally {

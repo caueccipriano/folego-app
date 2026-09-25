@@ -1,0 +1,48 @@
+# Local/editor noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.p8
+*.mobileprovision
+*.jks
+*.keystore
+key.properties
+service-account*.json
+google-services*.json
+GoogleService-Info.plist
+.secrets/
+secrets/
+
+# Flutter/Dart generated data
+.dart_tool/
+.pub/
+.pub-cache/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Platform build output
+**/android/.gradle/
+**/android/local.properties
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+
+# Signing/export artifacts
+*.aab
+*.apk
+*.ipa
+*.xcarchive
+*.dSYM.zip
