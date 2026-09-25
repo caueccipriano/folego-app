@@ -853,7 +853,7 @@ class _PlanScreenState extends State<PlanScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'parents resumem; limites são definidos somente nas subcategorias',
+          'categorias principais resumem; limites são definidos nas subcategorias',
           style: AppTypography.body(
             context,
             fontSize: 12,
