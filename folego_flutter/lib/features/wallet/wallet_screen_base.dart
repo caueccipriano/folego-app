@@ -1632,7 +1632,9 @@ class _WalletSectionChip extends StatelessWidget {
               color: selected ? purple.withValues(alpha: .13) : surface,
               borderRadius: BorderRadius.circular(AppRadii.pill),
               border: Border.all(
-                color: selected ? purple.withValues(alpha: .45) : border,
+                color: selected
+                    ? purple.withValues(alpha: .38)
+                    : border.withValues(alpha: .72),
               ),
             ),
             child: Row(
@@ -1646,33 +1648,35 @@ class _WalletSectionChip extends StatelessWidget {
                     context,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: selected ? primary : secondary,
+                    color: selected ? purple : secondary,
                   ),
                 ),
-                const SizedBox(width: 6),
-                Container(
-                  constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
-                  ),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? purple.withValues(alpha: .16)
-                        : border.withValues(alpha: .55),
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: selected ? purple : secondary,
+                if (count > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? purple.withValues(alpha: .16)
+                          : border.withValues(alpha: .45),
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: selected ? purple : secondary,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
