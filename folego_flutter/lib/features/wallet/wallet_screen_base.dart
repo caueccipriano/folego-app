@@ -297,6 +297,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildHeader(Brightness brightness) {
     final secondary = AppColors.secondaryText(brightness);
+    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
 
     return AppPageHeader(
@@ -1607,7 +1608,6 @@ class _WalletSectionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final purple = AppColors.primaryPurple(brightness);
-    final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
     final motionDuration = MediaQuery.disableAnimationsOf(context)
