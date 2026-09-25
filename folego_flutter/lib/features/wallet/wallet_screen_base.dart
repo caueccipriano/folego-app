@@ -297,7 +297,6 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildHeader(Brightness brightness) {
     final secondary = AppColors.secondaryText(brightness);
-    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
 
     return AppPageHeader(
