@@ -49,6 +49,7 @@ jobs:
           cp web/icons/Icon-512.png web/icons/Icon-maskable-512.png
           rsvg-convert -w 192 -h 192 web/icons/folego-logo.svg -o web/icons/Icon-192.png
           cp web/icons/Icon-192.png web/icons/Icon-maskable-192.png
+          rsvg-convert -w 180 -h 180 web/icons/folego-logo.svg -o web/icons/Icon-180.png
           rsvg-convert -w 64 -h 64 web/icons/folego-logo.svg -o web/favicon.png
 
       - name: Analyze
@@ -79,6 +80,7 @@ jobs:
           grep -F "${GITHUB_SHA}" build/web/index.html
           test -f build/web/icons/Icon-512.png
           test -f build/web/icons/Icon-192.png
+          test -f build/web/icons/Icon-180.png
           grep -F '"display": "standalone"' build/web/manifest.json
 
       - name: Add SPA fallback
