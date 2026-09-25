@@ -368,7 +368,8 @@ abstract final class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: secondaryText,
-
+          minimumSize: const Size(44, 44),
+          tapTargetSize: MaterialTapTargetSize.padded,
           highlightColor: primaryPurple.withValues(alpha: .10),
         ),
       ),
