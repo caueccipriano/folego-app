@@ -46,9 +46,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends librsvg2-bin
           rsvg-convert -w 512 -h 512 web/icons/folego-logo.svg -o web/icons/Icon-512.png
-          cp web/icons/Icon-512.png web/icons/Icon-maskable-512.png
+          rsvg-convert -w 512 -h 512 web/icons/folego-logo-maskable.svg -o web/icons/Icon-maskable-512.png
           rsvg-convert -w 192 -h 192 web/icons/folego-logo.svg -o web/icons/Icon-192.png
-          cp web/icons/Icon-192.png web/icons/Icon-maskable-192.png
+          rsvg-convert -w 192 -h 192 web/icons/folego-logo-maskable.svg -o web/icons/Icon-maskable-192.png
           rsvg-convert -w 180 -h 180 web/icons/folego-logo.svg -o web/icons/Icon-180.png
           rsvg-convert -w 64 -h 64 web/icons/folego-logo.svg -o web/favicon.png
 
