@@ -43,3 +43,5 @@ mandatory.
 Every test run writes screenshots, traces and videos to `qa/test-results`.
 GitHub Actions uploads them as artifacts so mobile/desktop regressions can be
 reviewed without an external browser service.
+
+CI note: every push to the QA branch runs this matrix before promotion.
