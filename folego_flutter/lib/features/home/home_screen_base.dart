@@ -278,7 +278,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final snapshot = _snapshot!;
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
-    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
