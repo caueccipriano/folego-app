@@ -990,7 +990,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       if (children.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         AnimatedRotation(
-                          duration: const Duration(milliseconds: 180),
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 180),
                           turns: expanded ? .25 : 0,
                           child: Icon(
                             AppIcons.chevronRight,
