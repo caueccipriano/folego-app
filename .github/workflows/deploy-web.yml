@@ -59,7 +59,8 @@ jobs:
         run: |
           flutter test \
             test/app_breakpoints_test.dart \
-            test/auth_widgets_test.dart
+            test/auth_widgets_test.dart \
+            test/auth_responsive_smoke_test.dart
 
       - name: Build web app
         run: flutter build web --release --base-href "/folego-app/"
