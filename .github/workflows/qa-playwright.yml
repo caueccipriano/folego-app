@@ -53,6 +53,10 @@ jobs:
             test/app_breakpoints_test.dart \
             test/auth_widgets_test.dart
 
+      - name: Run Flutter integration smoke
+        working-directory: folego_flutter
+        run: flutter test integration_test/auth_responsive_smoke_test.dart
+
       - name: Audit legacy responsive stress tests
         continue-on-error: true
         working-directory: folego_flutter
