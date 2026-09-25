@@ -82,4 +82,28 @@ test.describe('Fôlego public PWA shell', () => {
     );
     expect(overflow).toBeLessThanOrEqual(2);
   });
+  test('serves standalone legal documents without sign-in or SPA fallback', async ({
+    request,
+    baseURL,
+  }) => {
+    const expectedDocuments = [
+      { slug: 'privacy.html', heading: 'Seus dados, com contexto.' },
+      { slug: 'terms.html', heading: 'Termos simples para um app financeiro simples.' },
+      { slug: 'account-deletion.html', heading: 'Você controla sua conta.' },
+      { slug: 'support.html', heading: 'Como podemos ajudar?' },
+    ];
+
+    for (const doc of expectedDocuments) {
+      const url = new URL(`legal/${doc.slug}`, baseURL!).toString();
+      const response = await request.get(url);
+      expect(response.status(), url).toBe(200);
+      expect(response.headers()['content-type'], url).toContain('text/html');
+      const html = await response.text();
+      expect(html, url).toContain('<!doctype html>');
+      expect(html, url).toContain('lang="pt-BR"');
+      expect(html, url).toContain(doc.heading);
+      expect(html, url).not.toContain('flutter_bootstrap.js');
+    }
+  });
+
 });
