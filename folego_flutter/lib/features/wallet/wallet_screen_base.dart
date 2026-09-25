@@ -1609,7 +1609,6 @@ class _WalletSectionChip extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
-    final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
     final motionDuration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
@@ -1626,9 +1625,12 @@ class _WalletSectionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadii.pill),
           child: AnimatedContainer(
             duration: motionDuration,
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: selected ? purple.withValues(alpha: .13) : surface,
+              color: selected
+                  ? purple.withValues(alpha: .12)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadii.pill),
               border: Border.all(
                 color: selected
