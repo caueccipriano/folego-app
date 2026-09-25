@@ -14,7 +14,7 @@ void main() {
       'lib/core/subscriptions/subscription_service.dart',
     ).readAsStringSync();
 
-    expect(service, contains("if (kReleaseMode && isTestStoreKey(apiKey))"));
+    expect(service, contains('if (kReleaseMode && isTestStoreKey(apiKey))'));
     expect(service, contains("if (apiKey.startsWith('sk_'))"));
   });
 
