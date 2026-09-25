@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../data/repositories/folego_repository.dart';
+import '../premium/premium_screen.dart';
 import 'flexible_budget_screen.dart';
 import 'plan_screen_web2.dart' as base;
 import 'projection_screen.dart';
@@ -37,12 +38,19 @@ class _PlanScreenState extends State<PlanScreen> {
     }
     if (oldWidget.projectionOpenToken != widget.projectionOpenToken &&
         widget.projectionOpenToken != null) {
-      _projection = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openProjection();
+      });
     }
   }
 
-  void _openProjection() {
+  Future<void> _openProjection() async {
     if (_projection) return;
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'projeções e cenários futuros',
+    );
+    if (!unlocked || !mounted) return;
     setState(() => _projection = true);
   }
 

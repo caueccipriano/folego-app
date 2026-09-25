@@ -91,8 +91,9 @@ void main() {
   test('transactions wrapper preserves canonical base and secondary import entry', () {
     final source = read('lib/features/transactions/transactions_screen.dart');
     expect(source, contains('impl.TransactionsScreenV3'));
-    expect(source, contains("ValueKey('statement-import-entry')"));
+    expect(source, contains('Future<void> _openImport()'));
     expect(source, contains('StatementImportScreen'));
+    expect(source, contains("feature: 'importação de extratos CSV e OFX'"));
     expect(source, isNot(contains('TransactionImportScreen')));
   });
 

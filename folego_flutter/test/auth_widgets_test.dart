@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/l10n/app_localizations.dart';
 
 import 'package:folego/core/theme/app_icons.dart';
 import 'package:folego/features/auth/auth_widgets.dart';
@@ -9,6 +10,9 @@ void main() {
     var switched = false;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: AuthModeSwitch(
             isSignUp: false,
@@ -28,6 +32,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: _PasswordHarness(controller: controller),
         ),
@@ -46,6 +53,9 @@ void main() {
       var calls = 0;
       await tester.pumpWidget(
         MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: AuthSubmitButton(
               label: 'Entrando...',

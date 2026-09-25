@@ -1,86 +1,84 @@
-# Fôlego — Flutter v0.1
+# Fôlego
 
-Primeira base mobile do **Fôlego**, conectada ao backend Supabase já construído para o produto.
+> **Código proprietário.** A visibilidade do repositório não concede licença para copiar, distribuir, reutilizar ou criar trabalhos derivados do Fôlego. Consulte o arquivo `LICENSE`.
 
-> **Promessa:** saiba quanto você realmente pode gastar hoje sem apertar amanhã.
+**Saiba quanto você realmente pode gastar hoje sem apertar amanhã.**
 
-## O que já funciona nesta versão
+Release candidate: **1.0.0+1**.
 
-- Supabase inicializado com **publishable key** (nenhuma chave privilegiada no cliente).
-- Cadastro e login por e-mail + senha.
-- Bootstrap automático de `Minhas Finanças` pelo backend.
-- Onboarding em 6 etapas:
-  1. conta e saldo atual;
-  2. recebimento confirmado;
-  3. conta recorrente;
-  4. reserva protegida;
-  5. cartão + fatura atual;
-  6. primeiro orçamento variável.
-- Estado do onboarding recuperado por `get_onboarding_state()`.
-- Home real consumindo `get_folego_snapshot()`.
-- Hero **Seu Fôlego hoje** com valor diário, status e valor até o próximo recebimento.
-- Indicadores de caixa disponível, reserva, compromissos e caixa livre.
-- Progresso do orçamento variável.
-- Registro rápido de **despesa** e **receita** usando as RPCs atômicas do backend.
-- Navegação-base: Início, Transações, Plano, Carteira e Perfil.
-- Logout.
+Aplicativo de organização financeira pessoal em Flutter, com backend Supabase e arquitetura preparada para assinatura Premium via RevenueCat.
 
-As abas Transações, Plano e Carteira já existem como estrutura, mas serão implementadas nas próximas versões.
+## Produto v1
 
-## Backend conectado
+### Free
+- Fôlego diário e resumo financeiro;
+- lançamentos manuais;
+- histórico e filtros;
+- planejamento mensal;
+- contas, cartões, benefícios e dívidas;
+- recorrências e assinaturas;
+- metas e diário financeiro;
+- lembretes financeiros essenciais;
+- categorias, tema, conta, privacidade e exclusão de conta.
 
-O projeto usa o Supabase **Fôlego Dev** em São Paulo (`sa-east-1`). A URL e a publishable key estão em:
+### Premium
+Preço de lançamento planejado: **R$ 9,90/mês**, com oferta de **7 dias grátis** configurada pela loja.
 
-`lib/core/config/supabase_config.dart`
+Recursos:
+- projeções e cenários futuros;
+- automações de classificação;
+- importação CSV/OFX;
+- exportação CSV;
+- capabilities de notificações avançadas.
 
-A publishable key foi feita para código cliente e continua limitada pelas políticas de RLS e pelas permissões do banco. **Nunca coloque `service_role` ou `sb_secret_...` neste projeto Flutter.**
+Estados suportados: Free, Trial, Premium, Cortesia e Vitalício.
 
-## Como rodar
+## Stack
+- Flutter;
+- Supabase Auth/Postgres/Edge Functions;
+- RevenueCat para compras e entitlement;
+- GitHub Actions para análise, testes e builds.
 
-### 1. Instale o Flutter
+## Segurança
+- cliente usa somente publishable key do Supabase;
+- RLS protege dados por usuário/espaço;
+- nenhuma `service_role` fica no app;
+- concessões Premium manuais são controladas no backend;
+- conta pode ser apagada pelo próprio usuário;
+- logs de autenticação não incluem erro completo, e-mail, token ou stack trace.
 
-Instale uma versão atual do Flutter com Dart compatível com o `pubspec.yaml` e confirme:
+## Executar localmente
+
+### Dependências
+Instale Flutter/Dart compatíveis com o `pubspec.yaml` e rode:
 
 ```bash
 flutter doctor
 ```
 
-### 2. Gere o runner nativo sem sobrescrever o código
+### Gerar runners nativos
+O repositório mantém o produto Flutter e gera os runners nativos de forma controlada.
 
-**Windows / PowerShell:**
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap_flutter.ps1
-```
-
-Esse script gera o Android em uma pasta temporária e copia apenas o runner nativo.
-
-**macOS / Linux:**
+macOS/Linux:
 
 ```bash
 ./scripts/bootstrap_flutter.sh
 ```
 
-No macOS, o script prepara Android e iOS sem substituir `lib/` ou `pubspec.yaml`. Depois ambos executam:
+Windows:
 
-```bash
-flutter pub get
-flutter analyze
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap_flutter.ps1
 ```
 
-> Para compilar/publicar iOS é necessário um Mac com Xcode. O código Dart é o mesmo nas duas plataformas.
+Package Android planejado:
 
-### 3. Execute
-
-Com emulador/simulador ou aparelho conectado:
-
-```bash
-flutter run
+```text
+com.caueccipriano.folego
 ```
 
-## Configuração por `--dart-define`
-
-A base já possui defaults do projeto de desenvolvimento, mas você pode substituir sem editar código:
+### Configuração
+Supabase pode ser sobrescrito por `--dart-define`:
 
 ```bash
 flutter run \
@@ -88,62 +86,35 @@ flutter run \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 ```
 
-## Arquitetura
+RevenueCat na build de loja:
 
-```text
-Supabase Auth
-     ↓
-AuthGate
-     ↓
-Bootstrap
-     ├── onboarding incompleto → OnboardingScreen
-     └── onboarding completo   → HomeShell
-                                  ├── Home
-                                  ├── Transações
-                                  ├── Plano
-                                  ├── Carteira
-                                  └── Perfil
-
-Todas as regras financeiras ficam no backend.
-Flutter → FolegoRepository → RPCs Supabase → Fôlego Engine
+```bash
+--dart-define=REVENUECAT_ANDROID_API_KEY=...
+--dart-define=REVENUECAT_IOS_API_KEY=...
 ```
 
-A interface **não calcula contabilidade**. Ela apenas envia intenção e apresenta o que o motor retorna.
+Use apenas chaves públicas de SDK no cliente. Nunca inclua chave secreta administrativa.
 
-## RPCs usadas pelo app
+## QA
+A branch `release/folego-v1` executa:
+- `flutter analyze`;
+- testes de entitlement e gates Premium;
+- regressões de projeções;
+- regressões de recorrências;
+- regressões de notificações/automações;
+- build Web;
+- geração do scaffold nativo;
+- compilação Android;
+- snapshot da suíte legada para triagem.
 
-Leitura:
-- `get_onboarding_state`
-- `get_folego_snapshot`
+Veja `docs/release_qa_v1.md`.
 
-Onboarding:
-- `onboarding_create_account`
-- `onboarding_configure_income`
-- `onboarding_configure_recurring_expense`
-- `onboarding_create_card`
-- `onboarding_set_budget_item`
-- `onboarding_complete`
+## Lojas
+Materiais preparados em:
+- `docs/store/google_play_listing_pt_BR.md`;
+- `docs/store/google_play_data_safety.md`;
+- `docs/store/app_store_listing_pt_BR.md`;
+- `docs/store/app_store_privacy.md`;
+- `docs/legal/`.
 
-Registro rápido:
-- `register_expense`
-- `register_income`
-
-O backend também já possui operações de transferência, compra no cartão e pagamento de fatura para as próximas telas.
-
-## Observação sobre confirmação de e-mail
-
-No Supabase hospedado, confirmação de e-mail costuma estar habilitada. Nesta v0.1, após criar a conta o usuário confirma pelo navegador e volta ao app para entrar com e-mail e senha. Deep link nativo para retornar automaticamente ao Fôlego será configurado junto do polimento de Auth.
-
-## Próximas versões
-
-1. lista real de transações + filtros;
-2. formulário completo de registro (PIX, débito, cartão, transferência, reembolso);
-3. Carteira com contas, cartões, faturas e dívidas;
-4. Planejamento + recorrências + orçamentos completos;
-5. simulador **Posso comprar?**;
-6. notificações;
-7. RevenueCat / Free x Plus;
-8. identidade visual final, ícone, splash e publicação nas lojas.
-
-
-<!-- deploy-recovery 2026-09-24: republish canonical PWA branch after main overwrote GitHub Pages -->
+A publicação só deve acontecer após configurar contas de desenvolvedor, URLs públicas legais/suporte, RevenueCat, assinatura da build e testes em dispositivo físico.

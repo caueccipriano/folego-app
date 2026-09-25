@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
@@ -253,7 +254,9 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
     try {
       return await load();
     } catch (error) {
-      debugPrint('Wallet card optional detail failed: $error');
+      if (kDebugMode) {
+        debugPrint('Wallet optional detail failed (${error.runtimeType})');
+      }
       return fallback;
     }
   }

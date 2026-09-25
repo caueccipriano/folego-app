@@ -4,6 +4,7 @@ import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/data/models/monthly_money_summary.dart';
+import 'package:folego/data/models/projection_model.dart';
 import 'package:folego/data/models/recurring_item.dart';
 import 'package:folego/data/models/transaction_detail.dart';
 import 'package:folego/data/models/transaction_filters.dart';
@@ -45,7 +46,7 @@ void main() {
 
     expect(find.text('Almoço no Flash'), findsOneWidget);
     expect(
-      find.text('gasto de benefício • 17/09/2026 • Flash'),
+      find.text('Alimentação • 17/09/2026 • Flash'),
       findsOneWidget,
     );
   });
@@ -96,8 +97,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('te sobra pra gastar'), findsOneWidget);
     expect(find.textContaining('dinheiro disponível, sem benefícios'), findsOneWidget);
@@ -212,6 +212,28 @@ class _BenefitRepository implements FolegoRepository {
 
   @override
   Future<List<RecurringItem>> listRecurringItems(String spaceId) async => const [];
+
+  @override
+  Future<ProjectionResult> getProjection({
+    required String spaceId,
+    int horizonMonths = 12,
+    List<ProjectionAdjustment> adjustments = const [],
+    Set<String> disabledVariableIncomeKeys = const {},
+  }) async => ProjectionResult(
+        scenario: 'current',
+        horizonMonths: horizonMonths,
+        asOfDate: DateTime(2026, 9, 17),
+        openingBalance: 4000,
+        hasProjectionInputs: true,
+        summary: const ProjectionSummary(
+          endingBalance: 4000,
+          minimumBalance: 4000,
+          maximumBalance: 4000,
+          projectedSavings: 0,
+        ),
+        months: const [],
+        variableIncomes: const [],
+      );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

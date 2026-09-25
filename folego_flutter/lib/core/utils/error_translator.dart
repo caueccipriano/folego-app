@@ -41,7 +41,7 @@ abstract final class ErrorTranslator {
     }
     if (message.contains('password should be at least') ||
         message.contains('weak password')) {
-      return 'Essa senha não atende aos requisitos. Use pelo menos 6 caracteres.';
+      return 'Essa senha não atende aos requisitos. Use pelo menos 10 caracteres.';
     }
     if (message.contains('rate limit') ||
         message.contains('too many requests')) {

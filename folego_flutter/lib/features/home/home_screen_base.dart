@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
@@ -73,7 +74,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       return await future;
     } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+      if (kDebugMode) {
+        debugPrint('Home optional section failed ($label: ${error.runtimeType})');
+      }
       return null;
     }
   }
@@ -86,7 +89,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       return await call();
     } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+      if (kDebugMode) {
+        debugPrint('Home optional section failed ($label: ${error.runtimeType})');
+      }
       return null;
     }
   }
@@ -183,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = 'não consegui carregar seu resumo financeiro';
       });
     }
   }
@@ -608,7 +613,8 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(24),
           child: AppErrorState(
             title: 'não consegui carregar seu resumo financeiro',
-            description: _error,
+            description:
+                'confira sua conexão e tente novamente em alguns segundos.',
             onRetry: _load,
           ),
         ),
@@ -770,13 +776,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  Text(
-                    'ver todos',
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: primaryPurple,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 64),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'ver todos',
+                        maxLines: 1,
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: primaryPurple,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 3),
@@ -873,12 +887,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          '$sign${Formatters.money(event.amount.abs())}',
-          style: AppTypography.money(
-            context,
-            fontSize: 11,
-            color: amountColor,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 108),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              '$sign${Formatters.money(event.amount.abs())}',
+              maxLines: 1,
+              style: AppTypography.money(
+                context,
+                fontSize: 11,
+                color: amountColor,
+              ),
+            ),
           ),
         ),
       ],

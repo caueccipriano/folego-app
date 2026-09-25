@@ -1,0 +1,38 @@
+name: Repository hygiene
+
+on:
+  push:
+    branches:
+      - main
+      - release/folego-v1
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject local environment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          found="$(find . -type f \( -name '.env' -o -name '.env.*' \) ! -name '.env.example' -print -quit)"
+          if [ -n "$found" ]; then
+            echo "Local environment file must not be committed: $found"
+            exit 1
+          fi
+
+      - name: Reject signing material
+        shell: bash
+        run: |
+          set -euo pipefail
+          found="$(find . -type f \( -name '*.jks' -o -name '*.keystore' -o -name '*.p12' -o -name '*.p8' -o -name '*.mobileprovision' \) -print -quit)"
+          if [ -n "$found" ]; then
+            echo "Signing material must not be committed: $found"
+            exit 1
+          fi

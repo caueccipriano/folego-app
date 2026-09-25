@@ -132,7 +132,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('falta saber quando entra dinheiro'), findsOneWidget);
-    expect(find.textContaining('lançamentos → recorrências'), findsOneWidget);
+    expect(find.textContaining('receita recorrente'), findsOneWidget);
     expect(find.text('R\$ 0,00'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -149,7 +149,8 @@ void main() {
     expect(shell, contains('WalletScreen('));
     expect(shell, contains('ProfileScreen('));
 
-    expect(transactions, contains('statement-import-entry'));
+    expect(transactions, contains('StatementImportScreen'));
+    expect(transactions, contains('Future<void> _openImport()'));
     expect(wallet, contains('showWalletAddAction'));
     expect(profile, contains('logout'));
   });

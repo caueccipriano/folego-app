@@ -90,10 +90,9 @@ void main() {
     expect(source, contains("ValueKey('profile-desktop-layout')"));
     expect(source, contains("ValueKey('profile-identity-column')"));
     expect(source, contains("ValueKey('profile-settings-column')"));
-    expect(source, contains('_appearanceSection()'));
-    expect(source, contains('_languageSection()'));
-    expect(source, contains('_privacySection()'));
-    expect(source, contains('_aboutSection()'));
+    expect(source, contains('_preferencesSection()'));
+    expect(source, contains('_dataSection()'));
+    expect(source, contains('_openLegalPrivacy'));
     expect(source, contains('_logoutSection()'));
     expect(source, contains('_openFinancialOrganization'));
     expect(source, isNot(contains('_openCategories')));

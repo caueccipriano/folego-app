@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 class AuthBrandMark extends StatelessWidget {
   const AuthBrandMark({super.key, this.centered = false});
@@ -30,7 +31,7 @@ class AuthBrandMark extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(
-          'Fôlego',
+          AppLocalizations.of(context)!.appName,
           style: AppTypography.section(context, fontSize: 20, color: text),
         ),
       ],
@@ -80,7 +81,7 @@ class AuthTextField extends StatelessWidget {
     final suffix = onToggleObscure == null
         ? null
         : IconButton(
-            tooltip: obscureText ? 'Mostrar senha' : 'Ocultar senha',
+            tooltip: obscureText ? AppLocalizations.of(context)!.authShowPassword : AppLocalizations.of(context)!.authHidePassword,
             onPressed: enabled ? onToggleObscure : null,
             icon: Icon(obscureText ? AppIcons.eye : AppIcons.eyeOff),
           );
@@ -214,12 +215,12 @@ class AuthModeSwitch extends StatelessWidget {
       spacing: 2,
       children: [
         Text(
-          isSignUp ? 'Já tem conta?' : 'Ainda não tem conta?',
+          isSignUp ? AppLocalizations.of(context)!.authAlreadyHaveAccount : AppLocalizations.of(context)!.authNoAccountYet,
           style: AppTypography.body(context, fontSize: 13, color: secondary),
         ),
         TextButton(
           onPressed: enabled ? onPressed : null,
-          child: Text(isSignUp ? 'Entrar' : 'Criar conta'),
+          child: Text(isSignUp ? AppLocalizations.of(context)!.authSignIn : AppLocalizations.of(context)!.authSignUp),
         ),
       ],
     );

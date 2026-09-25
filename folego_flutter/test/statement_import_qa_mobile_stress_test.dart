@@ -144,11 +144,13 @@ void main() {
 
     final review = find.byKey(const ValueKey('statement-import-review-mobile'));
     final scrollable = find.descendant(of: review, matching: find.byType(Scrollable)).first;
-    await tester.scrollUntilVisible(
+    for (var i = 0; i < 24; i++) {
+      await tester.drag(scrollable, const Offset(0, -520));
+      await tester.pump();
+    }
+    expect(
       find.byKey(const ValueKey('statement-import-include-row-119')),
-      600,
-      scrollable: scrollable,
-      maxScrolls: 40,
+      findsOneWidget,
     );
     expect(find.text('COMPRA 119'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -168,7 +170,7 @@ void main() {
     await tester.tap(find.text('duplicados'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('duplicata possível'), findsWidgets);
+    expect(find.textContaining('possível duplicata'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

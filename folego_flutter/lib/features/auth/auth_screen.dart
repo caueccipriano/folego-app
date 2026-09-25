@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
+import '../../l10n/app_localizations.dart';
 import 'auth_validation.dart';
 import 'auth_widgets.dart';
 
@@ -171,8 +173,10 @@ class _AuthScreenState extends State<AuthScreen> {
         case _AuthView.recoverySent:
           break;
       }
-    } catch (error, stackTrace) {
-      debugPrint('Auth action failed: $error\n$stackTrace');
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Auth action failed (${error.runtimeType})');
+      }
       if (!mounted) return;
       final emailNotConfirmed = error is AuthException &&
           error.message.toLowerCase().contains('email not confirmed');
@@ -206,10 +210,12 @@ class _AuthScreenState extends State<AuthScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Novo e-mail de confirmação enviado.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.authConfirmationResent)),
       );
-    } catch (error, stackTrace) {
-      debugPrint('Auth resend failed: $error\n$stackTrace');
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Auth resend failed (${error.runtimeType})');
+      }
       if (!mounted) return;
       setState(() => _error = ErrorTranslator.forDisplay(error));
     } finally {
@@ -318,19 +324,20 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _buildForm(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final l10n = AppLocalizations.of(context)!;
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
     final title = switch (_view) {
-      _AuthView.login => 'Bom te ver de novo.',
-      _AuthView.signUp => 'Crie seu espaço.',
-      _AuthView.recovery => 'Recupere seu acesso.',
+      _AuthView.login => l10n.authLoginTitle,
+      _AuthView.signUp => l10n.authSignUpTitle,
+      _AuthView.recovery => l10n.authRecoveryTitle,
       _ => '',
     };
     final subtitle = switch (_view) {
-      _AuthView.login => 'Entre para continuar seu diário financeiro.',
-      _AuthView.signUp => 'Poucos dados. O resto a gente organiza depois.',
-      _AuthView.recovery => 'Informe seu e-mail para receber as instruções.',
+      _AuthView.login => l10n.authLoginSubtitle,
+      _AuthView.signUp => l10n.authSignUpSubtitle,
+      _AuthView.recovery => l10n.authRecoverySubtitle,
       _ => '',
     };
 
@@ -362,7 +369,7 @@ class _AuthScreenState extends State<AuthScreen> {
             if (_isSignUp) ...[
               AuthTextField(
                 controller: _firstNameController,
-                label: 'Nome',
+                label: l10n.authFirstName,
                 focusNode: _firstNameFocus,
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
@@ -374,7 +381,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 12),
               AuthTextField(
                 controller: _lastNameController,
-                label: 'Sobrenome',
+                label: l10n.authLastName,
                 focusNode: _lastNameFocus,
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
@@ -387,7 +394,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
             AuthTextField(
               controller: _emailController,
-              label: 'E-mail',
+              label: l10n.authEmail,
               focusNode: _emailFocus,
               keyboardType: TextInputType.emailAddress,
               textInputAction: _view == _AuthView.recovery
@@ -413,7 +420,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 12),
               AuthTextField(
                 controller: _confirmEmailController,
-                label: 'Confirmar e-mail',
+                label: l10n.authConfirmEmail,
                 focusNode: _confirmEmailFocus,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -430,8 +437,8 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 12),
               AuthTextField(
                 controller: _passwordController,
-                label: 'Senha',
-                hint: _isSignUp ? 'Pelo menos 6 caracteres' : null,
+                label: l10n.authPassword,
+                hint: _isSignUp ? l10n.authPasswordHint(AuthValidation.minimumPasswordLength) : null,
                 focusNode: _passwordFocus,
                 textInputAction: _isSignUp
                     ? TextInputAction.next
@@ -462,7 +469,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 12),
               AuthTextField(
                 controller: _confirmPasswordController,
-                label: 'Confirmar senha',
+                label: l10n.authConfirmPassword,
                 focusNode: _confirmPasswordFocus,
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.newPassword],
@@ -504,7 +511,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ? null
                                 : () => _setRememberMe(!_rememberMe),
                             child: Text(
-                              'lembrar usuário e senha',
+                              l10n.authRememberEmail,
                               style: AppTypography.body(
                                 context,
                                 fontSize: 12,
@@ -520,14 +527,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     onPressed: _loading
                         ? null
                         : () => _changeView(_AuthView.recovery),
-                    child: const Text('Esqueci minha senha'),
+                    child: Text(l10n.authForgotPassword),
                   ),
                 ],
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 12, bottom: 6),
                 child: Text(
-                  'o Fôlego guarda seu e-mail; a senha fica com o iPhone ou navegador',
+                  l10n.authRememberPrivacy,
                   style: AppTypography.label(
                     context,
                     fontSize: 9,
@@ -543,10 +550,10 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
             AuthSubmitButton(
               label: switch (_view) {
-                _AuthView.login => _loading ? 'Entrando...' : 'Entrar',
-                _AuthView.signUp => _loading ? 'Criando...' : 'Criar conta',
+                _AuthView.login => _loading ? l10n.authEntering : l10n.authEnter,
+                _AuthView.signUp => _loading ? l10n.authCreating : l10n.authCreateAccount,
                 _AuthView.recovery =>
-                  _loading ? 'Enviando...' : 'Enviar instruções',
+                  _loading ? l10n.authSending : l10n.authSendInstructions,
                 _ => '',
               },
               loading: _loading,
@@ -556,7 +563,7 @@ class _AuthScreenState extends State<AuthScreen> {
             if (_view == _AuthView.recovery)
               TextButton(
                 onPressed: _loading ? null : () => _backToLogin(),
-                child: const Text('Voltar para entrar'),
+                child: Text(l10n.authBackToLogin),
               )
             else
               AuthModeSwitch(
@@ -573,12 +580,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildCheckEmail(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthSuccessMessage(
-          title: 'Confira seu e-mail.',
-          body: 'Enviamos uma confirmação para:',
+          title: l10n.authCheckEmailTitle,
+          body: l10n.authCheckEmailBody,
           detail: _pendingEmail,
         ),
         const SizedBox(height: 24),
@@ -588,7 +596,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ],
         OutlinedButton(
           onPressed: _resending ? null : _resendConfirmation,
-          child: Text(_resending ? 'Reenviando...' : 'Reenviar e-mail'),
+          child: Text(_resending ? l10n.authResending : l10n.authResendEmail),
         ),
         const SizedBox(height: 8),
         TextButton(
@@ -603,30 +611,30 @@ class _AuthScreenState extends State<AuthScreen> {
                     if (mounted) _emailFocus.requestFocus();
                   });
                 },
-          child: const Text('Usei o e-mail errado'),
+          child: Text(l10n.authWrongEmail),
         ),
         TextButton(
           onPressed: _resending ? null : () => _backToLogin(),
-          child: const Text('Voltar para entrar'),
+          child: Text(l10n.authBackToLogin),
         ),
       ],
     );
   }
 
   Widget _buildRecoverySent(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthSuccessMessage(
-          title: 'Dá uma olhada no e-mail.',
-          body:
-              'Se esse e-mail estiver cadastrado, você receberá as instruções.',
+          title: l10n.authRecoverySentTitle,
+          body: l10n.authRecoverySentBody,
           detail: _pendingEmail,
         ),
         const SizedBox(height: 24),
         TextButton(
           onPressed: () => _backToLogin(),
-          child: const Text('Voltar para entrar'),
+          child: Text(l10n.authBackToLogin),
         ),
       ],
     );
@@ -650,7 +658,7 @@ class _CompactIntro extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Seu saldo não é o que você pode gastar.',
+          AppLocalizations.of(context)!.authIntroTitle,
           textAlign: TextAlign.center,
           style: AppTypography.section(
             context,
@@ -660,7 +668,7 @@ class _CompactIntro extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Um diário financeiro simples pra dar mais espaço às suas escolhas.',
+          AppLocalizations.of(context)!.authIntroBody,
           textAlign: TextAlign.center,
           style: AppTypography.body(
             context,
@@ -691,7 +699,7 @@ class _DesktopBrandPanel extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
-            'Seu saldo não é o que\nvocê pode gastar.',
+            AppLocalizations.of(context)!.authIntroTitle,
             style: AppTypography.display(
               context,
               fontSize: 42,
@@ -703,7 +711,7 @@ class _DesktopBrandPanel extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 460),
           child: Text(
-            'Um diário financeiro simples pra dar mais espaço às suas escolhas.',
+            AppLocalizations.of(context)!.authIntroBody,
             style: AppTypography.body(
               context,
               fontSize: 16,
