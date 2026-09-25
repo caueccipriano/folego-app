@@ -1,0 +1,56 @@
+name: Fôlego integrated native iOS candidate
+
+on:
+  push:
+    branches:
+      - qa/premium-native-integration-20260925
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/ios-qa-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: folego-native-ios-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-no-sign:
+    runs-on: macos-latest
+    timeout-minutes: 50
+    defaults:
+      run:
+        working-directory: folego_flutter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze the exact integrated candidate
+        run: flutter analyze
+
+      - name: Premium and PWA compatibility contracts
+        run: |
+          flutter test \
+            test/subscription_access_test.dart \
+            test/premium_release_contract_test.dart \
+            test/premium_web_compat_test.dart
+
+      - name: Generate iOS scaffolding safely
+        run: |
+          chmod +x scripts/bootstrap_flutter.sh
+          ./scripts/bootstrap_flutter.sh
+
+      - name: Compile iOS release without signing
+        run: >-
+          flutter build ios --no-codesign --release
+          --obfuscate --split-debug-info=/tmp/folego-ios-symbols
