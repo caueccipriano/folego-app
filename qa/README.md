@@ -8,6 +8,7 @@ This directory contains the browser-level QA layer for the Flutter PWA.
 - Android-like Chromium at 412x915 and 360x800
 - Tablet at 768x1024
 - Desktop at 1440x900
+- Dark mode on iPhone 15 Pro, Android Pixel and desktop
 - iPhone-like WebKit at 393x852 in dark color scheme
 - Desktop Chromium at 1440x900 in dark color scheme
 - PWA manifest, service worker and viewport metadata
