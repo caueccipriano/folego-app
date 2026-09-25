@@ -28,9 +28,17 @@ class AppEmptyState extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Container(
+    return Semantics(
+      container: true,
+      label: [
+        title,
+        if (description?.trim().isNotEmpty == true) description!,
+      ].join('. '),
+      child: ExcludeSemantics(
+        child: Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
+      constraints: const BoxConstraints(maxWidth: 520),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -77,6 +85,8 @@ class AppEmptyState extends StatelessWidget {
             action!,
           ],
         ],
+      ),
+    ),
       ),
     );
   }
