@@ -382,6 +382,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final compact = constraints.maxWidth < AppBreakpoints.medium;
         final wide = constraints.maxWidth >= 900;
         return ListView(
           padding: const EdgeInsets.fromLTRB(0, 12, 0, 72),
@@ -423,18 +424,29 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
               _ProjectionHero(
                 projection: projection,
                 simulated: _simulated != null,
+                compact: compact,
                 baseEndingBalance: _base?.summary.endingBalance,
               ),
               if (!wide) ...[
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _ProjectionSimulateButton(
-                    brightness: brightness,
-                    accent: accent,
-                    onPressed: _openSimulation,
+                if (compact)
+                  SizedBox(
+                    width: double.infinity,
+                    child: _ProjectionSimulateButton(
+                      brightness: brightness,
+                      accent: accent,
+                      onPressed: _openSimulation,
+                    ),
+                  )
+                else
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _ProjectionSimulateButton(
+                      brightness: brightness,
+                      accent: accent,
+                      onPressed: _openSimulation,
+                    ),
                   ),
-                ),
               ],
               const SizedBox(height: 14),
               AppSectionHeader(
@@ -627,11 +639,13 @@ class _ProjectionHero extends StatelessWidget {
   const _ProjectionHero({
     required this.projection,
     required this.simulated,
+    required this.compact,
     this.baseEndingBalance,
   });
 
   final ProjectionResult projection;
   final bool simulated;
+  final bool compact;
   final double? baseEndingBalance;
 
   @override
@@ -706,30 +720,49 @@ class _ProjectionHero extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _HeroStat(
-                  label: 'menor saldo',
-                  value: Formatters.money(summary.minimumBalance),
+          if (compact)
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroStat(
+                    label: 'menor saldo',
+                    value: Formatters.money(summary.minimumBalance),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HeroStat(
-                  label: 'maior saldo',
-                  value: Formatters.money(summary.maximumBalance),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _HeroStat(
+                    label: 'economia projetada',
+                    value: Formatters.money(summary.projectedSavings),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HeroStat(
-                  label: 'economia projetada',
-                  value: Formatters.money(summary.projectedSavings),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroStat(
+                    label: 'menor saldo',
+                    value: Formatters.money(summary.minimumBalance),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroStat(
+                    label: 'maior saldo',
+                    value: Formatters.money(summary.maximumBalance),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroStat(
+                    label: 'economia projetada',
+                    value: Formatters.money(summary.projectedSavings),
+                  ),
+                ),
+              ],
+            ),
           if (critical != null) ...[
             const SizedBox(height: 9),
             Align(
