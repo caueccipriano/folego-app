@@ -713,7 +713,7 @@ class _ProjectionHero extends StatelessWidget {
           if (simulated && baseEndingBalance != null) ...[
             const SizedBox(height: 7),
             Text(
-              'diferença vs. antes: ${_signedMoney(summary.endingBalance - baseEndingBalance!)}',
+              'diferença em relação ao cenário atual: ${_signedMoney(summary.endingBalance - baseEndingBalance!)}',
               style: AppTypography.body(
                 context,
                 fontSize: 11,
@@ -1530,8 +1530,8 @@ class _ProjectionMonthDetail extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             isCurrentMonth
-                ? 'realizado + ainda previsto = fechamento'
-                : 'fechamento projetado e compromissos previstos',
+                ? 'o que já aconteceu + o que ainda está previsto'
+                : 'saldo projetado e compromissos previstos',
             style: AppTypography.body(
               context,
               fontSize: 11,
