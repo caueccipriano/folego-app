@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -171,8 +172,8 @@ class _AuthScreenState extends State<AuthScreen> {
         case _AuthView.recoverySent:
           break;
       }
-    } catch (error, stackTrace) {
-      debugPrint('Auth action failed: $error\n$stackTrace');
+    } catch (error) {
+      if (kDebugMode) debugPrint('Auth action failed (${error.runtimeType})');
       if (!mounted) return;
       final emailNotConfirmed = error is AuthException &&
           error.message.toLowerCase().contains('email not confirmed');
@@ -208,8 +209,8 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Novo e-mail de confirmação enviado.')),
       );
-    } catch (error, stackTrace) {
-      debugPrint('Auth resend failed: $error\n$stackTrace');
+    } catch (error) {
+      if (kDebugMode) debugPrint('Auth resend failed (${error.runtimeType})');
       if (!mounted) return;
       setState(() => _error = ErrorTranslator.forDisplay(error));
     } finally {
