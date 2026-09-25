@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -37,6 +39,17 @@ Future<void> main() async {
 
   final client = Supabase.instance.client;
   await SubscriptionService.initialize(client);
-  await SubscriptionService(client).refreshAccess();
   runApp(FolegoApp(client: client, repository: FolegoRepository(client)));
+  // Do not block the first frame on a billing or database network request.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_refreshPremiumAfterLaunch(client));
+  });
+}
+
+Future<void> _refreshPremiumAfterLaunch(SupabaseClient client) async {
+  try {
+    await SubscriptionService(client).refreshAccess();
+  } catch (_) {
+    // Authentication can still render; access refresh retries on auth changes.
+  }
 }
