@@ -29,7 +29,15 @@ class AppErrorState extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Container(
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: [
+        title,
+        if (description?.trim().isNotEmpty == true) description!,
+      ].join('. '),
+      child: ExcludeSemantics(
+        child: Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
@@ -82,6 +90,8 @@ class AppErrorState extends StatelessWidget {
             child: const Text('tentar novamente'),
           ),
         ],
+      ),
+    ),
       ),
     );
   }
