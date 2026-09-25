@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/subscriptions/subscription_access.dart';
@@ -11,6 +12,8 @@ Future<bool> openPremiumUpgrade(
   BuildContext context, {
   required String feature,
 }) async {
+  // The current PWA remains free: mobile store billing is not available on web.
+  if (kIsWeb) return true;
   if (SubscriptionService.accessNotifier.value.hasPremium) return true;
   await Navigator.of(context).push<void>(
     MaterialPageRoute<void>(builder: (_) => PremiumScreen(feature: feature)),
