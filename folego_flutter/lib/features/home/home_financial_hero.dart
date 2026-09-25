@@ -114,6 +114,13 @@ class HomeFinancialHero extends StatelessWidget {
     final budgetNavigation = FlexibleBudgetNavigationScope.maybeOf(context);
     final showBudgetAction =
         spendable <= 0 && homeIsBudgetLimited(snapshot) && budgetNavigation != null;
+    final normalizedStatus = snapshot.status.trim().toLowerCase();
+    final showVoice = !compact ||
+        spendable <= 0 ||
+        snapshot.shortfall > 0 ||
+        normalizedStatus == 'atencao' ||
+        normalizedStatus == 'atenção' ||
+        normalizedStatus == 'sem_folga';
 
     return Semantics(
       container: true,
@@ -179,8 +186,9 @@ class HomeFinancialHero extends StatelessWidget {
                 color: onPurple.withValues(alpha: .94),
               ),
             ),
-            SizedBox(height: compact ? 9 : 10),
-            Container(
+            if (showVoice) ...[
+              SizedBox(height: compact ? 9 : 10),
+              Container(
               key: const ValueKey('home-folego-voice'),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
@@ -191,12 +199,13 @@ class HomeFinancialHero extends StatelessWidget {
                 homeFolegoVoiceLabel(snapshot),
                 style: AppTypography.label(
                   context,
-                  fontSize: compact ? 10 : 11,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: onPurple.withValues(alpha: .90),
                 ),
               ),
             ),
+            ],
             if (showBudgetAction) ...[
               const SizedBox(height: 4),
               TextButton.icon(
@@ -204,8 +213,7 @@ class HomeFinancialHero extends StatelessWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: onPurple,
                   padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 34),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: const Size(44, 44),
                 ),
                 onPressed: budgetNavigation.open,
                 icon: const Icon(AppIcons.chevronRight, size: 16),
@@ -219,41 +227,19 @@ class HomeFinancialHero extends StatelessWidget {
             ],
             SizedBox(height: compact ? 14 : 16),
             if (compact)
-              Row(
-                children: [
-                  Icon(
-                    AppIcons.benefit,
-                    size: 16,
-                    color: onPurple.withValues(alpha: .74),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const ValueKey('home-folego-explainer'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: onPurple,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(44, 44),
                   ),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text(
-                      'benefícios não entram neste valor',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: onPurple.withValues(alpha: .78),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    key: const ValueKey('home-folego-explainer'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: onPurple,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      minimumSize: const Size(0, 34),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: () => _showExplanation(context),
-                    icon: const Icon(AppIcons.info, size: 15),
-                    label: const Text('como funciona'),
-                  ),
-                ],
+                  onPressed: () => _showExplanation(context),
+                  icon: const Icon(AppIcons.info, size: 16),
+                  label: const Text('entenda o cálculo'),
+                ),
               )
             else
               Row(
