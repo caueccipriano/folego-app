@@ -76,7 +76,7 @@ abstract final class AppPalette {
 /// Controle de tema.
 ///
 /// Dark Mode é a identidade principal do Fôlego.
-/// Por enquanto a preferência ainda não é persistida.
+/// A preferência é persistida por AppPreferences e restaurada no bootstrap.
 abstract final class AppThemeController {
   static final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.dark);
 
