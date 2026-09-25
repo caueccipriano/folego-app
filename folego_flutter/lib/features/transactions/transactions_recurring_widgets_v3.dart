@@ -257,8 +257,8 @@ class _RecurringCard extends StatelessWidget {
             onTap: () => _showRecurringActions(context),
             borderRadius: BorderRadius.circular(14),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: secondaryText.withValues(alpha: .07),
