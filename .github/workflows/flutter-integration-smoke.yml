@@ -1,0 +1,45 @@
+name: Flutter integration smoke
+
+on:
+  push:
+    branches:
+      - qa/flutter-integration-smoke
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/flutter-integration-smoke.yml'
+  pull_request:
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/flutter-integration-smoke.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: flutter-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: folego_flutter
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run public auth integration smoke
+        run: flutter test integration_test/auth_public_flow_test.dart
