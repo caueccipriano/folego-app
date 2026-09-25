@@ -104,5 +104,38 @@ export default defineConfig({
         deviceScaleFactor: 1,
       },
     },
+    {
+      name: 'iphone-15-pro-dark',
+      use: {
+        browserName: 'webkit',
+        viewport: { width: 393, height: 852 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: iphoneUserAgent,
+        colorScheme: 'dark',
+      },
+    },
+    {
+      name: 'android-pixel-dark',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 412, height: 915 },
+        deviceScaleFactor: 2.625,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: androidUserAgent,
+        colorScheme: 'dark',
+      },
+    },
+    {
+      name: 'desktop-dark',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 1440, height: 900 },
+        deviceScaleFactor: 1,
+        colorScheme: 'dark',
+      },
+    },
   ],
 });
