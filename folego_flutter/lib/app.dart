@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/entitlements/feature_entitlements.dart';
 import 'core/layout/app_scroll_gutter.dart';
+import 'core/subscriptions/subscription_access.dart';
+import 'core/subscriptions/subscription_service.dart';
 import 'core/preferences/app_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/folego_repository.dart';
@@ -17,7 +21,13 @@ class FolegoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
+    return ValueListenableBuilder<SubscriptionAccess>(
+      valueListenable: SubscriptionService.accessNotifier,
+      builder: (context, access, _) => FeatureEntitlementsScope(
+        provider: kIsWeb
+            ? const FreeEntitlementProvider()
+            : SubscriptionEntitlementProvider(access),
+        child: ValueListenableBuilder<ThemeMode>(
       valueListenable: AppThemeController.mode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
@@ -42,6 +52,8 @@ class FolegoApp extends StatelessWidget {
           },
         );
       },
+        ),
+      ),
     );
   }
 }
