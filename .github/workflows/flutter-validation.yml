@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - feat/transactions-recurring
-      - polish/mobile-web-qa-20260924
   workflow_dispatch:
 
 permissions:
