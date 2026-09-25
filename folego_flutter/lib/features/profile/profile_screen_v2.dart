@@ -24,8 +24,10 @@ import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../auth/auth_validation.dart';
+import '../premium/premium_screen.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
+import 'legal_privacy_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 
@@ -142,6 +144,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _openLegalPrivacy() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const LegalPrivacyScreen()),
+    );
+  }
+
   Future<void> _openNotificationSettings() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -153,7 +161,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _openPremium() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PremiumScreen()),
+    );
+  }
+
   Future<void> _openAutomationRules() async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'automações inteligentes',
+    );
+    if (!unlocked || !mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AutomationRulesScreen(
@@ -165,6 +184,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _exportData(BuildContext anchorContext) async {
+    final unlocked = await openPremiumUpgrade(
+      context,
+      feature: 'exportação dos seus dados em CSV',
+    );
+    if (!unlocked || !mounted) return;
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
@@ -430,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita.',
+                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita. se houver uma assinatura ativa pela loja, ela não é cancelada automaticamente; cancele a renovação na Google Play ou App Store para evitar novas cobranças.',
                 style: AppTypography.body(
                   dialogContext,
                   fontSize: 12,
@@ -608,6 +632,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _SettingsCard(
               children: [
                 _SettingsRow(
+                  icon: Icons.workspace_premium_rounded,
+                  title: 'Fôlego Premium',
+                  subtitle: '7 dias grátis para elegíveis · R\$ 9,90/mês',
+                  onTap: _openPremium,
+                ),
+                _SettingsRow(
                   icon: AppIcons.notifications,
                   title: 'notificações',
                   subtitle:
@@ -636,6 +666,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _SettingsCard(
               children: [
+                _SettingsRow(
+                  icon: AppIcons.privacy,
+                  title: 'privacidade e termos',
+                  subtitle: 'dados, exclusão da conta e uso do aplicativo',
+                  onTap: _openLegalPrivacy,
+                ),
                 Builder(
                   builder: (exportContext) => _SettingsRow(
                     icon: AppIcons.exportData,
@@ -672,7 +708,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _SettingsRow(
               icon: AppIcons.logout,
               title: _signingOut ? 'saindo…' : 'sair do Fôlego',
-              subtitle: 'seus dados e seu onboarding não são apagados',
+              subtitle: 'seus dados e sua configuração inicial não são apagados',
               destructive: true,
               enabled: !_signingOut,
               trailing: _signingOut

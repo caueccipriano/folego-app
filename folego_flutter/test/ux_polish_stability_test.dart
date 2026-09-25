@@ -45,7 +45,7 @@ void main() {
 
       await tester.pumpWidget(_organizationApp(source));
       await _drainAsync(tester);
-      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'marcadores');
 
       expect(find.text('viagem'), findsOneWidget);
       expect(source.categoryLoads, 1);
@@ -66,7 +66,7 @@ void main() {
       await _drainAsync(tester);
 
       expect(find.text('mercado'), findsOneWidget);
-      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'marcadores');
       expect(find.text('não consegui carregar seus marcadores'), findsOneWidget);
       expect(find.text('tentar novamente'), findsOneWidget);
     });
@@ -82,7 +82,7 @@ void main() {
       await _drainAsync(tester);
 
       expect(find.text('não consegui carregar suas categorias'), findsOneWidget);
-      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'marcadores');
       expect(find.text('viagem'), findsOneWidget);
     });
 
@@ -98,7 +98,7 @@ void main() {
 
       await tester.pumpWidget(_organizationApp(source));
       await _drainAsync(tester);
-      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'marcadores');
       await tester.tap(find.text('tentar novamente'));
       await _drainAsync(tester);
 
@@ -112,9 +112,9 @@ void main() {
 
       await tester.pumpWidget(_organizationApp(source));
       await _drainAsync(tester);
-      await _switchOrganizationTab(tester, 'Marcadores');
-      await _switchOrganizationTab(tester, 'Categorias');
-      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'marcadores');
+      await _switchOrganizationTab(tester, 'categorias');
+      await _switchOrganizationTab(tester, 'marcadores');
 
       expect(source.categoryLoads, 1);
       expect(source.markerLoads, 1);
@@ -138,7 +138,7 @@ void main() {
 
       await tester.pumpWidget(_organizationApp(source));
       await _drainAsync(tester);
-      await _switchOrganizationTab(tester, 'Marcadores');
+      await _switchOrganizationTab(tester, 'marcadores');
       await tester.tap(find.byType(Switch).first);
       await _drainAsync(tester);
 
@@ -403,8 +403,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await _scrollNotifications(tester, -1200);
-      await tester.tap(find.byKey(const ValueKey('notification-time')));
+      final timeTile = find.byKey(const ValueKey('notification-time'));
+      await tester.ensureVisible(timeTile);
+      await tester.pumpAndSettle();
+      await tester.tap(timeTile);
       await tester.pumpAndSettle();
 
       expect(data.current.preferredHour, 9);

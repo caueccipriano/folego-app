@@ -1,0 +1,10 @@
+revoke execute on function public.cancel_simple_transaction(uuid, uuid) from anon;
+revoke execute on function public.classify_financial_event(uuid, uuid, uuid) from anon;
+revoke execute on function public.create_custom_category(uuid, text, text, uuid, boolean, text, text[]) from anon;
+revoke execute on function public.get_folego_snapshot(uuid, date) from anon;
+revoke execute on function public.get_wallet_overview(uuid) from anon;
+revoke execute on function public.list_transactions_filtered(uuid, date, date, text[], uuid, uuid, uuid, uuid, text, timestamptz, uuid, integer) from anon;
+revoke execute on function public.rename_custom_category(uuid, uuid, text) from anon;
+revoke execute on function public.set_category_visibility(uuid, uuid, boolean) from anon;
+revoke execute on function public.set_event_annotations(uuid, uuid, text, text, text, uuid[]) from anon;
+revoke execute on function public.set_recurring_annotations(uuid, uuid, text, text, uuid[]) from anon;

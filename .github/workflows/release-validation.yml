@@ -1,0 +1,86 @@
+name: Release candidate validation
+
+on:
+  push:
+    branches:
+      - release/folego-v1
+    paths:
+      - 'folego_flutter/**'
+      - 'supabase/**'
+      - '.github/workflows/release-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: folego-v1-release
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: folego_flutter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Premium entitlement tests
+        run: flutter test test/subscription_access_test.dart -r expanded
+
+      - name: Premium release contracts
+        run: flutter test test/premium_release_contract_test.dart -r expanded
+
+      - name: Projection regression
+        run: flutter test test/projection_screen_test.dart -r expanded --concurrency=1
+
+      - name: Recurring schedule regression
+        run: flutter test test/recurring_month_end_regression_test.dart -r expanded
+
+      - name: Notification and automation entitlement regression
+        run: flutter test test/notification_automation_foundation_test.dart -r expanded
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Verify legal web resources
+        run: |
+          test -f build/web/legal/privacy.html
+          test -f build/web/legal/terms.html
+          test -f build/web/legal/account-deletion.html
+          test -f build/web/legal/support.html
+
+      - name: Generate native scaffolds
+        run: bash scripts/bootstrap_flutter.sh
+
+      - name: Compile Android debug APK
+        run: flutter build apk --debug
+
+      - name: Compile obfuscated Android release app bundle
+        run: flutter build appbundle --release --obfuscate --split-debug-info=/tmp/folego-android-symbols
+
+      - name: Upload Android release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-1.0.0-android-aab
+          path: folego_flutter/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Legacy full-suite snapshot
+        continue-on-error: true
+        run: flutter test -r expanded
