@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/transactions-recurring
+      - polish/premium-final-20260924
   workflow_dispatch:
 
 permissions:
