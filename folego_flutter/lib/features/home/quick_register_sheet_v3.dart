@@ -1043,7 +1043,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     return TextField(
       controller: _description,
       textCapitalization: TextCapitalization.sentences,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: _isExpense ? 'Em que você gastou?' : 'De onde veio o dinheiro?',
         hintText: _isExpense ? 'Ex.: almoço, mercado, curso' : 'Ex.: salário, Pix recebido, renda extra',
       ),
