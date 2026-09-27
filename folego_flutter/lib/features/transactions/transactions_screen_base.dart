@@ -1243,7 +1243,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                   const SizedBox(width: 7),
                   _quickFilterChip(
                     context,
-                    label: 'receitas',
+                    label: 'recebidos',
                     selected: _isIncomeQuickFilter,
                     onTap: () => onFiltersChanged(
                       filters.copyWith(
@@ -1319,7 +1319,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                   : 'nenhum lançamento ainda',
               description: filtered
                   ? 'tente ajustar os filtros ou a busca'
-                  : 'seus gastos, receitas e movimentações aparecerão aqui',
+                  : 'Seu histórico começa aqui. Registre seu primeiro dinheiro recebido ou gasto.',
               action: filtered
                   ? TextButton.icon(
                       onPressed: onClearFilters,
@@ -1335,13 +1335,13 @@ class _TransactionsTabV3 extends StatelessWidget {
                           key: const ValueKey('transactions-empty-add-expense'),
                           onPressed: onRegisterExpense,
                           icon: const Icon(AppIcons.expense, size: 17),
-                          label: const Text('registrar gasto'),
+                          label: const Text('Gastei dinheiro'),
                         ),
                         OutlinedButton.icon(
                           key: const ValueKey('transactions-empty-add-income'),
                           onPressed: onRegisterIncome,
                           icon: const Icon(AppIcons.income, size: 17),
-                          label: const Text('registrar receita'),
+                          label: const Text('Recebi dinheiro'),
                         ),
                       ],
                     ),
