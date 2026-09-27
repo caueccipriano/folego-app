@@ -1,4 +1,6 @@
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_budget.dart';
+import '../../data/models/budget_overview_item.dart';
 import 'financial_report_builder.dart';
 import 'weekly_report_builder.dart';
 
@@ -28,6 +30,14 @@ class FinancialInsightsService {
       previous: previous,
     );
   }
+
+  Future<FlexibleBudgetOverview> flexibleBudget({
+    required String spaceId,
+    required DateTime asOf,
+  }) => repository.getFlexibleBudgetOverview(
+    spaceId: spaceId,
+    periodMonth: DateTime(asOf.year, asOf.month),
+  );
 
   Future<CurrentProgressReport> currentProgress({
     required String spaceId,
