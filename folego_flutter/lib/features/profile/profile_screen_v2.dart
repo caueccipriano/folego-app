@@ -27,6 +27,7 @@ import '../auth/auth_validation.dart';
 import '../premium/premium_screen.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
+import 'help_faq_screen.dart';
 import 'legal_privacy_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
@@ -601,6 +602,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _identity.email,
                   enabled: !_accountActionRunning && !_deletingAccount,
                   onTap: _changeEmail,
+                ),
+                _SettingsRow(
+                  icon: Icons.help_outline_rounded,
+                  title: 'ajuda e perguntas frequentes',
+                  subtitle: 'como registrar recebimentos, gastos e começar',
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HelpFaqScreen())),
                 ),
                 _SettingsRow(
                   icon: AppIcons.privacy,
