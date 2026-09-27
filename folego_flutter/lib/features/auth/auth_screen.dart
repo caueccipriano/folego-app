@@ -248,6 +248,42 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  Widget _keyboardToolbar() {
+    final nodes = <FocusNode>[
+      if (_isSignUp) _firstNameFocus,
+      if (_isSignUp) _lastNameFocus,
+      _emailFocus,
+      if (_isSignUp) _confirmEmailFocus,
+      if (_view != _AuthView.recovery) _passwordFocus,
+      if (_isSignUp) _confirmPasswordFocus,
+    ];
+    final index = nodes.indexWhere((node) => node.hasFocus);
+    return Semantics(
+      label: 'Controles do teclado',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          IconButton(
+            tooltip: 'Campo anterior',
+            onPressed: index > 0 ? () => nodes[index - 1].requestFocus() : null,
+            icon: const Icon(Icons.keyboard_arrow_up),
+          ),
+          IconButton(
+            tooltip: 'Próximo campo',
+            onPressed: index >= 0 && index < nodes.length - 1
+                ? () => nodes[index + 1].requestFocus() : null,
+            icon: const Icon(Icons.keyboard_arrow_down),
+          ),
+          TextButton.icon(
+            onPressed: () => FocusScope.of(context).unfocus(),
+            icon: const Icon(Icons.keyboard_hide_outlined),
+            label: const Text('Fechar teclado'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCompact(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     return AppContentContainer.auth(
@@ -264,6 +300,8 @@ class _AuthScreenState extends State<AuthScreen> {
             _CompactIntro(view: _view),
             const SizedBox(height: 28),
             _buildAuthContent(context),
+            if (bottomInset > 0 && (_view == _AuthView.login || _view == _AuthView.signUp || _view == _AuthView.recovery))
+              _keyboardToolbar(),
           ],
         ),
       ),
