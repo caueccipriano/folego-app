@@ -12,7 +12,7 @@ class WeeklyInsightsCard extends StatefulWidget {
 }
 
 class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
-  late Future<WeeklyFinanceReport> _report;
+  late Future<CurrentProgressReport> _report;
   @override
   void initState() { super.initState(); _load(); }
   @override
@@ -20,89 +20,127 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId) _load();
   }
-  void _load() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final monday = today.subtract(Duration(days: today.weekday - 1));
-    _report = widget.service.weekly(
-      spaceId: widget.spaceId,
-      weekStart: monday.subtract(const Duration(days: 7)),
-      asOf: now,
-    );
-  }
+  void _load() => _report = widget.service.currentProgress(
+    spaceId: widget.spaceId, asOf: DateTime.now(),
+  );
   @override
-  Widget build(BuildContext context) => FutureBuilder<WeeklyFinanceReport>(
+  Widget build(BuildContext context) => FutureBuilder<CurrentProgressReport>(
     future: _report,
     builder: (context, snapshot) {
-      final english = Localizations.localeOf(context).languageCode == 'en';
+      final en = Localizations.localeOf(context).languageCode == 'en';
       if (!snapshot.hasData) {
-        if (snapshot.hasError) {
-          return Card(child: ListTile(
-            title: Text(english ? 'Weekly summary unavailable' : 'Resumo semanal indisponível'),
-            trailing: IconButton(
-              tooltip: english ? 'Try again' : 'Tentar novamente',
-              icon: const Icon(Icons.refresh),
-              onPressed: () => setState(_load),
-            ),
-          ));
-        }
         return Card(child: ListTile(
-          title: Text(english ? 'Preparing your weekly summary…' : 'Preparando seu resumo semanal…'),
-          leading: const CircularProgressIndicator(),
+          title: Text(snapshot.hasError
+              ? (en ? 'Insights unavailable' : 'Insights indisponíveis')
+              : (en ? 'Preparing your insights…' : 'Preparando seus insights…')),
+          trailing: snapshot.hasError
+              ? IconButton(
+                  tooltip: en ? 'Retry' : 'Tentar novamente',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => setState(_load),
+                )
+              : const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()),
         ));
       }
       final report = snapshot.data!;
       final money = NumberFormat.currency(
-        locale: english ? 'en_US' : 'pt_BR',
-        symbol: english ? r'$' : r'R$',
+        locale: en ? 'en_US' : 'pt_BR', symbol: en ? r'$' : r'R$',
       );
-      final percentage = NumberFormat.decimalPatternDigits(
-        locale: english ? 'en_US' : 'pt_BR', decimalDigits: 1,
+      final percent = NumberFormat.decimalPatternDigits(
+        locale: en ? 'en_US' : 'pt_BR', decimalDigits: 1,
       );
-      final patterns = report.patterns
-          .where((pattern) => pattern.previous > 0 &&
-              pattern.variationPercent.abs() >= 5).toList()
-        ..sort((a, b) => b.variationPercent.abs()
-            .compareTo(a.variationPercent.abs()));
+      final change = report.weekExpenses - report.previousWeekExpenses;
+      final increasing = change > 0;
+      final category = report.categoryChanges.where((item) => item.difference > 0);
+      final mainCategory = category.isEmpty ? null : category.first;
+      final tips = <String>[];
+      if (mainCategory != null) {
+        tips.add(en
+            ? '${mainCategory.name} accounts for ${money.format(mainCategory.difference)} of the increase. Review recent purchases in this category.'
+            : '${mainCategory.name} representa ${money.format(mainCategory.difference)} do aumento. Confira as compras recentes nessa categoria.');
+      }
+      if (report.previousWeekExpenses > 0 && increasing) {
+        tips.add(en
+            ? 'Spending rose ${percent.format(change / report.previousWeekExpenses * 100)}% compared with the same days last week.'
+            : 'Seus gastos subiram ${percent.format(change / report.previousWeekExpenses * 100)}% em relação aos mesmos dias da semana passada.');
+      } else if (report.previousWeekExpenses > 0 && change < 0) {
+        tips.add(en
+            ? 'You spent ${money.format(-change)} less than at this point last week.'
+            : 'Você gastou ${money.format(-change)} a menos que neste ponto da semana passada.');
+      } else if (report.previousWeekExpenses == 0) {
+        tips.add(en
+            ? 'There are no expenses in the comparable period last week. Keep logging transactions for better insights.'
+            : 'Não há despesas no período equivalente da semana passada. Continue registrando lançamentos para melhorar os insights.');
+      }
       return Card(child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(english ? 'Last completed week' : 'Última semana concluída',
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Wrap(spacing: 12, runSpacing: 8, children: [
-            _WeeklyMetric(label: english ? 'Income' : 'Receitas', amount: money.format(report.income)),
-            _WeeklyMetric(label: english ? 'Expenses' : 'Despesas', amount: money.format(report.expenses)),
-          ]),
-          if (!report.comparedWithPreviousWeek)
-            Text(english
-                ? 'The comparison appears when the current week ends.'
-                : 'A comparação aparece quando a semana atual terminar.'),
-          for (final pattern in patterns.take(3))
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(pattern.category),
-              subtitle: Text(english
-                  ? '${pattern.variationPercent > 0 ? 'Up' : 'Down'} ${percentage.format(pattern.variationPercent.abs())}% vs. the previous week.'
-                  : '${pattern.variationPercent > 0 ? 'Aumento' : 'Redução'} de ${percentage.format(pattern.variationPercent.abs())}% em relação à semana anterior.'),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Expanded(child: Text(en ? 'Your money this week' : 'Seu dinheiro nesta semana',
+                style: Theme.of(context).textTheme.titleMedium)),
+            IconButton(
+              tooltip: en ? 'Refresh insights' : 'Atualizar insights',
+              icon: const Icon(Icons.refresh),
+              onPressed: () => setState(_load),
             ),
+          ]),
+          const SizedBox(height: 4),
+          Text(en ? 'Monday through today · compared with the same days last week'
+              : 'De segunda até agora · comparação com os mesmos dias da semana passada',
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 12),
+          Wrap(spacing: 16, runSpacing: 12, children: [
+            _Metric(label: en ? 'Income' : 'Receitas', value: money.format(report.weekIncome)),
+            _Metric(label: en ? 'Spending' : 'Despesas', value: money.format(report.weekExpenses)),
+          ]),
+          const SizedBox(height: 12),
+          Text(en ? 'Last week (same days): ${money.format(report.previousWeekExpenses)}'
+              : 'Semana passada (mesmos dias): ${money.format(report.previousWeekExpenses)}'),
+          const Divider(height: 26),
+          Text(en ? 'This month so far' : 'Seu mês até agora',
+              style: Theme.of(context).textTheme.titleSmall),
+          Text(money.format(report.monthExpenses),
+              style: Theme.of(context).textTheme.titleLarge),
+          Text(report.previousMonthComparable
+              ? (en
+                  ? 'Previous month, same period: ${money.format(report.previousMonthExpenses)}'
+                  : 'Mês anterior, mesmo período: ${money.format(report.previousMonthExpenses)}')
+              : (en
+                  ? 'The previous month has fewer days; no equivalent comparison is available.'
+                  : 'O mês anterior tem menos dias; não há comparação equivalente.'),
+              style: Theme.of(context).textTheme.bodySmall),
+          const Divider(height: 26),
+          Text(en ? 'Insights and next steps' : 'Insights e próximos passos',
+              style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 6),
+          for (final tip in tips.take(2))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Icon(Icons.lightbulb_outline, size: 19),
+                const SizedBox(width: 8),
+                Expanded(child: Text(tip)),
+              ]),
+            ),
+          Text(en
+              ? 'Based on recorded transactions, not a prediction or financial advice.'
+              : 'Com base nos lançamentos registrados; não é previsão nem aconselhamento financeiro.',
+              style: Theme.of(context).textTheme.bodySmall),
         ]),
       ));
     },
   );
 }
 
-class _WeeklyMetric extends StatelessWidget {
-  const _WeeklyMetric({required this.label, required this.amount});
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
   final String label;
-  final String amount;
+  final String value;
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: const BoxConstraints(minWidth: 125),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: Theme.of(context).textTheme.bodySmall),
-      const SizedBox(height: 3),
-      Text(amount, style: Theme.of(context).textTheme.titleMedium),
-    ]),
+      Text(value, style: Theme.of(context).textTheme.titleMedium),
+    ],
   );
 }
