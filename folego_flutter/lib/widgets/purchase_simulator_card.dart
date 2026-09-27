@@ -60,7 +60,7 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
           decoration: const InputDecoration(labelText: 'Valor da compra (reais)')),
         const SizedBox(height: 8),
         DropdownButtonFormField<int>(
-          value: _installments,
+          initialValue: _installments,
           decoration: const InputDecoration(labelText: 'Parcelas'),
           items: [1, 2, 3, 4, 5, 6, 10, 12]
               .map((n) => DropdownMenuItem(value: n, child: Text('$n x')))
@@ -75,3 +75,5 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
       ],
     )),
   );
+
+}
