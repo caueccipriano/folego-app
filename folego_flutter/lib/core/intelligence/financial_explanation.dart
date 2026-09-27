@@ -10,7 +10,7 @@ class FinancialExplanation {
     final result = report.result;
     if (!result.isFinite) return 'Resumo indisponível: revise os lançamentos.';
     final direction = result < 0 ? 'negativo' : 'não negativo';
-    return 'Seu resultado econômico do mês foi ${direction}. '
+    return 'Seu resultado econômico do mês foi $direction. '
         'Receitas: ${report.income.toStringAsFixed(2)} reais; '
         'despesas: ${report.expenses.toStringAsFixed(2)} reais. '
         'Confira os lançamentos antes de tomar decisões.';
