@@ -40,8 +40,10 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
         '${scenario.firstNegativeMonth == null ? 'Nenhum mês negativo na projeção consultada.' : 'Atenção: existe mês com saldo negativo na projeção.'} '
         'Simulação, não é uma garantia.');
     } catch (_) {
-      if (mounted) setState(() => _result =
-        'Não foi possível simular. Confira se o planejamento está configurado e tente novamente.');
+      if (mounted) {
+        setState(() => _result =
+          'Não foi possível simular. Confira se o planejamento está configurado e tente novamente.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
