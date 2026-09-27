@@ -36,7 +36,8 @@ class PurchaseScenarioService {
     final adjustment = ProjectionAdjustment(
       id: 'purchase-scenario',
       name: 'Compra simulada',
-      component: 'card_installments',
+      // Simulação de saída mensal; não presume uma fatura/cartão específico.
+      component: 'direct_expense',
       amountDelta: purchaseAmount / installments,
       frequency: 'monthly',
       startsOn: date,
