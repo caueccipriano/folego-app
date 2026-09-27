@@ -171,7 +171,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           onDismiss: () => Navigator.of(sheetContext).pop(),
         )),
       ),
-    );
+    ).whenComplete(() { _setupShown = false; });
   }
 
   void _openProjection() {
@@ -235,6 +235,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             client: Supabase.instance.client,
             repository: widget.repository,
             spaceId: widget.space.id,
+            onResumeSetup: _setupState != null && !_setupState!.onboardingCompleted
+                ? () { _refreshSetup().then((_) { if (mounted) _showSetup(); }); }
+                : null,
           ),
         ];
 
