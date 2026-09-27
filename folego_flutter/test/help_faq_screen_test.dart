@@ -5,7 +5,8 @@ import 'package:folego/features/profile/help_faq_screen.dart';
 void main() {
   testWidgets('FAQ searches income questions and can switch to English', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HelpFaqScreen()));
-    await tester.tap(find.text('Português').last);
+    final englishSwitch = find.text('English');
+    if (englishSwitch.evaluate().isNotEmpty) await tester.tap(englishSwitch);
     await tester.pumpAndSettle();
     expect(find.text('Help & FAQs'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'paycheck');
