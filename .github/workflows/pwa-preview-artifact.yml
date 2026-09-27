@@ -27,7 +27,7 @@ jobs:
       - name: Verify application
         run: |
           flutter analyze
-          flutter test test/app_breakpoints_test.dart test/auth_widgets_test.dart test/auth_responsive_smoke_test.dart test/setup_checklist_test.dart
+          flutter test test/app_breakpoints_test.dart test/auth_widgets_test.dart test/auth_responsive_smoke_test.dart test/setup_checklist_test.dart test/help_faq_screen_test.dart
       - name: Build PWA preview
         run: flutter build web --release --base-href "/"
       - name: Stamp preview version
