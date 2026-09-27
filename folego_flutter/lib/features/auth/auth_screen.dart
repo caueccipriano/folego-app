@@ -235,6 +235,22 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0 &&
+              (_view == _AuthView.login || _view == _AuthView.signUp || _view == _AuthView.recovery)
+          ? SafeArea(
+              top: false,
+              child: Material(
+                elevation: 4,
+                child: AnimatedBuilder(
+                  animation: Listenable.merge(<Listenable>[
+                    _firstNameFocus, _lastNameFocus, _emailFocus,
+                    _confirmEmailFocus, _passwordFocus, _confirmPasswordFocus,
+                  ]),
+                  builder: (context, _) => _keyboardToolbar(),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -301,8 +317,7 @@ class _AuthScreenState extends State<AuthScreen> {
             _CompactIntro(view: _view),
             const SizedBox(height: 28),
             _buildAuthContent(context),
-            if (bottomInset > 0 && (_view == _AuthView.login || _view == _AuthView.signUp || _view == _AuthView.recovery))
-              _keyboardToolbar(),
+
           ],
         ),
       ),
@@ -404,7 +419,20 @@ class _AuthScreenState extends State<AuthScreen> {
                 color: secondary,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const HelpFaqScreen()),
+                ),
+                icon: const Icon(Icons.help_outline_rounded, size: 18),
+                label: Text(Localizations.localeOf(context).languageCode == 'en'
+                    ? 'Help and frequently asked questions'
+                    : 'Ajuda e perguntas frequentes'),
+              ),
+            ),
+            const SizedBox(height: 16),
             if (_isSignUp) ...[
               AuthTextField(
                 controller: _firstNameController,
