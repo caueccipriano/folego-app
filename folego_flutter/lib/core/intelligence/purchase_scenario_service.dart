@@ -1,3 +1,4 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/projection_model.dart';
 import '../../data/repositories/folego_repository.dart';
 
@@ -51,6 +52,13 @@ class PurchaseScenarioService {
     if (!baseline.hasProjectionInputs || !withPurchase.hasProjectionInputs ||
         baseline.months.isEmpty || withPurchase.months.isEmpty) {
       throw StateError('Configure suas projeções antes de simular compras.');
+    }
+    // Backend is authoritative. Until paid receipts are verified server-side,
+    // never bypass the quota based on a client-side premium flag.
+    final quota = await Supabase.instance.client.rpc('consume_free_simulation');
+    final row = quota is List && quota.isNotEmpty ? quota.first : null;
+    if (row is! Map || row['allowed'] != true) {
+      throw StateError('Limite mensal de simulações atingido.');
     }
     DateTime? negative;
     for (final month in withPurchase.months) {
