@@ -138,6 +138,6 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
       );
     }
 
-    return HomeShell(space: _space!, repository: widget.repository);
+    return HomeShell(space: _space!, repository: widget.repository, onboardingState: _state);
   }
 }
