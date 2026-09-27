@@ -26,7 +26,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     final today = DateTime(now.year, now.month, now.day);
     final monday = today.subtract(Duration(days: today.weekday - 1));
     _report = widget.service.weekly(
-      spaceId: widget.spaceId, weekStart: monday, asOf: now);
+      spaceId: widget.spaceId, weekStart: monday.subtract(const Duration(days: 7)), asOf: now);
   }
   @override
   Widget build(BuildContext context) {
@@ -58,7 +58,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
         return Card(child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Sua semana', style: Theme.of(context).textTheme.titleMedium),
+            Text('Última semana concluída', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text('Receitas: R\$ ${report.income.toStringAsFixed(2)}'),
             Text('Despesas: R\$ ${report.expenses.toStringAsFixed(2)}'),
