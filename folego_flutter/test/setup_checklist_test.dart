@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/onboarding_state.dart';
-import 'package:folego_flutter/features/onboarding/setup_checklist.dart';
+import 'package:folego/data/models/onboarding_state.dart';
+import 'package:folego/features/onboarding/setup_checklist.dart';
 
 void main() {
   testWidgets('setup displays real progress and routes first task', (tester) async {
