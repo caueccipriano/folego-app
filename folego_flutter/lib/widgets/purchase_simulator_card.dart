@@ -57,7 +57,7 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
         TextField(controller: _amount,
           enabled: !_busy,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Valor da compra (R$)')),
+          decoration: const InputDecoration(labelText: 'Valor da compra (reais)')),
         const SizedBox(height: 8),
         DropdownButtonFormField<int>(
           value: _installments,
