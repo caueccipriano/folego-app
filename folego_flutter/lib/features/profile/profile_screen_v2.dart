@@ -40,11 +40,13 @@ class ProfileScreen extends StatefulWidget {
     required this.client,
     required this.repository,
     required this.spaceId,
+    this.onResumeSetup,
   });
 
   final SupabaseClient client;
   final FolegoRepository repository;
   final String spaceId;
+  final VoidCallback? onResumeSetup;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -595,6 +597,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
+                if (widget.onResumeSetup != null)
+                  _SettingsRow(
+                    icon: Icons.rocket_launch_outlined,
+                    title: Localizations.localeOf(context).languageCode == 'en' ? 'Continue setting up' : 'Continuar configuração',
+                    subtitle: Localizations.localeOf(context).languageCode == 'en' ? 'Pick up where you left off' : 'Retome de onde parou',
+                    onTap: widget.onResumeSetup!,
+                  ),
                 _SettingsRow(
                   icon: AppIcons.edit,
                   title: 'alterar e-mail',
