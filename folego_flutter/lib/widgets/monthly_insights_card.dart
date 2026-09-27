@@ -32,8 +32,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId ||
         oldWidget.month.year != widget.month.year ||
-        oldWidget.month.month != widget.month.month ||
-        oldWidget.service != widget.service) {
+        oldWidget.month.month != widget.month.month) {
       _load();
     }
   }
