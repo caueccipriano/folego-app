@@ -6,6 +6,7 @@ import '../../widgets/purchase_simulator_card.dart';
 import '../../widgets/financial_ai_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
@@ -335,6 +336,8 @@ class _HomeScreenState extends State<HomeScreen> {
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
     );
+    final isPrivateAiTester = Supabase.instance.client.auth.currentUser?.id ==
+        '5de8e34a-c6f5-4667-8fe0-2b4b89b42880';
     final financialAiCard = FinancialAiCard(
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
@@ -392,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   purchaseSimulator,
                   const SizedBox(height: 10),
 
-                  financialAiCard,
+                  if (isPrivateAiTester) financialAiCard,
                   const SizedBox(height: 10),
                   upcoming,
                   const SizedBox(height: 10),
@@ -424,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   purchaseSimulator,
                   const SizedBox(height: 14),
 
-                  financialAiCard,
+                  if (isPrivateAiTester) financialAiCard,
                   const SizedBox(height: 14),
                   projectionInsight,
                   const SizedBox(height: 24),
@@ -468,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             purchaseSimulator,
                             const SizedBox(height: 16),
 
-                            financialAiCard,
+                            if (isPrivateAiTester) financialAiCard,
                             const SizedBox(height: 16),
                             projectionInsight,
                           ],
