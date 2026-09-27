@@ -32,9 +32,9 @@ class WeeklyReportBuilder {
     final previousStart = start.subtract(const Duration(days: 7));
     if (asOf.isBefore(end)) {
       // Comparar uma semana incompleta com uma semana inteira distorce tendências.
-      return _build(transactions, start, end, previousStart, false);
+      return _build(transactions, start, end, previousStart, false, asOf);
     }
-    return _build(transactions, start, end, previousStart, true);
+    return _build(transactions, start, end, previousStart, true, asOf);
   }
 
   static WeeklyFinanceReport _build(
@@ -43,6 +43,7 @@ class WeeklyReportBuilder {
     DateTime end,
     DateTime previousStart,
     bool compare,
+    DateTime asOf,
   ) {
     var income = 0.0;
     var expenses = 0.0;
@@ -50,7 +51,7 @@ class WeeklyReportBuilder {
     for (final item in transactions) {
       if (item.status == 'ignored' || item.status == 'cancelled') continue;
       final date = item.occurredAt;
-      if (date.isBefore(previousStart) || !date.isBefore(end)) continue;
+      if (date.isBefore(previousStart) || !date.isBefore(end) || date.isAfter(asOf)) continue;
       if (item.isIncome) {
         if (!date.isBefore(start)) income += item.amount.abs();
       } else if (_economicExpenseTypes.contains(item.eventType)) {
