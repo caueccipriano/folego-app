@@ -56,13 +56,13 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
         _hasResult = true;
       });
     } on StateError catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) { setState(() => _error = error.message); }
     } catch (_) {
-      if (mounted) setState(() => _error = _english
+      if (mounted) { setState(() => _error = _english
           ? 'Unable to simulate. Check your budget setup and try again.'
-          : 'Não foi possível simular. Confira seu planejamento e tente novamente.');
+          : 'Não foi possível simular. Confira seu planejamento e tente novamente.'); }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) { setState(() => _busy = false); }
     }
   }
 
