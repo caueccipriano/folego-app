@@ -29,6 +29,14 @@ class FinancialInsightsService {
     );
   }
 
+  Future<CurrentProgressReport> currentProgress({
+    required String spaceId,
+    required DateTime asOf,
+  }) async {
+    final transactions = await repository.getTransactions(spaceId);
+    return WeeklyReportBuilder.currentProgress(transactions: transactions, asOf: asOf);
+  }
+
   Future<WeeklyFinanceReport> weekly({
     required String spaceId,
     required DateTime weekStart,
