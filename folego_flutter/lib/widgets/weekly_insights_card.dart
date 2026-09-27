@@ -15,6 +15,7 @@ class WeeklyInsightsCard extends StatefulWidget {
 class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
   late Future<CurrentProgressReport> _report;
   late Future<FlexibleBudgetOverview> _budget;
+  late Future<List<RepeatedExpense>> _repeated;
   @override
   void initState() { super.initState(); _load(); }
   @override
@@ -26,6 +27,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     final now = DateTime.now();
     _report = widget.service.currentProgress(spaceId: widget.spaceId, asOf: now);
     _budget = widget.service.flexibleBudget(spaceId: widget.spaceId, asOf: now);
+    _repeated = widget.service.repeatedPurchases(spaceId: widget.spaceId, asOf: now);
   }
   @override
   Widget build(BuildContext context) => FutureBuilder<CurrentProgressReport>(
@@ -126,6 +128,40 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                 Expanded(child: Text(tip)),
               ]),
             ),
+          FutureBuilder<List<RepeatedExpense>>(
+            future: _repeated,
+            builder: (context, repeatedSnapshot) {
+              if (!repeatedSnapshot.hasData ||
+                  repeatedSnapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              final repeated = repeatedSnapshot.data!.take(2);
+              return Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(en ? 'Repeated purchases to review' : 'Compras repetidas para revisar',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    for (final item in repeated)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.repeat),
+                        title: Text(item.description),
+                        subtitle: Text(en
+                            ? '${item.occurrences} purchases this month · ${money.format(item.total)}'
+                            : '${item.occurrences} compras neste mês · ${money.format(item.total)}'),
+                      ),
+                    Text(en
+                        ? 'These may be intentional. Repeated purchases are not necessarily subscriptions.'
+                        : 'Essas compras podem ser intencionais. Repetição não significa assinatura.',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              );
+            },
+          ),
           FutureBuilder<FlexibleBudgetOverview>(
             future: _budget,
             builder: (context, budgetSnapshot) {
