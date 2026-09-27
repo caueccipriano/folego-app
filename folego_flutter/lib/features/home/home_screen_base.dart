@@ -1,5 +1,6 @@
 import '../../core/intelligence/financial_insights_service.dart';
 import '../../widgets/monthly_insights_card.dart';
+import '../../widgets/weekly_insights_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -327,6 +328,10 @@ class _HomeScreenState extends State<HomeScreen> {
       spaceId: widget.space.id,
       month: DateTime.now(),
     );
+    final weeklyIntelligenceCard = WeeklyInsightsCard(
+      service: FinancialInsightsService(widget.repository),
+      spaceId: widget.space.id,
+    );
     final projectionInsight = HomeProjectionInsightCard(
       projection: _projection,
       unavailable: _projectionUnavailable,
@@ -371,6 +376,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   intelligenceCard,
                   const SizedBox(height: 10),
+                  weeklyIntelligenceCard,
+                  const SizedBox(height: 10),
                   upcoming,
                   const SizedBox(height: 10),
                   projectionInsight,
@@ -395,6 +402,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   monthlyMoney,
                   const SizedBox(height: 14),
                   intelligenceCard,
+                  const SizedBox(height: 14),
+                  weeklyIntelligenceCard,
                   const SizedBox(height: 14),
                   projectionInsight,
                   const SizedBox(height: 24),
@@ -432,6 +441,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             monthlyMoney,
                             const SizedBox(height: 16),
                             intelligenceCard,
+                            const SizedBox(height: 16),
+                            weeklyIntelligenceCard,
                             const SizedBox(height: 16),
                             projectionInsight,
                           ],
