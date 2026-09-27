@@ -18,7 +18,9 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
   void dispose() { _amount.dispose(); super.dispose(); }
 
   Future<void> _simulate() async {
-    final value = double.tryParse(_amount.text.trim().replaceAll('.', '').replaceAll(',', '.'));
+    final value = double.tryParse(_amount.text.trim().contains(',')
+        ? _amount.text.trim().replaceAll('.', '').replaceAll(',', '.')
+        : _amount.text.trim());
     if (value == null || value <= 0) {
       setState(() => _result = 'Digite um valor válido. Exemplo: 350,00');
       return;
