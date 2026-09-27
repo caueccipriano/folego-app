@@ -50,8 +50,10 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       }
       setState(() => _answer = data['answer'] as String);
     } catch (_) {
-      if (mounted) setState(() => _answer =
-          'Não foi possível consultar a IA. Verifique sua conexão, plano e configuração do assistente.');
+      if (mounted) {
+        setState(() => _answer =
+            'Não foi possível consultar a IA. Verifique sua conexão, plano e configuração do assistente.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
