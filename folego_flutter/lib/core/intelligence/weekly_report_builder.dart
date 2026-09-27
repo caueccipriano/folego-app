@@ -19,6 +19,36 @@ class WeeklyFinanceReport {
   double get result => income - expenses;
 }
 
+
+class CurrentProgressReport {
+  const CurrentProgressReport({
+    required this.weekIncome,
+    required this.weekExpenses,
+    required this.previousWeekExpenses,
+    required this.monthExpenses,
+    required this.previousMonthExpenses,
+    required this.previousWeekComparable,
+    required this.previousMonthComparable,
+    required this.categoryChanges,
+  });
+  final double weekIncome;
+  final double weekExpenses;
+  final double previousWeekExpenses;
+  final double monthExpenses;
+  final double previousMonthExpenses;
+  final bool previousWeekComparable;
+  final bool previousMonthComparable;
+  final List<CategoryChange> categoryChanges;
+}
+
+class CategoryChange {
+  const CategoryChange(this.name, this.current, this.previous);
+  final String name;
+  final double current;
+  final double previous;
+  double get difference => current - previous;
+}
+
 /// Relatório semanal baseado em movimentações econômicas, sem contar
 /// transferências e pagamentos de faturas como novas despesas.
 class WeeklyReportBuilder {
@@ -80,6 +110,80 @@ class WeeklyReportBuilder {
               currentEnd: end,
             )
           : const [],
+    );
+  }
+
+
+  /// Compara períodos equivalentes: segunda até agora vs. mesmos dias
+  /// da semana anterior; mês até hoje vs. mesmo número de dias anterior.
+  static CurrentProgressReport currentProgress({
+    required List<TransactionItem> transactions,
+    required DateTime asOf,
+  }) {
+    final today = DateTime(asOf.year, asOf.month, asOf.day);
+    final weekStart = today.subtract(Duration(days: today.weekday - 1));
+    final previousWeekStart = weekStart.subtract(const Duration(days: 7));
+    final previousWeekCutoff = asOf.subtract(const Duration(days: 7));
+    final monthStart = DateTime(today.year, today.month);
+    final previousMonthStart = DateTime(today.year, today.month - 1);
+    final elapsedDays = today.difference(monthStart).inDays;
+    final previousMonthLastDay = DateTime(today.year, today.month, 0).day;
+    final comparableMonthDays = elapsedDays + 1 <= previousMonthLastDay;
+    final previousMonthCutoff = comparableMonthDays
+        ? DateTime(previousMonthStart.year, previousMonthStart.month,
+            today.day, asOf.hour, asOf.minute, asOf.second)
+        : DateTime(today.year, today.month).subtract(const Duration(microseconds: 1));
+    var weekIncome = 0.0;
+    var weekExpenses = 0.0;
+    var previousWeekExpenses = 0.0;
+    var monthExpenses = 0.0;
+    var previousMonthExpenses = 0.0;
+    final currentCategories = <String, double>{};
+    final previousCategories = <String, double>{};
+    for (final item in transactions) {
+      if (item.status == 'ignored' || item.status == 'cancelled') continue;
+      final date = item.occurredAt;
+      if (date.isAfter(asOf)) continue;
+      final thisWeek = !date.isBefore(weekStart);
+      final lastWeek = !date.isBefore(previousWeekStart) &&
+          date.isBefore(weekStart) && !date.isAfter(previousWeekCutoff);
+      if (item.isIncome) {
+        if (thisWeek) weekIncome += item.amount.abs();
+        continue;
+      }
+      if (!_economicExpenseTypes.contains(item.eventType)) continue;
+      final amount = item.amount.abs();
+      final category = item.categoryName?.trim().isNotEmpty == true
+          ? item.categoryName!.trim() : 'Sem categoria';
+      if (thisWeek) {
+        weekExpenses += amount;
+        currentCategories.update(category, (v) => v + amount,
+            ifAbsent: () => amount);
+      }
+      if (lastWeek) {
+        previousWeekExpenses += amount;
+        previousCategories.update(category, (v) => v + amount,
+            ifAbsent: () => amount);
+      }
+      if (!date.isBefore(monthStart)) monthExpenses += amount;
+      if (!date.isBefore(previousMonthStart) && date.isBefore(monthStart) &&
+          !date.isAfter(previousMonthCutoff)) {
+        previousMonthExpenses += amount;
+      }
+    }
+    final changes = <CategoryChange>[
+      for (final name in {...currentCategories.keys, ...previousCategories.keys})
+        CategoryChange(name, currentCategories[name] ?? 0,
+            previousCategories[name] ?? 0),
+    ]..sort((a, b) => b.difference.compareTo(a.difference));
+    return CurrentProgressReport(
+      weekIncome: weekIncome, weekExpenses: weekExpenses,
+      previousWeekExpenses: previousWeekExpenses,
+      monthExpenses: monthExpenses,
+      previousMonthExpenses: previousMonthExpenses,
+      previousWeekComparable: true,
+      previousMonthComparable: comparableMonthDays,
+      categoryChanges: changes,
     );
   }
 
