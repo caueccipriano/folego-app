@@ -66,8 +66,15 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Pergunte ao Fôlego ✨', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 6),
-        const Text('Premium · até 30 perguntas por mês. Compartilhamos com a IA apenas totais agregados do mês, nunca seus lançamentos individuais.'),
+        const Text('Acesso antecipado exclusivo · até 30 perguntas por mês. A IA recebe somente os totais do mês, nunca seus lançamentos individuais.'),
         const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          ActionChip(label: const Text('Como está meu mês?'),
+            onPressed: _busy ? null : () => setState(() => _question.text = 'Como está minha situação financeira neste mês?')),
+          ActionChip(label: const Text('Onde posso melhorar?'),
+            onPressed: _busy ? null : () => setState(() => _question.text = 'O que posso melhorar no orçamento com os totais disponíveis?')),
+        ]),
+        const SizedBox(height: 8),
         TextField(
           controller: _question,
           enabled: !_busy,
