@@ -31,6 +31,14 @@ class FinancialInsightsService {
     );
   }
 
+  Future<List<RepeatedExpense>> repeatedPurchases({
+    required String spaceId,
+    required DateTime asOf,
+  }) async {
+    final transactions = await repository.getTransactions(spaceId);
+    return SpendingDetector.currentMonth(transactions: transactions, asOf: asOf);
+  }
+
   Future<FlexibleBudgetOverview> flexibleBudget({
     required String spaceId,
     required DateTime asOf,
