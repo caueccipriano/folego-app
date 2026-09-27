@@ -33,12 +33,12 @@ class FinancialReportBuilder {
     if (result < 0) {
       insights.add(PeriodInsight(
         title: 'Atenção ao resultado',
-        description: 'As despesas do mês superaram as receitas em R\\$ ${(-result).toStringAsFixed(2)}.',
+        description: 'As despesas do mês superaram as receitas em R\$ ${(-result).toStringAsFixed(2)}.',
       ));
     } else {
       insights.add(PeriodInsight(
         title: 'Resultado do mês',
-        description: 'As receitas superaram ou igualaram as despesas em R\\$ ${result.toStringAsFixed(2)}.',
+        description: 'As receitas superaram ou igualaram as despesas em R\$ ${result.toStringAsFixed(2)}.',
       ));
     }
     if (previous != null && previous.competenceExpenses > 0) {
