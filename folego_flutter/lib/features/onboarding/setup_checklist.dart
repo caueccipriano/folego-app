@@ -18,13 +18,14 @@ class SetupChecklist extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final english = Localizations.localeOf(context).languageCode == 'en';
     final steps = <({String title, String help, bool done, int tab})>[
-      (title: 'Adicione sua primeira conta', help: 'Informe seu banco e o saldo atual.', done: state.hasAccount, tab: 3),
-      (title: 'Registre sua renda', help: 'Cadastre seu salário ou outra entrada.', done: state.hasConfirmedIncome, tab: 1),
-      (title: 'Organize despesas fixas', help: 'Inclua aluguel, assinaturas e contas recorrentes.', done: state.recurringExpenseCount > 0, tab: 1),
-      (title: 'Configure seu orçamento', help: 'Defina quanto pretende gastar.', done: state.budgetConfigured, tab: 2),
-      (title: 'Adicione um cartão (opcional)', help: 'Acompanhe compras e faturas.', done: state.hasCard, tab: 3),
-      (title: 'Planeje sua reserva (opcional)', help: 'Escolha uma meta para imprevistos.', done: state.reserveConfigured, tab: 2),
+      (title: english ? 'Add your first account' : 'Adicione sua primeira conta', help: english ? 'Enter your bank and current balance.' : 'Informe seu banco e o saldo atual.', done: state.hasAccount, tab: 3),
+      (title: english ? 'Record your income' : 'Registre sua renda', help: english ? 'Add your paycheck or another source of income.' : 'Cadastre seu salário ou outra entrada.', done: state.hasConfirmedIncome, tab: 1),
+      (title: english ? 'Add recurring bills' : 'Organize despesas fixas', help: english ? 'Include rent, subscriptions and regular bills.' : 'Inclua aluguel, assinaturas e contas recorrentes.', done: state.recurringExpenseCount > 0, tab: 1),
+      (title: english ? 'Set your budget' : 'Configure seu orçamento', help: english ? 'Choose how much you plan to spend.' : 'Defina quanto pretende gastar.', done: state.budgetConfigured, tab: 2),
+      (title: english ? 'Add a card (optional)' : 'Adicione um cartão (opcional)', help: english ? 'Track purchases and card statements.' : 'Acompanhe compras e faturas.', done: state.hasCard, tab: 3),
+      (title: english ? 'Plan your emergency fund (optional)' : 'Planeje sua reserva (opcional)', help: english ? 'Set a goal for unexpected expenses.' : 'Escolha uma meta para imprevistos.', done: state.reserveConfigured, tab: 2),
     ];
     final done = steps.where((step) => step.done).length;
     return SafeArea(
@@ -35,13 +36,13 @@ class SetupChecklist extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(children: [
-              Expanded(child: Text('Seu Fôlego começa aqui', style: Theme.of(context).textTheme.headlineSmall)),
-              IconButton(tooltip: 'Fazer depois', onPressed: onDismiss, icon: const Icon(Icons.close)),
+              Expanded(child: Text(english ? 'Your Fôlego starts here' : 'Seu Fôlego começa aqui', style: Theme.of(context).textTheme.headlineSmall)),
+              IconButton(tooltip: english ? 'Do this later' : 'Fazer depois', onPressed: onDismiss, icon: const Icon(Icons.close)),
             ]),
             const SizedBox(height: 6),
-            const Text('Vamos organizar seu dinheiro juntos. Você pode pular qualquer etapa e voltar depois.'),
+            Text(english ? 'Let’s organize your money. Skip any step and return whenever you want.' : 'Vamos organizar seu dinheiro juntos. Você pode pular qualquer etapa e voltar depois.'),
             const SizedBox(height: 12),
-            Semantics(label: '$done de 6 etapas concluídas',
+            Semantics(label: english ? '$done of 6 steps completed' : '$done de 6 etapas concluídas',
               child: LinearProgressIndicator(value: done / steps.length, minHeight: 5)),
             const SizedBox(height: 12),
             Flexible(child: ListView.builder(
@@ -62,8 +63,8 @@ class SetupChecklist extends StatelessWidget {
             )),
             const SizedBox(height: 8),
             OutlinedButton.icon(onPressed: onRefresh,
-              icon: const Icon(Icons.refresh), label: const Text('Atualizar meu progresso')),
-            TextButton(onPressed: onDismiss, child: const Text('Explorar o app por enquanto')),
+              icon: const Icon(Icons.refresh), label: Text(english ? 'Refresh my progress' : 'Atualizar meu progresso')),
+            TextButton(onPressed: onDismiss, child: Text(english ? 'Explore the app for now' : 'Explorar o app por enquanto')),
           ],
         ),
       ),
