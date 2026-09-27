@@ -20,6 +20,57 @@ class WeeklyFinanceReport {
 }
 
 
+
+class RepeatedExpense {
+  const RepeatedExpense({
+    required this.description,
+    required this.category,
+    required this.occurrences,
+    required this.total,
+  });
+  final String description;
+  final String category;
+  final int occurrences;
+  final double total;
+}
+
+/// Finds repeated purchases in the current month; never assumes that a
+/// repeated purchase is a subscription or will recur in the future.
+class SpendingDetector {
+  static List<RepeatedExpense> currentMonth({
+    required List<TransactionItem> transactions,
+    required DateTime asOf,
+  }) {
+    final start = DateTime(asOf.year, asOf.month);
+    final grouped = <String, List<TransactionItem>>{};
+    for (final item in transactions) {
+      if (item.status == 'ignored' || item.status == 'cancelled' ||
+          !const {'expense', 'card_purchase', 'benefit_expense'}
+              .contains(item.eventType) ||
+          item.occurredAt.isBefore(start) || item.occurredAt.isAfter(asOf)) {
+        continue;
+      }
+      final description = item.description.trim();
+      if (description.isEmpty) continue;
+      final key = '${item.categoryId ?? item.categoryName ?? ''}|${description.toLowerCase()}';
+      grouped.putIfAbsent(key, () => []).add(item);
+    }
+    final repeated = <RepeatedExpense>[];
+    for (final items in grouped.values) {
+      if (items.length < 2) continue;
+      final first = items.first;
+      repeated.add(RepeatedExpense(
+        description: first.description.trim(),
+        category: first.categoryName?.trim() ?? '',
+        occurrences: items.length,
+        total: items.fold<double>(0, (sum, item) => sum + item.amount.abs()),
+      ));
+    }
+    repeated.sort((a, b) => b.total.compareTo(a.total));
+    return repeated;
+  }
+}
+
 class CurrentProgressReport {
   const CurrentProgressReport({
     required this.weekIncome,
