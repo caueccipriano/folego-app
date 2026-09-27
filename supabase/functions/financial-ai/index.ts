@@ -40,6 +40,7 @@ Deno.serve(async (request) => {
   const { data: quota, error: quotaError } = await admin.rpc('consume_premium_ai_question', { p_user_id: auth.user.id });
   if (quotaError) return respond(503, 'Não foi possível verificar seu plano.');
   if (quota !== true) return respond(403, 'Disponível para Premium, até 30 perguntas por mês.');
+  let delivered = false;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 18000);
@@ -58,12 +59,19 @@ Deno.serve(async (request) => {
         }),
       });
     } finally { clearTimeout(timeout); }
-    if (!upstream.ok) return respond(502, 'IA indisponível no momento. Tente novamente mais tarde.');
+    if (!upstream.ok) return respond(502, 'IA indisponível no momento. Sua pergunta não será descontada.');
     const data = await upstream.json();
     const answer = (data.output ?? []).flatMap((item: { content?: { type?: string; text?: string }[] }) => item.content ?? [])
       .filter((part: { type?: string }) => part.type === 'output_text')
       .map((part: { text?: string }) => part.text ?? '').join('\n').trim();
     if (!answer) return respond(502, 'A IA não retornou uma resposta.');
+    delivered = true;
     return new Response(JSON.stringify({ answer }), { status: 200, headers });
-  } catch { return respond(502, 'IA indisponível no momento.'); }
+  } catch { return respond(502, 'IA indisponível no momento. Sua pergunta não será descontada.'); }
+  finally {
+    if (!delivered) {
+      const { error: refundError } = await admin.rpc('refund_premium_ai_question', { p_user_id: auth.user.id });
+      if (refundError) console.error('Failed to refund AI quota', refundError.code);
+    }
+  }
 });
