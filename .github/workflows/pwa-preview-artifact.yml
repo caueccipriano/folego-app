@@ -1,0 +1,50 @@
+name: Folego PWA preview artifact
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/pwa-preview-artifact.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Verify application
+        run: |
+          flutter analyze
+          flutter test test/app_breakpoints_test.dart test/auth_widgets_test.dart test/auth_responsive_smoke_test.dart
+      - name: Build PWA preview
+        run: flutter build web --release --base-href "/"
+      - name: Stamp preview version
+        run: |
+          sed -i "s/__FOLEGO_CACHE_VERSION__/${GITHUB_SHA}/g" build/web/folego_push_sw.js
+          sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/index.html
+          sed -i "s#main.dart.js#main.dart.js?v=${GITHUB_SHA}#g" build/web/flutter_bootstrap.js
+      - name: Check preview files
+        run: |
+          test -f build/web/index.html
+          test -f build/web/manifest.json
+          test -f build/web/folego_push_sw.js
+          ! grep -q '__FOLEGO_CACHE_VERSION__' build/web/folego_push_sw.js
+          ! grep -q '__FOLEGO_BUILD_VERSION__' build/web/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: folego-pwa-preview-${{ github.sha }}
+          path: folego_flutter/build/web
+          retention-days: 14
+          if-no-files-found: error
