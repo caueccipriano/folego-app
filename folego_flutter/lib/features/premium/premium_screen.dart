@@ -133,8 +133,19 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (!access.hasPremium) ...[
+                      Text(
+                        Localizations.localeOf(context).languageCode == 'en'
+                            ? 'Your current plan: Fôlego Free'
+                            : 'Seu plano atual: Fôlego Free',
+                        style: AppTypography.body(context, fontSize: 13, color: secondary),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     Text(
-                      _accessLabel(access, l10n),
+                      access.hasPremium
+                          ? _accessLabel(access, l10n)
+                          : l10n.premiumPaidLabel,
                       style: AppTypography.section(context, fontSize: 18),
                     ),
                     const SizedBox(height: 4),
@@ -170,6 +181,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             : null,
                         child: Text(l10n.premiumManage),
                       ),
+                    if (!storeReady && !access.hasPremium) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        Localizations.localeOf(context).languageCode == 'en'
+                            ? 'You can explore Premium features here. Subscription checkout is not available in this web preview.'
+                            : 'Você pode conhecer os recursos Premium aqui. A contratação não está disponível nesta versão web.',
+                        style: AppTypography.body(context, fontSize: 12, color: secondary),
+                      ),
+                    ],
                     if (storeReady) ...[
                       const SizedBox(height: 8),
                       TextButton(
