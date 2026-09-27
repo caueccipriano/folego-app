@@ -39,6 +39,10 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
         'para R\$ ${after.toStringAsFixed(2)}. '
         '${scenario.firstNegativeMonth == null ? 'Nenhum mês negativo na projeção consultada.' : 'Atenção: existe mês com saldo negativo na projeção.'} '
         'Simulação, não é uma garantia.');
+    } on StateError catch (error) {
+      if (mounted) {
+        setState(() => _result = error.message);
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _result =
