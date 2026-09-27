@@ -4,7 +4,8 @@ on:
   pull_request:
     paths:
       - 'folego_flutter/lib/core/intelligence/**'
-      - 'folego_flutter/lib/widgets/monthly_insights_card.dart'
+      - 'folego_flutter/lib/widgets/**'
+      - 'folego_flutter/lib/features/home/home_screen_base.dart'
       - 'folego_flutter/test/**'
       - 'folego_flutter/pubspec.yaml'
       - '.github/workflows/financial-intelligence-ci.yml'
@@ -23,5 +24,5 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze --no-pub lib/core/intelligence lib/widgets/monthly_insights_card.dart test/financial_intelligence_test.dart test/financial_report_builder_test.dart test/weekly_report_builder_test.dart
+      - run: flutter analyze --no-pub lib/core/intelligence lib/widgets/monthly_insights_card.dart lib/widgets/weekly_insights_card.dart lib/features/home/home_screen_base.dart test/financial_intelligence_test.dart test/financial_report_builder_test.dart test/weekly_report_builder_test.dart
       - run: flutter test test/financial_intelligence_test.dart test/financial_report_builder_test.dart test/weekly_report_builder_test.dart
