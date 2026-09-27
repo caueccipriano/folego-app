@@ -222,11 +222,11 @@ class _HomeScreenState extends State<HomeScreen> {
           afterSpendable != null &&
           (beforeSpendable - afterSpendable).abs() >= .01;
       final message = changed
-          ? '${type == 'expense' ? 'gasto' : 'receita'} salvo · disponível: '
+          ? '${type == 'expense' ? 'gasto' : 'dinheiro recebido'} salvo · disponível: '
               '${Formatters.money(beforeSpendable)} → ${Formatters.money(afterSpendable)}'
           : type == 'expense'
               ? 'gasto salvo · seu Fôlego foi atualizado'
-              : 'receita salva · seu Fôlego foi atualizado';
+              : 'Dinheiro recebido! Seu Fôlego foi atualizado.';
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -731,8 +731,8 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: _QuickAction(
-            label: 'gasto',
-            semanticLabel: 'registrar gasto',
+            label: 'Gastei',
+            semanticLabel: 'Gastei dinheiro: registrar um gasto',
             icon: AppIcons.expense,
             background: AppColors.lime,
             foreground: AppColors.iconOnLime,
@@ -742,8 +742,8 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: _QuickAction(
-            label: 'receita',
-            semanticLabel: 'registrar receita',
+            label: 'Recebi',
+            semanticLabel: 'Recebi dinheiro: registrar salário, Pix ou renda extra',
             icon: AppIcons.income,
             background: surface,
             foreground: positive,
