@@ -8,6 +8,22 @@ TransactionItem item(String type, double amount, DateTime date, String category)
       status: 'confirmed', source: 'manual', categoryName: category);
 
 void main() {
+  test('detector mostra apenas compras repetidas no mês sem contar faturas', () {
+    final result = SpendingDetector.currentMonth(
+      asOf: DateTime(2026, 9, 25),
+      transactions: [
+        item('card_purchase', 20, DateTime(2026, 9, 2), 'Café'),
+        item('expense', 30, DateTime(2026, 9, 9), 'Café'),
+        item('card_payment', 50, DateTime(2026, 9, 10), 'Café'),
+        item('expense', 40, DateTime(2026, 8, 10), 'Café'),
+        item('expense', 60, DateTime(2026, 9, 12), 'Cinema'),
+      ],
+    );
+    expect(result.length, 1);
+    expect(result.single.description, 'Café');
+    expect(result.single.occurrences, 2);
+    expect(result.single.total, 50);
+  });
   test('compara semana e mês em períodos equivalentes sem duplicar fatura', () {
     final report = WeeklyReportBuilder.currentProgress(
       asOf: DateTime(2026, 9, 23, 18),
