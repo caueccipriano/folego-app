@@ -11,6 +11,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import '../../l10n/app_localizations.dart';
+import '../profile/help_faq_screen.dart';
 import 'auth_validation.dart';
 import 'auth_widgets.dart';
 
@@ -650,6 +651,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   });
                 },
           child: Text(l10n.authWrongEmail),
+        ),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HelpFaqScreen())),
+          icon: const Icon(Icons.help_outline),
+          label: Text(Localizations.localeOf(context).languageCode == 'en' ? 'Need help receiving your email?' : 'Precisa de ajuda para receber o e-mail?'),
         ),
         TextButton(
           onPressed: _resending ? null : () => _backToLogin(),
