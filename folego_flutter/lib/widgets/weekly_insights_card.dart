@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/intelligence/financial_insights_service.dart';
 import '../core/intelligence/weekly_report_builder.dart';
+import '../data/models/budget_overview_item.dart';
 
 class WeeklyInsightsCard extends StatefulWidget {
   const WeeklyInsightsCard({super.key, required this.service, required this.spaceId});
@@ -13,6 +14,7 @@ class WeeklyInsightsCard extends StatefulWidget {
 
 class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
   late Future<CurrentProgressReport> _report;
+  late Future<FlexibleBudgetOverview> _budget;
   @override
   void initState() { super.initState(); _load(); }
   @override
@@ -20,9 +22,11 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId) _load();
   }
-  void _load() => _report = widget.service.currentProgress(
-    spaceId: widget.spaceId, asOf: DateTime.now(),
-  );
+  void _load() {
+    final now = DateTime.now();
+    _report = widget.service.currentProgress(spaceId: widget.spaceId, asOf: now);
+    _budget = widget.service.flexibleBudget(spaceId: widget.spaceId, asOf: now);
+  }
   @override
   Widget build(BuildContext context) => FutureBuilder<CurrentProgressReport>(
     future: _report,
@@ -122,6 +126,73 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                 Expanded(child: Text(tip)),
               ]),
             ),
+          FutureBuilder<FlexibleBudgetOverview>(
+            future: _budget,
+            builder: (context, budgetSnapshot) {
+              if (!budgetSnapshot.hasData) {
+                if (budgetSnapshot.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(en
+                        ? 'Budget guidance is temporarily unavailable.'
+                        : 'As orientações do orçamento estão indisponíveis no momento.',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  );
+                }
+                return const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: LinearProgressIndicator(),
+                );
+              }
+              final budget = budgetSnapshot.data!;
+              if (!budget.configured || budget.limitAmount <= 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(en
+                      ? 'Set a flexible spending limit to see how much you can still spend.'
+                      : 'Defina seu teto de gastos flexíveis para saber quanto ainda pode gastar.'),
+                );
+              }
+              final daysLeft = DateTime(
+                DateTime.now().year, DateTime.now().month + 1, 0,
+              ).day - DateTime.now().day + 1;
+              final daily = budget.remainingAmount > 0
+                  ? budget.remainingAmount / daysLeft : 0.0;
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(en ? 'Your flexible budget' : 'Seu orçamento flexível',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      value: budget.usageRatio.clamp(0.0, 1.0),
+                      minHeight: 7,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(en
+                        ? '${money.format(budget.usedAmount)} used of ${money.format(budget.limitAmount)}'
+                        : '${money.format(budget.usedAmount)} utilizados de ${money.format(budget.limitAmount)}'),
+                    const SizedBox(height: 4),
+                    Text(budget.isExceeded
+                        ? (en
+                            ? 'You exceeded your flexible limit by ${money.format(budget.exceededAmount)}. Consider pausing optional purchases.'
+                            : 'Você ultrapassou seu teto flexível em ${money.format(budget.exceededAmount)}. Considere adiar compras opcionais.')
+                        : (en
+                            ? '${money.format(budget.remainingAmount)} left · about ${money.format(daily)} per remaining day, including today.'
+                            : 'Restam ${money.format(budget.remainingAmount)} · cerca de ${money.format(daily)} por dia restante, incluindo hoje.')),
+                    const SizedBox(height: 4),
+                    Text(en
+                        ? 'This guidance covers flexible spending only, not your total available bank balance.'
+                        : 'Este cálculo considera apenas gastos flexíveis, não o saldo disponível nas suas contas.',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
           Text(en
               ? 'Based on recorded transactions, not a prediction or financial advice.'
               : 'Com base nos lançamentos registrados; não é previsão nem aconselhamento financeiro.',
