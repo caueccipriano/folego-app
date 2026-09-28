@@ -15,6 +15,7 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
   bool _forGoal = false;
   DateTime? _selectedDate;
   final TextEditingController _amountController = TextEditingController(text: '0');
+  bool _invalidAmount = false;
   @override
   void dispose() {
     _amountController.dispose();
@@ -30,11 +31,13 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
     );
     final selectedDate = _selectedDate ?? runway.days.first.date;
     final dayKey = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-    final simulatedBalance = runway.balanceAtPayday - _purchase;
+    final effectivePurchase = _invalidAmount ? 0.0 : _purchase;
+    final simulatedBalance = runway.balanceAtPayday - effectivePurchase;
     final newlyAffected = runway.days.where((day) =>
-        !day.date.isBefore(dayKey) && day.closingBalance >= 0 && day.closingBalance - _purchase < 0).toList();
+        !day.date.isBefore(dayKey) && day.closingBalance >= 0 && day.closingBalance - effectivePurchase < 0).toList();
     final firstNewShortfall = newlyAffected.isEmpty ? null : newlyAffected.first.date;
     final alreadyNegative = runway.firstNegativeDay != null;
+    final simulationReady = !_invalidAmount && effectivePurchase > 0;
     final date = DateFormat.yMd(en ? 'en_US' : 'pt_BR');
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
@@ -56,7 +59,7 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
         Text(_forGoal
             ? (en ? 'Hypothetical contribution' : 'Aporte hipotético')
             : (en ? 'Hypothetical purchase' : 'Compra hipotética')),
-        Text(currency.format(_purchase)),
+        Text(currency.format(effectivePurchase)),
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(en ? 'Simulation date' : 'Data da simulação'),
@@ -78,38 +81,45 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
           decoration: InputDecoration(
             labelText: en ? 'Exact amount (BRL)' : 'Valor exato (BRL)',
             helperText: en ? 'Use a comma or dot for cents' : 'Use vírgula ou ponto para centavos',
+            errorText: _invalidAmount
+                ? (en ? 'Enter a value between 0 and 1,000,000' : 'Informe um valor entre 0 e 1.000.000')
+                : null,
           ),
           onChanged: (raw) {
             final value = double.tryParse(raw.trim().replaceAll(',', '.'));
-            if (value != null && value.isFinite && value >= 0 && value <= 1000000) {
-              setState(() => _purchase = value);
-            }
+            final valid = value != null && value.isFinite && value >= 0 && value <= 1000000;
+            setState(() {
+              _invalidAmount = !valid;
+              if (valid) _purchase = value;
+            });
           },
         ),
         Slider(
-          value: _purchase.clamp(0.0, 2000.0), min: 0, max: 2000, divisions: 40,
-          label: currency.format(_purchase),
+          value: effectivePurchase.clamp(0.0, 2000.0), min: 0, max: 2000, divisions: 40,
+          label: currency.format(effectivePurchase),
           onChanged: (value) => setState(() {
             _purchase = value;
+            _invalidAmount = false;
             _amountController.text = value.toStringAsFixed(0);
           }),
         ),
-        ListTile(
+        if (!_invalidAmount)
+          ListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(en ? 'Balance before next income after simulation'
               : 'Saldo antes da próxima entrada após a simulação'),
           trailing: Text(currency.format(simulatedBalance)),
         ),
-        if (_purchase > 0 && firstNewShortfall != null)
+        if (simulationReady && firstNewShortfall != null)
           Text(en
               ? 'This scenario introduces a new shortfall on ${date.format(firstNewShortfall)}.'
               : 'Esta simulação cria uma nova falta de saldo em ${date.format(firstNewShortfall)}.',
               style: TextStyle(color: Theme.of(context).colorScheme.error)),
-        if (alreadyNegative)
+        if (!_invalidAmount && alreadyNegative)
           Text(en
               ? 'Your existing schedule already shows a shortfall. Review scheduled bills independently of this simulation.'
               : 'Sua programação já apresenta falta de saldo. Revise as contas previstas independentemente desta simulação.'),
-        if (_purchase > 0 && firstNewShortfall == null && !alreadyNegative &&
+        if (simulationReady && firstNewShortfall == null && !alreadyNegative &&
             !widget.preparation.guidanceNeedsReview)
           Text(en
               ? 'No new negative day found in the registered schedule.'
