@@ -346,12 +346,17 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildPositionSummary() {
     final summary = _overview!.summary;
+    final reservedCash = _overview!.paymentAccounts
+        .where((account) => !account.availableForSpending)
+        .fold<double>(0, (total, account) => total + account.balance);
     final metrics = [
       _PositionMetric(
         label: 'disponível agora',
         value: summary.availableCash,
         icon: AppIcons.account,
-        subtitle: '${Formatters.money(summary.totalCash)} no total das contas',
+        subtitle: reservedCash > 0
+            ? '${Formatters.money(reservedCash)} separado de gastos · ${Formatters.money(summary.totalCash)} no total'
+            : '${Formatters.money(summary.totalCash)} no total das contas',
       ),
       _PositionMetric(
         label: 'benefícios',
