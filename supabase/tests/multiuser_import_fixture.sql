@@ -119,6 +119,30 @@ FOR EACH ROW
 WHEN (NEW.status='imported' AND NEW.imported_event_id IS NOT NULL)
 EXECUTE FUNCTION private.resolve_import_backing_event_id();
 
+-- Reference tables also hide the second user's rows, as on Supabase Dev.
+-- PostgreSQL FK checks still see such hidden rows; RLS alone is not a
+-- same-tenant foreign-reference invariant.
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY categories_select_member ON public.categories
+FOR SELECT TO authenticated
+USING ((SELECT private.is_space_member(categories.space_id)));
+ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY accounts_select_member ON public.accounts
+FOR SELECT TO authenticated
+USING ((SELECT private.is_space_member(accounts.space_id)));
+ALTER TABLE public.card_invoices ENABLE ROW LEVEL SECURITY;
+CREATE POLICY card_invoices_select_member ON public.card_invoices
+FOR SELECT TO authenticated
+USING ((SELECT private.is_space_member(card_invoices.space_id)));
+ALTER TABLE public.financial_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY events_select_member ON public.financial_events
+FOR SELECT TO authenticated
+USING ((SELECT private.is_space_member(financial_events.space_id)));
+ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY import_batches_select_member ON public.import_batches
+FOR SELECT TO authenticated
+USING ((SELECT private.is_space_member(import_batches.space_id)));
+
 -- Match the current Dev import_rows RLS predicate and direct grants.
 ALTER TABLE public.import_rows ENABLE ROW LEVEL SECURITY;
 CREATE POLICY import_rows_select_member ON public.import_rows
