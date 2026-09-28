@@ -298,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final latest = _latestTransaction();
 
-    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 88;
+    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 140;
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
@@ -386,21 +386,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   quickActions,
                   const SizedBox(height: 12),
                   monthlyMoney,
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
+                  upcoming,
+                  const SizedBox(height: 12),
+                  projectionInsight,
+                  const SizedBox(height: 16),
+                  latestSection,
+                  const SizedBox(height: 16),
                   intelligenceCard,
                   const SizedBox(height: 10),
                   weeklyIntelligenceCard,
                   const SizedBox(height: 10),
-                  purchaseSimulator,
-                  const SizedBox(height: 10),
-
-                  if (isPrivateAiTester) financialAiCard,
-                  const SizedBox(height: 10),
-                  upcoming,
-                  const SizedBox(height: 10),
-                  projectionInsight,
-                  const SizedBox(height: 14),
-                  latestSection,
+                  ExpansionTile(
+                    key: const ValueKey('home-purchase-tools'),
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+                    title: const Text('Simular uma compra'),
+                    subtitle: const Text('Veja o impacto antes de gastar'),
+                    children: [purchaseSimulator],
+                  ),
+                  if (isPrivateAiTester) ...[
+                    const SizedBox(height: 8),
+                    ExpansionTile(
+                      key: const ValueKey('home-ai-tools'),
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+                      title: const Text('Pergunte ao Fôlego ✨'),
+                      subtitle: const Text('Sua análise financeira com IA'),
+                      children: [financialAiCard],
+                    ),
+                  ],
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
                   if (pulse is! SizedBox) ...[
@@ -504,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final background = AppColors.background(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness).withValues(alpha: .14);
-    final bottom = MediaQuery.paddingOf(context).bottom + 88;
+    final bottom = MediaQuery.paddingOf(context).bottom + 140;
 
     Widget block(double height, {double? width, double radius = 18}) => Align(
           alignment: Alignment.centerLeft,
