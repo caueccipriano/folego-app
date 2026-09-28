@@ -41,7 +41,8 @@ class CashRunwayPreparation {
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final nextIncome = incomes.isEmpty ? null : incomes.first.dueDate;
     final excludedOverdue = distinctAgenda.where((event) =>
-      event.overdue && !event.realized && event.isOutflow &&
+      (event.overdue || event.dueDate.isBefore(today)) &&
+      !event.realized && event.isOutflow &&
       event.cashObligation).length;
     if (nextIncome == null) {
       return CashRunwayPreparation(
