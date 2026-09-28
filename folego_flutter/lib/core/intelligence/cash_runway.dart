@@ -68,7 +68,14 @@ class CashRunway {
       days.add(CashRunwayDay(date: date, closingBalance: balance,
         events: List.unmodifiable(todayEvents)));
     }
-    final available = balance - protectedReserve;
+    // An incoming payment later in the period cannot fund earlier bills.
+    // Use the lowest daily closing balance, not just the final balance.
+    final lowestBalance = days.isEmpty
+        ? balance
+        : days.map((day) => day.closingBalance).reduce(
+            (a, b) => a < b ? a : b,
+          );
+    final available = lowestBalance - protectedReserve;
     return CashRunway(
       days: List.unmodifiable(days),
       firstNegativeDay: firstNegative,
