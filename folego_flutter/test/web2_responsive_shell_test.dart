@@ -253,6 +253,8 @@ class _HomeSnapshotFailureRepository extends _HomeRepository {
 
 class _HomeRepository implements FolegoRepository {
   @override
+  String? get currentUserId => null;
+  @override
   Future<FolegoSnapshot> getSnapshot(String spaceId, {DateTime? asOfDate}) async => FolegoSnapshot(
     asOfDate: DateTime(2026, 9, 16),
     nextIncomeDate: DateTime(2026, 9, 30),
