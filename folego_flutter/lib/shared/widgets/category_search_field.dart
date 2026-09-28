@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../data/models/category_item.dart';
 import 'category_search_picker.dart';
 
@@ -81,7 +82,7 @@ class CategorySearchField extends StatelessWidget {
       child: InkWell(
         key: ValueKey('category-search-field-$label'),
         onTap: categories.isEmpty ? null : () => _openPicker(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: label,
@@ -97,6 +98,9 @@ class CategorySearchField extends StatelessWidget {
             selected?.breadcrumb ?? emptyLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: selected == null ? FontWeight.w400 : FontWeight.w600,
+            ),
           ),
         ),
       ),
