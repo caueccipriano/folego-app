@@ -22,9 +22,10 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
       locale: en ? 'en_US' : 'pt_BR', symbol: 'BRL',
     );
     final simulatedBalance = runway.balanceAtPayday - _purchase;
-    final affected = runway.days.where((day) =>
-        day.closingBalance - _purchase < 0).toList();
-    final firstShortfall = affected.isEmpty ? null : affected.first.date;
+    final newlyAffected = runway.days.where((day) =>
+        day.closingBalance >= 0 && day.closingBalance - _purchase < 0).toList();
+    final firstNewShortfall = newlyAffected.isEmpty ? null : newlyAffected.first.date;
+    final alreadyNegative = runway.firstNegativeDay != null;
     final date = DateFormat.yMd(en ? 'en_US' : 'pt_BR');
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
@@ -49,15 +50,23 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
         ),
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(en ? 'Balance before next income after purchase'
-              : 'Saldo antes da próxima entrada após a compra'),
+          title: Text(en ? 'Balance before next income after simulation'
+              : 'Saldo antes da próxima entrada após a simulação'),
           trailing: Text(currency.format(simulatedBalance)),
         ),
-        if (firstShortfall != null)
+        if (_purchase > 0 && firstNewShortfall != null)
           Text(en
-              ? 'Possible shortfall starting ${date.format(firstShortfall)}.'
-              : 'Possível falta de saldo a partir de ${date.format(firstShortfall)}.',
+              ? 'This scenario introduces a new shortfall on ${date.format(firstNewShortfall)}.'
+              : 'Esta simulação cria uma nova falta de saldo em ${date.format(firstNewShortfall)}.',
               style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        if (alreadyNegative)
+          Text(en
+              ? 'Your existing schedule already shows a shortfall. Review scheduled bills independently of this simulation.'
+              : 'Sua programação já apresenta falta de saldo. Revise as contas previstas independentemente desta simulação.'),
+        if (_purchase > 0 && firstNewShortfall == null && !alreadyNegative)
+          Text(en
+              ? 'No new negative day found in the registered schedule.'
+              : 'Nenhum novo dia negativo encontrado na programação cadastrada.'),
         Text(en
             ? 'Assumes this amount leaves your cash accounts today and every other scheduled event stays unchanged. Does not update a goal. Excludes unregistered bills and reserved money.'
             : 'Considera a saída desse valor das contas hoje, sem alterar os demais eventos. Não atualiza metas. Não inclui contas não cadastradas nem dinheiro reservado.',
