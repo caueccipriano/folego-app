@@ -305,6 +305,34 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                           : 'Referência diária de gastos'),
                       trailing: Text(money.format(runway.discretionaryDailyReference)),
                     ),
+                  if (runway.days.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(en ? 'Daily balance calendar' : 'Calendário de saldos',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    for (final day in runway.days.take(14))
+                      ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(date.format(day.date)),
+                        subtitle: Text(en
+                            ? '${day.events.length} scheduled events'
+                            : '${day.events.length} eventos previstos'),
+                        trailing: Text(
+                          money.format(day.closingBalance),
+                          style: TextStyle(
+                            color: day.closingBalance < 0
+                                ? Theme.of(context).colorScheme.error
+                                : null,
+                            fontWeight: day.closingBalance < 0
+                                ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    if (runway.days.length > 14)
+                      Text(en
+                          ? 'Showing the first 14 days; totals include the full period.'
+                          : 'Exibindo os primeiros 14 dias; os totais incluem todo o período.'),
+                  ],
                   if (runway.firstNegativeDay != null)
                     Text(en
                         ? 'Possible shortfall from ${date.format(runway.firstNegativeDay!)}.'
