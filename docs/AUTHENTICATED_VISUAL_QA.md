@@ -21,3 +21,49 @@ Review Supabase security advisor warnings for authenticated-callable SECURITY DE
 
 ## Current limitation
 If `FOLEGO_E2E_EMAIL` or `FOLEGO_E2E_PASSWORD` is missing, the authenticated suite is skipped. Public Playwright results cannot be represented as an authenticated visual audit.
+
+## Security review — 2026-09-28 (read-only, Fôlego Dev)
+
+Evidence comes from a fresh Supabase Security Advisor run and read-only PostgreSQL metadata/function-definition inspection. It does **not** certify an external attack test or production environment.
+
+### Verified: 5 intentional server-only tables
+
+The Advisor's five \`rls_enabled_no_policy\` informational findings cover:
+\`ai_question_usage\`, \`financial_intelligence_usage\`, \`quanto_automation_config\`,
+\`store_subscriptions\` and \`subscription_webhook_events\`.
+
+For **each** of these five tables, verification found:
+- RLS enabled, zero client-facing policies;
+- \`anon\` and \`authenticated\` have no direct SELECT, INSERT, UPDATE or DELETE privilege;
+- \`service_role\` retains SELECT privilege.
+
+**Outcome:** These five findings are consistent with intentional server-only storage. Do not add permissive client policies merely to silence the Advisor. Retest grants and ownership after future migrations.
+
+### Reviewed statically: 17 authenticated SECURITY DEFINER RPCs
+
+All 17 findings have \`anon EXECUTE = false\`. All 17 contain a visible identity/authorization gate: 11 call \`private.can_write_space(p_space_id)\`, four call \`private.is_space_member(p_space_id)\`, and two use the authenticated user's own ID (\`consume_free_simulation\` and \`get_my_store_subscription\`).
+
+**Important limitation:** The guards' presence is a static code check, not proof of tenant isolation. Functions run as \`postgres\`. Before release, test unauthorized cross-space READ and WRITE using *two fictional users and independent synthetic spaces*. Ensure denied calls leave events, balances, quotas, subscription entitlements and import rows unchanged. Do not change all functions to \`SECURITY INVOKER\` or revoke required client RPC grants in bulk: that would break the application.
+
+### Confirmed commercial-control gap: projection simulation quota
+
+As currently implemented, \`public.get_projection\` is directly executable by authenticated clients. It validates financial-space membership, **but does not read or decrement simulation quota**. The Flutter \`PurchaseScenarioService.simulate\` obtains the baseline and adjusted projections **before** calling \`consume_free_simulation\`. A signed-in user can therefore request their own adjusted projection RPC directly without consuming free simulations. This is a Premium entitlement/quota bypass, **not evidence of cross-account data access**.
+
+**Release blocker before charging for Premium:**
+1. Enforce a server-authoritative, atomic quota/entitlement check *within* every backend route able to return a paid simulated projection (including non-empty adjustments and any other paid scenario inputs); ordinary permitted baseline reads must continue to work.
+2. Update Flutter to avoid counting one simulation twice, and do not debit a user's quota for invalid configuration or a failed server computation.
+3. Test free quota exhaustion, Premium access, replay/concurrent requests, an adjusted direct RPC request, cross-space denial, and usage rollback after server error, using **fictional Dev users only**.
+4. Do not expose a new unrestricted core projection RPC through PostgREST or GraphQL.
+
+### Pending Auth configuration
+
+The Security Advisor additionally reports **leaked password protection disabled**. Enable and verify this control in Supabase Authentication settings where supported by the project plan: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+
+### Release gate
+
+- [x] Read-only privilege check for the five server-only tables
+- [x] Static inspection of the 17 authenticated privileged functions and their public grants
+- [ ] Two-user Dev authorization tests for the privileged RPC surface
+- [ ] Fix and prove atomic server-side paid-scenario quota enforcement
+- [ ] Enable and verify leaked-password protection
+- [ ] Re-run security advisors and review any new warnings before production
