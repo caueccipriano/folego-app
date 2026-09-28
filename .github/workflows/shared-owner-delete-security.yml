@@ -1,0 +1,105 @@
+name: Shared-space safe account deletion
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/delete-account/**'
+      - 'supabase/migrations/20260928231500_guard_shared_owner_account_deletion.sql'
+      - 'supabase/tests/shared_space_delete_*'
+      - 'folego_flutter/lib/features/profile/account_deletion_error.dart'
+      - 'folego_flutter/lib/features/profile/profile_screen_v2.dart'
+      - 'folego_flutter/test/shared_account_deletion_test.dart'
+      - '.github/workflows/shared-owner-delete-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database-isolation:
+    name: Reproduce old cascade and verify guarded deletion on synthetic DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_delete_ci
+          POSTGRES_DB: folego_deletion_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: disposable_delete_ci
+      PGDATABASE: folego_deletion_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm isolated synthetic database
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          test "$PGDATABASE" = "folego_deletion_ci"
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Reproduce legacy cascade against hypothetical shared members
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/shared_space_delete_fixture.sql \
+            -f supabase/tests/shared_space_delete_before_fix.sql
+
+      - name: Apply real migration and prove privacy/atomic deletion contract
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260928231500_guard_shared_owner_account_deletion.sql \
+            -f supabase/tests/shared_space_delete_acceptance.sql
+
+      - name: Verify all tests were disconnected from customers
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          test "$PGDATABASE" = "folego_deletion_ci"
+          echo 'PASS: all account-deletion SQL tests used disposable PostgreSQL.'
+
+  edge-contract:
+    name: Fail-closed Edge preflight (Deno tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Run synthetic shared-owner lookup tests
+        run: deno test supabase/functions/delete-account/shared_space_safety_test.ts
+      - name: Check all new TypeScript and Edge function types
+        run: deno check supabase/functions/delete-account/index.ts
+
+  flutter-contract:
+    name: Account deletion explanation and API rollout compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze changed Flutter sources
+        working-directory: folego_flutter
+        run: dart analyze lib/features/profile/account_deletion_error.dart lib/features/profile/profile_screen_v2.dart test/shared_account_deletion_test.dart
+      - name: Run shared-owner deletion regression
+        working-directory: folego_flutter
+        run: flutter test test/shared_account_deletion_test.dart
