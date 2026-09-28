@@ -112,8 +112,11 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
         if (!_invalidAmount)
           ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(en ? 'Balance before next income after simulation'
-              : 'Saldo antes da próxima entrada após a simulação'),
+          title: Text(widget.preparation.guidanceNeedsReview
+              ? (en ? 'Provisional simulated balance before income'
+                  : 'Saldo simulado provisório antes da próxima entrada')
+              : (en ? 'Balance before next income after simulation'
+                  : 'Saldo antes da próxima entrada após a simulação')),
           trailing: Text(currency.format(simulatedBalance)),
         ),
         if (simulationReady && firstNewShortfall != null)
