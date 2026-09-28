@@ -63,16 +63,12 @@ class PurchaseScenarioService {
         baseline.months.isEmpty || withPurchase.months.isEmpty) {
       throw StateError('Configure suas projeções antes de simular compras.');
     }
-    // Rolling upgrade: older Dev backends don't yet meter get_projection.
-    // Preserve the legacy quota only until the new backend explicitly confirms
-    // this scenario was metered. Otherwise we would debit users twice.
-    if (!withPurchase.serverQuotaEnforced) {
-      final quota = await Supabase.instance.client.rpc('consume_free_simulation');
-      final row = quota is List && quota.isNotEmpty ? quota.first : null;
-      if (row is! Map || row['allowed'] != true) {
-        throw StateError('Limite mensal de simulações atingido.');
-      }
-    }
+    // Backend v2 confirms that it has already reserved quota atomically.
+    // Backend v1 requires one (and only one) legacy debit after computation.
+    await chargeLegacyQuotaIfNeeded(
+      withPurchase,
+      () async => await Supabase.instance.client.rpc('consume_free_simulation'),
+    );
     DateTime? negative;
     for (final month in withPurchase.months) {
       if (month.closingProjected < 0) {
@@ -86,5 +82,21 @@ class PurchaseScenarioService {
       monthlyPayment: purchaseAmount / installments,
       firstNegativeMonth: negative,
     );
+  }
+}
+
+/// Transitional compatibility only: stop calling the old quota endpoint
+/// when the projection RPC itself confirms the simulation was metered.
+/// Kept injectable so tests can assert that an already-metered request never
+/// makes the additional RPC that would charge a user twice.
+Future<void> chargeLegacyQuotaIfNeeded(
+  ProjectionResult projection,
+  Future<dynamic> Function() requestLegacyQuota,
+) async {
+  if (projection.serverQuotaEnforced) return;
+  final quota = await requestLegacyQuota();
+  final row = quota is List && quota.isNotEmpty ? quota.first : null;
+  if (row is! Map || row['allowed'] != true) {
+    throw StateError('Limite mensal de simulações atingido.');
   }
 }
