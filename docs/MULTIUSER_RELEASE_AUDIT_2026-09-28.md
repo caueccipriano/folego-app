@@ -14,6 +14,8 @@ dispositivo compartilhado e pessoa que exclui a conta. Cobrir personagens
 fictícios no teste **não** prova que todos os fluxos reais ou todas as contas
 existentes foram testados.
 
+**Precisão da auditoria:** permissões apenas de tabela não permitem concluir que uma função invoker não pode ler uma tabela. Foi consultado `has_column_privilege` para todas as colunas usadas por `get_my_premium_grant`, além da policy. A suposta falha MU-02 foi corrigida no relatório sem alterar o aplicativo.
+
 ## Resultado do inventário estático em Dev
 
 - 45 tabelas de aplicação no schema público com RLS habilitada; todas as
@@ -38,7 +40,7 @@ existentes foram testados.
 | ID | Área | Evidência | Ação/critério |
 | --- | --- | --- | --- |
 | MU-01 | Integridade entre contas / importação | \`import_rows\` aceita INSERT/UPDATE por um writer do próprio espaço, mas suas FKs principais usam apenas UUID do objeto, e não o par \`(objeto_id, space_id)\`. Uma referência pertencente a B podia ser gravada na linha de A conhecendo o UUID, mesmo oculta por RLS. O RPC de confirmação já revalida categoria/conta/fatura — **não há evidência de leitura de dados de B**. | Nova migração \`20260928223000_harden_import_row_cross_space_refs.sql\` adiciona o invariante a toda escrita, inclusive API direta, preservando resoluções de IDs de compras/faturas. Teste sintético reproduz antes e exige bloqueio depois. Pendente Dev e revisão. |
-| MU-02 | Cortesia/Vitalício de todos os usuários | \`public.get_my_premium_grant()\` usa \`SECURITY INVOKER\`; \`authenticated\` executa a função mas não tem permissão SELECT em \`premium_grants\`. O Flutter ignora erro e pode mostrar \`Free\` para uma pessoa com concessão ativa. | Nova migração \`20260928223500_restore_premium_grant_self_read.sql\`: leitura **apenas** das colunas user_id/grant_type/valid_until, mediante RLS \`user_id=auth.uid()\`; nunca expõe nota administrativa nem concede escrita. Teste sintético A cortesia/B Free/C vitalício. |
+| MU-02 | Cortesia/Vitalício de todos os usuários | **Verificado como protegido após inspeção das permissões por coluna:** `get_my_premium_grant()` usa `SECURITY INVOKER` e `authenticated` já tem SELECT apenas nas colunas `user_id`, `grant_type` e `valid_until`, sujeito a RLS `auth.uid()=user_id`. A tabela completa não tem SELECT, e a nota administrativa não é legível — ambos comportamentos corretos. A checagem inicial exclusivamente com `has_table_privilege` gerou um falso positivo, retirado da PR. | **Nenhuma migração necessária.** Manter teste de regressão de colunas, RLS e acesso próprio no QA autenticado com contas fictícias; não ampliar grants. |
 | MU-03 | Cota de cenários para qualquer usuário | Em Dev, \`get_projection\` ainda permite chamadas diretas ajustadas sem debitar cota: a versão anterior cobra no Flutter após a projeção. | PR #11 implementa cobrança atômica no RPC. 39 testes Flutter e suíte sintética de PostgreSQL passaram. Atualizar *cliente antes da migração* para impedir dupla cobrança; testes reais por identidade ainda pendentes. |
 | MU-04 | Push em aparelhos compartilhados | \`web_push_subscriptions.endpoint\` é UNIQUE global, associado a um user_id. Logout normal do Perfil limpa inscrição. Bootstrap/onboarding chama \`auth.signOut\` diretamente; mudanças involuntárias de sessão/expiração também precisam verificar limpeza. Não foi demonstrado vazamento em aparelho real. | E2E A ativa push → expira sessão/logout alternativo → B entra no mesmo browser → garantir que B jamais recebe push financeiro de A. Corrigir eventual persistência antes de ativar push ao público. |
 | MU-05 | Escopo Premium no servidor | A tela de projeções pede Premium, mas o \`get_projection\` de Dev ainda aceita projeção base (inclusive horizonte 12/24) de qualquer membro autenticado. A Home usa leitura base de 3 meses e simulador Free possui 3 tentativas. | Formalizar divisão Free/Premium do endpoint e testes de bypass via REST sem quebrar Home nem simulador Free. A PR #11 protege cenários ajustados, **não** resolve toda a segmentação de projeção base. |
@@ -83,7 +85,7 @@ https://github.com/caueccipriano/folego-app/issues/12.
 
 ## Correções e limites operacionais
 
-A branch deste documento contém **apenas** migrações propostas e CI isolado.
+A branch deste documento contém **apenas** uma migração proposta para integridade de importações e CI isolado. A suposta correção de permissões Premium foi descartada após verificação detalhada e não integra esta branch.
 O controle de cota está em uma PR separada. Antes de aplicar em Dev:
 verificar o SHA, o estado da função existente e os privilégios; fazer
 preflight de importações legadas e backups apropriados. Nunca implantar uma
