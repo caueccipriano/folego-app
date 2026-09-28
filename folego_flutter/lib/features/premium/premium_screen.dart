@@ -152,7 +152,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Text(
                       access.hasPremium
                           ? _activeCopy(access, l10n)
-                          : '${SubscriptionService.trialLabel} · ${SubscriptionService.monthlyPriceLabel}',
+                          : storeReady
+                              ? (Localizations.localeOf(context).languageCode == 'en'
+                                  ? 'See the official store offer for the final price and any trial.'
+                                  : 'Confira o preço final e eventuais testes grátis na oferta oficial da loja.')
+                              : (Localizations.localeOf(context).languageCode == 'en'
+                                  ? 'Planned Brazil launch price: R\$ 14.90/month. No web checkout yet.'
+                                  : 'Preço previsto para lançamento no Brasil: ${SubscriptionService.monthlyPriceLabel}. Sem contratação web.'),
                       style: AppTypography.body(
                         context,
                         fontSize: 13,
