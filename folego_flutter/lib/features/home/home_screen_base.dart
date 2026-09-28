@@ -397,21 +397,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   weeklyIntelligenceCard,
                   const SizedBox(height: 10),
-                  ExpansionTile(
-                    key: const ValueKey('home-purchase-tools'),
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-                    title: const Text('Simular uma compra'),
-                    subtitle: const Text('Veja o impacto antes de gastar'),
-                    children: [purchaseSimulator],
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: ExpansionTile(
+                      key: const ValueKey('home-purchase-tools'),
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+                      title: const Text('Simular uma compra'),
+                      subtitle: const Text('Veja o impacto antes de gastar'),
+                      childrenPadding: const EdgeInsets.only(bottom: 8),
+                      children: [purchaseSimulator],
+                    ),
                   ),
                   if (isPrivateAiTester) ...[
                     const SizedBox(height: 8),
-                    ExpansionTile(
-                      key: const ValueKey('home-ai-tools'),
-                      tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-                      title: const Text('Pergunte ao Fôlego ✨'),
-                      subtitle: const Text('Sua análise financeira com IA'),
-                      children: [financialAiCard],
+                    Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: ExpansionTile(
+                        key: const ValueKey('home-ai-tools'),
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+                        title: const Text('Pergunte ao Fôlego ✨'),
+                        subtitle: const Text('Sua análise financeira com IA'),
+                        childrenPadding: const EdgeInsets.only(bottom: 8),
+                        children: [financialAiCard],
+                      ),
                     ),
                   ],
                 ] else if (layout == AppLayoutSize.medium) ...[
