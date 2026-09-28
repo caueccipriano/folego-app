@@ -14,6 +14,27 @@ The `revenuecat-webhook` Edge Function is deployed to Supabase **Dev** with JWT 
 5. Configure store products, entitlement `premium`, trial availability, localized pricing and policies in RevenueCat and the stores; confirm purchase/restore behavior on actual iOS and Android builds.
 6. Only after these checks, deploy reviewed migrations and webhook to production. Never copy Dev secrets or enable live billing as part of a QA run.
 
+## Commercial launch targets
+
+- Approved Brazilian monthly price: **R$ 14,90**, subject to exact store price confirmation.
+- Income objective: **at least R$ 500/month after payment fees and operating expenses, before personal taxes**. This is a planning target, not guaranteed earnings.
+- Example sensitivity: with **15% variable fees** and **R$ 150 monthly fixed costs**, **52 active paying subscribers** produce R$ 658.58 net before taxes (52 × 14.90 × 0.85 − 150). Actual store fees, taxes, refunds and infrastructure costs must replace these assumptions before publication.
+- Instrument conversion from free to Premium and monthly cancellations; use observed data rather than promising a conversion rate.
+
+## Release acceptance — evidence required
+
+| Gate | Evidence | State |
+| --- | --- | --- |
+| Financial ownership separation | Automated wallet test + Dev account-level reconciliation | Dev reconciliation and automated test completed; current build pending CI |
+| Responsive UI | Flutter analyze, web build, Playwright and authenticated physical iPhone screenshots | Automated run pending; physical authenticated iPhone review outstanding |
+| Price parity | Store monthly products, RevenueCat offering and localized native paywall all show R$ 14,90 | Not configured or verified |
+| Billing security | Webhook secret installed in Dev; reject invalid bearer; server-only entitlement and quotas verified | Not verified end to end |
+| Subscription lifecycle | Sandbox purchase, restore, renewal, cancellation, expiry, refund, duplicate/out-of-order delivery | Not verified |
+| Store compliance | Privacy policy, account deletion, subscription disclosures and store metadata reviewed | Requires review |
+| Production release | Explicit approval after evidence above; separate production migration and webhook review | Not authorized |
+
+Do not enable real billing, mark launch-ready, or merge the feature branch merely because CI passes. The GitHub Pages PWA does not have native in-app purchases.
+
 ## Known limitations
 - Cancellation intentionally leaves an existing entitlement active until expiration.
 - Only verified store events are stored in `store_subscriptions`. Client-side premium status alone cannot bypass server quota.
