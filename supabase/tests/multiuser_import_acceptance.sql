@@ -144,6 +144,48 @@ END;
 $viewer_b$;
 RESET ROLE;
 
+-- The two legitimate shared-space writers have separate identities.
+-- Neither has any membership in B's independently owned space.
+SET ROLE authenticated;
+SELECT set_config(
+  'request.jwt.claim.sub','cccccccc-cccc-4ccc-8ccc-cccccccccccc',false
+);
+DO $member_c$
+DECLARE v_rows integer;
+BEGIN
+  IF (SELECT count(*) FROM public.import_rows) <> 1 THEN
+    RAISE EXCEPTION 'C member saw an unrelated private space';
+  END IF;
+  UPDATE public.import_rows
+  SET category_id='a0000000-0000-4000-8000-000000000002'
+  WHERE id='a0000000-0000-4000-8000-000000000010';
+  GET DIAGNOSTICS v_rows=ROW_COUNT;
+  IF v_rows<>1 THEN RAISE EXCEPTION 'valid member was unable to write'; END IF;
+  RAISE NOTICE 'PASS: a legitimate shared member writes only authorized space A';
+END;
+$member_c$;
+RESET ROLE;
+
+SET ROLE authenticated;
+SELECT set_config(
+  'request.jwt.claim.sub','dddddddd-dddd-4ddd-8ddd-dddddddddddd',false
+);
+DO $admin_d$
+DECLARE v_rows integer;
+BEGIN
+  IF (SELECT count(*) FROM public.import_rows) <> 1 THEN
+    RAISE EXCEPTION 'D admin saw an unrelated private space';
+  END IF;
+  UPDATE public.import_rows
+  SET category_id='a0000000-0000-4000-8000-000000000002'
+  WHERE id='a0000000-0000-4000-8000-000000000010';
+  GET DIAGNOSTICS v_rows=ROW_COUNT;
+  IF v_rows<>1 THEN RAISE EXCEPTION 'valid admin was unable to write'; END IF;
+  RAISE NOTICE 'PASS: a legitimate shared admin writes only authorized space A';
+END;
+$admin_d$;
+RESET ROLE;
+
 DO $post$
 BEGIN
   IF (SELECT count(*) FROM public.import_rows
