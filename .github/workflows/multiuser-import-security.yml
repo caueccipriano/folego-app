@@ -1,0 +1,67 @@
+name: Multi-user import isolation — disposable database
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20260928223000_harden_import_row_cross_space_refs.sql'
+      - 'supabase/tests/multiuser_import_*'
+      - '.github/workflows/multiuser-import-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-tenant-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ephemeral_multiuser_ci
+          POSTGRES_DB: folego_multiuser_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ephemeral_multiuser_ci
+      PGDATABASE: folego_multiuser_ci
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Reproduce existing legacy tenant-reference gap using fake accounts
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/multiuser_import_fixture.sql \
+            -f supabase/tests/multiuser_import_before_fix.sql
+
+      - name: Apply proposed migration and verify multiuser boundaries
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260928223000_harden_import_row_cross_space_refs.sql \
+            -f supabase/tests/multiuser_import_acceptance.sql
+
+      - name: Confirm DB is isolated from real Fôlego users
+        run: |
+          test "$PGDATABASE" = "folego_multiuser_ci"
+          test "$PGHOST" = "127.0.0.1"
+          echo "PASS: disposable PostgreSQL only; no customer data accessed or modified."
+
