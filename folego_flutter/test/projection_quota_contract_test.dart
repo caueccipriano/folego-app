@@ -62,11 +62,16 @@ void main() {
     expect(migration, contains('free_simulation_limit_reached'));
     expect(migration, contains("'{simulation_quota_enforced}'"));
 
+    final debit = migration.indexOf(
+      'SELECT quota.allowed, quota.remaining INTO v_allowed, v_remaining',
+    );
     final compute = migration.indexOf('v_result := private.get_projection_core(');
-    final debit = migration.indexOf('SELECT quota.allowed INTO v_allowed');
     final result = migration.indexOf("'{simulation_quota_enforced}'");
-    expect(compute, greaterThanOrEqualTo(0));
-    expect(debit, greaterThan(compute));
-    expect(result, greaterThan(debit));
+    expect(debit, greaterThanOrEqualTo(0));
+    expect(compute, greaterThan(debit));
+    expect(result, greaterThan(compute));
+    expect(migration, contains('SET used = used - 1'));
+    expect(migration, contains('ELSIF v_remaining >= 0'));
+    expect(migration, contains('simulation_quota_refund_failed'));
   });
 }
