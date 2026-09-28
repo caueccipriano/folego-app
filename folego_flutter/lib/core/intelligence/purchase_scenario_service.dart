@@ -46,19 +46,32 @@ class PurchaseScenarioService {
     );
     final baseline = await repository.getProjection(
       spaceId: spaceId, horizonMonths: horizonMonths);
-    final withPurchase = await repository.getProjection(
-      spaceId: spaceId, horizonMonths: horizonMonths,
-      adjustments: [adjustment]);
+    final ProjectionResult withPurchase;
+    try {
+      withPurchase = await repository.getProjection(
+        spaceId: spaceId, horizonMonths: horizonMonths,
+        adjustments: [adjustment]);
+    } on PostgrestException catch (error) {
+      // New backend rejects the fourth free scenario *inside* the projection
+      // RPC. Keep the user-facing error readable without masking other errors.
+      if (error.message.contains('free_simulation_limit_reached')) {
+        throw StateError('Limite mensal de simulações atingido.');
+      }
+      rethrow;
+    }
     if (!baseline.hasProjectionInputs || !withPurchase.hasProjectionInputs ||
         baseline.months.isEmpty || withPurchase.months.isEmpty) {
       throw StateError('Configure suas projeções antes de simular compras.');
     }
-    // Backend is authoritative. Until paid receipts are verified server-side,
-    // never bypass the quota based on a client-side premium flag.
-    final quota = await Supabase.instance.client.rpc('consume_free_simulation');
-    final row = quota is List && quota.isNotEmpty ? quota.first : null;
-    if (row is! Map || row['allowed'] != true) {
-      throw StateError('Limite mensal de simulações atingido.');
+    // Rolling upgrade: older Dev backends don't yet meter get_projection.
+    // Preserve the legacy quota only until the new backend explicitly confirms
+    // this scenario was metered. Otherwise we would debit users twice.
+    if (!withPurchase.serverQuotaEnforced) {
+      final quota = await Supabase.instance.client.rpc('consume_free_simulation');
+      final row = quota is List && quota.isNotEmpty ? quota.first : null;
+      if (row is! Map || row['allowed'] != true) {
+        throw StateError('Limite mensal de simulações atingido.');
+      }
     }
     DateTime? negative;
     for (final month in withPurchase.months) {
