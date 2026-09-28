@@ -59,6 +59,17 @@ void main() {
     expect(result.guidanceNeedsReview, isTrue);
     expect(result.runway!.balanceAtPayday, 500);
   });
+  test('unpaid past-due obligation is flagged despite stale overdue flag', () {
+    final result = CashRunwayPreparation.fromOfficialData(
+      wallet: wallet, asOf: DateTime(2026, 9, 27),
+      agenda: [
+        event('past-due', '2026-09-25', 'outflow', 80),
+        event('income', '2026-09-30', 'income', 2000),
+      ],
+    );
+    expect(result.excludedOverdueCount, 1);
+    expect(result.guidanceNeedsReview, isTrue);
+  });
   test('pauses guidance when financial agenda reaches its result cap', () {
     final result = CashRunwayPreparation.fromOfficialData(
       wallet: wallet, asOf: DateTime(2026, 9, 27),
