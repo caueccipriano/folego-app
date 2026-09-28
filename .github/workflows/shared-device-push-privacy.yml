@@ -1,0 +1,48 @@
+name: Shared-device push session privacy
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/core/notifications/session_notification_cleanup.dart'
+      - 'folego_flutter/lib/features/auth/auth_gate.dart'
+      - 'folego_flutter/lib/features/bootstrap/bootstrap_screen.dart'
+      - 'folego_flutter/lib/features/profile/profile_screen_v2.dart'
+      - 'folego_flutter/test/shared_device_push_logout_test.dart'
+      - '.github/workflows/shared-device-push-privacy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  logout-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+
+      - name: Analyze every changed auth and notification source
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/core/notifications/session_notification_cleanup.dart \
+            lib/features/auth/auth_gate.dart \
+            lib/features/bootstrap/bootstrap_screen.dart \
+            lib/features/profile/profile_screen_v2.dart \
+            test/shared_device_push_logout_test.dart
+
+      - name: Run synthetic logout and existing notification safety tests
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/shared_device_push_logout_test.dart \
+            test/notification_runtime_test.dart \
+            test/notification_service_test.dart
