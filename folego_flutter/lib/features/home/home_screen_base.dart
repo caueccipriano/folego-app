@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
     );
-    final isPrivateAiTester = Supabase.instance.client.auth.currentUser?.id ==
+    final isPrivateAiTester = widget.repository.currentUserId ==
         '5de8e34a-c6f5-4667-8fe0-2b4b89b42880';
     final financialAiCard = FinancialAiCard(
       service: FinancialInsightsService(widget.repository),
