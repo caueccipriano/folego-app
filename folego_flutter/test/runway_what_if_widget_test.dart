@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:folego/core/intelligence/cash_runway.dart';
 import 'package:folego/core/intelligence/cash_runway_preparation.dart';
 import 'package:folego/widgets/runway_what_if_card.dart';
@@ -27,6 +28,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: Scaffold(body: SingleChildScrollView(
         child: RunwayWhatIfCard(preparation: preparation()),
       )),
@@ -51,6 +53,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: Scaffold(body: SingleChildScrollView(
         child: RunwayWhatIfCard(
           preparation: preparation(needsReview: true),
