@@ -28,7 +28,11 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: Scaffold(body: SingleChildScrollView(
         child: RunwayWhatIfCard(preparation: preparation()),
       )),
@@ -53,7 +57,11 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: Scaffold(body: SingleChildScrollView(
         child: RunwayWhatIfCard(
           preparation: preparation(needsReview: true),
