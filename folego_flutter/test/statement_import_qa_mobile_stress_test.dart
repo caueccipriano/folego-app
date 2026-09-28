@@ -175,6 +175,17 @@ void main() {
     await tester.tap(find.text('duplicados'));
     await tester.pumpAndSettle();
 
+    // Filtered rows are lazy and can start below the review header.
+    await tester.scrollUntilVisible(
+      find.textContaining('possível duplicata'),
+      240,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('statement-import-review-mobile')),
+        matching: find.byType(Scrollable),
+      ).first,
+      maxScrolls: 30,
+    );
+    await tester.pumpAndSettle();
     expect(find.textContaining('possível duplicata'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
