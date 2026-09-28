@@ -407,7 +407,10 @@ void main() {
       await tester.scrollUntilVisible(
         timeTile,
         350,
-        scrollable: find.byKey(const ValueKey('notification-settings-list')),
+        scrollable: find.descendant(
+          of: find.byKey(const ValueKey('notification-settings-list')),
+          matching: find.byType(Scrollable),
+        ).first,
         maxScrolls: 30,
       );
       await tester.pumpAndSettle();
