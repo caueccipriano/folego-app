@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
+import { accountDeletionPreflight } from "./shared_space_safety.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -52,20 +53,41 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // automation_rules.created_by is the only direct user FK that restricts
-  // account deletion. Owned spaces and the remaining user-owned rows cascade.
-  const { error: rulesError } = await admin
-    .from("automation_rules")
-    .delete()
-    .eq("created_by", user.id);
+  // Preflight for a user who owns a financial space with other members.
+  // !inner forces the ownership check on the joined financial_spaces table;
+  // only *other* user_id values count. A failed lookup must block deletion.
+  // The auth.users BEFORE DELETE trigger provides the authoritative,
+  // same-transaction backstop, including concurrent or out-of-band requests.
+  const ownerSafety = await accountDeletionPreflight(async () => {
+    const { data, error } = await admin
+      .from("space_members")
+      .select("space_id,financial_spaces!inner(owner_id)")
+      .eq("financial_spaces.owner_id", user.id)
+      .neq("user_id", user.id)
+      .limit(1);
+    return { data, error };
+  });
 
-  if (rulesError) {
-    console.error("delete-account rule cleanup failed", rulesError.code);
-    return json(500, { error: "cleanup_failed" });
+  if (ownerSafety === "shared_space_requires_resolution") {
+    return json(409, { error: ownerSafety });
+  }
+  if (ownerSafety !== "clear") {
+    return json(503, { error: "shared_space_check_unavailable" });
   }
 
+  // The new database trigger deletes automation_rules authored by this
+  // account in the SAME transaction as auth.users deletion. Do not perform
+  // a separate service-role cleanup: if auth deletion later fails, that
+  // would cause partial data loss in another user's shared financial space.
   const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
   if (deleteError) {
+    if (
+      deleteError.message?.includes(
+        "shared_space_owner_deletion_requires_resolution",
+      )
+    ) {
+      return json(409, { error: "shared_space_requires_resolution" });
+    }
     console.error("delete-account auth deletion failed", deleteError.code);
     return json(500, { error: "delete_failed" });
   }
