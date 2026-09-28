@@ -9,17 +9,21 @@ class CashRunwayPreparation {
     required this.nextIncomeDate,
     required this.excludedOverdueCount,
     required this.openingBalance,
+    this.agendaMayBeTruncated = false,
   });
   final CashRunway? runway;
   final DateTime? nextIncomeDate;
   final int excludedOverdueCount;
   final double openingBalance;
+  final bool agendaMayBeTruncated;
+  bool get guidanceNeedsReview => excludedOverdueCount > 0 || agendaMayBeTruncated;
 
   static CashRunwayPreparation fromOfficialData({
     required WalletOverview wallet,
     required List<UpcomingFinancialEvent> agenda,
     required DateTime asOf,
     double protectedReserve = 0,
+    bool agendaMayBeTruncated = false,
   }) {
     final today = DateTime(asOf.year, asOf.month, asOf.day);
     final available = wallet.accounts
@@ -37,6 +41,7 @@ class CashRunwayPreparation {
       return CashRunwayPreparation(
         runway: null, nextIncomeDate: null,
         excludedOverdueCount: excludedOverdue, openingBalance: available,
+        agendaMayBeTruncated: agendaMayBeTruncated,
       );
     }
     final uniqueEvents = <String, UpcomingFinancialEvent>{};
@@ -63,6 +68,7 @@ class CashRunwayPreparation {
       nextIncomeDate: nextIncome,
       excludedOverdueCount: excludedOverdue,
       openingBalance: available,
+      agendaMayBeTruncated: agendaMayBeTruncated,
     );
   }
 }
