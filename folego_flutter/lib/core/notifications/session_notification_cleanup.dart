@@ -24,10 +24,7 @@ abstract final class SessionNotificationCleanup {
       await _clearBrowserOrRegisteredNotifications(client);
     } catch (error) {
       if (kDebugMode) {
-        debugPrint(
-          'Notification session cleanup failed (' +
-              error.runtimeType.toString() + ')',
-        );
+        debugPrint('Notification session cleanup failed (${error.runtimeType})');
       }
     }
   }
@@ -55,10 +52,7 @@ abstract final class SessionNotificationCleanup {
       await cleanup();
     } catch (error) {
       if (kDebugMode) {
-        debugPrint(
-          'Pre-logout notification cleanup failed (' +
-              error.runtimeType.toString() + ')',
-        );
+        debugPrint('Pre-logout notification cleanup failed (${error.runtimeType})');
       }
     }
     await signOut();
