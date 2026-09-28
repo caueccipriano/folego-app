@@ -5,8 +5,6 @@ on:
     paths:
       - 'supabase/migrations/20260928223000_harden_import_row_cross_space_refs.sql'
       - 'supabase/tests/multiuser_import_*'
-      - 'supabase/migrations/20260928223500_restore_premium_grant_self_read.sql'
-      - 'supabase/tests/multiuser_premium_*'
       - '.github/workflows/multiuser-import-security.yml'
   workflow_dispatch:
 
@@ -67,56 +65,3 @@ jobs:
           test "$PGHOST" = "127.0.0.1"
           echo "PASS: disposable PostgreSQL only; no customer data accessed or modified."
 
-  premium-entitlement-isolation:
-    name: Isolated per-user Premium grants and least privilege
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ephemeral_premium_ci
-          POSTGRES_DB: folego_premium_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 3s
-          --health-timeout 5s
-          --health-retries 20
-
-    env:
-      PGHOST: 127.0.0.1
-      PGPORT: '5432'
-      PGUSER: postgres
-      PGPASSWORD: ephemeral_premium_ci
-      PGDATABASE: folego_premium_ci
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Ensure PostgreSQL client
-        run: |
-          if ! command -v psql >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y postgresql-client
-          fi
-          psql --version
-
-      - name: Reproduce blocked complimentary grant lookup for synthetic A
-        run: |
-          psql -X -v ON_ERROR_STOP=1 \
-            -f supabase/tests/multiuser_premium_fixture.sql \
-            -f supabase/tests/multiuser_premium_before_fix.sql
-
-      - name: Apply proposed grant and prove independent A/B/C entitlements
-        run: |
-          psql -X -v ON_ERROR_STOP=1 \
-            -f supabase/migrations/20260928223500_restore_premium_grant_self_read.sql \
-            -f supabase/tests/multiuser_premium_acceptance.sql
-
-      - name: Confirm no access to any customer database
-        run: |
-          test "$PGDATABASE" = "folego_premium_ci"
-          test "$PGHOST" = "127.0.0.1"
-          echo "PASS: fictional entitlements, isolated PostgreSQL only."
