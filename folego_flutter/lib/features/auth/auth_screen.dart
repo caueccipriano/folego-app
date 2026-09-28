@@ -11,6 +11,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import '../../l10n/app_localizations.dart';
+import '../profile/help_faq_screen.dart';
 import 'auth_validation.dart';
 import 'auth_widgets.dart';
 
@@ -234,6 +235,22 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0 &&
+              (_view == _AuthView.login || _view == _AuthView.signUp || _view == _AuthView.recovery)
+          ? SafeArea(
+              top: false,
+              child: Material(
+                elevation: 4,
+                child: AnimatedBuilder(
+                  animation: Listenable.merge(<Listenable>[
+                    _firstNameFocus, _lastNameFocus, _emailFocus,
+                    _confirmEmailFocus, _passwordFocus, _confirmPasswordFocus,
+                  ]),
+                  builder: (context, _) => _keyboardToolbar(),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -244,6 +261,42 @@ class _AuthScreenState extends State<AuthScreen> {
             return _buildCompact(context);
           },
         ),
+      ),
+    );
+  }
+
+  Widget _keyboardToolbar() {
+    final nodes = <FocusNode>[
+      if (_isSignUp) _firstNameFocus,
+      if (_isSignUp) _lastNameFocus,
+      _emailFocus,
+      if (_isSignUp) _confirmEmailFocus,
+      if (_view != _AuthView.recovery) _passwordFocus,
+      if (_isSignUp) _confirmPasswordFocus,
+    ];
+    final index = nodes.indexWhere((node) => node.hasFocus);
+    return Semantics(
+      label: 'Controles do teclado',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          IconButton(
+            tooltip: 'Campo anterior',
+            onPressed: index > 0 ? () => nodes[index - 1].requestFocus() : null,
+            icon: const Icon(Icons.keyboard_arrow_up),
+          ),
+          IconButton(
+            tooltip: 'Próximo campo',
+            onPressed: index >= 0 && index < nodes.length - 1
+                ? () => nodes[index + 1].requestFocus() : null,
+            icon: const Icon(Icons.keyboard_arrow_down),
+          ),
+          TextButton.icon(
+            onPressed: () => FocusScope.of(context).unfocus(),
+            icon: const Icon(Icons.keyboard_hide_outlined),
+            label: const Text('Fechar teclado'),
+          ),
+        ],
       ),
     );
   }
@@ -264,6 +317,7 @@ class _AuthScreenState extends State<AuthScreen> {
             _CompactIntro(view: _view),
             const SizedBox(height: 28),
             _buildAuthContent(context),
+
           ],
         ),
       ),
@@ -365,7 +419,20 @@ class _AuthScreenState extends State<AuthScreen> {
                 color: secondary,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const HelpFaqScreen()),
+                ),
+                icon: const Icon(Icons.help_outline_rounded, size: 18),
+                label: Text(Localizations.localeOf(context).languageCode == 'en'
+                    ? 'Help and frequently asked questions'
+                    : 'Ajuda e perguntas frequentes'),
+              ),
+            ),
+            const SizedBox(height: 16),
             if (_isSignUp) ...[
               AuthTextField(
                 controller: _firstNameController,
@@ -612,6 +679,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   });
                 },
           child: Text(l10n.authWrongEmail),
+        ),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HelpFaqScreen())),
+          icon: const Icon(Icons.help_outline),
+          label: Text(Localizations.localeOf(context).languageCode == 'en' ? 'Need help receiving your email?' : 'Precisa de ajuda para receber o e-mail?'),
         ),
         TextButton(
           onPressed: _resending ? null : () => _backToLogin(),

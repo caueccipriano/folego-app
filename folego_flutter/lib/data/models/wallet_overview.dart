@@ -21,6 +21,16 @@ class WalletOverview {
       .where((account) => account.isBenefit)
       .toList(growable: false);
 
+  /// Funds that belong to the user but are intentionally not spendable.
+  double get protectedOwnCash => paymentAccounts
+      .where((account) => account.isOwned && !account.availableForSpending)
+      .fold<double>(0, (sum, account) => sum + account.balance);
+
+  /// Money held on behalf of others is never the user's reserve or net worth.
+  double get thirdPartyCash => paymentAccounts
+      .where((account) => account.isThirdParty)
+      .fold<double>(0, (sum, account) => sum + account.balance);
+
   factory WalletOverview.fromJson(Map<String, dynamic> json) {
     List<Map<String, dynamic>> list(String key) {
       final value = json[key];
@@ -78,6 +88,7 @@ class WalletAccount {
     required this.availableForSpending,
     required this.balance,
     this.institution,
+    this.ownershipType = 'self',
   });
 
   static const benefitType = 'benefit';
@@ -88,7 +99,10 @@ class WalletAccount {
   final String type;
   final bool availableForSpending;
   final double balance;
+  final String ownershipType;
 
+  bool get isOwned => ownershipType == 'self';
+  bool get isThirdParty => ownershipType == 'third_party';
   bool get isBenefit => type == benefitType;
   bool get isCashAccount => !isBenefit;
 
@@ -100,6 +114,7 @@ class WalletAccount {
       type: json['type'] as String,
       availableForSpending:
           json['available_for_spending'] as bool? ?? false,
+      ownershipType: json['ownership_type'] as String? ?? 'self',
       balance: _number(json['balance']),
     );
   }

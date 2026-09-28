@@ -11,7 +11,7 @@ class SubscriptionService {
   final SupabaseClient _client;
 
   static const entitlementId = 'premium';
-  static const monthlyPriceLabel = 'R\$ 9,90/mês';
+  static const monthlyPriceLabel = 'R\$ 14,90/mês';
   static const trialLabel = '7 dias grátis';
   static const androidApiKey =
       String.fromEnvironment('REVENUECAT_ANDROID_API_KEY');
@@ -84,6 +84,23 @@ class SubscriptionService {
 
     if (_client.auth.currentUser == null) {
       return const SubscriptionAccess(kind: SubscriptionAccessKind.free);
+    }
+
+    // The web/PWA cannot use native RevenueCat SDK; rely on server-verified
+    // store events instead of accepting client-supplied premium flags.
+    try {
+      final store = _firstRow(await _client.rpc('get_my_store_subscription'));
+      if (store?['status'] == 'active') {
+        final expiresAt = _parseDate(store?['expires_at'] as String?);
+        if (expiresAt == null || expiresAt.isAfter(DateTime.now())) {
+          return SubscriptionAccess(
+            kind: SubscriptionAccessKind.premium,
+            expiresAt: expiresAt,
+          );
+        }
+      }
+    } catch (_) {
+      // A temporary backend error must not crash the paywall.
     }
 
     try {

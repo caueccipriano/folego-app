@@ -91,23 +91,23 @@ abstract final class AppTypography {
       ),
       bodyLarge: GoogleFonts.manrope(
         textStyle: manrope.bodyLarge,
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: FontWeight.w400,
-        height: 1.45,
+        height: 1.48,
         color: primaryText,
       ),
       bodyMedium: GoogleFonts.manrope(
         textStyle: manrope.bodyMedium,
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
-        height: 1.45,
+        height: 1.48,
         color: primaryText,
       ),
       bodySmall: GoogleFonts.manrope(
         textStyle: manrope.bodySmall,
         fontSize: 12,
         fontWeight: FontWeight.w400,
-        height: 1.40,
+        height: 1.48,
         color: secondaryText,
       ),
       labelLarge: GoogleFonts.manrope(
@@ -119,9 +119,9 @@ abstract final class AppTypography {
       ),
       labelMedium: GoogleFonts.manrope(
         textStyle: manrope.labelMedium,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
-        height: 1.20,
+        height: 1.28,
         color: secondaryText,
       ),
       labelSmall: GoogleFonts.manrope(
@@ -169,12 +169,28 @@ abstract final class AppTypography {
     double fontSize = 52,
     Color? color,
   }) {
+    // Unbounded at tiny sizes with aggressive negative tracking produces
+    // overlapping glyphs in iOS WebKit (visually like struck-through amounts).
+    // Use the UI font for compact currency and reserve display type for KPIs.
+    if (fontSize < 20) {
+      return GoogleFonts.manrope(
+        textStyle: Theme.of(context).textTheme.bodyMedium,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+        letterSpacing: 0,
+        fontFeatures: const [FontFeature.tabularFigures()],
+        decoration: TextDecoration.none,
+        color: color,
+      );
+    }
     return GoogleFonts.unbounded(
       textStyle: Theme.of(context).textTheme.displayLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      height: .98,
-      letterSpacing: -1.4,
+      height: 1.15,
+      letterSpacing: fontSize < 30 ? -.3 : -.8,
+      decoration: TextDecoration.none,
       color: color,
     );
   }

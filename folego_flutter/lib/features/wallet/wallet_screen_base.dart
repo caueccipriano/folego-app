@@ -346,12 +346,19 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildPositionSummary() {
     final summary = _overview!.summary;
+    final reservedCash = _overview!.protectedOwnCash;
+    final thirdPartyCash = _overview!.thirdPartyCash;
+    final custodyNote = thirdPartyCash > 0
+        ? '${Formatters.money(thirdPartyCash)} de terceiros · fora do seu total'
+        : null;
     final metrics = [
       _PositionMetric(
         label: 'disponível agora',
         value: summary.availableCash,
         icon: AppIcons.account,
-        subtitle: '${Formatters.money(summary.totalCash)} no total das contas',
+        subtitle: reservedCash > 0
+            ? '${Formatters.money(summary.totalCash)} seu total · ${Formatters.money(reservedCash)} seus guardados'
+            : '${Formatters.money(summary.totalCash)} no total das suas contas',
       ),
       _PositionMetric(
         label: 'benefícios',
@@ -378,7 +385,11 @@ class _WalletScreenState extends State<WalletScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PositionMetricCard(metric: metrics.first, emphasized: true),
+              _PositionMetricCard(
+                metric: metrics.first,
+                emphasized: true,
+                note: custodyNote,
+              ),
               const SizedBox(height: spacing),
               Row(
                 children: [
@@ -402,7 +413,10 @@ class _WalletScreenState extends State<WalletScreen> {
               .map(
                 (metric) => SizedBox(
                   width: width,
-                  child: _PositionMetricCard(metric: metric),
+                  child: _PositionMetricCard(
+                    metric: metric,
+                    note: identical(metric, metrics.first) ? custodyNote : null,
+                  ),
                 ),
               )
               .toList(growable: false),
@@ -476,28 +490,52 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildAccounts() {
-    final accounts = _overview!.paymentAccounts;
-    return _WalletSection(
-      title: 'suas contas',
-      description: 'saldo, reserva e dinheiro realmente disponível',
-      child: accounts.isEmpty
-          ? _WalletEmpty(
-              icon: AppIcons.account,
-              title: 'nenhuma conta por aqui',
-              description: 'adicione sua primeira conta para acompanhar o saldo',
-              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
-              onAction: widget.onAddRequested,
+    final ownAccounts = _overview!.paymentAccounts
+        .where((account) => account.isOwned)
+        .toList(growable: false);
+    final thirdPartyAccounts = _overview!.paymentAccounts
+        .where((account) => account.isThirdParty)
+        .toList(growable: false);
+
+    _ResponsiveWalletGrid accountGrid(List<WalletAccount> accounts) {
+      return _ResponsiveWalletGrid(
+        children: accounts
+            .map(
+              (account) => _AccountCard(
+                account: account,
+                onTap: () => _openAccount(account),
+              ),
             )
-          : _ResponsiveWalletGrid(
-              children: accounts
-                  .map(
-                    (account) => _AccountCard(
-                      account: account,
-                      onTap: () => _openAccount(account),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
+            .toList(growable: false),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _WalletSection(
+          title: 'suas contas',
+          description: 'seu saldo, suas reservas e dinheiro disponível',
+          child: ownAccounts.isEmpty
+              ? _WalletEmpty(
+                  icon: AppIcons.account,
+                  title: 'nenhuma conta pessoal por aqui',
+                  description: 'adicione sua primeira conta para acompanhar o saldo',
+                  actionLabel:
+                      widget.onAddRequested == null ? null : 'adicionar à carteira',
+                  onAction: widget.onAddRequested,
+                )
+              : accountGrid(ownAccounts),
+        ),
+        if (thirdPartyAccounts.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _WalletSection(
+            title: 'dinheiro de terceiros',
+            description: 'valores sob sua guarda, fora do seu patrimônio e do disponível',
+            child: accountGrid(thirdPartyAccounts),
+          ),
+        ],
+      ],
     );
   }
 
@@ -646,9 +684,14 @@ class _PositionMetric {
 }
 
 class _PositionMetricCard extends StatelessWidget {
-  const _PositionMetricCard({required this.metric, this.emphasized = false});
+  const _PositionMetricCard({
+    required this.metric,
+    this.emphasized = false,
+    this.note,
+  });
   final _PositionMetric metric;
   final bool emphasized;
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -705,11 +748,23 @@ class _PositionMetricCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               metric.subtitle!,
-              maxLines: 1,
+              maxLines: emphasized || note != null ? 2 : 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.label(
                 context,
                 fontSize: 9,
+                color: secondary,
+              ),
+            ),
+          ],
+          if (note != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              note!,
+              maxLines: 2,
+              style: AppTypography.label(
+                context,
+                fontSize: 10,
                 color: secondary,
               ),
             ),
@@ -856,9 +911,11 @@ class _AccountCard extends StatelessWidget {
             children: [
               _StatusPill(label: 'ativa', color: positive),
               _StatusPill(
-                label: account.availableForSpending
-                    ? 'entra no saldo disponível'
-                    : 'saldo protegido',
+                label: account.isThirdParty
+                    ? 'dinheiro de terceiros'
+                    : account.availableForSpending
+                        ? 'entra no saldo disponível'
+                        : 'seu saldo protegido',
               ),
             ],
           ),

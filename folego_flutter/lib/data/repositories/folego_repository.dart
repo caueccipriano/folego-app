@@ -19,6 +19,9 @@ class FolegoRepository {
 
   final SupabaseClient _client;
 
+  /// Auth identity from this repository's client, without global initialization.
+  String? get currentUserId => _client.auth.currentUser?.id;
+
   // ---------------------------------------------------------------------------
   // ESPAÇO / PERFIL
   // ---------------------------------------------------------------------------

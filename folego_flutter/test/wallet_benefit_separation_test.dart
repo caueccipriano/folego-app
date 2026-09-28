@@ -53,6 +53,56 @@ void main() {
       expect(overview.benefits.single.isBenefit, isTrue);
     });
 
+    test('third-party custody is not counted as the user\'s own reserve', () {
+      final overview = WalletOverview.fromJson({
+        'summary': {
+          'total_cash': 650,
+          'available_cash': 150,
+          'total_benefit': 0,
+          'total_card_invoice': 0,
+          'total_debt_remaining': 0,
+        },
+        'accounts': [
+          {
+            'id': 'own-investment',
+            'name': 'Mercado Pago',
+            'type': 'investment',
+            'ownership_type': 'self',
+            'available_for_spending': false,
+            'balance': 500,
+          },
+          {
+            'id': 'third-party-reserve',
+            'name': 'Third-party custody',
+            'type': 'reserve',
+            'ownership_type': 'third_party',
+            'available_for_spending': false,
+            'balance': 500,
+          },
+          {
+            'id': 'checking',
+            'name': 'Checking account',
+            'type': 'checking',
+            'ownership_type': 'self',
+            'available_for_spending': true,
+            'balance': 150,
+          },
+        ],
+        'cards': const [],
+        'debts': const [],
+        'installments': const [],
+      });
+
+      expect(overview.summary.totalCash, 650);
+      expect(overview.protectedOwnCash, 500);
+      expect(overview.thirdPartyCash, 500);
+      expect(overview.paymentAccounts, hasLength(3));
+      expect(overview.paymentAccounts[0].isOwned, isTrue);
+      expect(overview.paymentAccounts[1].isThirdParty, isTrue);
+      expect(overview.paymentAccounts[1].isOwned, isFalse);
+      expect(overview.paymentAccounts[2].isThirdParty, isFalse);
+    });
+
     test('benefit remains a WalletAccount and never becomes a credit card', () {
       const benefit = WalletAccount(
         id: 'benefit-1',

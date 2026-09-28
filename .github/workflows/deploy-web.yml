@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/transactions-recurring
+      - feat/financial-intelligence-20260926
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/deploy-web.yml'
@@ -60,7 +61,9 @@ jobs:
           flutter test \
             test/app_breakpoints_test.dart \
             test/auth_widgets_test.dart \
-            test/auth_responsive_smoke_test.dart
+            test/auth_responsive_smoke_test.dart \
+            test/wallet_benefit_separation_test.dart \
+            test/premium_release_contract_test.dart
 
       - name: Flutter public auth integration smoke
         run: |

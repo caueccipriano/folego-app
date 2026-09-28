@@ -11,6 +11,8 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../data/models/financial_space.dart';
+import '../../data/models/onboarding_state.dart';
+import '../onboarding/setup_checklist.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
@@ -41,8 +43,10 @@ class HomeShell extends StatefulWidget {
     required this.space,
     required this.repository,
     this.realtimeEventSource,
+    this.onboardingState,
   });
 
+  final OnboardingState? onboardingState;
   final FinancialSpace space;
   final FolegoRepository repository;
   final AppRealtimeEventSource? realtimeEventSource;
@@ -53,6 +57,8 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 0;
+  bool _setupShown = false;
+  OnboardingState? _setupState;
   int _projectionRequestToken = 0;
   late final RealtimeInvalidationCoordinator _realtimeCoordinator;
   late final RealtimeSessionController _realtimeSession;
@@ -63,6 +69,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    _setupState = widget.onboardingState;
+    if (_setupState != null && !_setupState!.onboardingCompleted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showSetup());
+    }
     _index = homeIndexForPushRoute(Uri.base.queryParameters['push_route']);
     _realtimeCoordinator = RealtimeInvalidationCoordinator();
     _realtimeSession = RealtimeSessionController(
@@ -131,6 +141,39 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _refreshSetup() async {
+    try {
+      final state = await widget.repository.getOnboardingState(widget.space.id);
+      if (!mounted) return;
+      setState(() => _setupState = state);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não foi possível atualizar agora. Tente novamente.')));
+    }
+  }
+
+  void _showSetup() {
+    if (!mounted || _setupShown || _setupState == null) return;
+    _setupShown = true;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: .86,
+        child: StatefulBuilder(builder: (context, redraw) => SetupChecklist(
+          state: _setupState!,
+          onNavigate: (tab) {
+            Navigator.of(sheetContext).pop();
+            setState(() => _index = tab);
+          },
+          onRefresh: () async { await _refreshSetup(); if (sheetContext.mounted) redraw(() {}); },
+          onDismiss: () => Navigator.of(sheetContext).pop(),
+        )),
+      ),
+    ).whenComplete(() { _setupShown = false; });
+  }
+
   void _openProjection() {
     setState(() {
       _index = 2;
@@ -192,6 +235,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             client: Supabase.instance.client,
             repository: widget.repository,
             spaceId: widget.space.id,
+            onResumeSetup: _setupState != null && !_setupState!.onboardingCompleted
+                ? () { _refreshSetup().then((_) { if (mounted) _showSetup(); }); }
+                : null,
           ),
         ];
 

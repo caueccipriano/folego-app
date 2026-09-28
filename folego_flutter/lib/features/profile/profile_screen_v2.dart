@@ -27,6 +27,7 @@ import '../auth/auth_validation.dart';
 import '../premium/premium_screen.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
+import 'help_faq_screen.dart';
 import 'legal_privacy_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
@@ -39,11 +40,13 @@ class ProfileScreen extends StatefulWidget {
     required this.client,
     required this.repository,
     required this.spaceId,
+    this.onResumeSetup,
   });
 
   final SupabaseClient client;
   final FolegoRepository repository;
   final String spaceId;
+  final VoidCallback? onResumeSetup;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -594,6 +597,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
+                if (widget.onResumeSetup != null)
+                  _SettingsRow(
+                    icon: Icons.rocket_launch_outlined,
+                    title: Localizations.localeOf(context).languageCode == 'en' ? 'Continue setting up' : 'Continuar configuração',
+                    subtitle: Localizations.localeOf(context).languageCode == 'en' ? 'Pick up where you left off' : 'Retome de onde parou',
+                    onTap: widget.onResumeSetup!,
+                  ),
                 _SettingsRow(
                   icon: AppIcons.edit,
                   title: 'alterar e-mail',
@@ -601,6 +611,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _identity.email,
                   enabled: !_accountActionRunning && !_deletingAccount,
                   onTap: _changeEmail,
+                ),
+                _SettingsRow(
+                  icon: Icons.help_outline_rounded,
+                  title: 'ajuda e perguntas frequentes',
+                  subtitle: 'como registrar recebimentos, gastos e começar',
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HelpFaqScreen())),
                 ),
                 _SettingsRow(
                   icon: AppIcons.privacy,

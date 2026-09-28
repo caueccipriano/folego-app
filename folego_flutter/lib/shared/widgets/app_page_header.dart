@@ -28,7 +28,7 @@ class AppPageHeader extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final compact = MediaQuery.sizeOf(context).width < 600;
     final titleSize = compact ? 26.0 : 28.0;
-    final subtitleSize = compact ? 12.0 : 13.0;
+    final subtitleSize = compact ? 14.0 : 15.0;
     final leadingIndent = compact ? 52.0 : 56.0;
 
     Widget titleRow({required bool includeTrailing}) {
@@ -81,7 +81,7 @@ class AppPageHeader extends StatelessWidget {
           children: [
             titleRow(includeTrailing: !stackTrailing),
             if (subtitle?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               subtitleText(),
             ],
             if (stackTrailing) ...[

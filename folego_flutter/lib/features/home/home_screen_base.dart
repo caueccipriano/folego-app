@@ -1,3 +1,9 @@
+import '../../core/intelligence/financial_insights_service.dart';
+import '../../widgets/monthly_insights_card.dart';
+import '../../widgets/weekly_insights_card.dart';
+import '../../core/intelligence/purchase_scenario_service.dart';
+import '../../widgets/purchase_simulator_card.dart';
+import '../../widgets/financial_ai_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -215,11 +221,11 @@ class _HomeScreenState extends State<HomeScreen> {
           afterSpendable != null &&
           (beforeSpendable - afterSpendable).abs() >= .01;
       final message = changed
-          ? '${type == 'expense' ? 'gasto' : 'receita'} salvo · disponível: '
+          ? '${type == 'expense' ? 'gasto' : 'dinheiro recebido'} salvo · disponível: '
               '${Formatters.money(beforeSpendable)} → ${Formatters.money(afterSpendable)}'
           : type == 'expense'
               ? 'gasto salvo · seu Fôlego foi atualizado'
-              : 'receita salva · seu Fôlego foi atualizado';
+              : 'Dinheiro recebido! Seu Fôlego foi atualizado.';
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -292,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final latest = _latestTransaction();
 
-    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 88;
+    final bottomListPadding = MediaQuery.paddingOf(context).bottom + 140;
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
@@ -319,6 +325,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
+    );
+    final intelligenceCard = MonthlyInsightsCard(
+      service: FinancialInsightsService(widget.repository),
+      spaceId: widget.space.id,
+      month: DateTime.now(),
+    );
+    final weeklyIntelligenceCard = WeeklyInsightsCard(
+      service: FinancialInsightsService(widget.repository),
+      spaceId: widget.space.id,
+    );
+    final isPrivateAiTester = widget.repository.currentUserId ==
+        '5de8e34a-c6f5-4667-8fe0-2b4b89b42880';
+    final financialAiCard = FinancialAiCard(
+      service: FinancialInsightsService(widget.repository),
+      spaceId: widget.space.id,
+    );
+    final purchaseSimulator = PurchaseSimulatorCard(
+      service: PurchaseScenarioService(widget.repository),
+      spaceId: widget.space.id,
     );
     final projectionInsight = HomeProjectionInsightCard(
       projection: _projection,
@@ -361,12 +386,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   quickActions,
                   const SizedBox(height: 12),
                   monthlyMoney,
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   upcoming,
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   projectionInsight,
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   latestSection,
+                  const SizedBox(height: 16),
+                  intelligenceCard,
+                  const SizedBox(height: 10),
+                  weeklyIntelligenceCard,
+                  const SizedBox(height: 10),
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: ExpansionTile(
+                      key: const ValueKey('home-purchase-tools'),
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+                      title: const Text('Simular uma compra'),
+                      subtitle: const Text('Veja o impacto antes de gastar'),
+                      childrenPadding: const EdgeInsets.only(bottom: 8),
+                      children: [purchaseSimulator],
+                    ),
+                  ),
+                  if (isPrivateAiTester) ...[
+                    const SizedBox(height: 8),
+                    Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: ExpansionTile(
+                        key: const ValueKey('home-ai-tools'),
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+                        title: const Text('Pergunte ao Fôlego ✨'),
+                        subtitle: const Text('Sua análise financeira com IA'),
+                        childrenPadding: const EdgeInsets.only(bottom: 8),
+                        children: [financialAiCard],
+                      ),
+                    ),
+                  ],
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
                   if (pulse is! SizedBox) ...[
@@ -384,6 +439,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 22),
                   monthlyMoney,
+                  const SizedBox(height: 14),
+                  intelligenceCard,
+                  const SizedBox(height: 14),
+                  weeklyIntelligenceCard,
+                  const SizedBox(height: 14),
+                  purchaseSimulator,
+                  const SizedBox(height: 14),
+
+                  if (isPrivateAiTester) financialAiCard,
                   const SizedBox(height: 14),
                   projectionInsight,
                   const SizedBox(height: 24),
@@ -420,6 +484,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             monthlyMoney,
                             const SizedBox(height: 16),
+                            intelligenceCard,
+                            const SizedBox(height: 16),
+                            weeklyIntelligenceCard,
+                            const SizedBox(height: 16),
+                            purchaseSimulator,
+                            const SizedBox(height: 16),
+
+                            if (isPrivateAiTester) financialAiCard,
+                            const SizedBox(height: 16),
                             projectionInsight,
                           ],
                         ),
@@ -452,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final background = AppColors.background(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness).withValues(alpha: .14);
-    final bottom = MediaQuery.paddingOf(context).bottom + 88;
+    final bottom = MediaQuery.paddingOf(context).bottom + 140;
 
     Widget block(double height, {double? width, double radius = 18}) => Align(
           alignment: Alignment.centerLeft,
@@ -678,8 +751,8 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: _QuickAction(
-            label: 'gasto',
-            semanticLabel: 'registrar gasto',
+            label: 'Gastei',
+            semanticLabel: 'Gastei dinheiro: registrar um gasto',
             icon: AppIcons.expense,
             background: AppColors.lime,
             foreground: AppColors.iconOnLime,
@@ -689,8 +762,8 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: _QuickAction(
-            label: 'receita',
-            semanticLabel: 'registrar receita',
+            label: 'Recebi',
+            semanticLabel: 'Recebi dinheiro: registrar salário, Pix ou renda extra',
             icon: AppIcons.income,
             background: surface,
             foreground: positive,

@@ -422,7 +422,8 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final protected = walletAccountTypeIsProtected(_type);
+    final protected = walletAccountTypeIsProtected(_type) ||
+        (widget.account?.isThirdParty ?? false);
     return Material(
       color: AppColors.surface(brightness),
       borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -487,6 +488,13 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
                   icon: AppIcons.info,
                   text: 'para corrigir o saldo, registre um ajuste. assim o histórico continua consistente.',
                 ),
+                if (widget.account?.isThirdParty ?? false) ...[
+                  const SizedBox(height: 12),
+                  _InfoNote(
+                    icon: AppIcons.info,
+                    text: 'esta conta guarda dinheiro de terceiros. seu saldo não entra no seu patrimônio nem no dinheiro disponível.',
+                  ),
+                ],
               ],
               if (!_benefit) ...[
                 const SizedBox(height: 12),
@@ -496,9 +504,11 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
                   onChanged: protected ? null : (value) => setState(() => _available = value),
                   title: const Text('incluir no dinheiro disponível'),
                   subtitle: Text(
-                    protected
-                        ? '${walletAccountTypeLabel(_type)} fica separado do dinheiro livre para gastar'
-                        : 'ative quando esse saldo realmente puder ser usado nos gastos do dia a dia',
+                    widget.account?.isThirdParty ?? false
+                        ? 'dinheiro de terceiros nunca fica disponível para seus gastos'
+                        : protected
+                            ? '${walletAccountTypeLabel(_type)} fica separado do dinheiro livre para gastar'
+                            : 'ative quando esse saldo realmente puder ser usado nos gastos do dia a dia',
                   ),
                 ),
               ],

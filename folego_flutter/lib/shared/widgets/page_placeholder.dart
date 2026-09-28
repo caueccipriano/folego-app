@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'section_card.dart';
+import 'app_empty_state.dart';
+import 'app_page_header.dart';
 
+/// Placeholder consistente com as demais páginas e seus estados vazios.
 class PagePlaceholder extends StatelessWidget {
   const PagePlaceholder({
     super.key,
@@ -20,31 +22,12 @@ class PagePlaceholder extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 18),
-          SectionCard(
-            child: Column(
-              children: [
-                Icon(
-                  icon,
-                  size: 46,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(height: 1.45),
-                ),
-              ],
-            ),
+          AppPageHeader(title: title),
+          const SizedBox(height: 24),
+          AppEmptyState(
+            icon: icon,
+            title: title,
+            description: description,
           ),
         ],
       ),

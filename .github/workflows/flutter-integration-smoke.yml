@@ -51,4 +51,11 @@ jobs:
             --driver=test_driver/integration_test.dart \
             --target=integration_test/auth_public_flow_test.dart \
             -d web-server \
-            --browser-name=chrome
+            --browser-name=chrome \
+            --verbose
+
+      - name: Show browser driver diagnostics on failure
+        if: failure()
+        run: |
+          echo 'ChromeDriver diagnostics:'
+          tail -n 120 /tmp/chromedriver.log || true

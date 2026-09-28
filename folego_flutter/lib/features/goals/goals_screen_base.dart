@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
+import '../../core/intelligence/goal_pace.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -152,6 +153,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   GoalEmptyState(onCreate: _createGoal)
                 else ...[
                   _SummaryCard(goals: _active),
+                  if (_active.any((goal) => GoalPace.forGoal(goal, DateTime.now()) != null)) ...[
+                    const SizedBox(height: 12),
+                    _GoalGuidance(goals: _active),
+                  ],
                   const SizedBox(height: 28),
                   AppSectionHeader(
                     title: 'metas ativas',
@@ -378,6 +383,60 @@ class _SmallEmpty extends StatelessWidget {
         style: AppTypography.button(
           context,
           color: AppColors.primaryText(brightness),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalGuidance extends StatelessWidget {
+  const _GoalGuidance({required this.goals});
+  final List<FinancialGoal> goals;
+
+  @override
+  Widget build(BuildContext context) {
+    final en = Localizations.localeOf(context).languageCode == 'en';
+    final entries = [
+      for (final goal in goals)
+        if (GoalPace.forGoal(goal, DateTime.now()) case final pace?)
+          (goal: goal, pace: pace),
+    ];
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(en ? 'Your goals, month by month' : 'Suas metas, mês a mês',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(en
+                ? 'Suggested contributions based on each target date.'
+                : 'Referências de aportes calculadas pela data de cada meta.'),
+            for (final entry in entries.take(3))
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(entry.goal.name),
+                subtitle: Text(en
+                    ? '${entry.pace.monthsRemaining} calendar months including this month'
+                    : '${entry.pace.monthsRemaining} meses corridos, incluindo o atual'),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(Formatters.money(entry.pace.monthlyContribution),
+                        style: Theme.of(context).textTheme.titleSmall),
+                    Text(en ? 'per month' : 'por mês',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            Text(en
+                ? 'Illustrative pace only. Contributions are not scheduled and affordability is not guaranteed.'
+                : 'Referência ilustrativa. Nenhum aporte é agendado e a disponibilidade financeira não é garantida.',
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
       ),
     );

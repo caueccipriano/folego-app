@@ -41,8 +41,8 @@ class AppLoadingState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTypography.body(
                   context,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                   color: secondary,
                 ),
               ),

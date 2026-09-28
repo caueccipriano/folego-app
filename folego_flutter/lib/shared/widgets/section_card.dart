@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_radii.dart';
+
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -15,7 +17,7 @@ class SectionCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         side: BorderSide(color: Theme.of(context).dividerColor),
       ),
       child: Padding(padding: padding, child: child),

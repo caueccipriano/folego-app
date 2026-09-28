@@ -36,6 +36,22 @@ void main() {
     expect(profile, contains('_openNotificationSettings'));
   });
 
+  test('approved launch price and web checkout safeguards are consistent', () {
+    final subscription =
+        File('lib/core/subscriptions/subscription_service.dart')
+            .readAsStringSync();
+    final premium =
+        File('lib/features/premium/premium_screen.dart')
+            .readAsStringSync();
+
+    expect(subscription, contains('14,90/mês'));
+    expect(subscription, contains('!kIsWeb'));
+    expect(subscription, contains('throw StateError('));
+    expect(premium, contains('SubscriptionService.isConfigured'));
+    expect(premium, contains('onPressed: storeReady && !_running'));
+    expect(premium, contains('premiumStoreOnly'));
+  });
+
   test('authentication does not log full errors or stack traces', () {
     final auth =
         File('lib/features/auth/auth_screen.dart').readAsStringSync();

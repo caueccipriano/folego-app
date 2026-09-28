@@ -404,7 +404,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       final timeTile = find.byKey(const ValueKey('notification-time'));
-      await tester.ensureVisible(timeTile);
+      await tester.scrollUntilVisible(
+        timeTile,
+        350,
+        scrollable: find.descendant(
+          of: find.byKey(const ValueKey('notification-settings-list')),
+          matching: find.byType(Scrollable),
+        ).first,
+        maxScrolls: 30,
+      );
       await tester.pumpAndSettle();
       await tester.tap(timeTile);
       await tester.pumpAndSettle();

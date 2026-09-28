@@ -1243,7 +1243,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                   const SizedBox(width: 7),
                   _quickFilterChip(
                     context,
-                    label: 'receitas',
+                    label: 'recebidos',
                     selected: _isIncomeQuickFilter,
                     onTap: () => onFiltersChanged(
                       filters.copyWith(
@@ -1319,7 +1319,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                   : 'nenhum lançamento ainda',
               description: filtered
                   ? 'tente ajustar os filtros ou a busca'
-                  : 'seus gastos, receitas e movimentações aparecerão aqui',
+                  : 'Seu histórico começa aqui. Registre seu primeiro dinheiro recebido ou gasto.',
               action: filtered
                   ? TextButton.icon(
                       onPressed: onClearFilters,
@@ -1335,13 +1335,13 @@ class _TransactionsTabV3 extends StatelessWidget {
                           key: const ValueKey('transactions-empty-add-expense'),
                           onPressed: onRegisterExpense,
                           icon: const Icon(AppIcons.expense, size: 17),
-                          label: const Text('registrar gasto'),
+                          label: const Text('Gastei dinheiro'),
                         ),
                         OutlinedButton.icon(
                           key: const ValueKey('transactions-empty-add-income'),
                           onPressed: onRegisterIncome,
                           icon: const Icon(AppIcons.income, size: 17),
-                          label: const Text('registrar receita'),
+                          label: const Text('Recebi dinheiro'),
                         ),
                       ],
                     ),
@@ -1399,8 +1399,8 @@ class _TransactionsTabV3 extends StatelessWidget {
                       group,
                       style: AppTypography.label(
                         context,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.secondaryText(
                           Theme.of(context).brightness,
                         ),
@@ -1458,8 +1458,8 @@ class _TransactionsTabV3 extends StatelessWidget {
       ),
       labelStyle: AppTypography.label(
         context,
-        fontSize: 10,
-        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        fontSize: 12,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
         color: selected ? accent : AppColors.secondaryText(brightness),
       ),
     );
@@ -1693,7 +1693,7 @@ class _TransactionCardV3 extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
                           context,
-                          fontSize: 11,
+                          fontSize: 13,
                           color: secondary,
                         ),
                       ),

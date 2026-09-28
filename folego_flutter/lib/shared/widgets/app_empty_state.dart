@@ -59,25 +59,25 @@ class AppEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: primary,
             ),
           ),
           if (description?.trim().isNotEmpty == true) ...[
-            const SizedBox(height: 5),
+            const SizedBox(height: 8),
             Text(
               description!,
               textAlign: TextAlign.center,
               style: AppTypography.body(
                 context,
-                fontSize: 11,
+                fontSize: 14,
                 color: secondary,
               ),
             ),
           ],
           if (action != null) ...[
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             action!,
           ],
         ],

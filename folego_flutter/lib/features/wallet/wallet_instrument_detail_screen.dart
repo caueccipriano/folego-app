@@ -189,9 +189,11 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
                 value: walletAccountTypeLabel(_account.type),
                 supporting: benefit
                     ? 'não pode pagar fatura nem participar de transferências cash'
-                    : _account.availableForSpending
-                        ? 'incluída no dinheiro disponível'
-                        : 'saldo protegido do disponível',
+                    : _account.isThirdParty
+                        ? 'dinheiro de terceiros · fora do seu patrimônio'
+                        : _account.availableForSpending
+                            ? 'incluída no dinheiro disponível'
+                            : 'seu dinheiro protegido do disponível',
               ),
             ],
           ),

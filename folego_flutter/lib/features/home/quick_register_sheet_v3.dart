@@ -777,8 +777,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                   _isRecurring
                                       ? 'salvar recorrência'
                                       : _isExpense
-                                          ? 'registrar gasto'
-                                          : 'registrar receita',
+                                          ? 'Registrar gasto'
+                                          : 'Registrar dinheiro recebido',
                                 ),
                         ),
                       ],
@@ -798,7 +798,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isExpense ? 'novo gasto' : 'nova receita',
+                _isExpense ? 'Gastei dinheiro' : 'Recebi dinheiro',
                 style: AppTypography.section(
                   context,
                   fontSize: 20,
@@ -808,8 +808,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               const SizedBox(height: 4),
               Text(
                 _isExpense
-                    ? 'valor, categoria e pagamento. o resto é detalhe.'
-                    : 'valor, categoria e conta. pronto.',
+                    ? 'Informe o valor e como você pagou.'
+                    : 'Salário, Pix recebido ou renda extra: registre aqui.',
                 style: AppTypography.body(
                   context,
                   fontSize: 11,
@@ -1043,9 +1043,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     return TextField(
       controller: _description,
       textCapitalization: TextCapitalization.sentences,
-      decoration: const InputDecoration(
-        labelText: 'o que foi?',
-        hintText: 'ex.: almoço, mercado, curso',
+      decoration: InputDecoration(
+        labelText: _isExpense ? 'Em que você gastou?' : 'De onde veio o dinheiro?',
+        hintText: _isExpense ? 'Ex.: almoço, mercado, curso' : 'Ex.: salário, Pix recebido, renda extra',
       ),
     );
   }

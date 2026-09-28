@@ -133,15 +133,32 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (!access.hasPremium) ...[
+                      Text(
+                        Localizations.localeOf(context).languageCode == 'en'
+                            ? 'Your current plan: Fôlego Free'
+                            : 'Seu plano atual: Fôlego Free',
+                        style: AppTypography.body(context, fontSize: 13, color: secondary),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     Text(
-                      _accessLabel(access, l10n),
+                      access.hasPremium
+                          ? _accessLabel(access, l10n)
+                          : l10n.premiumPaidLabel,
                       style: AppTypography.section(context, fontSize: 18),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       access.hasPremium
                           ? _activeCopy(access, l10n)
-                          : '${SubscriptionService.trialLabel} · ${SubscriptionService.monthlyPriceLabel}',
+                          : storeReady
+                              ? (Localizations.localeOf(context).languageCode == 'en'
+                                  ? 'See the official store offer for the final price and any trial.'
+                                  : 'Confira o preço final e eventuais testes grátis na oferta oficial da loja.')
+                              : (Localizations.localeOf(context).languageCode == 'en'
+                                  ? 'Planned Brazil launch price: R\$ 14.90/month. No web checkout yet.'
+                                  : 'Preço previsto para lançamento no Brasil: ${SubscriptionService.monthlyPriceLabel}. Sem contratação web.'),
                       style: AppTypography.body(
                         context,
                         fontSize: 13,
@@ -170,6 +187,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             : null,
                         child: Text(l10n.premiumManage),
                       ),
+                    if (!storeReady && !access.hasPremium) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        Localizations.localeOf(context).languageCode == 'en'
+                            ? 'You can explore Premium features here. Subscription checkout is not available in this web preview.'
+                            : 'Você pode conhecer os recursos Premium aqui. A contratação não está disponível nesta versão web.',
+                        style: AppTypography.body(context, fontSize: 12, color: secondary),
+                      ),
+                    ],
                     if (storeReady) ...[
                       const SizedBox(height: 8),
                       TextButton(
