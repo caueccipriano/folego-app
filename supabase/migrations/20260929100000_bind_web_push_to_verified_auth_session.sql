@@ -48,6 +48,15 @@ ALTER TABLE public.web_push_subscriptions
   ADD COLUMN IF NOT EXISTS session_id uuid,
   ADD COLUMN IF NOT EXISTS session_bound_at timestamptz;
 
+-- Unbound old endpoints MUST NOT receive any financial notifications.
+-- This does not delete subscriptions, VAPID keys, financial records or
+-- notification preferences. The user's next authenticated opt-in upsert
+-- (which already sends disabled_at=null) rebinds/re-enables the endpoint.
+UPDATE public.web_push_subscriptions
+SET disabled_at=coalesce(disabled_at,now()),
+    updated_at=now()
+WHERE session_id IS NULL AND disabled_at IS NULL;
+
 -- Reject unauthenticated or forged session claims during any client
 -- subscription registration or key changes. service_role updates for
 -- dispatch delivery bookkeeping / disabling must continue to work.
@@ -120,15 +129,6 @@ BEFORE INSERT OR UPDATE OF
 ON public.web_push_subscriptions
 FOR EACH ROW
 EXECUTE FUNCTION private.bind_web_push_to_auth_session();
-
--- Unbound old endpoints MUST NOT receive any financial notifications.
--- This does not delete subscriptions, VAPID keys, financial records or
--- notification preferences. The user's next authenticated opt-in upsert
--- (which already sends disabled_at=null) rebinds/re-enables the endpoint.
-UPDATE public.web_push_subscriptions
-SET disabled_at=coalesce(disabled_at,now()),
-    updated_at=now()
-WHERE session_id IS NULL AND disabled_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS web_push_bound_active_session_idx
 ON public.web_push_subscriptions(user_id,session_id)
