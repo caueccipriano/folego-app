@@ -42,6 +42,11 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
       subtitle: Text(en ? 'Simulation only — no transaction or goal contribution is created'
           : 'Apenas simulação — nenhum lançamento ou aporte real é criado'),
       children: [
+        if (widget.preparation.guidanceNeedsReview)
+          Text(en
+              ? 'Caution: overdue obligations or incomplete agenda data make this simulation provisional. Review your records before making a decision.'
+              : 'Atenção: contas vencidas ou agenda incompleta tornam esta simulação provisória. Revise seus registros antes de decidir.',
+              style: TextStyle(color: Theme.of(context).colorScheme.error)),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: _forGoal,
@@ -104,7 +109,8 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
           Text(en
               ? 'Your existing schedule already shows a shortfall. Review scheduled bills independently of this simulation.'
               : 'Sua programação já apresenta falta de saldo. Revise as contas previstas independentemente desta simulação.'),
-        if (_purchase > 0 && firstNewShortfall == null && !alreadyNegative)
+        if (_purchase > 0 && firstNewShortfall == null && !alreadyNegative &&
+            !widget.preparation.guidanceNeedsReview)
           Text(en
               ? 'No new negative day found in the registered schedule.'
               : 'Nenhum novo dia negativo encontrado na programação cadastrada.'),
