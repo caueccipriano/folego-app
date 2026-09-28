@@ -158,6 +158,7 @@ class ProjectionResult {
     required this.asOfDate,
     required this.openingBalance,
     required this.hasProjectionInputs,
+    this.serverQuotaEnforced = false,
     required this.summary,
     required this.months,
     required this.variableIncomes,
@@ -168,6 +169,9 @@ class ProjectionResult {
   final DateTime asOfDate;
   final double openingBalance;
   final bool hasProjectionInputs;
+  /// True only when the backend already checked and metered this scenario.
+  /// Absent on older backends, where Flutter retains its legacy quota call.
+  final bool serverQuotaEnforced;
   final ProjectionSummary summary;
   final List<ProjectionMonth> months;
   final List<ProjectionVariableIncome> variableIncomes;
@@ -185,6 +189,7 @@ class ProjectionResult {
       asOfDate: DateTime.parse(json['as_of_date'] as String),
       openingBalance: _projectionNumber(json['opening_balance']),
       hasProjectionInputs: json['has_projection_inputs'] as bool? ?? false,
+      serverQuotaEnforced: json['simulation_quota_enforced'] as bool? ?? false,
       summary: ProjectionSummary.fromJson(rawSummary),
       months: rawMonths is List
           ? rawMonths
