@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../data/models/financial_space.dart';
@@ -153,7 +154,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         builder: (_) => FractionallySizedBox(
           heightFactor: .94,
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
             child: TransactionClassificationInbox(
               repository: widget.repository,
               spaceId: resolvedSpace.id,
