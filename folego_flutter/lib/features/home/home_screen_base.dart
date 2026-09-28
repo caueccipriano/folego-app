@@ -6,7 +6,6 @@ import '../../widgets/purchase_simulator_card.dart';
 import '../../widgets/financial_ai_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
