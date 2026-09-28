@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../data/models/category_item.dart';
@@ -135,8 +136,8 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
         decoration: BoxDecoration(
           color: background,
           borderRadius: widget.dialogMode
-              ? BorderRadius.circular(28)
-              : const BorderRadius.vertical(top: Radius.circular(30)),
+              ? BorderRadius.circular(AppRadii.sheet)
+              : BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
           border: widget.dialogMode
               ? Border.all(color: border)
               : Border(top: BorderSide(color: border)),
@@ -157,7 +158,7 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                           height: 4,
                           decoration: BoxDecoration(
                             color: border,
-                            borderRadius: BorderRadius.circular(99),
+                            borderRadius: BorderRadius.circular(AppRadii.pill),
                           ),
                         ),
                       ),
@@ -177,14 +178,14 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                                   color: primaryText,
                                 ),
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(height: 6),
                               Text(
                                 emptyQuery
                                     ? 'categorias e subcategorias'
                                     : '${results.length} resultado${results.length == 1 ? '' : 's'}',
                                 style: AppTypography.body(
                                   context,
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   color: secondaryText,
                                 ),
                               ),
