@@ -19,12 +19,13 @@ class FinancialInsightsService {
   }) async {
     final wallet = await repository.getWalletOverview(spaceId: spaceId);
     final agenda = await repository.getFinancialAgenda(
-      spaceId, startDate: DateTime(asOf.year, asOf.month, asOf.day),
+      spaceId, startDate: DateTime(asOf.year, asOf.month, asOf.day - 30),
       endDate: DateTime(asOf.year, asOf.month, asOf.day + 62),
       limit: 200,
     );
     return CashRunwayPreparation.fromOfficialData(
       wallet: wallet, agenda: agenda, asOf: asOf,
+      agendaMayBeTruncated: agenda.length >= 200,
     );
   }
 
