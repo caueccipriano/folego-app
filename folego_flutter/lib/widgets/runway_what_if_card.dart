@@ -13,6 +13,7 @@ class RunwayWhatIfCard extends StatefulWidget {
 class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
   double _purchase = 0;
   bool _forGoal = false;
+  DateTime? _selectedDate;
   @override
   Widget build(BuildContext context) {
     final runway = widget.preparation.runway;
@@ -21,9 +22,11 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
     final currency = NumberFormat.currency(
       locale: en ? 'en_US' : 'pt_BR', symbol: 'BRL',
     );
+    final selectedDate = _selectedDate ?? runway.days.first.date;
+    final dayKey = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final simulatedBalance = runway.balanceAtPayday - _purchase;
     final newlyAffected = runway.days.where((day) =>
-        day.closingBalance >= 0 && day.closingBalance - _purchase < 0).toList();
+        !day.date.isBefore(dayKey) && day.closingBalance >= 0 && day.closingBalance - _purchase < 0).toList();
     final firstNewShortfall = newlyAffected.isEmpty ? null : newlyAffected.first.date;
     final alreadyNegative = runway.firstNegativeDay != null;
     final date = DateFormat.yMd(en ? 'en_US' : 'pt_BR');
@@ -43,6 +46,21 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
             ? (en ? 'Hypothetical contribution' : 'Aporte hipotético')
             : (en ? 'Hypothetical purchase' : 'Compra hipotética')),
         Text(currency.format(_purchase)),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(en ? 'Simulation date' : 'Data da simulação'),
+          subtitle: Text(DateFormat.yMd(en ? 'en_US' : 'pt_BR').format(selectedDate)),
+          trailing: const Icon(Icons.calendar_month_outlined),
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: selectedDate,
+              firstDate: runway.days.first.date,
+              lastDate: runway.days.last.date,
+            );
+            if (picked != null && mounted) setState(() => _selectedDate = picked);
+          },
+        ),
         Slider(
           value: _purchase, min: 0, max: 2000, divisions: 40,
           label: currency.format(_purchase),
@@ -68,8 +86,8 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
               ? 'No new negative day found in the registered schedule.'
               : 'Nenhum novo dia negativo encontrado na programação cadastrada.'),
         Text(en
-            ? 'Assumes this amount leaves your cash accounts today and every other scheduled event stays unchanged. Does not update a goal. Excludes unregistered bills and reserved money.'
-            : 'Considera a saída desse valor das contas hoje, sem alterar os demais eventos. Não atualiza metas. Não inclui contas não cadastradas nem dinheiro reservado.',
+            ? 'Assumes this amount leaves your cash accounts on the selected date and every other scheduled event stays unchanged. Does not update a goal. Excludes unregistered bills and reserved money.'
+            : 'Considera a saída desse valor das contas na data selecionada, sem alterar os demais eventos. Não atualiza metas. Não inclui contas não cadastradas nem dinheiro reservado.',
             style: Theme.of(context).textTheme.bodySmall),
       ],
     );
