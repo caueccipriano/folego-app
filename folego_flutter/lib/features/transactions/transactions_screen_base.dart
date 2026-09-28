@@ -1399,8 +1399,8 @@ class _TransactionsTabV3 extends StatelessWidget {
                       group,
                       style: AppTypography.label(
                         context,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.secondaryText(
                           Theme.of(context).brightness,
                         ),
@@ -1458,8 +1458,8 @@ class _TransactionsTabV3 extends StatelessWidget {
       ),
       labelStyle: AppTypography.label(
         context,
-        fontSize: 10,
-        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        fontSize: 12,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
         color: selected ? accent : AppColors.secondaryText(brightness),
       ),
     );
@@ -1693,7 +1693,7 @@ class _TransactionCardV3 extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
                           context,
-                          fontSize: 11,
+                          fontSize: 13,
                           color: secondary,
                         ),
                       ),
