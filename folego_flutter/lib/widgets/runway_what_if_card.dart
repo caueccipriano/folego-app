@@ -12,6 +12,7 @@ class RunwayWhatIfCard extends StatefulWidget {
 
 class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
   double _purchase = 0;
+  bool _forGoal = false;
   @override
   Widget build(BuildContext context) {
     final runway = widget.preparation.runway;
@@ -27,12 +28,18 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
     final date = DateFormat.yMd(en ? 'en_US' : 'pt_BR');
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
-      title: Text(en ? 'What if I buy something today?' : 'E se eu comprar algo hoje?'),
-      subtitle: Text(en ? 'Simulation only — no transaction is created'
-          : 'Apenas simulação — nenhum lançamento é criado'),
+      title: Text(en ? 'Simulate a purchase or savings contribution' : 'Simule uma compra ou um aporte'),
+      subtitle: Text(en ? 'Simulation only — no transaction or goal contribution is created'
+          : 'Apenas simulação — nenhum lançamento ou aporte real é criado'),
       children: [
-        Text(en ? 'Hypothetical purchase: ${currency.format(_purchase)}'
-            : 'Compra hipotética: ${currency.format(_purchase)}'),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _forGoal,
+          onChanged: (value) => setState(() => _forGoal = value),
+          title: Text(en ? 'Simulate a savings contribution' : 'Simular aporte para uma meta'),
+        ),
+        Text(en ? (_forGoal ? 'Hypothetical contribution: '+currency.format(_purchase) : 'Hypothetical purchase: '+currency.format(_purchase))
+            : (_forGoal ? 'Aporte hipotético: '+currency.format(_purchase) : 'Compra hipotética: '+currency.format(_purchase))),
         Slider(
           value: _purchase, min: 0, max: 2000, divisions: 40,
           label: currency.format(_purchase),
@@ -50,8 +57,8 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
               : 'Possível falta de saldo a partir de ${date.format(firstShortfall)}.',
               style: TextStyle(color: Theme.of(context).colorScheme.error)),
         Text(en
-            ? 'Assumes the purchase is paid in cash today and every other scheduled event stays unchanged. Excludes unregistered bills and reserved money.'
-            : 'Considera pagamento à vista hoje, sem alterar os demais eventos previstos. Não inclui contas não cadastradas nem dinheiro reservado.',
+            ? 'Assumes this amount leaves your cash accounts today and every other scheduled event stays unchanged. Does not update a goal. Excludes unregistered bills and reserved money.'
+            : 'Considera a saída desse valor das contas hoje, sem alterar os demais eventos. Não atualiza metas. Não inclui contas não cadastradas nem dinheiro reservado.',
             style: Theme.of(context).textTheme.bodySmall),
       ],
     );
