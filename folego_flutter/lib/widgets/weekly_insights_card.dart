@@ -5,6 +5,7 @@ import '../core/intelligence/weekly_report_builder.dart';
 import '../core/intelligence/budget_pace.dart';
 import '../core/intelligence/financial_radar.dart';
 import '../core/intelligence/cash_runway_preparation.dart';
+import 'runway_what_if_card.dart';
 import '../data/models/budget_overview_item.dart';
 
 class WeeklyInsightsCard extends StatefulWidget {
@@ -333,6 +334,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                           ? 'Showing the first 14 days; totals include the full period.'
                           : 'Exibindo os primeiros 14 dias; os totais incluem todo o período.'),
                   ],
+                  RunwayWhatIfCard(preparation: preparation),
                   if (runway.firstNegativeDay != null)
                     Text(en
                         ? 'Possible shortfall from ${date.format(runway.firstNegativeDay!)}.'
