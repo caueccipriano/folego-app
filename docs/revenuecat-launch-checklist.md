@@ -1,6 +1,11 @@
 # RevenueCat launch gate — Fôlego
 The `revenuecat-webhook` Edge Function is deployed to Supabase **Dev** with JWT verification disabled **only** because it independently authenticates the RevenueCat Authorization bearer header. It fails closed while `REVENUECAT_WEBHOOK_SECRET` is missing. Do not put this secret in Git, app builds, or logs.
 
+## Approved launch offer
+- Brazil monthly Premium target: **R$ 14,90/month**. Configure the actual store products and RevenueCat offering to this price before enabling checkout. The Flutter display label alone does not set or guarantee the store charge.
+- Confirm that the store paywall shows the exact localized price, renewal interval, trial eligibility and cancellation terms; never assume the displayed in-app marketing price overrides the store.
+- The web/PWA preview currently has no native checkout. Do not advertise active web purchases until a separate verified web billing integration exists.
+
 ## Before enabling billing
 1. Generate a long random webhook secret and set it in Supabase Dev Edge Function secrets as `REVENUECAT_WEBHOOK_SECRET`.
 2. In RevenueCat dashboard, configure a webhook with URL `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/revenuecat-webhook` and header `Authorization: Bearer <same secret>`. Limit to the appropriate RevenueCat project/environment.
