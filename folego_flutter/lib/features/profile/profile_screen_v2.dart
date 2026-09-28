@@ -30,6 +30,7 @@ import 'financial_organization_screen.dart';
 import 'help_faq_screen.dart';
 import 'legal_privacy_screen.dart';
 import 'notification_settings_screen.dart';
+import 'account_deletion_error.dart';
 import 'profile_actions.dart';
 
 part 'profile_widgets.dart';
@@ -457,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita. se houver uma assinatura ativa pela loja, ela não é cancelada automaticamente; cancele a renovação na Google Play ou App Store para evitar novas cobranças.',
+                'isso apaga sua conta e seus dados financeiros. essa ação não pode ser desfeita. se você for proprietário de um espaço financeiro compartilhado com outras pessoas, a exclusão será bloqueada para proteger os dados delas até que a titularidade seja resolvida. se houver uma assinatura ativa pela loja, ela não é cancelada automaticamente; cancele a renovação na Google Play ou App Store para evitar novas cobranças.',
                 style: AppTypography.body(
                   dialogContext,
                   fontSize: 12,
@@ -523,9 +524,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            error is StateError
-                ? 'não consegui apagar sua conta agora'
-                : ErrorTranslator.forDisplay(error),
+            sharedAccountDeletionErrorMessage(error) ??
+                (error is StateError
+                    ? 'não consegui apagar sua conta agora'
+                    : ErrorTranslator.forDisplay(error)),
           ),
         ),
       );
