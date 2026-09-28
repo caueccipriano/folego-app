@@ -9,6 +9,7 @@ import '../../core/app_info/app_version_info.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/notifications/notification_runtime.dart';
+import '../../core/notifications/session_notification_cleanup.dart';
 import '../../core/preferences/app_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -71,13 +72,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _identity = ProfileIdentity(email: widget.client.auth.currentUser?.email ?? '');
     _themeMode = AppThemeController.mode.value;
-    _logoutAction = ProfileLogoutAction(() async {
-      final notificationService = NotificationServiceRegistry.current;
-      if (notificationService != null) {
-        await notificationService.clearForLogout();
-      }
-      await widget.client.auth.signOut();
-    });
+    _logoutAction = ProfileLogoutAction(
+      () => SessionNotificationCleanup.signOut(widget.client),
+    );
     _loadIdentity();
     _loadVersion();
   }
