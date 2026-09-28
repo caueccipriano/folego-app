@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/intelligence/cash_runway_preparation.dart';
 
-/// Preview only: assumes an optional purchase is paid today.
+/// Read-only preview of a hypothetical outflow on a selected forecast date.
 class RunwayWhatIfCard extends StatefulWidget {
   const RunwayWhatIfCard({super.key, required this.preparation});
   final CashRunwayPreparation preparation;
@@ -41,6 +41,8 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
         !day.date.isBefore(dayKey) && day.closingBalance >= 0 && day.closingBalance - effectivePurchase < 0).toList();
     final firstNewShortfall = newlyAffected.isEmpty ? null : newlyAffected.first.date;
     final alreadyNegative = runway.firstNegativeDay != null;
+    final alreadyNegativeBeforeScenario = runway.days.any((day) =>
+        day.date.isBefore(dayKey) && day.closingBalance < 0);
     final simulationReady = !_invalidAmount && effectivePurchase > 0;
     final date = DateFormat.yMd(en ? 'en_US' : 'pt_BR');
     return ExpansionTile(
@@ -121,8 +123,12 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
               style: TextStyle(color: Theme.of(context).colorScheme.error)),
         if (!_invalidAmount && alreadyNegative)
           Text(en
-              ? 'Your existing schedule already shows a shortfall. Review scheduled bills independently of this simulation.'
-              : 'Sua programação já apresenta falta de saldo. Revise as contas previstas independentemente desta simulação.'),
+              ? alreadyNegativeBeforeScenario
+                  ? 'A shortfall already occurs before the selected date; this simulation cannot fix it.'
+                  : 'Your existing schedule already shows a shortfall. Review scheduled bills independently of this simulation.'
+              : alreadyNegativeBeforeScenario
+                  ? 'Já existe falta de saldo antes da data escolhida; esta simulação não resolve esse problema.'
+                  : 'Sua programação já apresenta falta de saldo. Revise as contas previstas independentemente desta simulação.'),
         if (simulationReady && firstNewShortfall == null && !alreadyNegative &&
             !widget.preparation.guidanceNeedsReview)
           Text(en
