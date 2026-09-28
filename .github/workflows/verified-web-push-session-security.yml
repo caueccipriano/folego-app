@@ -1,0 +1,79 @@
+name: Server-verified Web Push sessions
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql'
+      - 'supabase/tests/verified_push_session_*'
+      - 'supabase/functions/_shared/verified_push_subscriptions*'
+      - 'supabase/functions/folego-push-dispatch/index.ts'
+      - 'supabase/functions/folego-daily-summary/index.ts'
+      - '.github/workflows/verified-web-push-session-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-session-database:
+    name: Real SQL migration tested with fictional A/B devices
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_push_ci_only
+          POSTGRES_DB: folego_verified_push_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: disposable_push_ci_only
+      PGDATABASE: folego_verified_push_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify isolated test-only target and PostgreSQL client
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          test "$PGDATABASE" = "folego_verified_push_ci"
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Reproduce old bug and test real migration with synthetic sessions
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/verified_push_session_fixture.sql \
+            -f supabase/tests/verified_push_session_before_fix.sql \
+            -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
+            -f supabase/tests/verified_push_session_acceptance.sql
+
+  fail-closed-edge:
+    name: Edge RPC authentication and fail-closed synthetic tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Test revoked session failure and per-send recheck
+        run: deno test supabase/functions/_shared/verified_push_subscriptions_test.ts
+      - name: Type-check both actual Edge dispatch functions
+        run: |
+          deno check supabase/functions/folego-push-dispatch/index.ts \
+            supabase/functions/folego-daily-summary/index.ts
+      - name: Static checks for both safe session lookup call paths
+        run: |
+          grep -q 'loadVerifiedPushSubscriptions' supabase/functions/folego-push-dispatch/index.ts
+          grep -q 'isPushSubscriptionStillActive' supabase/functions/folego-push-dispatch/index.ts
+          grep -q 'loadVerifiedPushSubscriptions' supabase/functions/folego-daily-summary/index.ts
+          grep -q 'isPushSubscriptionStillActive' supabase/functions/folego-daily-summary/index.ts

@@ -1,4 +1,9 @@
 import webpush from "npm:web-push@3.6.7";
+import {
+  isPushSubscriptionStillActive,
+  loadVerifiedPushSubscriptions,
+  type VerifiedPushSubscription,
+} from "../_shared/verified_push_subscriptions.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 type Candidate = {
@@ -9,13 +14,6 @@ type Candidate = {
   title: string;
   body: string;
   route: string;
-};
-
-type PushSubscriptionRow = {
-  id: string;
-  endpoint: string;
-  p256dh: string;
-  auth_secret: string;
 };
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -115,6 +113,7 @@ Deno.serve(async (req: Request) => {
   let skippedQuiet = 0;
   let disabled = 0;
   let failed = 0;
+  let skippedInvalidSessions = 0;
 
   for (const candidate of candidates) {
     const { data: shouldDeliver, error: quietError } = await supabase.rpc(
@@ -136,18 +135,18 @@ Deno.serve(async (req: Request) => {
       continue;
     }
 
-    const { data: subscriptionsData, error: subscriptionsError } = await supabase
-      .from("web_push_subscriptions")
-      .select("id,endpoint,p256dh,auth_secret")
-      .eq("user_id", candidate.user_id)
-      .is("disabled_at", null);
-
-    if (subscriptionsError) {
+    // Never read the raw endpoint table. This service-role RPC joins each
+    // endpoint with its server-verified, unexpired Supabase Auth session.
+    // A missing migration, denied RPC or malformed response stops delivery.
+    let subscriptions: VerifiedPushSubscription[];
+    try {
+      subscriptions = await loadVerifiedPushSubscriptions(
+        supabase, candidate.user_id,
+      );
+    } catch (_) {
       failed += 1;
       continue;
     }
-
-    const subscriptions = (subscriptionsData ?? []) as PushSubscriptionRow[];
     let delivered = false;
 
     const pushPayload = JSON.stringify({
@@ -160,6 +159,20 @@ Deno.serve(async (req: Request) => {
     });
 
     for (const subscription of subscriptions) {
+      // Revalidate immediately before each external send as well as during
+      // initial selection. Deleted or expired session rows fail closed.
+      try {
+        const stillActive = await isPushSubscriptionStillActive(
+          supabase, candidate.user_id, subscription.id,
+        );
+        if (!stillActive) {
+          skippedInvalidSessions += 1;
+          continue;
+        }
+      } catch (_) {
+        failed += 1;
+        continue;
+      }
       try {
         await webpush.sendNotification(
           {
@@ -221,5 +234,6 @@ Deno.serve(async (req: Request) => {
     skipped_quiet: skippedQuiet,
     disabled,
     failed,
+    skippedInvalidSessions,
   });
 });
