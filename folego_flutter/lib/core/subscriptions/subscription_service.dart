@@ -11,7 +11,7 @@ class SubscriptionService {
   final SupabaseClient _client;
 
   static const entitlementId = 'premium';
-  static const monthlyPriceLabel = 'R\$ 9,90/mês';
+  static const monthlyPriceLabel = 'R\$ 14,90/mês';
   static const trialLabel = '7 dias grátis';
   static const androidApiKey =
       String.fromEnvironment('REVENUECAT_ANDROID_API_KEY');
