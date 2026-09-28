@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../core/intelligence/financial_insights_service.dart';
 import '../core/intelligence/weekly_report_builder.dart';
 import '../core/intelligence/budget_pace.dart';
+import '../core/intelligence/financial_radar.dart';
 import '../data/models/budget_overview_item.dart';
 
 class WeeklyInsightsCard extends StatefulWidget {
@@ -16,6 +17,7 @@ class WeeklyInsightsCard extends StatefulWidget {
 class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
   late Future<CurrentProgressReport> _report;
   late Future<FlexibleBudgetOverview> _budget;
+  late Future<FinancialRadar> _radar;
   late Future<List<RepeatedExpense>> _repeated;
   @override
   void initState() { super.initState(); _load(); }
@@ -28,6 +30,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     final now = DateTime.now();
     _report = widget.service.currentProgress(spaceId: widget.spaceId, asOf: now);
     _budget = widget.service.flexibleBudget(spaceId: widget.spaceId, asOf: now);
+    _radar = widget.service.radar(spaceId: widget.spaceId);
     _repeated = widget.service.repeatedPurchases(spaceId: widget.spaceId, asOf: now);
   }
   @override
@@ -256,6 +259,53 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                         style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
+              );
+            },
+          ),
+          FutureBuilder<FinancialRadar>(
+            future: _radar,
+            builder: (context, radarSnapshot) {
+              if (!radarSnapshot.hasData) {
+                if (radarSnapshot.hasError) {
+                  return Text(en
+                      ? 'Future balance is temporarily unavailable.'
+                      : 'O saldo futuro está indisponível no momento.');
+                }
+                return const LinearProgressIndicator();
+              }
+              final radar = radarSnapshot.data!;
+              if (!radar.hasReliableInputs) {
+                return Text(en
+                    ? 'Complete your financial projection to see upcoming monthly risks.'
+                    : 'Complete sua projeção financeira para visualizar os riscos dos próximos meses.');
+              }
+              final monthFormat = DateFormat.yMMMM(en ? 'en_US' : 'pt_BR');
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 26),
+                  Text(en ? 'Upcoming months radar' : 'Radar dos próximos meses',
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  for (final month in radar.months.take(3))
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(monthFormat.format(month.month)),
+                      subtitle: Text(en
+                          ? 'Projected month-end balance'
+                          : 'Saldo projetado ao fim do mês'),
+                      trailing: Text(money.format(month.closingProjected)),
+                    ),
+                  if (radar.firstNegativeMonth != null)
+                    Text(en
+                        ? 'Attention: the projection shows a negative balance in ${monthFormat.format(radar.firstNegativeMonth!)}.'
+                        : 'Atenção: a projeção indica saldo negativo em ${monthFormat.format(radar.firstNegativeMonth!)}.'),
+                  Text(en
+                      ? 'Monthly projection only. It does not identify the exact day of a shortfall.'
+                      : 'Projeção mensal: não identifica o dia exato de uma possível falta de dinheiro.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                ],
               );
             },
           ),
