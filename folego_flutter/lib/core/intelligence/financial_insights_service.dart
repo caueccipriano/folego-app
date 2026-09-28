@@ -2,6 +2,8 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../data/repositories/folego_repository_agenda.dart';
 import 'cash_runway_preparation.dart';
+import '../../data/models/upcoming_financial_event.dart';
+import '../../data/models/wallet_overview.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'financial_report_builder.dart';
 import 'financial_radar.dart';
@@ -17,15 +19,33 @@ class FinancialInsightsService {
     required String spaceId,
     required DateTime asOf,
   }) async {
-    final wallet = await repository.getWalletOverview(spaceId: spaceId);
-    final agenda = await repository.getFinancialAgenda(
-      spaceId, startDate: DateTime(asOf.year, asOf.month, asOf.day - 30),
-      endDate: DateTime(asOf.year, asOf.month, asOf.day + 62),
-      limit: 200,
-    );
+    final today = DateTime(asOf.year, asOf.month, asOf.day);
+    // Keep overdue history separate so old records cannot crowd future bills
+    // out of the RPC's 200-item limit.
+    final results = await Future.wait([
+      repository.getWalletOverview(spaceId: spaceId),
+      repository.getFinancialAgenda(
+        spaceId,
+        startDate: DateTime(today.year, today.month, today.day - 30),
+        endDate: DateTime(today.year, today.month, today.day - 1),
+        limit: 200,
+      ),
+      repository.getFinancialAgenda(
+        spaceId,
+        startDate: today,
+        endDate: DateTime(today.year, today.month, today.day + 62),
+        limit: 200,
+      ),
+    ]);
+    final wallet = results[0] as WalletOverview;
+    final overdueAgenda = results[1] as List<UpcomingFinancialEvent>;
+    final futureAgenda = results[2] as List<UpcomingFinancialEvent>;
     return CashRunwayPreparation.fromOfficialData(
-      wallet: wallet, agenda: agenda, asOf: asOf,
-      agendaMayBeTruncated: agenda.length >= 200,
+      wallet: wallet,
+      agenda: [...overdueAgenda, ...futureAgenda],
+      asOf: asOf,
+      agendaMayBeTruncated:
+          overdueAgenda.length >= 200 || futureAgenda.length >= 200,
     );
   }
 
