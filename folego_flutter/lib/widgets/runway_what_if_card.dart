@@ -29,7 +29,11 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
     final currency = NumberFormat.currency(
       locale: en ? 'en_US' : 'pt_BR', symbol: 'BRL',
     );
-    final selectedDate = _selectedDate ?? runway.days.first.date;
+    final selectedDate = _selectedDate == null ||
+            _selectedDate!.isBefore(runway.days.first.date) ||
+            _selectedDate!.isAfter(runway.days.last.date)
+        ? runway.days.first.date
+        : _selectedDate!;
     final dayKey = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final effectivePurchase = _invalidAmount ? 0.0 : _purchase;
     final simulatedBalance = runway.balanceAtPayday - effectivePurchase;
