@@ -10,7 +10,7 @@ test.describe('authenticated navigation smoke', () => {
   test('logs in and navigates through the five main destinations', async ({
     page,
   }, testInfo) => {
-    await openFolego(page);
+    const pageErrors = await openFolego(page);
     await enableFlutterAccessibility(page);
 
     const emailField = page.getByRole('textbox', { name: /e-mail/i }).first();
@@ -34,7 +34,17 @@ test.describe('authenticated navigation smoke', () => {
       const target = page.getByText(destination, { exact: true }).first();
       await target.click();
       await page.waitForTimeout(350);
+      await expect(page.locator('flutter-view')).toBeVisible();
+      const geometry = await page.evaluate(() => ({
+        viewportWidth: window.innerWidth,
+        documentWidth: document.documentElement.scrollWidth,
+      }));
+      expect.soft(
+        geometry.documentWidth,
+        `Horizontal overflow on ${destination} (${testInfo.project.name})`,
+      ).toBeLessThanOrEqual(geometry.viewportWidth + 2);
       await capture(page, testInfo, `auth-${destination}`);
     }
+    expect.soft(pageErrors, pageErrors.join('\n')).toEqual([]);
   });
 });
