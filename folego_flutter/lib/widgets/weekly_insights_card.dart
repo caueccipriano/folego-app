@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/intelligence/financial_insights_service.dart';
 import '../core/intelligence/weekly_report_builder.dart';
+import '../core/intelligence/budget_pace.dart';
 import '../data/models/budget_overview_item.dart';
 
 class WeeklyInsightsCard extends StatefulWidget {
@@ -189,6 +190,11 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                       : 'Defina seu teto de gastos flexíveis para saber quanto ainda pode gastar.'),
                 );
               }
+              final pace = BudgetPace.forDate(
+                used: budget.usedAmount,
+                limit: budget.limitAmount,
+                asOf: DateTime.now(),
+              );
               final daysLeft = DateTime(
                 DateTime.now().year, DateTime.now().month + 1, 0,
               ).day - DateTime.now().day + 1;
@@ -219,6 +225,31 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                             ? '${money.format(budget.remainingAmount)} left · about ${money.format(daily)} per remaining day, including today.'
                             : 'Restam ${money.format(budget.remainingAmount)} · cerca de ${money.format(daily)} por dia restante, incluindo hoje.')),
                     const SizedBox(height: 4),
+                    if (pace.canEstimate) ...[
+                      const SizedBox(height: 10),
+                      Text(en ? 'At your current pace' : 'No seu ritmo atual',
+                          style: Theme.of(context).textTheme.titleSmall),
+                      Text(en
+                          ? 'Estimated month-end flexible spending: ${money.format(pace.projectedMonthSpending)}'
+                          : 'Estimativa de gastos flexíveis até o fim do mês: ${money.format(pace.projectedMonthSpending)}'),
+                      Text(pace.projectedOverLimit
+                          ? (en
+                              ? 'That is ${money.format(pace.projectedDifference)} above your limit. Review optional spending to adjust course.'
+                              : 'Isso representa ${money.format(pace.projectedDifference)} acima do limite. Reveja gastos opcionais para ajustar o ritmo.')
+                          : (en
+                              ? 'At this pace, spending stays within the configured flexible limit.'
+                              : 'Nesse ritmo, os gastos ficam dentro do limite flexível configurado.')),
+                      Text(en
+                          ? 'Method: spending so far ÷ elapsed calendar days × days in month. This is a simple estimate, not a prediction.'
+                          : 'Cálculo: gastos até agora ÷ dias corridos × dias do mês. É uma estimativa simples, não uma previsão.',
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ] else if (DateTime.now().day < 7) ...[
+                      const SizedBox(height: 8),
+                      Text(en
+                          ? 'Spending pace will appear after the first seven days of the month.'
+                          : 'O ritmo de gastos aparecerá após os primeiros sete dias do mês.',
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ],
                     Text(en
                         ? 'This guidance covers flexible spending only, not your total available bank balance.'
                         : 'Este cálculo considera apenas gastos flexíveis, não o saldo disponível nas suas contas.',
