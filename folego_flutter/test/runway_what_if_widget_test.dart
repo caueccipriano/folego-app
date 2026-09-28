@@ -25,6 +25,7 @@ CashRunwayPreparation preparation({bool needsReview = false}) {
 void main() {
   testWidgets('invalid amount hides stale simulation balance', (tester) async {
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('pt', 'BR'),
       home: Scaffold(body: SingleChildScrollView(
         child: RunwayWhatIfCard(preparation: preparation()),
       )),
@@ -47,6 +48,7 @@ void main() {
 
   testWidgets('provisional scenario is visibly labeled', (tester) async {
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('pt', 'BR'),
       home: Scaffold(body: SingleChildScrollView(
         child: RunwayWhatIfCard(
           preparation: preparation(needsReview: true),
