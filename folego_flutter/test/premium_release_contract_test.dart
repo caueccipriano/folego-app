@@ -44,7 +44,7 @@ void main() {
         File('lib/features/premium/premium_screen.dart')
             .readAsStringSync();
 
-    expect(subscription, contains("monthlyPriceLabel = 'R\\\$ 14,90/mês'"));
+    expect(subscription, contains('monthlyPriceLabel = \'R\\\$ 14,90/mês\''));
     expect(subscription, contains('!kIsWeb'));
     expect(subscription, contains("throw StateError("));
     expect(premium, contains('SubscriptionService.isConfigured'));
