@@ -18,7 +18,7 @@ The `revenuecat-webhook` Edge Function is deployed to Supabase **Dev** with JWT 
 
 - Approved Brazilian monthly price: **R$ 14,90**, subject to exact store price confirmation.
 - Income objective: **at least R$ 500/month after payment fees and operating expenses, before personal taxes**. This is a planning target, not guaranteed earnings.
-- Example sensitivity: with **15% variable fees** and **R$ 150 monthly fixed costs**, **52 active paying subscribers** produce R$ 658.58 net before taxes (52 × 14.90 × 0.85 − 150). Actual store fees, taxes, refunds and infrastructure costs must replace these assumptions before publication.
+- Example sensitivity: with **15% variable fees** and **R$ 150 monthly fixed costs**, **52 active paying subscribers** produce R$ 508.58 net before taxes (52 × 14.90 × 0.85 − 150). Actual store fees, taxes, refunds and infrastructure costs must replace these assumptions before publication.
 - Instrument conversion from free to Premium and monthly cancellations; use observed data rather than promising a conversion rate.
 
 ## Release acceptance — evidence required
