@@ -299,13 +299,21 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                         : 'Saldo estimado antes do recebimento'),
                     trailing: Text(money.format(runway.balanceAtPayday)),
                   ),
-                  if (runway.days.isNotEmpty)
+                  if (runway.days.isNotEmpty && !preparation.guidanceNeedsReview)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(en ? 'Daily spending reference'
                           : 'Referência diária de gastos'),
                       trailing: Text(money.format(runway.discretionaryDailyReference)),
                     ),
+                  if (preparation.guidanceNeedsReview)
+                    Text(en
+                        ? 'Daily spending guidance is paused until overdue items or incomplete agenda data are reviewed.'
+                        : 'A orientação diária está suspensa até revisar contas vencidas ou dados incompletos da agenda.'),
+                  if (preparation.agendaMayBeTruncated)
+                    Text(en
+                        ? 'Your agenda reached the 200-event limit. This estimate may omit scheduled items.'
+                        : 'Sua agenda atingiu o limite de 200 eventos. Esta estimativa pode não incluir todos os compromissos.'),
                   if (runway.days.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(en ? 'Daily balance calendar' : 'Calendário de saldos',
