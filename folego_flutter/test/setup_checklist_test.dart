@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/onboarding_state.dart';
 import 'package:folego/features/onboarding/setup_checklist.dart';
@@ -11,7 +12,7 @@ void main() {
       reserveConfigured: false, folegoReady: false, onboardingCompleted: false,
     );
     int? destination;
-    await tester.pumpWidget(MaterialApp(locale: const Locale('pt', 'BR'), supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')], home: Scaffold(body: SetupChecklist(
+    await tester.pumpWidget(MaterialApp(locale: const Locale('pt', 'BR'), supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')], localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate], home: Scaffold(body: SetupChecklist(
       state: state,
       onNavigate: (tab) => destination = tab,
       onRefresh: () {},
@@ -30,7 +31,7 @@ void main() {
       reserveConfigured: false, folegoReady: false, onboardingCompleted: false,
     );
     int? destination;
-    await tester.pumpWidget(MaterialApp(locale: const Locale('pt', 'BR'), supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')], home: Scaffold(body: SetupChecklist(
+    await tester.pumpWidget(MaterialApp(locale: const Locale('pt', 'BR'), supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')], localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate], home: Scaffold(body: SetupChecklist(
       state: state,
       onNavigate: (tab) => destination = tab,
       onRefresh: () {},
