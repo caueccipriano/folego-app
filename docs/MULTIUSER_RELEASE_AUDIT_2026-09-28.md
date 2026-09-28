@@ -16,6 +16,17 @@ existentes foram testados.
 
 **Precisão da auditoria:** permissões apenas de tabela não permitem concluir que uma função invoker não pode ler uma tabela. Foi consultado `has_column_privilege` para todas as colunas usadas por `get_my_premium_grant`, além da policy. A suposta falha MU-02 foi corrigida no relatório sem alterar o aplicativo.
 
+### Checagens agregadas adicionais (sem dados individuais)
+
+Também foram conferidas referências cruzadas em **todos os registros existentes**
+de `financial_events` e `financial_impacts`, retornando apenas contagens:
+referências de eventos a categorias fora do espaço: **0**; referência
+pai/evento fora do espaço: **0**; impactos a contas fora do espaço:
+**0**; impactos a categorias fora do espaço: **0**. Havia **0** linhas
+na tabela de importações `import_rows`. Esses resultados representam o
+instante da consulta, não uma garantia permanente. A migração proposta
+impede novos vínculos cruzados nas importações por API direta.
+
 ## Resultado do inventário estático em Dev
 
 - 45 tabelas de aplicação no schema público com RLS habilitada; todas as
