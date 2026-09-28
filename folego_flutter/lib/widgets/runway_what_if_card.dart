@@ -38,8 +38,10 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
           onChanged: (value) => setState(() => _forGoal = value),
           title: Text(en ? 'Simulate a savings contribution' : 'Simular aporte para uma meta'),
         ),
-        Text(en ? (_forGoal ? 'Hypothetical contribution: '+currency.format(_purchase) : 'Hypothetical purchase: '+currency.format(_purchase))
-            : (_forGoal ? 'Aporte hipotético: '+currency.format(_purchase) : 'Compra hipotética: '+currency.format(_purchase))),
+        Text(_forGoal
+            ? (en ? 'Hypothetical contribution' : 'Aporte hipotético')
+            : (en ? 'Hypothetical purchase' : 'Compra hipotética')),
+        Text(currency.format(_purchase)),
         Slider(
           value: _purchase, min: 0, max: 2000, divisions: 40,
           label: currency.format(_purchase),
