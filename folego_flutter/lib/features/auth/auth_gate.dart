@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/notifications/session_notification_cleanup.dart';
 import '../../core/subscriptions/subscription_service.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../bootstrap/bootstrap_screen.dart';
@@ -29,10 +30,29 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _session = widget.client.auth.currentSession;
+    // An unauthenticated PWA may still hold a browser push subscription from
+    // the last signed-in person on this physical device.
+    if (_session == null) {
+      unawaited(
+        SessionNotificationCleanup.clearAfterSessionLoss(widget.client),
+      );
+    }
     unawaited(_syncSubscription(_session));
     _subscription = widget.client.auth.onAuthStateChange.listen(
       (event) {
         if (!mounted) return;
+        final previousUserId = _session?.user.id;
+        final nextUserId = event.session?.user.id;
+        if (event.event == AuthChangeEvent.signedOut ||
+            (previousUserId != null &&
+             nextUserId != null &&
+             previousUserId != nextUserId)) {
+          // Covers direct signOut calls, expired/revoked sessions and user
+          // switches that bypass the explicit signout UI.
+          unawaited(
+            SessionNotificationCleanup.clearAfterSessionLoss(widget.client),
+          );
+        }
         setState(() {
           _session = event.session;
           if (event.event == AuthChangeEvent.passwordRecovery) {
