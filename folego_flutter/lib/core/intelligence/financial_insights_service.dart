@@ -2,6 +2,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'financial_report_builder.dart';
+import 'financial_radar.dart';
 import 'weekly_report_builder.dart';
 
 /// Camada de integração: mantém os cálculos desacoplados do Supabase e da UI.
@@ -9,6 +10,16 @@ import 'weekly_report_builder.dart';
 class FinancialInsightsService {
   const FinancialInsightsService(this.repository);
   final FolegoRepository repository;
+
+  Future<FinancialRadar> radar({
+    required String spaceId,
+    int horizonMonths = 3,
+  }) async {
+    final projection = await repository.getProjection(
+      spaceId: spaceId, horizonMonths: horizonMonths,
+    );
+    return FinancialRadar.fromProjection(projection);
+  }
 
   Future<MonthlyIntelligenceReport> monthly({
     required String spaceId,
