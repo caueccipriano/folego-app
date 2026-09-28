@@ -89,12 +89,12 @@ jobs:
       - name: Publish QA coverage limitations
         if: always()
         env:
-          LEGACY_STRESS_OUTCOME: \${{ steps.legacy_stress.outcome }}
+          LEGACY_STRESS_OUTCOME: ${{ steps.legacy_stress.outcome }}
         run: |
           {
             echo '## Cross-device QA coverage'
             echo ''
-            echo "Legacy responsive stress suite: **\${LEGACY_STRESS_OUTCOME}** (non-blocking)."
+            echo "Legacy responsive stress suite: **${LEGACY_STRESS_OUTCOME}** (non-blocking)."
             echo ''
             if [ -z "$FOLEGO_E2E_EMAIL" ] || [ -z "$FOLEGO_E2E_PASSWORD" ]; then
               echo '**Authenticated navigation NOT VERIFIED:** E2E credentials are not configured; authenticated tests are skipped.'
