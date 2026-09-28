@@ -46,20 +46,29 @@ class PurchaseScenarioService {
     );
     final baseline = await repository.getProjection(
       spaceId: spaceId, horizonMonths: horizonMonths);
-    final withPurchase = await repository.getProjection(
-      spaceId: spaceId, horizonMonths: horizonMonths,
-      adjustments: [adjustment]);
+    final ProjectionResult withPurchase;
+    try {
+      withPurchase = await repository.getProjection(
+        spaceId: spaceId, horizonMonths: horizonMonths,
+        adjustments: [adjustment]);
+    } on PostgrestException catch (error) {
+      // New backend rejects the fourth free scenario *inside* the projection
+      // RPC. Keep the user-facing error readable without masking other errors.
+      if (error.message.contains('free_simulation_limit_reached')) {
+        throw StateError('Limite mensal de simulações atingido.');
+      }
+      rethrow;
+    }
     if (!baseline.hasProjectionInputs || !withPurchase.hasProjectionInputs ||
         baseline.months.isEmpty || withPurchase.months.isEmpty) {
       throw StateError('Configure suas projeções antes de simular compras.');
     }
-    // Backend is authoritative. Until paid receipts are verified server-side,
-    // never bypass the quota based on a client-side premium flag.
-    final quota = await Supabase.instance.client.rpc('consume_free_simulation');
-    final row = quota is List && quota.isNotEmpty ? quota.first : null;
-    if (row is! Map || row['allowed'] != true) {
-      throw StateError('Limite mensal de simulações atingido.');
-    }
+    // Backend v2 confirms that it has already reserved quota atomically.
+    // Backend v1 requires one (and only one) legacy debit after computation.
+    await chargeLegacyQuotaIfNeeded(
+      withPurchase,
+      () async => await Supabase.instance.client.rpc('consume_free_simulation'),
+    );
     DateTime? negative;
     for (final month in withPurchase.months) {
       if (month.closingProjected < 0) {
@@ -73,5 +82,21 @@ class PurchaseScenarioService {
       monthlyPayment: purchaseAmount / installments,
       firstNegativeMonth: negative,
     );
+  }
+}
+
+/// Transitional compatibility only: stop calling the old quota endpoint
+/// when the projection RPC itself confirms the simulation was metered.
+/// Kept injectable so tests can assert that an already-metered request never
+/// makes the additional RPC that would charge a user twice.
+Future<void> chargeLegacyQuotaIfNeeded(
+  ProjectionResult projection,
+  Future<dynamic> Function() requestLegacyQuota,
+) async {
+  if (projection.serverQuotaEnforced) return;
+  final quota = await requestLegacyQuota();
+  final row = quota is List && quota.isNotEmpty ? quota.first : null;
+  if (row is! Map || row['allowed'] != true) {
+    throw StateError('Limite mensal de simulações atingido.');
   }
 }
