@@ -55,6 +55,7 @@ jobs:
             test/auth_responsive_smoke_test.dart
 
       - name: Audit legacy responsive stress tests
+        id: legacy_stress
         continue-on-error: true
         working-directory: folego_flutter
         run: |
@@ -84,6 +85,25 @@ jobs:
       - name: Run cross-device Playwright QA
         working-directory: qa
         run: npx playwright test
+
+      - name: Publish QA coverage limitations
+        if: always()
+        env:
+          LEGACY_STRESS_OUTCOME: \${{ steps.legacy_stress.outcome }}
+        run: |
+          {
+            echo '## Cross-device QA coverage'
+            echo ''
+            echo "Legacy responsive stress suite: **\${LEGACY_STRESS_OUTCOME}** (non-blocking)."
+            echo ''
+            if [ -z "$FOLEGO_E2E_EMAIL" ] || [ -z "$FOLEGO_E2E_PASSWORD" ]; then
+              echo '**Authenticated navigation NOT VERIFIED:** E2E credentials are not configured; authenticated tests are skipped.'
+            else
+              echo 'Authenticated navigation tests were enabled; inspect Playwright results for individual outcomes.'
+            fi
+            echo ''
+            echo 'Passing this workflow does not verify live financial data reconciliation or physical-device behavior.'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload QA artifacts
         if: always()
