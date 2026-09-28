@@ -46,7 +46,7 @@ void main() {
 
     expect(subscription, contains('14,90/mês'));
     expect(subscription, contains('!kIsWeb'));
-    expect(subscription, contains("throw StateError("));
+    expect(subscription, contains('throw StateError('));
     expect(premium, contains('SubscriptionService.isConfigured'));
     expect(premium, contains('onPressed: storeReady && !_running'));
     expect(premium, contains('premiumStoreOnly'));
