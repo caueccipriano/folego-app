@@ -1,5 +1,7 @@
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
+import '../../data/repositories/folego_repository_agenda.dart';
+import 'cash_runway_preparation.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'financial_report_builder.dart';
 import 'financial_radar.dart';
@@ -10,6 +12,21 @@ import 'weekly_report_builder.dart';
 class FinancialInsightsService {
   const FinancialInsightsService(this.repository);
   final FolegoRepository repository;
+
+  Future<CashRunwayPreparation> cashRunway({
+    required String spaceId,
+    required DateTime asOf,
+  }) async {
+    final wallet = await repository.getWalletOverview(spaceId: spaceId);
+    final agenda = await repository.getFinancialAgenda(
+      spaceId, startDate: DateTime(asOf.year, asOf.month, asOf.day),
+      endDate: DateTime(asOf.year, asOf.month, asOf.day + 62),
+      limit: 200,
+    );
+    return CashRunwayPreparation.fromOfficialData(
+      wallet: wallet, agenda: agenda, asOf: asOf,
+    );
+  }
 
   Future<FinancialRadar> radar({
     required String spaceId,
