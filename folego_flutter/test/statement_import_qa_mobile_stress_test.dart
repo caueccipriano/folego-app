@@ -144,10 +144,15 @@ void main() {
 
     final review = find.byKey(const ValueKey('statement-import-review-mobile'));
     final scrollable = find.descendant(of: review, matching: find.byType(Scrollable)).first;
-    for (var i = 0; i < 24; i++) {
-      await tester.drag(scrollable, const Offset(0, -520));
-      await tester.pump();
-    }
+    // ListView builds rows lazily; locate the final row instead of assuming
+    // that a fixed number of drag gestures lands on it across screen sizes.
+    await tester.scrollUntilVisible(
+      find.text('COMPRA 119'),
+      500,
+      scrollable: scrollable,
+      maxScrolls: 120,
+    );
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('statement-import-include-row-119')),
       findsOneWidget,
