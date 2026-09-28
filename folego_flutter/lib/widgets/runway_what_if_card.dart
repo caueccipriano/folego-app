@@ -14,6 +14,12 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
   double _purchase = 0;
   bool _forGoal = false;
   DateTime? _selectedDate;
+  final TextEditingController _amountController = TextEditingController(text: '0');
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final runway = widget.preparation.runway;
@@ -61,10 +67,27 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
             if (picked != null && mounted) setState(() => _selectedDate = picked);
           },
         ),
+        TextField(
+          controller: _amountController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: en ? 'Exact amount (BRL)' : 'Valor exato (R$)',
+            helperText: en ? 'Use a comma or dot for cents' : 'Use vírgula ou ponto para centavos',
+          ),
+          onChanged: (raw) {
+            final value = double.tryParse(raw.trim().replaceAll(',', '.'));
+            if (value != null && value.isFinite && value >= 0 && value <= 1000000) {
+              setState(() => _purchase = value);
+            }
+          },
+        ),
         Slider(
-          value: _purchase, min: 0, max: 2000, divisions: 40,
+          value: _purchase.clamp(0.0, 2000.0), min: 0, max: 2000, divisions: 40,
           label: currency.format(_purchase),
-          onChanged: (value) => setState(() => _purchase = value),
+          onChanged: (value) => setState(() {
+            _purchase = value;
+            _amountController.text = value.toStringAsFixed(0);
+          }),
         ),
         ListTile(
           contentPadding: EdgeInsets.zero,
