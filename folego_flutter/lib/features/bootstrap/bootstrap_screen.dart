@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/notifications/session_notification_cleanup.dart';
 import '../../core/preferences/app_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -99,7 +100,7 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
                   label: const Text('tentar de novo'),
                 ),
                 TextButton.icon(
-                  onPressed: widget.client.auth.signOut,
+                  onPressed: () => SessionNotificationCleanup.signOut(widget.client),
                   icon: const Icon(AppIcons.logout),
                   label: const Text('sair'),
                 ),
@@ -134,7 +135,7 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
     if (!_state!.onboardingCompleted && !_introSeen) {
       return OnboardingScreen(
         onCompleted: _completeIntro,
-        onSignOut: widget.client.auth.signOut,
+        onSignOut: () => SessionNotificationCleanup.signOut(widget.client),
       );
     }
 
