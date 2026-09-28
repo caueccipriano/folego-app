@@ -346,17 +346,19 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildPositionSummary() {
     final summary = _overview!.summary;
-    final reservedCash = _overview!.paymentAccounts
-        .where((account) => !account.availableForSpending)
-        .fold<double>(0, (total, account) => total + account.balance);
+    final reservedCash = _overview!.protectedOwnCash;
+    final thirdPartyCash = _overview!.thirdPartyCash;
+    final custodyNote = thirdPartyCash > 0
+        ? '${Formatters.money(thirdPartyCash)} de terceiros · fora do seu total'
+        : null;
     final metrics = [
       _PositionMetric(
         label: 'disponível agora',
         value: summary.availableCash,
         icon: AppIcons.account,
         subtitle: reservedCash > 0
-            ? '${Formatters.money(reservedCash)} separado de gastos · ${Formatters.money(summary.totalCash)} no total'
-            : '${Formatters.money(summary.totalCash)} no total das contas',
+            ? '${Formatters.money(summary.totalCash)} seu total · ${Formatters.money(reservedCash)} seus guardados'
+            : '${Formatters.money(summary.totalCash)} no total das suas contas',
       ),
       _PositionMetric(
         label: 'benefícios',
@@ -383,7 +385,11 @@ class _WalletScreenState extends State<WalletScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PositionMetricCard(metric: metrics.first, emphasized: true),
+              _PositionMetricCard(
+                metric: metrics.first,
+                emphasized: true,
+                note: custodyNote,
+              ),
               const SizedBox(height: spacing),
               Row(
                 children: [
@@ -407,7 +413,10 @@ class _WalletScreenState extends State<WalletScreen> {
               .map(
                 (metric) => SizedBox(
                   width: width,
-                  child: _PositionMetricCard(metric: metric),
+                  child: _PositionMetricCard(
+                    metric: metric,
+                    note: identical(metric, metrics.first) ? custodyNote : null,
+                  ),
                 ),
               )
               .toList(growable: false),
@@ -651,9 +660,14 @@ class _PositionMetric {
 }
 
 class _PositionMetricCard extends StatelessWidget {
-  const _PositionMetricCard({required this.metric, this.emphasized = false});
+  const _PositionMetricCard({
+    required this.metric,
+    this.emphasized = false,
+    this.note,
+  });
   final _PositionMetric metric;
   final bool emphasized;
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -710,11 +724,23 @@ class _PositionMetricCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               metric.subtitle!,
-              maxLines: 1,
+              maxLines: emphasized || note != null ? 2 : 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.label(
                 context,
                 fontSize: 9,
+                color: secondary,
+              ),
+            ),
+          ],
+          if (note != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              note!,
+              maxLines: 2,
+              style: AppTypography.label(
+                context,
+                fontSize: 10,
                 color: secondary,
               ),
             ),
