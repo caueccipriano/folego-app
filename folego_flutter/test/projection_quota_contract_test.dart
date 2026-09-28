@@ -3,18 +3,22 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/projection_model.dart';
 
-Map<String, dynamic> _projectionResponse({bool? serverMetered}) => {
-  'scenario': 'current',
-  'horizon_months': 12,
-  'as_of_date': '2026-09-28',
-  'opening_balance': 100,
-  'has_projection_inputs': true,
-  if (serverMetered != null)
-    'simulation_quota_enforced': serverMetered,
-  'summary': <String, dynamic>{},
-  'months': <Object>[],
-  'variable_incomes': <Object>[],
-};
+Map<String, dynamic> _projectionResponse({bool? serverMetered}) {
+  final response = <String, dynamic>{
+    'scenario': 'current',
+    'horizon_months': 12,
+    'as_of_date': '2026-09-28',
+    'opening_balance': 100,
+    'has_projection_inputs': true,
+    'summary': <String, dynamic>{},
+    'months': <Object>[],
+    'variable_incomes': <Object>[],
+  };
+  if (serverMetered != null) {
+    response['simulation_quota_enforced'] = serverMetered;
+  }
+  return response;
+}
 
 void main() {
   test('new backend confirms that it already metered a scenario', () {
@@ -56,7 +60,7 @@ void main() {
 
     expect(migration, contains('private.get_projection_core'));
     expect(migration, contains('REVOKE ALL ON FUNCTION private.get_projection_core'));
-    expect(migration, contains("coalesce(cardinality(p_disabled_variable_income_keys), 0) > 0"));
+    expect(migration, contains('coalesce(cardinality(p_disabled_variable_income_keys), 0) > 0'));
     expect(migration, contains("v_result ->> 'has_projection_inputs'"));
     expect(migration, contains('public.consume_free_simulation()'));
     expect(migration, contains('free_simulation_limit_reached'));
