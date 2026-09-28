@@ -35,6 +35,27 @@ void main() {
     expect(result.nextIncomeDate, DateTime(2026, 9, 30));
     expect(result.runway!.balanceAtPayday, 400);
   });
+  test('pauses spending guidance when overdue obligations are excluded', () {
+    final result = CashRunwayPreparation.fromOfficialData(
+      wallet: wallet, asOf: DateTime(2026, 9, 27),
+      agenda: [
+        event('overdue', '2026-09-24', 'outflow', 300, overdue: true),
+        event('income', '2026-09-30', 'income', 2000),
+      ],
+    );
+    expect(result.excludedOverdueCount, 1);
+    expect(result.guidanceNeedsReview, isTrue);
+    expect(result.runway!.balanceAtPayday, 500);
+  });
+  test('pauses guidance when financial agenda reaches its result cap', () {
+    final result = CashRunwayPreparation.fromOfficialData(
+      wallet: wallet, asOf: DateTime(2026, 9, 27),
+      agenda: [event('income', '2026-09-30', 'income', 2000)],
+      agendaMayBeTruncated: true,
+    );
+    expect(result.agendaMayBeTruncated, isTrue);
+    expect(result.guidanceNeedsReview, isTrue);
+  });
   test('does not invent a payday when agenda lacks dated income', () {
     final result = CashRunwayPreparation.fromOfficialData(
       wallet: wallet, asOf: DateTime(2026, 9, 27), agenda: [],
