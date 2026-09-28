@@ -58,7 +58,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
       }
       final report = snapshot.data!;
       final money = NumberFormat.currency(
-        locale: en ? 'en_US' : 'pt_BR', symbol: en ? '
+        locale: en ? 'en_US' : 'pt_BR', symbol: en ? '\
       );
       final percent = NumberFormat.decimalPatternDigits(
         locale: en ? 'en_US' : 'pt_BR', decimalDigits: 1,
