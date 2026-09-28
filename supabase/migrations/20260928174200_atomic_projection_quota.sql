@@ -58,6 +58,7 @@ AS $metered_projection$
 DECLARE
   v_result jsonb;
   v_allowed boolean;
+  v_remaining integer;
   v_is_scenario boolean;
 BEGIN
   -- Preserve the existing per-space authorization even for baseline reads.
@@ -65,28 +66,25 @@ BEGIN
     RAISE EXCEPTION 'read_access_denied' USING ERRCODE = '42501';
   END IF;
 
-  -- Original engine validates inputs and computes the result before any debit.
-  -- Raising a database exception later rolls back the whole RPC transaction.
-  v_result := private.get_projection_core(
-    p_space_id,
-    p_horizon_months,
-    p_adjustments,
-    p_disabled_variable_income_keys
-  );
+  -- Reject invalid adjustment arrays before checking the quota. The core
+  -- applies the same checks again and validates each adjustment individually.
+  IF p_adjustments IS NULL OR jsonb_typeof(p_adjustments) <> 'array' THEN
+    RAISE EXCEPTION 'invalid_projection_adjustments';
+  END IF;
+  IF jsonb_array_length(p_adjustments) > 40 THEN
+    RAISE EXCEPTION 'too_many_projection_adjustments';
+  END IF;
 
-  -- Baseline reads remain free, including home-screen projections. Explicit
-  -- hypothetical changes (adjustments or disabled income) are simulations.
+  -- Plain baseline reads, including Home, never consume a simulation.
+  -- Both hypothetical adjustments and disabled income are paid scenarios.
   v_is_scenario :=
     jsonb_array_length(p_adjustments) > 0
     OR coalesce(cardinality(p_disabled_variable_income_keys), 0) > 0;
 
-  -- No debit for missing planning data: Flutter rejects this configuration.
-  IF v_is_scenario
-     AND coalesce((v_result ->> 'has_projection_inputs')::boolean, false)
-  THEN
-    -- Existing SECURITY DEFINER helper atomically locks/increments the
-    -- monthly free quota (3) or accepts a server-verified Premium entitlement.
-    SELECT quota.allowed INTO v_allowed
+  IF v_is_scenario THEN
+    -- Reserve quota BEFORE the expensive projection engine runs. Concurrent
+    -- calls share the existing UPDATE ... used < 3 row lock and cannot race.
+    SELECT quota.allowed, quota.remaining INTO v_allowed, v_remaining
     FROM public.consume_free_simulation() AS quota
     LIMIT 1;
 
@@ -94,15 +92,45 @@ BEGIN
       RAISE EXCEPTION 'free_simulation_limit_reached'
         USING ERRCODE = 'P0001';
     END IF;
+    IF v_remaining IS NULL THEN
+      RAISE EXCEPTION 'unexpected_simulation_quota_response';
+    END IF;
+  END IF;
 
-    -- The new Flutter client skips its legacy client-side quota RPC when this
-    -- server-issued flag is present. Do not accept such flags as RPC inputs.
-    v_result := jsonb_set(
-      v_result,
-      '{simulation_quota_enforced}',
-      'true'::jsonb,
-      true
-    );
+  -- A failing computation raises an exception and the entire RPC transaction
+  -- rolls back, including any provisional quota reservation above.
+  v_result := private.get_projection_core(
+    p_space_id,
+    p_horizon_months,
+    p_adjustments,
+    p_disabled_variable_income_keys
+  );
+
+  IF v_is_scenario THEN
+    IF coalesce((v_result ->> 'has_projection_inputs')::boolean, false)
+    THEN
+      -- Authoritative handshake: newer Flutter clients must not call the
+      -- legacy quota helper again for this successful simulation.
+      v_result := jsonb_set(
+        v_result, '{simulation_quota_enforced}', 'true'::jsonb, true
+      );
+    ELSIF v_remaining >= 0 THEN
+      -- Incomplete plans must not consume a free simulation. Refund inside
+      -- this same transaction, with the user's own server-side identity.
+      -- Paid grants return remaining=-1 and never touch the counter.
+      UPDATE public.financial_intelligence_usage
+      SET used = used - 1
+      WHERE user_id = (SELECT auth.uid())
+        AND period_month = date_trunc(
+          'month', now() at time zone 'UTC'
+        )::date
+        AND capability = 'simulation'
+        AND used > 0;
+
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'simulation_quota_refund_failed';
+      END IF;
+    END IF;
   END IF;
 
   RETURN v_result;
