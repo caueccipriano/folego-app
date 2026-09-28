@@ -887,9 +887,11 @@ class _AccountCard extends StatelessWidget {
             children: [
               _StatusPill(label: 'ativa', color: positive),
               _StatusPill(
-                label: account.availableForSpending
-                    ? 'entra no saldo disponível'
-                    : 'saldo protegido',
+                label: account.isThirdParty
+                    ? 'dinheiro de terceiros'
+                    : account.availableForSpending
+                        ? 'entra no saldo disponível'
+                        : 'seu saldo protegido',
               ),
             ],
           ),
