@@ -35,6 +35,18 @@ void main() {
     expect(result.nextIncomeDate, DateTime(2026, 9, 30));
     expect(result.runway!.balanceAtPayday, 400);
   });
+  test('duplicate overdue records count as one obligation', () {
+    final result = CashRunwayPreparation.fromOfficialData(
+      wallet: wallet, asOf: DateTime(2026, 9, 27),
+      agenda: [
+        event('old-bill', '2026-09-24', 'outflow', 100, overdue: true),
+        event('old-bill', '2026-09-24', 'outflow', 100, overdue: true),
+        event('income', '2026-09-30', 'income', 2000),
+      ],
+    );
+    expect(result.excludedOverdueCount, 1);
+    expect(result.guidanceNeedsReview, isTrue);
+  });
   test('pauses spending guidance when overdue obligations are excluded', () {
     final result = CashRunwayPreparation.fromOfficialData(
       wallet: wallet, asOf: DateTime(2026, 9, 27),
