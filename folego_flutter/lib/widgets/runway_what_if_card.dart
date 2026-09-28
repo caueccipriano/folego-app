@@ -71,7 +71,7 @@ class _RunwayWhatIfCardState extends State<RunwayWhatIfCard> {
           controller: _amountController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: en ? 'Exact amount (BRL)' : 'Valor exato (R$)',
+            labelText: en ? 'Exact amount (BRL)' : 'Valor exato (BRL)',
             helperText: en ? 'Use a comma or dot for cents' : 'Use vírgula ou ponto para centavos',
           ),
           onChanged: (raw) {
