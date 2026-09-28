@@ -61,7 +61,7 @@ class AppErrorState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: primary,
             ),
@@ -75,12 +75,12 @@ class AppErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppTypography.body(
                 context,
-                fontSize: 11,
+                fontSize: 14,
                 color: secondary,
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           FilledButton(
             onPressed: () => onRetry(),
             child: const Text('tentar novamente'),
