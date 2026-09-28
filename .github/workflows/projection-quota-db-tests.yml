@@ -1,0 +1,66 @@
+name: Atomic projection quota — isolated database
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20260928174200_atomic_projection_quota.sql'
+      - 'supabase/tests/projection_quota_*'
+      - '.github/workflows/projection-quota-db-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgres-contract:
+    name: Isolated Postgres 17 authorization, quota and race tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ephemeral_ci_only
+          POSTGRES_DB: folego_quota_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ephemeral_ci_only
+      PGDATABASE: folego_quota_ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure psql client
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Run real migration against disposable synthetic fixture
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/projection_quota_fixture.sql \
+            -f supabase/migrations/20260928174200_atomic_projection_quota.sql \
+            -f supabase/tests/projection_quota_acceptance.sql
+
+      - name: Verify concurrent final-attempt cap
+        run: bash supabase/tests/projection_quota_concurrency.sh
+
+      - name: Confirm no external project can be targeted
+        run: |
+          test "$PGDATABASE" = "folego_quota_ci"
+          test "$PGHOST" = "127.0.0.1"
+          echo "PASS: all SQL tests were isolated from Supabase Dev and production."
