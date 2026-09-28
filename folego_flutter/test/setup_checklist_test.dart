@@ -11,7 +11,7 @@ void main() {
       reserveConfigured: false, folegoReady: false, onboardingCompleted: false,
     );
     int? destination;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SetupChecklist(
+    await tester.pumpWidget(MaterialApp(locale: const Locale('pt', 'BR'), home: Scaffold(body: SetupChecklist(
       state: state,
       onNavigate: (tab) => destination = tab,
       onRefresh: () {},
@@ -30,7 +30,7 @@ void main() {
       reserveConfigured: false, folegoReady: false, onboardingCompleted: false,
     );
     int? destination;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SetupChecklist(
+    await tester.pumpWidget(MaterialApp(locale: const Locale('pt', 'BR'), home: Scaffold(body: SetupChecklist(
       state: state,
       onNavigate: (tab) => destination = tab,
       onRefresh: () {},
