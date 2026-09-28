@@ -39,7 +39,11 @@ class CashRunwayPreparation {
         excludedOverdueCount: excludedOverdue, openingBalance: available,
       );
     }
-    final events = agenda.where((event) =>
+    final uniqueEvents = <String, UpcomingFinancialEvent>{};
+    for (final event in agenda) {
+      uniqueEvents.putIfAbsent(event.eventKey, () => event);
+    }
+    final events = uniqueEvents.values.where((event) =>
       !event.realized && !event.overdue &&
       event.dueDate.isBefore(nextIncome) &&
       !event.dueDate.isBefore(today) &&
