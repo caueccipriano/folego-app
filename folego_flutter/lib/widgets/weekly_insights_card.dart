@@ -295,8 +295,9 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(en ? 'Estimated balance before income'
-                        : 'Saldo estimado antes do recebimento'),
+                    title: Text(preparation.guidanceNeedsReview
+                        ? (en ? 'Provisional balance before income' : 'Saldo provisório antes do recebimento')
+                        : (en ? 'Estimated balance before income' : 'Saldo estimado antes do recebimento')),
                     trailing: Text(money.format(runway.balanceAtPayday)),
                   ),
                   if (runway.days.isNotEmpty && !preparation.guidanceNeedsReview)
