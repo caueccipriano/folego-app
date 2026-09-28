@@ -29,12 +29,18 @@ class CashRunwayPreparation {
     final available = wallet.accounts
         .where((account) => account.isCashAccount && account.availableForSpending)
         .fold<double>(0, (sum, account) => sum + account.balance);
-    final incomes = agenda.where((event) =>
+    // Deduplicate first so repeated agenda records cannot inflate warnings.
+    final uniqueEvents = <String, UpcomingFinancialEvent>{};
+    for (final event in agenda) {
+      uniqueEvents.putIfAbsent(event.eventKey, () => event);
+    }
+    final distinctAgenda = uniqueEvents.values;
+    final incomes = distinctAgenda.where((event) =>
       event.isIncome && !event.realized && !event.overdue &&
       !event.dueDate.isBefore(today) && event.amount > 0).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final nextIncome = incomes.isEmpty ? null : incomes.first.dueDate;
-    final excludedOverdue = agenda.where((event) =>
+    final excludedOverdue = distinctAgenda.where((event) =>
       event.overdue && !event.realized && event.isOutflow &&
       event.cashObligation).length;
     if (nextIncome == null) {
@@ -44,11 +50,7 @@ class CashRunwayPreparation {
         agendaMayBeTruncated: agendaMayBeTruncated,
       );
     }
-    final uniqueEvents = <String, UpcomingFinancialEvent>{};
-    for (final event in agenda) {
-      uniqueEvents.putIfAbsent(event.eventKey, () => event);
-    }
-    final events = uniqueEvents.values.where((event) =>
+    final events = distinctAgenda.where((event) =>
       !event.realized && !event.overdue &&
       event.dueDate.isBefore(nextIncome) &&
       !event.dueDate.isBefore(today) &&
