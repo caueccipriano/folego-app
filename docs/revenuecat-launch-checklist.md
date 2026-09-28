@@ -25,8 +25,8 @@ The `revenuecat-webhook` Edge Function is deployed to Supabase **Dev** with JWT 
 
 | Gate | Evidence | State |
 | --- | --- | --- |
-| Financial ownership separation | Automated wallet test + Dev account-level reconciliation | Dev reconciliation and automated test completed; current build pending CI |
-| Responsive UI | Flutter analyze, web build, Playwright and authenticated physical iPhone screenshots | Automated run pending; physical authenticated iPhone review outstanding |
+| Financial ownership separation | Automated wallet test + Dev account-level reconciliation | Dev reconciliation and automated regression test completed; latest feature-branch CI passed (commit 655c59a7). Physical authenticated review still pending |
+| Responsive UI | Flutter analyze, web build, Playwright and authenticated physical iPhone screenshots | Latest feature-branch Flutter analyze, web build, Playwright and integration workflows passed (commit 655c59a7); physical authenticated iPhone review outstanding. Playwright success does not imply authenticated coverage without E2E secrets |
 | Price parity | Store monthly products, RevenueCat offering and localized native paywall all show R$ 14,90 | Not configured or verified |
 | Billing security | Webhook secret installed in Dev; reject invalid bearer; server-only entitlement and quotas verified | Not verified end to end |
 | Subscription lifecycle | Sandbox purchase, restore, renewal, cancellation, expiry, refund, duplicate/out-of-order delivery | Not verified |
@@ -34,6 +34,10 @@ The `revenuecat-webhook` Edge Function is deployed to Supabase **Dev** with JWT 
 | Production release | Explicit approval after evidence above; separate production migration and webhook review | Not authorized |
 
 Do not enable real billing, mark launch-ready, or merge the feature branch merely because CI passes. The GitHub Pages PWA does not have native in-app purchases.
+
+## Latest verified build
+- Feature branch commit `655c59a7`: repository hygiene, financial intelligence checks, Flutter integration smoke, PWA preview artifact, cross-device Playwright QA and Flutter Web deployment all passed. This verifies CI and deployment, **not** native purchases, authenticated physical-device UI, or production release.
+- Do not reclassify third-party funds as personal savings. The Dev wallet overview excluded the R$ 500 third-party Mercado Pago balance from the R$ 649.96 personal total; own protected Mercado Pago investment remains separate from available cash.
 
 ## Known limitations
 - Cancellation intentionally leaves an existing entitlement active until expiration.
