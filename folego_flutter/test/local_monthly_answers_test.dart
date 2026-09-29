@@ -68,7 +68,8 @@ void main() {
   test('manual ChatGPT handoff contains ONLY allowed aggregates and question', () {
     final prompt = buildChatGptMonthlyPrompt(month(), 'Como estou?');
     expect(prompt, contains('09/2026:'));
-    expect(prompt, contains('Receitas reais: R\$ 4.000,00'));
+    expect(prompt, contains('Receitas reais: R\$'));
+    expect(prompt, contains('4.000,00')); // Intl emits a nonbreaking space.
     expect(prompt, contains('Pergunta: Como estou?'));
     expect(prompt, contains('Pagamentos de fatura (apenas fluxo de caixa)'));
     expect(prompt, contains('nenhum dado foi enviado'));
