@@ -15,13 +15,21 @@ function syntheticBridge({
     endpoint: 'https://push.synthetic.invalid/previously-approved',
     keys: { p256dh: 'fictional-public', auth: 'fictional-secret' },
   },
+  strictGesture = false,
+  userAgent = 'fictional-Test-PWA',
+  standalone = true,
 } = {}) {
   let prompts = 0;
   let registrations = 0;
   let newSubscriptions = 0;
   let unsubscribes = 0;
   let existingLookups = 0;
+  let gestureActive = false;
   const calls = {
+    withTap: (action) => {
+      gestureActive = true;
+      try { return action(); } finally { gestureActive = false; }
+    },
     prompts: () => prompts,
     registrations: () => registrations,
     newSubscriptions: () => newSubscriptions,
@@ -40,6 +48,9 @@ function syntheticBridge({
     pushManager: {
       async getSubscription() { existingLookups++; return subscription; },
       async subscribe() {
+        if (strictGesture && !gestureActive) {
+          throw new Error('subscribe_missing_direct_user_gesture');
+        }
         newSubscriptions++;
         subscription = {
           endpoint: 'https://push.synthetic.invalid/new-identity-only',
@@ -60,14 +71,25 @@ function syntheticBridge({
     JSON,
     Uint8Array,
     atob,
-    window: { addEventListener() {} },
+    window: {
+      addEventListener() {},
+      matchMedia: () => ({ matches: standalone }),
+    },
     Notification: {
-      permission,
-      async requestPermission() { prompts++; return 'granted'; },
+      get permission() { return permission; },
+      requestPermission() {
+        if (strictGesture && !gestureActive) {
+          throw new Error('permission_missing_direct_user_gesture');
+        }
+        prompts++;
+        permission = 'granted';
+        return Promise.resolve('granted');
+      },
     },
     PushManager: class PushManager {},
     navigator: {
-      userAgent: 'fictional-Test-PWA',
+      userAgent,
+      standalone,
       serviceWorker: {
         async getRegistration() { return registration; },
         async register() { registrations++; return registration; },
@@ -152,4 +174,59 @@ test('a user-initiated previous-device unsubscribe leaves no local endpoint', as
   const peek = JSON.parse(await api.folegoPushPeekExistingSubscription());
   assert.equal(peek.subscription, null);
   assert.equal(calls.unsubscribes(), 1);
+});
+
+test('iPhone browser tab does not offer Web Push outside installed Home Screen app', async () => {
+  const { api, calls } = syntheticBridge({
+    permission: 'default', existing: null, strictGesture: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+    standalone: false,
+  });
+  const result = JSON.parse(await api.folegoPushPermissionFromTap());
+  assert.equal(result.status, 'unsupported');
+  assert.equal(calls.prompts(), 0);
+  assert.equal(calls.newSubscriptions(), 0);
+});
+
+test('installed iPhone requests permission DIRECTLY from the first tap', async () => {
+  const { api, calls } = syntheticBridge({
+    permission: 'default', existing: null, strictGesture: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+    standalone: true,
+  });
+  const preflight = JSON.parse(await api.folegoPushPrepareTap());
+  assert.equal(preflight.ready, true);
+  assert.equal(calls.prompts(), 0);
+  assert.equal(calls.newSubscriptions(), 0);
+
+  const requested = calls.withTap(() => api.folegoPushPermissionFromTap());
+  assert.equal(calls.prompts(), 1, 'must start synchronously in tap');
+  const response = JSON.parse(await requested);
+  assert.equal(response.status, 'permissionGrantedNeedsActivation');
+  assert.equal(calls.newSubscriptions(), 0, 'must not auto-subscribe after prompt');
+});
+
+test('second installed-iPhone tap starts subscribe SYNCHRONOUSLY', async () => {
+  const { api, calls } = syntheticBridge({
+    permission: 'granted', existing: null, strictGesture: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+    standalone: true,
+  });
+  assert.equal(JSON.parse(await api.folegoPushPrepareTap()).ready, true);
+  const pending = calls.withTap(() => api.folegoPushSubscribeFromTap());
+  assert.equal(calls.newSubscriptions(), 1, 'subscribe must start before tap returns');
+  const response = JSON.parse(await pending);
+  assert.equal(response.status, 'granted');
+  assert.equal(response.subscription.endpoint, 'https://push.synthetic.invalid/new-identity-only');
+  assert.equal(calls.prompts(), 0);
+});
+
+test('without completed prewarm, a tap fails safely rather than delaying subscription', async () => {
+  const { api, calls } = syntheticBridge({
+    permission: 'granted', existing: null, strictGesture: true,
+  });
+  const pending = calls.withTap(() => api.folegoPushSubscribeFromTap());
+  assert.equal(JSON.parse(await pending).status, 'needsPreparation');
+  assert.equal(calls.newSubscriptions(), 0);
+  assert.equal(calls.prompts(), 0);
 });
