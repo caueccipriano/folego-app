@@ -84,7 +84,7 @@ class PanoramaMonthComparison extends StatelessWidget {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    Formatters.monthYear.format(data.earlier.periodMonth),
+                    _monthLabel(data.earlier.periodMonth),
                     textAlign: TextAlign.end,
                     style: AppTypography.body(
                       context,
@@ -97,7 +97,7 @@ class PanoramaMonthComparison extends StatelessWidget {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    Formatters.monthYear.format(data.later.periodMonth),
+                    _monthLabel(data.later.periodMonth),
                     textAlign: TextAlign.end,
                     style: AppTypography.body(
                       context,
@@ -156,6 +156,11 @@ class PanoramaMonthComparison extends StatelessWidget {
       ),
     );
   }
+
+  // A numeric month/year label is unambiguous and does not require the
+  // optional intl DateFormat locale initialization in isolated PWA widgets.
+  String _monthLabel(DateTime month) =>
+      '${month.month.toString().padLeft(2, '0')}/${month.year}';
 
   Widget _valueRow(
     BuildContext context, {
