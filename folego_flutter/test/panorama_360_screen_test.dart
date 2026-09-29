@@ -74,6 +74,13 @@ void main() {
     expect(find.byKey(const ValueKey('panorama-content')), findsOneWidget);
     expect(find.byKey(const ValueKey('panorama-spendable')), findsOneWidget);
     expect(find.text('resultado econômico do mês'), findsOneWidget);
+    // A historical-comparison card now sits between economics and budgets.
+    // The compact dashboard lazy-builds lower sections during scrolling.
+    await tester.scrollUntilVisible(
+      find.text('limites do mês'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('limites do mês'), findsOneWidget);
     expect(
       find.text('nenhum limite por categoria configurado'),
