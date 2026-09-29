@@ -38,6 +38,19 @@ A new **Panorama 360** screen, accessible from Home as its own clearly labeled c
 
 This slice intentionally requires no SQL migration, new customer data, bank access, browser instrumentation, notifications, third-party APIs or Premium charge. Backend/Flutter UI integration must pass static analysis + synthetic widget/unit testing before review. No direct connected Dev writes or deployment.
 
+## Second read-only slice: last three months
+
+This separate stacked draft adds a compact **three-month economic trend** to Panorama 360, sourced by the existing `get_monthly_money_summary` RPC for the selected space. It makes no new transfers, account syncs or customer edits.
+
+- The two previous months load concurrently with the existing current month's canonical result; each month's API error remains **unknown**, never reported as zero.
+- Each card visualizes the same official `realIncome` and `competenceExpenses` definitions. Card bill payments, reserve movements and internal account transfers are cash movements, **not another expense**.
+- Data is displayed oldest-to-current and accepts valid cross-year boundaries. An unexpected month in a response is rejected rather than appearing in the wrong comparison period.
+- The spending change against last month appears only when **both** current and immediately prior months were returned. An incomplete current month is explicitly flagged and must not be interpreted as a forecast or a guaranteed saving.
+- Three months are enough for a useful first comparison without requesting full transaction history; later rich trends can be paginated and optional. Existing financial-space RLS still applies.
+- The original Home screen and Panorama have no new payment gate here. Paid insights will be designed after validation that free users understand the baseline.
+
+Acceptance: standalone synthetic Dart model tests (including legitimate zeros vs network failures and card bill non-double-count), a scrollable Flutter widget test with an absent historical period, static analysis, existing economic/budget/goal regression suite and independent multiuser staging before any deployment.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.
