@@ -342,10 +342,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final financialAiCard = FinancialAiCard(
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
+      embedded: layout == AppLayoutSize.compact,
     );
     final purchaseSimulator = PurchaseSimulatorCard(
       service: PurchaseScenarioService(widget.repository),
       spaceId: widget.space.id,
+      embedded: layout == AppLayoutSize.compact,
     );
     final projectionInsight = HomeProjectionInsightCard(
       projection: _projection,
@@ -406,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ExpansionTile(
                       key: const ValueKey('home-purchase-tools'),
                       tilePadding: const EdgeInsets.symmetric(horizontal: 20),
-                      title: const Text('Simular uma compra'),
+                      title: const Text('Simular uma compra', style: TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: const Text('Veja o impacto antes de gastar'),
                       childrenPadding: const EdgeInsets.only(bottom: 8),
                       children: [purchaseSimulator],
@@ -419,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ExpansionTile(
                         key: const ValueKey('home-ai-tools'),
                         tilePadding: const EdgeInsets.symmetric(horizontal: 20),
-                        title: const Text('Pergunte ao Fôlego ✨'),
+                        title: const Text('Pergunte ao Fôlego ✨', style: TextStyle(fontWeight: FontWeight.w700)),
                         subtitle: const Text('Sua análise financeira com IA'),
                         childrenPadding: const EdgeInsets.only(bottom: 8),
                         children: [financialAiCard],

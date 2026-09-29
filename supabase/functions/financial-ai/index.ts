@@ -1,11 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+// Flutter web sends a browser preflight before the authenticated POST.
+const headers = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-store',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 function respond(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers });
 }
 
 Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (request.method !== 'POST') return respond(405, 'Método não permitido.');
   const jwt = request.headers.get('Authorization')?.replace(/^Bearer /i, '');
   if (!jwt) return respond(401, 'Entre na sua conta.');
