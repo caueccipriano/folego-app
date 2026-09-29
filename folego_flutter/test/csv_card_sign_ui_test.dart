@@ -167,9 +167,9 @@ void main() {
     await tester.tap(find.text('compras positivas (ex.: +35,90)').last);
     await tester.pumpAndSettle();
 
-    final amountField = find.byWidgetPredicate(
-      (widget) => widget is DropdownButtonFormField<int> &&
-          widget.decoration.labelText == 'valor',
+    final amountField = find.descendant(
+      of: find.byKey(const ValueKey('statement-import-signed-amount-field')),
+      matching: find.byType(DropdownButtonFormField<int>),
     );
     await _scrollTo(tester, amountField);
     await tester.tap(amountField);
