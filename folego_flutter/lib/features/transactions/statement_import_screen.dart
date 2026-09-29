@@ -634,7 +634,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       const SizedBox(height: 14),
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
       _ColumnMappingField(label: 'descrição *', value: mapping.descriptionColumn, headers: csv.headers, examples: csv.examplesFor(mapping.descriptionColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(descriptionColumn: value))),
-      _ColumnMappingField(label: 'valor', value: mapping.amountColumn, headers: csv.headers, examples: csv.examplesFor(mapping.amountColumn), optional: true, onChanged: (value) => setState(() {
+      _ColumnMappingField(key: const ValueKey('statement-import-signed-amount-field'), label: 'valor', value: mapping.amountColumn, headers: csv.headers, examples: csv.examplesFor(mapping.amountColumn), optional: true, onChanged: (value) => setState(() {
         // A previous sign confirmation applies only to its chosen source
         // column. Changing the signed-value column requires fresh consent.
         if (value != mapping.amountColumn) _cardSignChoice = null;
@@ -894,7 +894,7 @@ class _StepHeader extends StatelessWidget {
 }
 
 class _ColumnMappingField extends StatelessWidget {
-  const _ColumnMappingField({required this.label, required this.value, required this.headers, required this.examples, required this.onChanged, this.optional = false});
+  const _ColumnMappingField({super.key, required this.label, required this.value, required this.headers, required this.examples, required this.onChanged, this.optional = false});
   final String label;
   final int? value;
   final List<String> headers;
