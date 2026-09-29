@@ -127,7 +127,7 @@ void main() {
     // tomorrow by scrolling instead of expecting it above the fold.
     final agendaScroll = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(
-      find.text('amanhã'),
+      find.text('amanhã').first,
       200,
       scrollable: agendaScroll,
     );
@@ -320,7 +320,8 @@ void main() {
     );
     await _flush(tester);
     expect(find.text('próximos movimentos'), findsOneWidget);
-    expect(find.textContaining('Internet'), findsOneWidget);
+    // Upcoming appears both as a summary line and in the full agenda.
+    expect(find.textContaining('Internet'), findsWidgets);
     await tester.tap(find.text('próximos movimentos'));
     await _flush(tester);
     expect(find.text('agenda'), findsOneWidget);
