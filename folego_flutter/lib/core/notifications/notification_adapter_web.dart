@@ -164,6 +164,7 @@ class WebPushNotificationAdapter
             'owned_rebind' => ExistingPushRecoveryStatus.needsRebind,
             'owned_active' => ExistingPushRecoveryStatus.alreadyActive,
             'new_device' => ExistingPushRecoveryStatus.needsEnrollment,
+            'not_eligible' => ExistingPushRecoveryStatus.needsEnrollment,
             _ => ExistingPushRecoveryStatus.unavailable,
           };
         } catch (_) {
