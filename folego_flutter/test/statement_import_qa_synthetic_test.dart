@@ -51,6 +51,7 @@ void main() {
         mapping: doc.suggestedMapping.copyWith(
           decimalFormat: CsvDecimalFormat.american,
           dateFormat: CsvDateFormat.iso,
+          cardSignConvention: CsvCardSignConvention.purchasesNegative,
         ),
         sourceKind: StatementImportSourceKind.card,
       );
