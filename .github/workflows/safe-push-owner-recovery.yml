@@ -96,7 +96,7 @@ jobs:
             lib/core/notifications/notification_adapter_web.dart \
             lib/core/notifications/notification_service.dart \
             lib/features/profile/notification_settings_screen.dart \
-            test/safe_push_recovery_test.dart
+            test/safe_push_recovery_test.dart \
             test/push_recovery_screen_test.dart
           flutter analyze --no-pub
       - name: Run recovery, notification lifecycle and profile tests
