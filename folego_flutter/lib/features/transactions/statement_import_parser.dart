@@ -14,7 +14,7 @@ enum CsvDateFormat { auto, dmy, mdy, iso }
 /// CSVs differ: a credit-card PURCHASE can be exported as a signed
 /// negative amount or as a positive charge. The user must explicitly
 /// choose this convention in the wizard for signed card CSVs.
-enum CsvCardSignConvention { purchasesNegative, purchasesPositive }
+enum CsvCardSignConvention { unselected, purchasesNegative, purchasesPositive }
 
 class StatementImportParseException implements Exception {
   const StatementImportParseException(this.message);
@@ -39,7 +39,7 @@ class CsvImportMapping {
     this.noteColumn,
     this.decimalFormat = CsvDecimalFormat.auto,
     this.dateFormat = CsvDateFormat.auto,
-    this.cardSignConvention = CsvCardSignConvention.purchasesNegative,
+    this.cardSignConvention = CsvCardSignConvention.unselected,
   });
 
   final int? dateColumn;
@@ -167,6 +167,17 @@ class CsvImportDocument {
   }) {
     if (!mapping.isComplete) {
       throw const StatementImportParseException('mapeie data, descrição e valor antes de continuar');
+    }
+    // Block *all* signed card CSV imports from callers that bypass the UI
+    // until the charge/refund sign convention is explicitly supplied.
+    // Split debit/credit headings already express their own direction;
+    // ordinary bank and benefit files are never affected.
+    if (sourceKind == StatementImportSourceKind.card &&
+        mapping.amountColumn != null &&
+        mapping.cardSignConvention == CsvCardSignConvention.unselected) {
+      throw const StatementImportParseException(
+        'escolha se compras do cartão aparecem positivas ou negativas',
+      );
     }
     final result = <StatementImportCandidate>[];
     for (var index = 0; index < rows.length; index++) {

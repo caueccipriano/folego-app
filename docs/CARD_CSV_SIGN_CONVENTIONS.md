@@ -31,9 +31,12 @@ corrupt reporting.
   decimals (`1.234` vs `1,234`) still require explicit decimal
   locale choice. Import remains staged, deduplicated and separately
   confirmed by the existing all-user pipeline.
-- Existing parser APIs keep their historical negative-purchase default
-  for legacy test fixtures; **the actual user-facing wizard does not
-  permit signed-card staging without a new explicit choice**.
+- Both the import wizard **and the underlying CSV parser** now require
+  an explicit source-sign choice for signed-value credit-card CSVs.
+  A brand-new mapping defaults to `unselected` and cannot create even a
+  staged card candidate when called directly without that choice. This
+  closes the gap for non-widget call paths while preserving the behavior
+  of account and benefit exports and split debit/credit card columns.
 
 ## Synthetic verification
 
