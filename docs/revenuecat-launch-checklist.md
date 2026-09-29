@@ -38,7 +38,7 @@ Do not enable real billing, mark launch-ready, or merge the feature branch merel
 
 ## Latest verified build
 - Feature branch commit `655c59a7`: repository hygiene, financial intelligence checks, Flutter integration smoke, PWA preview artifact, cross-device Playwright QA and Flutter Web deployment all passed. This verifies CI and deployment, **not** native purchases, authenticated physical-device UI, or production release.
-- Do not reclassify third-party funds as personal savings. The Dev wallet overview excluded the R$ 500 third-party Mercado Pago balance from the R$ 649.96 personal total; own protected Mercado Pago investment remains separate from available cash.
+- Financial and wallet QA must use isolated fictional fixtures and assert third-party funds are never included in a user's own balance. Do not embed any real account details or customer balance amounts in public launch documentation.
 
 ## Known limitations
 - Cancellation intentionally leaves an existing entitlement active until expiration.
