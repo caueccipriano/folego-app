@@ -9,6 +9,7 @@ import 'package:folego/data/models/credit_card_item.dart';
 import 'package:folego/data/models/statement_import.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/transactions/statement_import_screen.dart';
+import 'package:folego/features/transactions/statement_import_parser.dart';
 
 class _FakeRepository extends Fake implements FolegoRepository {}
 
@@ -151,4 +152,51 @@ void main() {
     expect(stageCalls, 1);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('changing signed source amount requires a NEW sign confirmation',
+      (tester) async {
+    var stageCalls = 0;
+    await _cardMapping(tester, onStage: (candidates, configuration) async {
+      stageCalls++;
+      return 'fictional-batch';
+    });
+
+    final sign = find.byKey(const ValueKey('csv-card-sign-card-2'));
+    await _scrollTo(tester, sign);
+    await tester.tap(sign);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('compras positivas (ex.: +35,90)').last);
+    await tester.pumpAndSettle();
+
+    final amountField = find.byWidgetPredicate(
+      (widget) => widget is DropdownButtonFormField<int> &&
+          widget.decoration.labelText == 'valor',
+    );
+    await _scrollTo(tester, amountField);
+    await tester.tap(amountField);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('não usar').last);
+    await tester.pumpAndSettle();
+
+    // Restoring the same amount column must NOT silently restore the old
+    // source-sign choice. A stale choice could turn a refund into a charge.
+    await tester.tap(amountField);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Valor').last);
+    await tester.pumpAndSettle();
+
+    await _scrollTo(tester, sign);
+    final selected =
+        tester.widget<DropdownButtonFormField<CsvCardSignConvention>>(sign);
+    expect(selected.initialValue, isNull);
+
+    final stage = find.byKey(const ValueKey('statement-import-stage-csv'));
+    await _scrollTo(tester, stage);
+    await tester.tap(stage);
+    await tester.pumpAndSettle();
+    expect(stageCalls, 0);
+    expect(find.textContaining('confirme se compras do cartão aparecem'),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
