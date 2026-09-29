@@ -20,6 +20,7 @@ class MonthlyInsightsCard extends StatefulWidget {
 
 class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
   late Future<MonthlyIntelligenceReport> _report;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -31,8 +32,10 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
   void didUpdateWidget(covariant MonthlyInsightsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId ||
+        !identical(oldWidget.service.repository, widget.service.repository) ||
         oldWidget.month.year != widget.month.year ||
         oldWidget.month.month != widget.month.month) {
+      _expanded = false;
       _load();
     }
   }
@@ -92,10 +95,10 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
             childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
             title: Text(
               'Seu mês em perspectiva',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8),
+            subtitle: _expanded ? null : Padding(
+              padding: const EdgeInsets.only(top: 6),
               child: Text(
                 insights.first.title,
                 maxLines: 1,
@@ -103,7 +106,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
-            trailing: const Icon(Icons.expand_more),
+            onExpansionChanged: (expanded) => setState(() => _expanded = expanded),
             children: [
               for (final insight in insights)
                 Padding(
@@ -112,7 +115,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(insight.title,
-                          style: Theme.of(context).textTheme.titleSmall),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text(insight.description,
                           style: Theme.of(context).textTheme.bodyMedium),
