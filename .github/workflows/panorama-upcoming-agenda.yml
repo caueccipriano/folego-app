@@ -1,0 +1,51 @@
+name: Folego 360 upcoming agenda navigation
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/test/panorama_upcoming_navigation_test.dart'
+      - 'folego_flutter/test/panorama_360_*'
+      - '.github/workflows/panorama-upcoming-agenda.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upcoming-agenda:
+    name: Due dates, iPhone tap and canonical agenda navigation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze updated UI and all app code
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_360_screen.dart \
+            test/panorama_upcoming_navigation_test.dart
+          flutter analyze --no-pub
+      - name: Verify synthetic phone interaction and previous money-integrity suite
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_upcoming_navigation_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/panorama_budget_watch_test.dart \
+            test/panorama_month_trend_test.dart
+      - name: State limitations
+        run: |
+          {
+            echo 'This test confirms navigation/dates for fictional future bills.'
+            echo 'It does not simulate an authenticated production browser,'
+            echo 'pull actual accounts, mark bills paid or send notifications.'
+          } >> "$GITHUB_STEP_SUMMARY"
