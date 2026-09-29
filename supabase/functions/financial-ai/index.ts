@@ -67,15 +67,45 @@ Deno.serve(async (request) => {
         }),
       });
     } finally { clearTimeout(timeout); }
-    if (!upstream.ok) return respond(502, 'IA indisponível no momento. Sua pergunta não será descontada.');
+    if (!upstream.ok) {
+      // Log only a coarse allowlisted provider error. Never log requests, tokens,
+      // financial context, response bodies or user identifiers.
+      let providerCode: string | null = null;
+      try {
+        const failure = await upstream.json();
+        const code = failure?.error?.code;
+        if (typeof code === 'string' && [
+          'insufficient_quota', 'rate_limit_exceeded',
+          'model_not_found', 'invalid_api_key',
+        ].includes(code)) providerCode = code;
+      } catch { /* Non-JSON provider error: the HTTP status still helps. */ }
+      console.warn('financial-ai provider_failure', {
+        status: upstream.status, reason: providerCode ?? 'other',
+      });
+      if (providerCode === 'insufficient_quota')
+        return respond(503, 'A capacidade do serviço de IA precisa ser regularizada. Nenhuma pergunta descontada.');
+      if (upstream.status === 401 || upstream.status === 403 ||
+          providerCode === 'model_not_found' || providerCode === 'invalid_api_key')
+        return respond(503, 'A configuração do assistente precisa ser revisada. Nenhuma pergunta descontada.');
+      if (upstream.status === 429)
+        return respond(503, 'O assistente está temporariamente ocupado. Tente novamente mais tarde; nenhuma pergunta descontada.');
+      return respond(502, 'O serviço de IA não conseguiu concluir a resposta. Tente novamente; nenhuma pergunta descontada.');
+    }
     const data = await upstream.json();
     const answer = (data.output ?? []).flatMap((item: { content?: { type?: string; text?: string }[] }) => item.content ?? [])
       .filter((part: { type?: string }) => part.type === 'output_text')
       .map((part: { text?: string }) => part.text ?? '').join('\n').trim();
-    if (!answer) return respond(502, 'A IA não retornou uma resposta.');
+    if (!answer) { console.warn('financial-ai empty_provider_output'); return respond(502, 'A IA não retornou uma resposta. Nenhuma pergunta descontada.'); }
     delivered = true;
     return new Response(JSON.stringify({ answer }), { status: 200, headers });
-  } catch { return respond(502, 'IA indisponível no momento. Sua pergunta não será descontada.'); }
+  } catch (error) {
+    // A timeout differs from an HTTP provider rejection; keep both observable
+    // without exposing prompts, secrets or financial data to logs.
+    const reason = error instanceof Error && error.name === 'AbortError'
+      ? 'timeout' : 'request_failed';
+    console.warn('financial-ai transport_failure', { reason });
+    return respond(502, 'A conexão com a IA falhou. Tente novamente; nenhuma pergunta descontada.');
+  }
   finally {
     if (!delivered) {
       const { error: refundError } = await admin.rpc('refund_premium_ai_question', { p_user_id: auth.user.id });
