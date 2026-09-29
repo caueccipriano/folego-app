@@ -28,6 +28,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   MonthlyMoneySummary? _localSummary;
   String? _summaryForUserId;
   String? _summaryForSpaceId;
+  String? _answerForUserId;
+  String? _answerForSpaceId;
   bool _showLocalSummary = false;
 
   // A widget may be reused when the selected household or repository changes.
@@ -42,6 +44,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _answer = null;
       _isError = false;
       _isLocalAnswer = false;
+      _answerForUserId = null;
+      _answerForSpaceId = null;
       _busy = false;
       _localSummary = null;
       _summaryForUserId = null;
@@ -82,6 +86,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _answer = null;
       _isError = false;
       _isLocalAnswer = false;
+      _answerForUserId = null;
+      _answerForSpaceId = null;
       _localSummary = null;
       _summaryForUserId = null;
       _summaryForSpaceId = null;
@@ -118,7 +124,11 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
             : 'O assistente ainda não está disponível. Tente novamente.'; });
         return;
       }
-      setState(() => _answer = data['answer'] as String);
+      setState(() {
+        _answerForUserId = userId;
+        _answerForSpaceId = spaceId;
+        _answer = data['answer'] as String;
+      });
     } on FunctionException catch (error) {
       final details = error.details;
       if (current()) {
@@ -178,6 +188,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _answer = null;
       _isError = false;
       _isLocalAnswer = false;
+      _answerForUserId = null;
+      _answerForSpaceId = null;
       _localSummary = null;
       _summaryForUserId = null;
       _summaryForSpaceId = null;
@@ -194,6 +206,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         _summaryForUserId = userId;
         _summaryForSpaceId = spaceId;
         _isLocalAnswer = true;
+        _answerForUserId = userId;
+        _answerForSpaceId = spaceId;
         _answer = buildLocalMonthlyAnswer(summary, question);
       });
     } catch (_) {
@@ -246,6 +260,9 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     final accent = AppColors.primaryPurple(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness);
+    final visibleAnswer = _answerForUserId == null ||
+        (_answerForUserId == widget.service.repository.currentUserId &&
+         _answerForSpaceId == widget.spaceId) ? _answer : null;
     final visibleSummary = _summaryForUserId != null &&
         _summaryForUserId == widget.service.repository.currentUserId &&
         _summaryForSpaceId == widget.spaceId ? _localSummary : null;
@@ -317,7 +334,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
              'e pode estar indisponível. Ela recebe apenas os totais do mês, '
              'nunca lançamentos individuais.',
           style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-        if (_answer != null) ...[
+        if (visibleAnswer != null) ...[
           const SizedBox(height: 14),
           Semantics(
             liveRegion: true,
@@ -345,7 +362,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                   )),
                 ]),
                 const SizedBox(height: 6),
-                SelectableText(_answer!, style: theme.textTheme.bodyMedium),
+                SelectableText(visibleAnswer, style: theme.textTheme.bodyMedium),
                 if (_isError && visibleSummary != null) ...[
                   const SizedBox(height: 10),
                   TextButton.icon(
