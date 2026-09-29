@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/lib/features/home/home_screen_base.dart'
+      - 'folego_flutter/lib/widgets/financial_ai_card.dart'
       - 'folego_flutter/lib/features/transactions/statement_import_*'
       - 'folego_flutter/lib/core/subscriptions/**'
       - 'folego_flutter/lib/features/premium/**'
@@ -11,6 +13,7 @@ on:
       - 'folego_flutter/web/folego_push_bridge.js'
       - 'folego_flutter/web/tests/folego_push_recovery_bridge.test.cjs'
       - 'folego_flutter/test/panorama_*'
+      - 'folego_flutter/test/financial_ai_card_privacy_test.dart'
       - 'folego_flutter/test/csv_*'
       - 'folego_flutter/test/portable_*'
       - 'folego_flutter/test/premium_release_contract_test.dart'
@@ -43,6 +46,7 @@ jobs:
         working-directory: folego_flutter
         run: |
           flutter test \
+            test/financial_ai_card_privacy_test.dart \
             test/panorama_360_data_test.dart \
             test/panorama_360_screen_test.dart \
             test/panorama_budget_watch_test.dart \
