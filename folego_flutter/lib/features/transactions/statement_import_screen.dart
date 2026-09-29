@@ -390,7 +390,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     List<StatementImportCandidate> candidates, {
     required Map<String, dynamic> configuration,
   }) async {
-    if (_loading || _file == null || _sourceId == null || _fileType == null) return;
+    if (_loading || _bootstrapping || _file == null ||
+        _sourceId == null || _fileType == null ||
+        !_sourceOptions.any((option) => _sourceIdOf(option) == _sourceId)) {
+      return;
+    }
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
     setState(() { _loading = true; _error = null; });
     try {
       final sourceAccountId = _sourceKind == StatementImportSourceKind.card ? null : _sourceId;
@@ -405,20 +411,25 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
               configuration: configuration, candidates: candidates,
             )
           : await widget.repository.stageStatementImport(
-              spaceId: widget.spaceId, filename: _file!.name,
+              spaceId: selectedSpaceId, filename: _file!.name,
               fileType: _fileType!, sourceKind: _sourceKind,
               sourceAccountId: sourceAccountId, sourceCardId: sourceCardId,
               sourceInstitution: _sourceInstitution,
               fileFingerprint: statementFileFingerprint(_file!.bytes),
               configuration: configuration, candidates: candidates,
             );
+      if (!mounted || epoch != _spaceEpoch) return;
       final rows = await _loadRows(batchId);
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() { _batchId = batchId; _rows = rows; _step = _ImportStep.review; });
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -435,21 +446,26 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   Future<void> _openCategoryManagement(String kind) async {
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CategoryManagementScreen(
           repository: widget.repository,
-          spaceId: widget.spaceId,
+          spaceId: selectedSpaceId,
           initialKind: kind,
           returnCreated: true,
         ),
       ),
     );
+    if (epoch != _spaceEpoch || !mounted) return;
     if (widget.bootstrapOverride == null) {
       try {
-        final expense = await widget.repository.listExpenseCategoryCatalog(widget.spaceId);
-        final income = await widget.repository.listIncomeCategoryCatalog(widget.spaceId);
-        if (mounted) setState(() { _expenseCategories = expense; _incomeCategories = income; });
+        final expense = await widget.repository.listExpenseCategoryCatalog(selectedSpaceId);
+        final income = await widget.repository.listIncomeCategoryCatalog(selectedSpaceId);
+        if (mounted && epoch == _spaceEpoch) {
+          setState(() { _expenseCategories = expense; _incomeCategories = income; });
+        }
       } catch (_) {}
     }
   }
