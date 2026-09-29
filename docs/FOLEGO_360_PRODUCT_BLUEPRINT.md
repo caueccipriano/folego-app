@@ -88,6 +88,22 @@ The initial design keeps the watch inside the EXISTING Panorama budget
 card, rather than adding new screens or requiring a separate setup.
 Authenticated multi-space staging QA remains a release blocker.
 
+## Fourth microdelivery: actually navigate to upcoming commitments
+
+The existing Panorama linked its **“ver todos”** action beside upcoming
+bills to the general Transactions page rather than the existing dedicated
+Upcoming Events agenda. This is corrected to open the real calendar/agenda
+for the SAME selected financial space. The compact preview now shows each
+pending obligation's **actual due date** alongside its description and
+amount; the view does not imply an overdue/paid status that the backend has
+not confirmed.
+
+This is a UI/navigation fix only: it creates no scheduled payment, edits
+no recurring record, reclassifies no financial event, sends no push, and
+does not issue a second network query to draw the preview. Synthetic
+iPhone-sized interaction tests verify the tap; broader authenticated
+multi-account staging remains an independent release blocker.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.
