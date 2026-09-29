@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { classifyProviderFailure } from './provider_error.ts';
 
 // Flutter web sends a browser preflight before the authenticated POST.
 const headers = {
@@ -68,36 +69,22 @@ Deno.serve(async (request) => {
       });
     } finally { clearTimeout(timeout); }
     if (!upstream.ok) {
-      // Log only a coarse allowlisted provider error. Never log requests, tokens,
-      // financial context, response bodies or user identifiers.
-      let providerCode: string | null = null;
+      // Parse provider payload only to obtain coarse known identifiers. Do not
+      // emit the raw response or any of the user's financial context to logs.
+      let providerCode: unknown = null;
+      let providerType: unknown = null;
       try {
         const failure = await upstream.json();
-        // OpenAI 429 sometimes encodes a billing limitation in error.type
-        // while error.code is null. Only emit allowlisted diagnostics.
-        const allowed = [
-          'insufficient_quota', 'rate_limit_exceeded',
-          'model_not_found', 'invalid_api_key',
-        ];
-        const code = failure?.error?.code;
-        const type = failure?.error?.type;
-        if (typeof code === 'string' && allowed.includes(code)) {
-          providerCode = code;
-        } else if (typeof type === 'string' && allowed.includes(type)) {
-          providerCode = type;
-        }
-      } catch { /* Non-JSON provider error: the HTTP status still helps. */ }
+        providerCode = failure?.error?.code;
+        providerType = failure?.error?.type;
+      } catch { /* Non-JSON upstream error: classify by HTTP status. */ }
+      const classification = classifyProviderFailure(
+        upstream.status, providerCode, providerType,
+      );
       console.warn('financial-ai provider_failure', {
-        status: upstream.status, reason: providerCode ?? 'other',
+        status: upstream.status, reason: classification.kind,
       });
-      if (providerCode === 'insufficient_quota')
-        return respond(503, 'A capacidade do serviço de IA precisa ser regularizada. Nenhuma pergunta descontada.');
-      if (upstream.status === 401 || upstream.status === 403 ||
-          providerCode === 'model_not_found' || providerCode === 'invalid_api_key')
-        return respond(503, 'A configuração do assistente precisa ser revisada. Nenhuma pergunta descontada.');
-      if (upstream.status === 429)
-        return respond(503, 'O assistente está temporariamente ocupado. Tente novamente mais tarde; nenhuma pergunta descontada.');
-      return respond(502, 'O serviço de IA não conseguiu concluir a resposta. Tente novamente; nenhuma pergunta descontada.');
+      return respond(classification.status, classification.message);
     }
     const data = await upstream.json();
     const answer = (data.output ?? []).flatMap((item: { content?: { type?: string; text?: string }[] }) => item.content ?? [])
