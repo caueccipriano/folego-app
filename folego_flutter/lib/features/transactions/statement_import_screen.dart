@@ -319,6 +319,11 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     final confirmedMapping = signedCardCsv
         ? mapping.copyWith(cardSignConvention: _cardSignChoice)
         : mapping;
+    if (csv.hasAmbiguousDateValues(confirmedMapping)) {
+      setState(() => _error =
+          'o arquivo contém datas ambíguas: escolha DD/MM/AAAA ou MM/DD/AAAA');
+      return;
+    }
     try {
       final candidates = csv.buildCandidates(
         mapping: confirmedMapping,
@@ -628,6 +633,15 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
           text: 'Algumas colunas estão indefinidas ou parecem ambíguas. '
               'Escolha a data, a descrição e o valor correto antes de continuar. '
               'O Fôlego não adivinha qual coluna representa seu dinheiro.',
+          error: false,
+        ),
+      ],
+      if (csv.hasAmbiguousDateValues(mapping)) ...[
+        const SizedBox(height: 10),
+        const _MessageBox(
+          text: 'Encontramos datas que podem representar dois meses '
+              'diferentes. Escolha DD/MM/AAAA ou MM/DD/AAAA no campo '
+              'formato de data antes de importar.',
           error: false,
         ),
       ],
