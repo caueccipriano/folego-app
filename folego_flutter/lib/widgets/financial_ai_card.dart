@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/intelligence/financial_insights_service.dart';
 import '../core/theme/app_colors.dart';
 import '../data/models/monthly_money_summary.dart';
 import 'folego_home_section_card.dart';
 import 'local_monthly_summary.dart';
+import 'local_monthly_answers.dart';
 
 /// Only monthly aggregate totals are shared with the AI provider.
 class FinancialAiCard extends StatefulWidget {
@@ -21,6 +23,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   bool _busy = false;
   String? _answer;
   bool _isError = false;
+  bool _isLocalAnswer = false;
   int _requestEpoch = 0;
   MonthlyMoneySummary? _localSummary;
   bool _showLocalSummary = false;
@@ -36,6 +39,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _question.clear();
       _answer = null;
       _isError = false;
+      _isLocalAnswer = false;
       _busy = false;
       _localSummary = null;
       _showLocalSummary = false;
@@ -73,6 +77,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _busy = true;
       _answer = null;
       _isError = false;
+      _isLocalAnswer = false;
       _localSummary = null;
       _showLocalSummary = false;
     });
@@ -131,12 +136,90 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
           _busy = false;
           _answer = null;
           _isError = false;
+          _isLocalAnswer = false;
           _question.clear();
           _localSummary = null;
           _showLocalSummary = false;
         });
       }
     }
+  }
+
+  /// Never invokes a language-model provider or consumes a question quota.
+  Future<void> _askLocally() async {
+    final question = _question.text.trim();
+    if (question.length < 3 || question.length > 500) {
+      setState(() {
+        _isError = true;
+        _isLocalAnswer = false;
+        _answer = 'Escreva uma pergunta de 3 a 500 caracteres.';
+      });
+      return;
+    }
+    final epoch = ++_requestEpoch;
+    final spaceId = widget.spaceId;
+    final repository = widget.service.repository;
+    final userId = repository.currentUserId;
+    bool current() => mounted && _requestEpoch == epoch &&
+        widget.spaceId == spaceId &&
+        identical(widget.service.repository, repository) &&
+        repository.currentUserId == userId;
+
+    setState(() {
+      _busy = true;
+      _answer = null;
+      _isError = false;
+      _isLocalAnswer = false;
+      _localSummary = null;
+      _showLocalSummary = false;
+    });
+    try {
+      final month = DateTime.now();
+      final summary = await repository.getMonthlyMoneySummary(
+        spaceId: spaceId, periodMonth: DateTime(month.year, month.month),
+      );
+      if (!current()) return;
+      setState(() {
+        _localSummary = summary;
+        _isLocalAnswer = true;
+        _answer = buildLocalMonthlyAnswer(summary, question);
+      });
+    } catch (_) {
+      if (current()) {
+        setState(() {
+          _isError = true;
+          _answer = 'Não foi possível carregar os totais neste momento. '
+              'Confira sua conexão e tente novamente.';
+        });
+      }
+    } finally {
+      if (current()) {
+        setState(() => _busy = false);
+      } else if (mounted && _requestEpoch == epoch) {
+        _requestEpoch++;
+        setState(() {
+          _busy = false;
+          _answer = null;
+          _isError = false;
+          _isLocalAnswer = false;
+          _localSummary = null;
+          _showLocalSummary = false;
+          _question.clear();
+        });
+      }
+    }
+  }
+
+  Future<void> _copyForChatGpt() async {
+    final summary = _localSummary;
+    if (summary == null || _busy) return;
+    final prompt = buildChatGptMonthlyPrompt(summary, _question.text);
+    // Explicit, user-triggered copy only. No automatic data transmission.
+    await Clipboard.setData(ClipboardData(text: prompt));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Totais copiados. Abra seu ChatGPT e cole a pergunta.'),
+    ));
   }
 
   @override
@@ -156,13 +239,13 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         Row(children: [
           Icon(Icons.auto_awesome, color: accent, size: 17),
           const SizedBox(width: 7),
-          Expanded(child: Text('IA · acesso antecipado',
+          Expanded(child: Text('Análise automática · sem limite de perguntas',
             style: theme.textTheme.labelMedium?.copyWith(
               color: accent, fontWeight: FontWeight.w700))),
         ]),
         const SizedBox(height: 6),
-        Text('Até 30 perguntas por mês. A IA recebe apenas os totais '
-             'do mês, nunca seus lançamentos individuais.',
+        Text('Respostas calculadas com os totais registrados, sem uso '
+             'de IA ou créditos. Para perguntas abertas, use seu ChatGPT.',
           style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         const SizedBox(height: 14),
         // One accessible horizontal row rather than two oversized chip rows
@@ -199,10 +282,16 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         ),
         const SizedBox(height: 2),
         SizedBox(width: double.infinity, child: FilledButton.icon(
-          onPressed: _busy ? null : _ask,
-          icon: const Icon(Icons.auto_awesome, size: 19),
-          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA',
+          onPressed: _busy ? null : _askLocally,
+          icon: const Icon(Icons.insights, size: 19),
+          label: Text(_busy ? 'Consultando…' : 'Analisar sem limite',
             style: const TextStyle(fontWeight: FontWeight.w700)),
+        )),
+        const SizedBox(height: 6),
+        SizedBox(width: double.infinity, child: OutlinedButton.icon(
+          onPressed: _busy ? null : _ask,
+          icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+          label: const Text('Perguntar à IA (API limitada)'),
         )),
         if (_answer != null) ...[
           const SizedBox(height: 14),
@@ -225,7 +314,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                     color: accent, size: 17),
                   const SizedBox(width: 8),
                   Expanded(child: Text(
-                    _isError ? 'Não foi possível responder' : 'Resposta do Fôlego',
+                    _isError ? 'Não foi possível responder' : _isLocalAnswer
+                      ? 'Resposta automática · sem IA' : 'Resposta da IA',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700),
                   )),
@@ -246,6 +336,18 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
               ]),
             ),
           ),
+        ],
+        if (_localSummary != null && !_busy) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _copyForChatGpt,
+            icon: const Icon(Icons.copy_all_outlined, size: 18),
+            label: const Text('Copiar totais e pergunta para meu ChatGPT'),
+          ),
+          Text('A cópia inclui somente totais mensais. Você escolhe '
+               'se deseja colá-los no ChatGPT; o Fôlego não envia nada '
+               'automaticamente.',
+            style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         ],
         if (_isError && _showLocalSummary && _localSummary != null) ...[
           const SizedBox(height: 10),
