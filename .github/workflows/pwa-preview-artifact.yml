@@ -57,7 +57,7 @@ jobs:
           static_dir="$(mktemp -d)"
           cp -a build/web/. "$static_dir/"
           cat > "$static_dir/vercel.json" <<'JSON'
-          {"version":2,"framework":null,"buildCommand":null,"outputDirectory":".","rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+          {"version":2,"framework":null,"buildCommand":null,"outputDirectory":".","rewrites":[{"source":"/((?!.*\\.).*)","destination":"/index.html"}]}
           JSON
           printf '%s\n' "$GITHUB_SHA" > "$static_dir/source-sha.txt"
           cd "$static_dir"
