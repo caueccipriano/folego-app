@@ -109,10 +109,12 @@ void main() {
     });
 
     expect(find.textContaining('datas ambíguas'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('statement-import-ambiguous-date-guidance')),
-      findsWidgets,
-    );
+    // The extra guidance below the date selector is lazily mounted on
+    // compact phones; scroll to it rather than asserting eager rendering.
+    final guidance =
+        find.byKey(const ValueKey('statement-import-ambiguous-date-guidance'));
+    await _scrollTo(tester, guidance);
+    expect(guidance, findsOneWidget);
 
     final stage = find.byKey(const ValueKey('statement-import-stage-csv'));
     await _scrollTo(tester, stage);
