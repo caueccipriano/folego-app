@@ -4,6 +4,32 @@ This document separates **written code**, **automated synthetic tests** and
 **real-user launch acceptance**. Passing any unit or browser-viewport CI is
 not an authorization to use customer records or publish the app.
 
+## September 29 verified PWA checkpoint
+
+- The original Fôlego 360 chain remains **draft / review only**. The follow-on
+  [PWA polish branch #49](https://github.com/caueccipriano/folego-app/pull/49)
+  was **separately** published for exploratory use at
+  https://caueccipriano.github.io/folego-app/ by GitHub Pages. This is NOT
+  authorization for the stacked chain's general-customer rollout.
+- Supabase **Dev** financial-ai function v4 is active with the CORS preflight
+  patch (an OPTIONS request was verified as HTTP 204); real authenticated
+  end-to-end AI responses have not been independently demonstrated.
+  Server quota is currently a single-account private beta.
+- #49 contains merged [PR #50](https://github.com/caueccipriano/folego-app/pull/50):
+  pending AI requests are invalidated on a selected financial-space,
+  repository or Auth-identity change; old-user responses are never shown in
+  the newly selected space and invalid input has explicit error styling.
+  Its exact PR #50 financial-intelligence, preview, integration, repository
+  hygiene and cross-device CI checks passed on the tested commit.
+- [Full combined Fôlego 360 acceptance](https://github.com/caueccipriano/folego-app/actions/runs/36620174972):
+  **154** synthetic Flutter tests passed; full static analysis, browser Push
+  regressions and the release-verdict job passed on the integrated source.
+- Independent fictional HTTPS Supabase staging/Auth A/B, real installed
+  iPhone/Android + closed-session Push revocation, backend all-user Premium
+  quotas, store sandbox payments and external approval are still required.
+  A green deployment log proves browser-shell publishing, not a secure
+  public financial service launch.
+
 ## Consolidated review scope
 
 The latest stacked draft integration starts with:
@@ -21,9 +47,10 @@ The latest stacked draft integration starts with:
 - This integration patch: add PR #39's separately green **closed-month matched parent-category differences** to the R$9.90 consolidated QA candidate, with an extra privacy guard hiding **category names and direction** while values are masked. The new tests are part of the SAME integrated Flutter CI gate.
 - Existing combined QA: run previously independent money, import, price and Push browser synthetic contracts **on the SAME integrated commit**.
 
-The work remains in draft GitHub branches. Neither isolated Supabase
-migrations nor a real public deployment have been made through this
-integration.
+The integrated release chain remains in draft GitHub branches. No isolated
+Supabase production migration, general-user rollout, native store distribution
+or release acceptance has been performed. The separately published #49
+GitHub Pages beta described above is not a production release certificate.
 
 ## Synthetic versus real acceptance
 
