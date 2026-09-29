@@ -10,8 +10,14 @@ import 'push_recovery.dart';
 @JS('folegoPushGetStatus')
 external JSPromise<JSString> _folegoPushGetStatus();
 
-@JS('folegoPushRequestAndSubscribe')
-external JSPromise<JSString> _folegoPushRequestAndSubscribe();
+@JS('folegoPushPrepareTap')
+external JSPromise<JSString> _folegoPushPrepareTap();
+
+@JS('folegoPushPermissionFromTap')
+external JSPromise<JSString> _folegoPushPermissionFromTap();
+
+@JS('folegoPushSubscribeFromTap')
+external JSPromise<JSString> _folegoPushSubscribeFromTap();
 
 @JS('folegoPushPeekExistingSubscription')
 external JSPromise<JSString> _folegoPushPeekExistingSubscription();
@@ -28,6 +34,26 @@ class WebPushNotificationAdapter
   WebPushNotificationAdapter(this.client);
 
   final SupabaseClient client;
+
+  // A successful owner-status RPC and warm worker must finish BEFORE any
+  // user gesture. A refreshed JWT or different account invalidates it.
+  String? _readyUserId;
+  String? _readyAccessToken;
+  String? _readyOwnership;
+  String? _readyEndpoint;
+  bool _readyGranted = false;
+
+  void _clearPreparedGesture() {
+    _readyUserId = null;
+    _readyAccessToken = null;
+    _readyOwnership = null;
+    _readyEndpoint = null;
+    _readyGranted = false;
+  }
+
+  bool _preparedFor(String userId, String accessToken) =>
+      _readyUserId == userId && _readyAccessToken == accessToken;
+
 
   NotificationPermissionStatus _mapStatus(String? value) {
     switch (value) {
@@ -136,31 +162,49 @@ class WebPushNotificationAdapter
   @override
   Future<ExistingPushRecoveryStatus> inspectExistingPush() =>
       PushBrowserOperationQueue.run(() async {
+        _clearPreparedGesture();
         final userId = client.auth.currentUser?.id;
-        if (userId == null) return ExistingPushRecoveryStatus.unavailable;
+        final accessToken = client.auth.currentSession?.accessToken;
+        if (userId == null || accessToken == null) {
+          return ExistingPushRecoveryStatus.unavailable;
+        }
         try {
+          // Registration + exact endpoint inspection happen here, well
+          // BEFORE the future iOS touch/notification permission gesture.
+          final raw = await _folegoPushPrepareTap().toDart;
+          final prepared = jsonDecode(raw.toDart);
+          if (prepared is! Map ||
+              prepared['status'] == 'unsupported' ||
+              prepared['status'] == 'denied') {
+            return ExistingPushRecoveryStatus.unavailable;
+          }
+          if (prepared['ready'] != true) {
+            return ExistingPushRecoveryStatus.lookupFailed;
+          }
           final existing = await _peekExisting();
+          final ownership =
+              await _serverOwnershipStatus(existing.endpoint ?? '');
+          if (client.auth.currentUser?.id != userId ||
+              client.auth.currentSession?.accessToken != accessToken) {
+            return ExistingPushRecoveryStatus.unavailable;
+          }
+          _readyUserId = userId;
+          _readyAccessToken = accessToken;
+          _readyOwnership = ownership;
+          _readyEndpoint = existing.endpoint;
+          _readyGranted = existing.granted;
+
+          // This still checks the server before a FIRST permission prompt.
+          // Only the future explicit tap may invoke the browser API.
           if (!existing.granted) {
             return ExistingPushRecoveryStatus.unavailable;
           }
-          if (client.auth.currentUser?.id != userId) {
-            return ExistingPushRecoveryStatus.unavailable;
-          }
           if (existing.endpoint == null) {
-            // Confirm the safe RPC is deployed even for a device with no
-            // existing Push subscription. Missing migration => no CTA.
-            final state = await _serverOwnershipStatus('');
-            if (client.auth.currentUser?.id != userId ||
-                state != 'new_device') {
-              return ExistingPushRecoveryStatus.unavailable;
-            }
-            return ExistingPushRecoveryStatus.needsEnrollment;
+            return ownership == 'new_device'
+                ? ExistingPushRecoveryStatus.needsEnrollment
+                : ExistingPushRecoveryStatus.unavailable;
           }
-          final state = await _serverOwnershipStatus(existing.endpoint!);
-          if (client.auth.currentUser?.id != userId) {
-            return ExistingPushRecoveryStatus.unavailable;
-          }
-          return switch (state) {
+          return switch (ownership) {
             'owned_rebind' => ExistingPushRecoveryStatus.needsRebind,
             'owned_active' => ExistingPushRecoveryStatus.alreadyActive,
             'new_device' => ExistingPushRecoveryStatus.needsEnrollment,
@@ -168,6 +212,7 @@ class WebPushNotificationAdapter
             _ => ExistingPushRecoveryStatus.unavailable,
           };
         } catch (_) {
+          _clearPreparedGesture();
           return ExistingPushRecoveryStatus.lookupFailed;
         }
       });
@@ -223,98 +268,166 @@ class WebPushNotificationAdapter
         }
       });
 
-  /// User-initiated opt-in only. If the existing browser endpoint was NOT
-  /// registered by this Fôlego identity, remove the old local subscription
-  /// before creating a new endpoint. Never upsert B onto A's endpoint.
+  Future<NotificationPermissionStatus> _finishGesturePermission(
+    JSPromise<JSString> pending,
+    String userId,
+    String accessToken,
+  ) async {
+    try {
+      final decoded = jsonDecode((await pending.toDart).toDart);
+      if (decoded is! Map ||
+          client.auth.currentUser?.id != userId ||
+          client.auth.currentSession?.accessToken != accessToken) {
+        return NotificationPermissionStatus.notDetermined;
+      }
+      // Permission is not a push subscription. An iPhone owner makes a
+      // SECOND deliberate tap after the UI re-inspects the fresh state.
+      if (decoded['status'] == 'denied') {
+        return NotificationPermissionStatus.denied;
+      }
+      if (decoded['status'] == 'unsupported') {
+        return NotificationPermissionStatus.unsupported;
+      }
+      return NotificationPermissionStatus.notDetermined;
+    } catch (_) {
+      return NotificationPermissionStatus.notDetermined;
+    } finally {
+      _clearPreparedGesture();
+    }
+  }
+
+  Future<NotificationPermissionStatus> _finishGestureSubscribe(
+    JSPromise<JSString> pending,
+    String userId,
+    String accessToken,
+  ) async {
+    try {
+      final decoded = jsonDecode((await pending.toDart).toDart);
+      if (decoded is! Map ||
+          decoded['status'] != 'granted' ||
+          client.auth.currentUser?.id != userId ||
+          client.auth.currentSession?.accessToken != accessToken) {
+        return NotificationPermissionStatus.notDetermined;
+      }
+      final subscription = decoded['subscription'];
+      if (subscription is! Map) {
+        return NotificationPermissionStatus.notDetermined;
+      }
+      final keys = subscription['keys'];
+      if (keys is! Map) {
+        return NotificationPermissionStatus.notDetermined;
+      }
+      final endpoint = subscription['endpoint'];
+      final p256dh = keys['p256dh'];
+      final auth = keys['auth'];
+      if (endpoint is! String ||
+          !endpoint.startsWith('https://') ||
+          p256dh is! String ||
+          p256dh.isEmpty ||
+          auth is! String ||
+          auth.isEmpty ||
+          client.auth.currentUser?.id != userId ||
+          client.auth.currentSession?.accessToken != accessToken) {
+        return NotificationPermissionStatus.notDetermined;
+      }
+
+      // The database trigger binds the live signed Auth session.
+      await client.from('web_push_subscriptions').upsert(
+        <String, dynamic>{
+          'user_id': userId,
+          'endpoint': endpoint,
+          'p256dh': p256dh,
+          'auth_secret': auth,
+          'user_agent': decoded['userAgent'] as String?,
+          'disabled_at': null,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        },
+        onConflict: 'endpoint',
+      );
+      if (client.auth.currentUser?.id != userId ||
+          client.auth.currentSession?.accessToken != accessToken) {
+        return NotificationPermissionStatus.notDetermined;
+      }
+      return NotificationPermissionStatus.granted;
+    } catch (_) {
+      return NotificationPermissionStatus.notDetermined;
+    } finally {
+      _clearPreparedGesture();
+    }
+  }
+
+  /// Every network authorization and service-worker await finishes in
+  /// inspectExistingPush, before the tap. A busy queue refuses the gesture
+  /// instead of postponing it and losing WebKit transient user activation.
   @override
-  Future<NotificationPermissionStatus> requestPermission() =>
-      PushBrowserOperationQueue.run(() async {
-        final userId = client.auth.currentUser?.id;
-        if (userId == null) {
-          return NotificationPermissionStatus.notDetermined;
-        }
+  Future<NotificationPermissionStatus> requestPermission() {
+    final userId = client.auth.currentUser?.id;
+    final accessToken = client.auth.currentSession?.accessToken;
+    if (userId == null ||
+        accessToken == null ||
+        !_preparedFor(userId, accessToken)) {
+      return Future<NotificationPermissionStatus>.value(
+        NotificationPermissionStatus.notDetermined,
+      );
+    }
+
+    if (!_readyGranted) {
+      // This JS function invokes Notification.requestPermission() BEFORE
+      // yielding control to the event loop, directly in Flutter onTap.
+      return PushBrowserOperationQueue.tryRunGesture(() {
+        final pending = _folegoPushPermissionFromTap();
+        return _finishGesturePermission(pending, userId, accessToken);
+      }).then((result) =>
+          result ?? NotificationPermissionStatus.notDetermined);
+    }
+
+    if (_readyEndpoint != null &&
+        (_readyOwnership == 'new_device' ||
+            _readyOwnership == 'not_eligible')) {
+      // Another browser account may have owned this endpoint. One tap
+      // unbinds it locally; a SECOND tap is needed for the new user's
+      // own session. Never steal the old globally UNIQUE DB endpoint.
+      final oldEndpoint = _readyEndpoint!;
+      _clearPreparedGesture();
+      return PushBrowserOperationQueue.run(() async {
         try {
-          final existing = await _peekExisting();
-          if (existing.granted && existing.endpoint != null) {
-            final ownership =
-                await _serverOwnershipStatus(existing.endpoint!);
-            if (client.auth.currentUser?.id != userId) {
-              return NotificationPermissionStatus.notDetermined;
-            }
-            if (ownership == 'new_device') {
-              // This browser endpoint is NOT associated with the current
-              // signed-in user. They pressed the explicit opt-in control:
-              // unsubscribe locally rather than silently inheriting it.
-              final removed = jsonDecode(
-                (await _folegoPushUnsubscribe().toDart).toDart,
-              );
-              if (removed is! Map ||
-                  removed['endpoint'] != existing.endpoint) {
-                return NotificationPermissionStatus.notDetermined;
-              }
-            }
-          } else {
-            // Fail closed on pre-migration clients; do not prompt for
-            // browser permission while backend ownership is unverifiable.
-            await _serverOwnershipStatus('');
-          }
-
-          if (client.auth.currentUser?.id != userId) {
+          if (client.auth.currentUser?.id != userId ||
+              client.auth.currentSession?.accessToken != accessToken) {
             return NotificationPermissionStatus.notDetermined;
           }
-          final value = await _folegoPushRequestAndSubscribe().toDart;
-          final parsed = jsonDecode(value.toDart);
-          if (parsed is! Map) return NotificationPermissionStatus.notDetermined;
-          final result = Map<String, dynamic>.from(parsed);
-          final status = _mapStatus(result['status'] as String?);
-          if (status != NotificationPermissionStatus.granted) return status;
-
-          final subscriptionRaw = result['subscription'];
-          if (subscriptionRaw is! Map) {
+          final decoded =
+              jsonDecode((await _folegoPushUnsubscribe().toDart).toDart);
+          if (decoded is! Map || decoded['endpoint'] != oldEndpoint) {
             return NotificationPermissionStatus.notDetermined;
           }
-          final subscription = Map<String, dynamic>.from(subscriptionRaw);
-          final keysRaw = subscription['keys'];
-          if (keysRaw is! Map) {
-            return NotificationPermissionStatus.notDetermined;
-          }
-          final keys = Map<String, dynamic>.from(keysRaw);
-          final endpoint = subscription['endpoint'] as String?;
-          final p256dh = keys['p256dh'] as String?;
-          final authSecret = keys['auth'] as String?;
-          if (endpoint == null ||
-              !endpoint.startsWith('https://') ||
-              p256dh == null ||
-              authSecret == null ||
-              client.auth.currentUser?.id != userId) {
-            return NotificationPermissionStatus.notDetermined;
-          }
-
-          // The authoritative trigger sets the session_id from the signed
-          // current JWT. A different user's row cannot be stolen through
-          // the existing endpoint UNIQUE key and own-user RLS.
-          await client.from('web_push_subscriptions').upsert(
-            <String, dynamic>{
-              'user_id': userId,
-              'endpoint': endpoint,
-              'p256dh': p256dh,
-              'auth_secret': authSecret,
-              'user_agent': result['userAgent'] as String?,
-              'disabled_at': null,
-              'updated_at': DateTime.now().toUtc().toIso8601String(),
-            },
-            onConflict: 'endpoint',
-          );
-          if (client.auth.currentUser?.id != userId) {
-            return NotificationPermissionStatus.notDetermined;
-          }
-          return NotificationPermissionStatus.granted;
+          return NotificationPermissionStatus.notDetermined;
         } catch (_) {
-          // A missing RPC, missing session, error or malformed browser
-          // probe cannot give a false success or inherit another identity.
           return NotificationPermissionStatus.notDetermined;
         }
       });
+    }
+
+    if (_readyEndpoint != null && _readyOwnership == 'owned_active') {
+      return Future<NotificationPermissionStatus>.value(
+        NotificationPermissionStatus.granted,
+      );
+    }
+
+    if (_readyEndpoint != null ||
+        _readyOwnership != 'new_device') {
+      return Future<NotificationPermissionStatus>.value(
+        NotificationPermissionStatus.notDetermined,
+      );
+    }
+
+    // The pre-warmed worker already has NO local browser subscription.
+    // PushManager.subscribe() starts synchronously before the first await.
+    return PushBrowserOperationQueue.tryRunGesture(() {
+      final pending = _folegoPushSubscribeFromTap();
+      return _finishGestureSubscribe(pending, userId, accessToken);
+    }).then((result) =>
+        result ?? NotificationPermissionStatus.notDetermined);
+  }
 
   @override
   Future<List<FinancialNotificationIntent>> pendingForSpace(String spaceId) async =>
