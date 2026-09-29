@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'notification_models.dart';
+import 'push_recovery.dart';
 
 abstract interface class NotificationSchedulerAdapter {
   Future<NotificationPermissionStatus> requestPermission();
@@ -88,6 +89,25 @@ class NotificationService {
 
   Future<NotificationPermissionStatus> getPermissionStatus() =>
       _adapter.getPermissionStatus();
+  /// Read-only inspection; a granted browser permission does not imply the
+  /// current signed-in user owns the current device's Push endpoint.
+  Future<ExistingPushRecoveryStatus> inspectExistingPush() async {
+    final adapter = _adapter;
+    if (adapter is PushDeviceRecovery) {
+      return (adapter as PushDeviceRecovery).inspectExistingPush();
+    }
+    return ExistingPushRecoveryStatus.unavailable;
+  }
+
+  /// Only called after an explicit user action in notification settings.
+  Future<NotificationPermissionStatus> rebindPreviouslyOwnedPush() async {
+    final adapter = _adapter;
+    if (adapter is PushDeviceRecovery) {
+      return (adapter as PushDeviceRecovery).rebindPreviouslyOwnedPush();
+    }
+    return NotificationPermissionStatus.unsupported;
+  }
+
 
   Future<void> schedule(FinancialNotificationIntent intent) =>
       _adapter.schedule(intent);

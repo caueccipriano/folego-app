@@ -5,6 +5,7 @@ import '../../core/layout/app_scroll_gutter.dart';
 import '../../core/notifications/notification_models.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/notifications/push_recovery.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -48,6 +49,8 @@ class _NotificationSettingsScreenState
   NotificationPreferences? _preferences;
   NotificationPermissionStatus _permission =
       NotificationPermissionStatus.notDetermined;
+  ExistingPushRecoveryStatus _pushRecovery =
+      ExistingPushRecoveryStatus.unavailable;
   bool _loading = true;
   String? _savingKey;
   String? _error;
@@ -88,11 +91,13 @@ class _NotificationSettingsScreenState
       final values = await Future.wait<dynamic>([
         _dataSource.load(widget.spaceId),
         _service.getPermissionStatus(),
+        _service.inspectExistingPush(),
       ]);
       if (!mounted) return;
       setState(() {
         _preferences = values[0] as NotificationPreferences;
         _permission = values[1] as NotificationPermissionStatus;
+        _pushRecovery = values[2] as ExistingPushRecoveryStatus;
         _loading = false;
       });
     } catch (_) {
@@ -145,6 +150,48 @@ class _NotificationSettingsScreenState
     }
   }
 
+  Future<void> _activatePushOnThisDevice() async {
+    if (_saving) return;
+    final prior = _pushRecovery;
+    if (prior != ExistingPushRecoveryStatus.needsRebind &&
+        prior != ExistingPushRecoveryStatus.needsEnrollment) {
+      return;
+    }
+    setState(() {
+      _savingKey = 'push-recovery';
+      _error = null;
+    });
+    try {
+      final permission = prior == ExistingPushRecoveryStatus.needsRebind
+          ? await _service.rebindPreviouslyOwnedPush()
+          : await _service.requestPermission();
+      final verified = await _service.inspectExistingPush();
+      if (!mounted) return;
+      if (permission != NotificationPermissionStatus.granted ||
+          verified != ExistingPushRecoveryStatus.alreadyActive) {
+        setState(() {
+          _pushRecovery = verified;
+          _error = 'não consegui ativar os alertas deste dispositivo. '
+              'tente novamente quando estiver conectado.';
+        });
+        return;
+      }
+      setState(() {
+        _permission = permission;
+        _pushRecovery = verified;
+      });
+      _message('pronto — notificações ativadas neste dispositivo');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'não consegui confirmar a inscrição deste dispositivo';
+        _pushRecovery = ExistingPushRecoveryStatus.lookupFailed;
+      });
+    } finally {
+      if (mounted) setState(() => _savingKey = null);
+    }
+  }
+
   Future<void> _toggleMaster(bool enabled) async {
     final current = _preferences;
     if (current == null || _saving) return;
@@ -152,7 +199,12 @@ class _NotificationSettingsScreenState
     if (enabled && _permission != NotificationPermissionStatus.unsupported) {
       final permission = await _service.requestPermission();
       if (!mounted) return;
-      setState(() => _permission = permission);
+      final recovery = await _service.inspectExistingPush();
+      if (!mounted) return;
+      setState(() {
+        _permission = permission;
+        _pushRecovery = recovery;
+      });
       if (permission != NotificationPermissionStatus.granted) {
         _message(_permissionMessage(permission));
         return;
@@ -394,9 +446,11 @@ class _NotificationSettingsScreenState
 
   Widget _masterSection(NotificationPreferences prefs) => _SettingsSection(
         title: 'lembretes',
-        subtitle: prefs.financialRemindersEnabled
-            ? 'seus alertas estão ativos'
-            : 'pausados — suas escolhas continuam salvas',
+        subtitle: !prefs.financialRemindersEnabled
+            ? 'pausados — suas escolhas continuam salvas'
+            : _pushRecovery == ExistingPushRecoveryStatus.alreadyActive
+                ? 'seus alertas estão ativos neste dispositivo'
+                : 'preferências salvas — confira a entrega neste dispositivo',
         child: SwitchListTile.adaptive(
           key: const ValueKey('notifications-master-toggle'),
           contentPadding: EdgeInsets.zero,
@@ -713,10 +767,28 @@ class _NotificationSettingsScreenState
     final unsupported = _permission == NotificationPermissionStatus.unsupported;
     final denied = _permission == NotificationPermissionStatus.denied;
     final granted = _permission == NotificationPermissionStatus.granted;
+    final rebind = _pushRecovery == ExistingPushRecoveryStatus.needsRebind;
+    final enroll = _pushRecovery == ExistingPushRecoveryStatus.needsEnrollment;
+    final lookupFailed =
+        _pushRecovery == ExistingPushRecoveryStatus.lookupFailed;
+    final showRecovery = (_preferences?.financialRemindersEnabled ?? false) &&
+        (rebind || enroll);
 
     final String title;
     final String body;
-    if (unsupported) {
+    if (lookupFailed) {
+      title = 'verificação temporariamente indisponível';
+      body = 'não foi possível confirmar se este aparelho está '
+          'cadastrado para receber alertas. tente novamente mais tarde.';
+    } else if (rebind) {
+      title = 'seus alertas precisam ser reativados';
+      body = 'encontrei uma inscrição antiga deste dispositivo vinculada '
+          'à sua conta. reative sem autorizar outra pessoa.';
+    } else if (enroll) {
+      title = 'ative os alertas neste aparelho';
+      body = 'o navegador tem permissão, mas este dispositivo ainda '
+          'não está vinculado à sua conta Fôlego.';
+    } else if (unsupported) {
       title = 'seus lembretes podem ser configurados agora';
       body = 'notificações no celular: em breve';
     } else if (denied) {
@@ -766,6 +838,19 @@ class _NotificationSettingsScreenState
                       color: AppColors.secondaryText(brightness),
                     ),
                   ),
+                  if (showRecovery) ...[
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      key: const ValueKey('push-safe-recovery-button'),
+                      onPressed: _saving ? null : _activatePushOnThisDevice,
+                      icon: const Icon(AppIcons.refresh),
+                      label: Text(
+                        rebind
+                            ? 'reativar meus alertas'
+                            : 'ativar neste dispositivo',
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
