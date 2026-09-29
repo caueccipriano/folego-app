@@ -112,6 +112,9 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   StatementImportFileType? _fileType;
   CsvImportDocument? _csv;
   CsvImportMapping? _mapping;
+  // No silent card sign guess: this stays unset until explicit consent in
+  // the mapping UI, and resets for every selected file/source kind.
+  CsvCardSignConvention? _cardSignChoice;
   StatementImportSourceKind _sourceKind = StatementImportSourceKind.account;
   String? _sourceId;
   String? _sourceInstitution;
@@ -225,6 +228,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         _fileType = type;
         _csv = csv;
         _mapping = csv?.suggestedMapping;
+        _cardSignChoice = null;
         _sourceId = null;
         _sourceInstitution = null;
         _step = _ImportStep.destination;
@@ -257,6 +261,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   void _changeSourceKind(StatementImportSourceKind value) {
     setState(() {
       _sourceKind = value;
+      _cardSignChoice = null;
       _sourceId = null;
       _sourceInstitution = null;
       _error = null;
@@ -305,15 +310,27 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       setState(() => _error = 'mapeie data, descrição e valor antes de continuar');
       return;
     }
+    final signedCardCsv = _sourceKind == StatementImportSourceKind.card &&
+        mapping.amountColumn != null;
+    if (signedCardCsv && _cardSignChoice == null) {
+      setState(() => _error = 'confirme se compras do cartão aparecem com sinal positivo ou negativo');
+      return;
+    }
+    final confirmedMapping = signedCardCsv
+        ? mapping.copyWith(cardSignConvention: _cardSignChoice)
+        : mapping;
     try {
-      final candidates = csv.buildCandidates(mapping: mapping, sourceKind: _sourceKind);
+      final candidates = csv.buildCandidates(
+        mapping: confirmedMapping,
+        sourceKind: _sourceKind,
+      );
       await _stageCandidates(
         candidates,
         configuration: <String, dynamic>{
           'delimiter': csv.delimiter == '\t' ? 'tab' : csv.delimiter,
           'has_header': csv.hasHeader,
           'encoding': csv.encoding,
-          'mapping': mapping.toJson(),
+          'mapping': confirmedMapping.toJson(),
         },
       );
     } catch (error) {
@@ -623,6 +640,34 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         const SizedBox(width: 10),
         Expanded(child: _ColumnMappingField(label: 'crédito', value: mapping.creditColumn, headers: csv.headers, examples: csv.examplesFor(mapping.creditColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearCredit: true) : mapping.copyWith(creditColumn: value)))),
       ]),
+      if (_sourceKind == StatementImportSourceKind.card &&
+          mapping.amountColumn != null) ...[
+        const SizedBox(height: 10),
+        const _MessageBox(
+          text: 'Em alguns cartões, compras aparecem positivas; em outros, negativas. '
+              'Confira uma compra e um estorno no arquivo antes de escolher. '
+              'Isso define como o Fôlego interpreta os sinais, sem alterar o valor original.',
+          error: false,
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<CsvCardSignConvention>(
+          key: ValueKey('csv-card-sign-${_sourceKind.name}-${mapping.amountColumn}'),
+          initialValue: _cardSignChoice,
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'sinal das compras no cartão *'),
+          items: const [
+            DropdownMenuItem(
+              value: CsvCardSignConvention.purchasesNegative,
+              child: Text('compras negativas (ex.: -35,90)', overflow: TextOverflow.ellipsis),
+            ),
+            DropdownMenuItem(
+              value: CsvCardSignConvention.purchasesPositive,
+              child: Text('compras positivas (ex.: +35,90)', overflow: TextOverflow.ellipsis),
+            ),
+          ],
+          onChanged: (value) => setState(() => _cardSignChoice = value),
+        ),
+      ],
       const SizedBox(height: 6),
       Row(children: [
         Expanded(child: DropdownButtonFormField<CsvDecimalFormat>(initialValue: mapping.decimalFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato decimal'), items: const [DropdownMenuItem(value: CsvDecimalFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.brazilian, child: Text('1.234,56', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.american, child: Text('1,234.56', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(decimalFormat: value)))),
