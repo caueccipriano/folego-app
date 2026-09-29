@@ -625,7 +625,20 @@ ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
   final second = int.parse(match.group(2)!);
   var year = int.parse(match.group(3)!);
   if (year < 100) year += year >= 70 ? 1900 : 2000;
-  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  // 05/06 can mean June 5 (DD/MM) or May 6 (MM/DD). Never silently
+  // choose a different month for an imported financial transaction.
+  // 05/05 is unambiguous in either convention; 16/09 and 09/16 can
+  // also be safely inferred. Explicitly chosen formats bypass this.
+  if (format == CsvDateFormat.auto &&
+      first >= 1 && first <= 12 &&
+      second >= 1 && second <= 12 &&
+      first != second) {
+    throw const StatementImportParseException(
+      'data ambígua: selecione manualmente DD/MM/AAAA ou MM/DD/AAAA',
+    );
+  }
+  final useMdy = format == CsvDateFormat.mdy ||
+      (format == CsvDateFormat.auto && first <= 12 && second > 12);
   return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
 }
 
