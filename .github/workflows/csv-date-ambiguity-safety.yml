@@ -1,0 +1,58 @@
+name: CSV date ambiguity safety
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/transactions/statement_import_parser.dart'
+      - 'folego_flutter/lib/features/transactions/statement_import_screen.dart'
+      - 'folego_flutter/test/csv_ambiguous_date*'
+      - '.github/workflows/csv-date-ambiguity-safety.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  date-safety:
+    name: No silent DD/MM vs MM/DD misclassification
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze parser, date UI and entire app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/transactions/statement_import_parser.dart \
+            lib/features/transactions/statement_import_screen.dart \
+            test/csv_ambiguous_date_test.dart \
+            test/csv_ambiguous_date_ui_test.dart
+          flutter analyze --no-pub
+      - name: Test date ambiguity, real compact wizard and importer regressions
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/csv_ambiguous_date_test.dart \
+            test/csv_ambiguous_date_ui_test.dart \
+            test/csv_card_sign_convention_test.dart \
+            test/csv_card_sign_ui_test.dart \
+            test/portable_csv_header_mapping_test.dart \
+            test/statement_import_parser_test.dart \
+            test/statement_import_qa_synthetic_test.dart \
+            test/statement_import_ui_test.dart \
+            test/statement_import_contract_test.dart
+      - name: State acceptance scope
+        run: |
+          {
+            echo 'Only fictional CSV data. No linked Dev/customer records.'
+            echo 'Tests require a clear date convention before ambiguous staging.'
+            echo 'This does NOT prove real Organizze/Mobills format compatibility,'
+            echo 'authenticated multiuser staging, physical iPhone or release readiness.'
+          } >> "$GITHUB_STEP_SUMMARY"

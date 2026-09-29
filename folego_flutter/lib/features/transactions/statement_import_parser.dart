@@ -152,6 +152,69 @@ class CsvImportDocument {
         .toList(growable: false);
   }
 
+  /// Returns an actionable warning only when automatic date interpretation
+  /// is unsafe. The wizard already exposes explicit DD/MM vs MM/DD choices.
+  String? autoDateWarning(CsvImportMapping mapping) {
+    if (mapping.dateColumn == null ||
+        mapping.dateFormat != CsvDateFormat.auto) {
+      return null;
+    }
+    try {
+      _safeAutoDateFormat(mapping.dateColumn!);
+      return null;
+    } on StatementImportParseException catch (error) {
+      return error.message;
+    }
+  }
+
+  /// Infer only when this exact selected column contains disambiguating
+  /// dates. Never silently decide between 03/04 and 04/03, or interpret
+  /// mixed locale exports as one date scheme.
+  CsvDateFormat _safeAutoDateFormat(int dateColumn) {
+    var dmyEvidence = false;
+    var mdyEvidence = false;
+    var isoEvidence = false;
+    var ambiguous = false;
+    var nonIsoEvidence = false;
+    final slashDate = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})(?:$|[ T])');
+    final isoDate = RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}(?:$|[ T])');
+
+    for (final row in rows) {
+      if (row.every((value) => value.trim().isEmpty)) continue;
+      final raw = _optionalCell(row, dateColumn);
+      if (raw == null) continue; // Row-level parser will reject it.
+      if (isoDate.hasMatch(raw)) {
+        isoEvidence = true;
+        continue;
+      }
+      final match = slashDate.firstMatch(raw);
+      if (match == null) continue; // Row-level parser will reject it.
+      nonIsoEvidence = true;
+      final first = int.parse(match.group(1)!);
+      final second = int.parse(match.group(2)!);
+      if (first > 12 && second <= 12) dmyEvidence = true;
+      if (second > 12 && first <= 12) mdyEvidence = true;
+      if (first <= 12 && second <= 12 && first != second) {
+        ambiguous = true;
+      }
+    }
+
+    if ((dmyEvidence && mdyEvidence) ||
+        (isoEvidence && nonIsoEvidence)) {
+      throw const StatementImportParseException(
+        'o CSV mistura formatos de data: escolha e confira um formato por arquivo',
+      );
+    }
+    if (ambiguous && !dmyEvidence && !mdyEvidence) {
+      throw const StatementImportParseException(
+        'datas ambíguas (ex.: 03/04): escolha DD/MM/AAAA ou MM/DD/AAAA antes de importar',
+      );
+    }
+    if (mdyEvidence) return CsvDateFormat.mdy;
+    if (dmyEvidence) return CsvDateFormat.dmy;
+    return CsvDateFormat.auto; // ISO or only symmetric 03/03-like dates.
+  }
+
   List<StatementImportCandidate> buildCandidates({
     required CsvImportMapping mapping,
     required StatementImportSourceKind sourceKind,
@@ -159,13 +222,18 @@ class CsvImportDocument {
     if (!mapping.isComplete) {
       throw const StatementImportParseException('mapeie data, descrição e valor antes de continuar');
     }
+    // Check the entire selected date column BEFORE any staging candidate
+    // is produced. An explicit locale always takes precedence.
+    final dateFormat = mapping.dateFormat == CsvDateFormat.auto
+        ? _safeAutoDateFormat(mapping.dateColumn!)
+        : mapping.dateFormat;
     final result = <StatementImportCandidate>[];
     for (var index = 0; index < rows.length; index++) {
       final row = rows[index];
       if (row.every((value) => value.trim().isEmpty)) continue;
       try {
         final rawDate = _cell(row, mapping.dateColumn!);
-        final parsedDate = parseCsvDate(rawDate, mapping.dateFormat);
+        final parsedDate = parseCsvDate(rawDate, dateFormat);
         final description = _cell(row, mapping.descriptionColumn!).trim();
         if (description.isEmpty) throw const FormatException('description');
 
@@ -625,7 +693,14 @@ ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
   final second = int.parse(match.group(2)!);
   var year = int.parse(match.group(3)!);
   if (year < 100) year += year >= 70 ? 1900 : 2000;
-  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  if (format == CsvDateFormat.auto &&
+      first <= 12 && second <= 12 && first != second) {
+    throw const StatementImportParseException(
+      'data ambígua: escolha DD/MM/AAAA ou MM/DD/AAAA antes de importar',
+    );
+  }
+  final useMdy = format == CsvDateFormat.mdy ||
+      (format == CsvDateFormat.auto && first <= 12 && second > 12);
   return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
 }
 
