@@ -159,7 +159,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         SizedBox(width: double.infinity, child: FilledButton.icon(
           onPressed: _busy ? null : _ask,
           icon: const Icon(Icons.auto_awesome),
-          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA'),
+          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA', style: const TextStyle(fontWeight: FontWeight.w700)),
         )),
         if (_answer != null) Padding(
           padding: const EdgeInsets.only(top: 16),
