@@ -6,6 +6,8 @@ import '../core/intelligence/budget_pace.dart';
 import '../core/intelligence/financial_radar.dart';
 import '../core/intelligence/cash_runway_preparation.dart';
 import 'runway_what_if_card.dart';
+import 'folego_home_section_card.dart';
+import '../core/theme/app_colors.dart';
 import '../data/models/budget_overview_item.dart';
 
 class WeeklyInsightsCard extends StatefulWidget {
@@ -46,7 +48,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     builder: (context, snapshot) {
       final en = Localizations.localeOf(context).languageCode == 'en';
       if (!snapshot.hasData) {
-        return Card(child: ListTile(
+        return FolegoHomeSectionCard(child: ListTile(
           title: Text(snapshot.hasError
               ? (en ? 'Insights unavailable' : 'Insights indisponíveis')
               : (en ? 'Preparing your insights…' : 'Preparando seus insights…')),
@@ -89,15 +91,15 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
             ? 'There are no expenses in the comparable period last week. Keep logging transactions for better insights.'
             : 'Não há despesas no período equivalente da semana passada. Continue registrando lançamentos para melhorar os insights.');
       }
-      return Card(
-        clipBehavior: Clip.antiAlias,
+      return FolegoHomeSectionCard(
         child: ExpansionTile(
           key: ValueKey('weekly-insights-${widget.spaceId}'),
           initiallyExpanded: false,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          title: Text(en ? 'Your money this week' : 'Seu dinheiro nesta semana',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          title: FolegoHomeSectionTitle(en ? 'Your money this week' : 'Seu dinheiro nesta semana'),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Wrap(spacing: 16, runSpacing: 8, children: [
@@ -115,7 +117,8 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
               ),
               IconButton(
                 tooltip: en ? 'Refresh insights' : 'Atualizar insights',
-                icon: const Icon(Icons.refresh, size: 20),
+                icon: Icon(Icons.refresh, size: 20,
+                    color: AppColors.primaryPurple(Theme.of(context).brightness)),
                 onPressed: () => setState(_load),
               ),
             ],
@@ -407,8 +410,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Divider(height: 26),
-                  Text(en ? 'Upcoming months radar' : 'Radar dos próximos meses',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                  FolegoHomeSectionTitle(en ? 'Upcoming months radar' : 'Radar dos próximos meses', size: 13),
                   const SizedBox(height: 8),
                   for (final month in radar.months.take(3))
                     Padding(
@@ -464,7 +466,8 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: Theme.of(context).textTheme.bodySmall),
-      Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+      Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()])),
     ],
   );
 }

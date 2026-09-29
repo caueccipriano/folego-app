@@ -73,11 +73,19 @@ Deno.serve(async (request) => {
       let providerCode: string | null = null;
       try {
         const failure = await upstream.json();
-        const code = failure?.error?.code;
-        if (typeof code === 'string' && [
+        // OpenAI 429 sometimes encodes a billing limitation in error.type
+        // while error.code is null. Only emit allowlisted diagnostics.
+        const allowed = [
           'insufficient_quota', 'rate_limit_exceeded',
           'model_not_found', 'invalid_api_key',
-        ].includes(code)) providerCode = code;
+        ];
+        const code = failure?.error?.code;
+        const type = failure?.error?.type;
+        if (typeof code === 'string' && allowed.includes(code)) {
+          providerCode = code;
+        } else if (typeof type === 'string' && allowed.includes(type)) {
+          providerCode = type;
+        }
       } catch { /* Non-JSON provider error: the HTTP status still helps. */ }
       console.warn('financial-ai provider_failure', {
         status: upstream.status, reason: providerCode ?? 'other',

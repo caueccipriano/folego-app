@@ -3,10 +3,11 @@ name: Folego home polish and AI diagnostics QA
 on:
   pull_request:
     paths:
-      - 'folego_flutter/lib/widgets/monthly_insights_card.dart'
-      - 'folego_flutter/lib/widgets/weekly_insights_card.dart'
+      - 'folego_flutter/lib/widgets/**'
+      - 'folego_flutter/lib/features/home/home_screen_base.dart'
       - 'folego_flutter/lib/core/intelligence/financial_report_builder.dart'
       - 'folego_flutter/test/monthly_insights_home_polish_test.dart'
+      - 'folego_flutter/test/local_monthly_summary_test.dart'
       - 'folego_flutter/test/financial_report_builder_test.dart'
       - 'supabase/functions/financial-ai/index.ts'
       - '.github/workflows/home-ai-recovery.yml'
@@ -33,7 +34,7 @@ jobs:
       - name: Run new mobile visual and locale regression
         working-directory: folego_flutter
         run: |
-          flutter test             test/monthly_insights_home_polish_test.dart             test/financial_report_builder_test.dart             test/financial_intelligence_test.dart             test/home_financial_copy_test.dart
+          flutter test             test/monthly_insights_home_polish_test.dart             test/financial_report_builder_test.dart             test/financial_intelligence_test.dart             test/home_financial_copy_test.dart test/local_monthly_summary_test.dart test/financial_ai_card_privacy_test.dart
   edge-check:
     runs-on: ubuntu-latest
     steps:

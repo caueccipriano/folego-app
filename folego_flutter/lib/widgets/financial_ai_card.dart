@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/intelligence/financial_insights_service.dart';
+import '../core/theme/app_colors.dart';
+import '../data/models/monthly_money_summary.dart';
+import 'folego_home_section_card.dart';
+import 'local_monthly_summary.dart';
 
 /// Only monthly aggregate totals are shared with the AI provider.
 class FinancialAiCard extends StatefulWidget {
@@ -18,6 +22,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   String? _answer;
   bool _isError = false;
   int _requestEpoch = 0;
+  MonthlyMoneySummary? _localSummary;
+  bool _showLocalSummary = false;
 
   // A widget may be reused when the selected household or repository changes.
   // Never display A's pending financial answer (or start an A request) inside B.
@@ -31,6 +37,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _answer = null;
       _isError = false;
       _busy = false;
+      _localSummary = null;
+      _showLocalSummary = false;
     }
   }
 
@@ -61,7 +69,13 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         identical(widget.service.repository, repository) &&
         repository.currentUserId == userId;
 
-    setState(() { _busy = true; _answer = null; _isError = false; });
+    setState(() {
+      _busy = true;
+      _answer = null;
+      _isError = false;
+      _localSummary = null;
+      _showLocalSummary = false;
+    });
     try {
       final month = DateTime.now();
       // Only current totals are needed; an unavailable previous month cannot block the question.
@@ -70,6 +84,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       );
       // A may have signed out or switched spaces while the summary was loading.
       if (!current()) return;
+      _localSummary = summary;
       final result = await Supabase.instance.client.functions.invoke(
         'financial-ai',
         body: {
@@ -117,6 +132,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
           _answer = null;
           _isError = false;
           _question.clear();
+          _localSummary = null;
+          _showLocalSummary = false;
         });
       }
     }
@@ -125,79 +142,133 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final accent = AppColors.primaryPurple(brightness);
+    final border = AppColors.border(brightness);
+    final muted = AppColors.secondaryText(brightness);
     final content = Padding(
-      padding: EdgeInsets.fromLTRB(widget.embedded ? 18 : 18, 14, widget.embedded ? 18 : 18, 18),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (!widget.embedded) ...[
-          Text('Pergunte ao Fôlego ✨', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
+          const FolegoHomeSectionTitle('Pergunte ao Fôlego'),
+          const SizedBox(height: 12),
         ],
-        Text('Acesso antecipado · até 30 perguntas por mês', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        Text('A IA recebe apenas os totais do mês, nunca seus lançamentos individuais.', style: theme.textTheme.bodySmall),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          ActionChip(label: const Text('Como está meu mês?'),
-            onPressed: _busy ? null : () => setState(() => _question.text = 'Como está minha situação financeira neste mês?')),
-          ActionChip(label: const Text('Onde posso melhorar?'),
-            onPressed: _busy ? null : () => setState(() => _question.text = 'O que posso melhorar no orçamento com os totais disponíveis?')),
+        Row(children: [
+          Icon(Icons.auto_awesome, color: accent, size: 17),
+          const SizedBox(width: 7),
+          Expanded(child: Text('IA · acesso antecipado',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: accent, fontWeight: FontWeight.w700))),
         ]),
+        const SizedBox(height: 6),
+        Text('Até 30 perguntas por mês. A IA recebe apenas os totais '
+             'do mês, nunca seus lançamentos individuais.',
+          style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+        const SizedBox(height: 14),
+        // One accessible horizontal row rather than two oversized chip rows
+        // on a 375px iPhone screen.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            ActionChip(
+              label: const Text('Como está meu mês?'),
+              onPressed: _busy ? null : () => setState(() =>
+                _question.text = 'Como está minha situação financeira neste mês?'),
+            ),
+            const SizedBox(width: 8),
+            ActionChip(
+              label: const Text('Onde posso melhorar?'),
+              onPressed: _busy ? null : () => setState(() =>
+                _question.text = 'O que posso melhorar no orçamento com os totais disponíveis?'),
+            ),
+          ]),
+        ),
         const SizedBox(height: 12),
         TextField(
           controller: _question,
           enabled: !_busy,
           maxLength: 500,
+          minLines: 2,
           maxLines: 3,
           decoration: const InputDecoration(
-            labelText: 'O que você quer entender?',
-            hintText: 'Como está meu resultado deste mês?',
-            border: OutlineInputBorder(),
+            labelText: 'Sua pergunta',
+            hintText: 'O que você quer entender?',
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
+        const SizedBox(height: 2),
         SizedBox(width: double.infinity, child: FilledButton.icon(
           onPressed: _busy ? null : _ask,
-          icon: const Icon(Icons.auto_awesome),
-          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA', style: const TextStyle(fontWeight: FontWeight.w700)),
+          icon: const Icon(Icons.auto_awesome, size: 19),
+          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA',
+            style: const TextStyle(fontWeight: FontWeight.w700)),
         )),
-        if (_answer != null) Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Semantics(
+        if (_answer != null) ...[
+          const SizedBox(height: 14),
+          Semantics(
             liveRegion: true,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: _isError
-                    ? theme.colorScheme.errorContainer.withValues(alpha: 0.32)
-                    : theme.colorScheme.surfaceContainerHighest,
+                    ? AppColors.background(brightness)
+                    : accent.withValues(alpha: .06),
                 border: Border.all(
-                  color: _isError
-                      ? theme.colorScheme.error.withValues(alpha: 0.26)
-                      : theme.colorScheme.outlineVariant,
-                ),
-                borderRadius: BorderRadius.circular(16),
+                  color: _isError ? border : accent.withValues(alpha: .28)),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Icon(_isError ? Icons.info_outline : Icons.auto_awesome,
-                    color: _isError ? theme.colorScheme.error : theme.colorScheme.primary,
-                    size: 18),
+                    color: accent, size: 17),
                   const SizedBox(width: 8),
                   Expanded(child: Text(
                     _isError ? 'Não foi possível responder' : 'Resposta do Fôlego',
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700),
                   )),
                 ]),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 SelectableText(_answer!, style: theme.textTheme.bodyMedium),
+                if (_isError && _localSummary != null) ...[
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: () => setState(() =>
+                      _showLocalSummary = !_showLocalSummary),
+                    icon: Icon(_showLocalSummary
+                      ? Icons.expand_less : Icons.assessment_outlined),
+                    label: Text(_showLocalSummary
+                      ? 'Ocultar resumo automático' : 'Ver resumo sem IA'),
+                  ),
+                ],
               ]),
             ),
           ),
-        ),
+        ],
+        if (_isError && _showLocalSummary && _localSummary != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: .06),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: accent.withValues(alpha: .22)),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Resumo automático · sem IA',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: accent, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              SelectableText(buildLocalMonthlySummary(_localSummary!),
+                style: theme.textTheme.bodyMedium),
+            ]),
+          ),
+        ],
       ]),
     );
-    return widget.embedded ? content : Card(child: content);
+    return widget.embedded ? content : FolegoHomeSectionCard(child: content);
   }
 }
