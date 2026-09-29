@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_content_container.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -120,7 +121,15 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
       ));
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+        valueListenable: FinancialPrivacy.hidden,
+        // Amounts already pass through Formatters.money. Rebuild EVERY
+        // mounted section immediately when the privacy switch changes.
+        // Historical charts must not outlive the global hide-values state.
+        builder: (context, _, _) => _buildPrivacyAware(context),
+      );
+
+  Widget _buildPrivacyAware(BuildContext context) {
     final theme = Theme.of(context).brightness;
     final data = _data;
     return Scaffold(
