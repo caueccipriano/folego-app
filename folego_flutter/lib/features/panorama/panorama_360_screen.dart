@@ -15,6 +15,7 @@ import '../plan/flexible_budget_screen.dart';
 import '../transactions/transactions_screen.dart';
 import 'panorama_360_data.dart';
 import 'panorama_month_comparison.dart';
+import 'panorama_budget_watch.dart';
 
 /// Combines existing canonical sources; opening this screen writes nothing.
 class Panorama360Screen extends StatefulWidget {
@@ -313,6 +314,7 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
 
   Widget _budgetCard(Panorama360Data data) {
     final overview = data.budgetSummary;
+    final watch = data.budgetWatch;
     final configured = data.budgets
             ?.where((item) => item.isParent)
             .any((item) => item.hasBudget) ??
@@ -334,6 +336,8 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                   _money('utilizado', overview.actualAmount),
                   const Divider(),
                   _money('restante', overview.remainingAmount, large: true),
+                  if (watch != null && watch.isNotEmpty)
+                    PanoramaBudgetWatch(entries: watch),
                 ]),
     );
   }
