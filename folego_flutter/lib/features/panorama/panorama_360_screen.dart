@@ -11,6 +11,7 @@ import '../../data/models/folego_snapshot.dart';
 import '../../data/models/monthly_money_summary.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../goals/goals_screen.dart';
+import '../home/upcoming_events_screen.dart';
 import '../plan/flexible_budget_screen.dart';
 import '../transactions/transactions_screen.dart';
 import 'panorama_360_data.dart';
@@ -24,12 +25,16 @@ class Panorama360Screen extends StatefulWidget {
     required this.repository,
     required this.space,
     this.loadOverride,
+    this.onUpcomingRequested,
   });
 
   final FolegoRepository repository;
   final FinancialSpace space;
   @visibleForTesting
   final Panorama360Loader? loadOverride;
+
+  @visibleForTesting
+  final VoidCallback? onUpcomingRequested;
 
   @override
   State<Panorama360Screen> createState() => _Panorama360ScreenState();
@@ -92,6 +97,20 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
           spaceId: widget.space.id,
         ),
       ));
+
+  void _upcoming() {
+    final callback = widget.onUpcomingRequested;
+    if (callback != null) {
+      callback();
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => UpcomingEventsScreen(
+        repository: widget.repository,
+        spaceId: widget.space.id,
+      ),
+    ));
+  }
 
   void _transactions() => Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (_) => TransactionsScreen(
@@ -387,7 +406,7 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
       title: 'próximos compromissos',
       icon: AppIcons.calendar,
       action: 'ver todos',
-      onAction: _transactions,
+      onAction: _upcoming,
       content: upcoming == null
           ? _unavailable()
           : upcoming.isEmpty
@@ -398,10 +417,27 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                       padding: const EdgeInsets.symmetric(vertical: 5),
                       child: Row(children: [
                         Expanded(
-                          child: Text(
-                            event.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                event.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                'vence ${event.dueDate.day.toString().padLeft(2, '0')}/'
+                                '${event.dueDate.month.toString().padLeft(2, '0')}',
+                                style: AppTypography.body(
+                                  context,
+                                  fontSize: 10,
+                                  color: AppColors.secondaryText(
+                                    Theme.of(context).brightness,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
