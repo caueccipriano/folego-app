@@ -126,7 +126,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final content = Padding(
-      padding: EdgeInsets.fromLTRB(widget.embedded ? 20 : 18, 16, widget.embedded ? 20 : 18, 20),
+      padding: EdgeInsets.fromLTRB(widget.embedded ? 18 : 18, 14, widget.embedded ? 18 : 18, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (!widget.embedded) ...[
           Text('Pergunte ao Fôlego ✨', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
@@ -135,8 +135,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         Text('Acesso antecipado · até 30 perguntas por mês', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
         Text('A IA recebe apenas os totais do mês, nunca seus lançamentos individuais.', style: theme.textTheme.bodySmall),
-        const SizedBox(height: 16),
-        Wrap(spacing: 8, runSpacing: 4, children: [
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 8, children: [
           ActionChip(label: const Text('Como está meu mês?'),
             onPressed: _busy ? null : () => setState(() => _question.text = 'Como está minha situação financeira neste mês?')),
           ActionChip(label: const Text('Onde posso melhorar?'),
@@ -152,12 +152,14 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
             labelText: 'O que você quer entender?',
             hintText: 'Como está meu resultado deste mês?',
             border: OutlineInputBorder(),
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         ),
         SizedBox(width: double.infinity, child: FilledButton.icon(
           onPressed: _busy ? null : _ask,
           icon: const Icon(Icons.auto_awesome),
-          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA'),
+          label: Text(_busy ? 'Consultando…' : 'Perguntar à IA', style: const TextStyle(fontWeight: FontWeight.w700)),
         )),
         if (_answer != null) Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -167,14 +169,29 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _isError ? theme.colorScheme.errorContainer : theme.colorScheme.surfaceContainerHighest,
+                color: _isError
+                    ? theme.colorScheme.errorContainer.withValues(alpha: 0.32)
+                    : theme.colorScheme.surfaceContainerHighest,
+                border: Border.all(
+                  color: _isError
+                      ? theme.colorScheme.error.withValues(alpha: 0.26)
+                      : theme.colorScheme.outlineVariant,
+                ),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(_isError ? 'Não foi possível responder' : 'Resposta do Fôlego',
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                SelectableText(_answer!),
+                Row(children: [
+                  Icon(_isError ? Icons.info_outline : Icons.auto_awesome,
+                    color: _isError ? theme.colorScheme.error : theme.colorScheme.primary,
+                    size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(
+                    _isError ? 'Não foi possível responder' : 'Resposta do Fôlego',
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  )),
+                ]),
+                const SizedBox(height: 8),
+                SelectableText(_answer!, style: theme.textTheme.bodyMedium),
               ]),
             ),
           ),
