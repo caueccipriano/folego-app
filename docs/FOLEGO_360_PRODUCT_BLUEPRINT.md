@@ -138,6 +138,32 @@ support requires a separately consented, anonymized actual export
 sample and source-specific tests. No customer file, login, access token
 or financial figure belongs in the repository or CI logs.
 
+## Sixth microdelivery: explicit credit-card CSV sign conventions
+
+Some **generic** card CSV formats record purchases as negative signed
+amounts; others use positive signed amounts. It is unsafe to treat all
+positive card rows as payments or refunds. The **existing CSV mapping
+wizard** now displays a card-only choice for signed-amount files:
+
+- `Compras negativas (-)` preserves existing Fôlego behavior by default.
+- `Compras positivas (+)` is an explicit opt-in per import, not an
+  automatic guess based on a bank or competitor's alleged format.
+- The signed convention adjusts the direction of **card rows only**.
+  Split debit/credit columns, bank accounts, benefits and OFX parsing
+  must never inherit this choice.
+- A card refund and a card payment still require row-level review and
+  never become income or a settled bill automatically just because the
+  sign changes. The convention is included in the import's recorded
+  mapping configuration.
+- The wizard asks people to verify a known purchase during the
+  **existing review step** before confirming anything. All initial
+  implementation and UI tests use imaginary card transactions.
+
+This is NOT certified against any actual Organizze, Mobills or bank
+export. Vendor-specific migration requires a redacted sample and
+express approval. No real invoices, external banking actions,
+customer data or auto-posting are involved.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.

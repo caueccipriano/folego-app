@@ -11,6 +11,10 @@ const int statementImportMaxRows = 2000;
 enum CsvDecimalFormat { auto, brazilian, american }
 enum CsvDateFormat { auto, dmy, mdy, iso }
 
+/// Explicit signed-amount convention for a CARD CSV only. Bank-account
+/// exports and split debit/credit columns keep their original direction.
+enum CsvCardSignConvention { purchasesNegative, purchasesPositive }
+
 class StatementImportParseException implements Exception {
   const StatementImportParseException(this.message);
   final String message;
@@ -34,6 +38,7 @@ class CsvImportMapping {
     this.noteColumn,
     this.decimalFormat = CsvDecimalFormat.auto,
     this.dateFormat = CsvDateFormat.auto,
+    this.cardSignConvention = CsvCardSignConvention.purchasesNegative,
   });
 
   final int? dateColumn;
@@ -50,6 +55,7 @@ class CsvImportMapping {
   final int? noteColumn;
   final CsvDecimalFormat decimalFormat;
   final CsvDateFormat dateFormat;
+  final CsvCardSignConvention cardSignConvention;
 
   bool get hasValueMapping => amountColumn != null || debitColumn != null || creditColumn != null;
   bool get isComplete => dateColumn != null && descriptionColumn != null && hasValueMapping;
@@ -79,6 +85,7 @@ class CsvImportMapping {
     bool clearNote = false,
     CsvDecimalFormat? decimalFormat,
     CsvDateFormat? dateFormat,
+    CsvCardSignConvention? cardSignConvention,
   }) {
     return CsvImportMapping(
       dateColumn: dateColumn ?? this.dateColumn,
@@ -95,6 +102,7 @@ class CsvImportMapping {
       noteColumn: clearNote ? null : noteColumn ?? this.noteColumn,
       decimalFormat: decimalFormat ?? this.decimalFormat,
       dateFormat: dateFormat ?? this.dateFormat,
+      cardSignConvention: cardSignConvention ?? this.cardSignConvention,
     );
   }
 
@@ -113,6 +121,7 @@ class CsvImportMapping {
         'note_column': noteColumn,
         'decimal_format': decimalFormat.name,
         'date_format': dateFormat.name,
+        'card_sign_convention': cardSignConvention.name,
       };
 }
 
@@ -160,12 +169,24 @@ class CsvImportDocument {
         if (description.isEmpty) throw const FormatException('description');
 
         final money = _moneyForRow(row, mapping);
+        // Some card exports encode purchases as positive signed amounts.
+        // Invert ONLY when the customer chose that convention for a card's
+        // signed amount. Split debit/credit and bank/benefit records must
+        // never inherit this card-specific interpretation.
+        final direction = sourceKind == StatementImportSourceKind.card &&
+                mapping.amountColumn != null &&
+                mapping.cardSignConvention ==
+                    CsvCardSignConvention.purchasesPositive
+            ? (money.direction == StatementImportDirection.debit
+                ? StatementImportDirection.credit
+                : StatementImportDirection.debit)
+            : money.direction;
         final merchant = _optionalCell(row, mapping.merchantColumn);
         final externalId = _optionalCell(row, mapping.externalIdColumn);
         final sourceType = _optionalCell(row, mapping.typeColumn);
         final classification = classifyStatementRow(
           sourceKind: sourceKind,
-          direction: money.direction,
+          direction: direction,
           description: description,
           sourceType: sourceType,
         );
@@ -179,7 +200,7 @@ class CsvImportDocument {
             amountMinor: money.amountMinor,
             description: description,
             merchant: merchant,
-            direction: money.direction,
+            direction: direction,
             externalId: externalId,
             candidateType: classification.candidateType,
             finalType: classification.finalType,
