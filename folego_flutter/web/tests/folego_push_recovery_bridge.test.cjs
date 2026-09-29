@@ -60,7 +60,7 @@ function syntheticBridge({
     JSON,
     Uint8Array,
     atob,
-    window: {},
+    window: { addEventListener() {} },
     Notification: {
       permission,
       async requestPermission() { prompts++; return 'granted'; },
