@@ -26,6 +26,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   bool _isLocalAnswer = false;
   int _requestEpoch = 0;
   MonthlyMoneySummary? _localSummary;
+  String? _summaryForUserId;
+  String? _summaryForSpaceId;
   bool _showLocalSummary = false;
 
   // A widget may be reused when the selected household or repository changes.
@@ -42,6 +44,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _isLocalAnswer = false;
       _busy = false;
       _localSummary = null;
+      _summaryForUserId = null;
+      _summaryForSpaceId = null;
       _showLocalSummary = false;
     }
   }
@@ -79,6 +83,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _isError = false;
       _isLocalAnswer = false;
       _localSummary = null;
+      _summaryForUserId = null;
+      _summaryForSpaceId = null;
       _showLocalSummary = false;
     });
     try {
@@ -90,6 +96,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       // A may have signed out or switched spaces while the summary was loading.
       if (!current()) return;
       _localSummary = summary;
+      _summaryForUserId = userId;
+      _summaryForSpaceId = spaceId;
       final result = await Supabase.instance.client.functions.invoke(
         'financial-ai',
         body: {
@@ -171,6 +179,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       _isError = false;
       _isLocalAnswer = false;
       _localSummary = null;
+      _summaryForUserId = null;
+      _summaryForSpaceId = null;
       _showLocalSummary = false;
     });
     try {
@@ -181,6 +191,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       if (!current()) return;
       setState(() {
         _localSummary = summary;
+        _summaryForUserId = userId;
+        _summaryForSpaceId = spaceId;
         _isLocalAnswer = true;
         _answer = buildLocalMonthlyAnswer(summary, question);
       });
@@ -212,7 +224,10 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
 
   Future<void> _copyForChatGpt() async {
     final summary = _localSummary;
-    if (summary == null || _busy) return;
+    if (summary == null || _busy ||
+        _summaryForUserId == null ||
+        _summaryForUserId != widget.service.repository.currentUserId ||
+        _summaryForSpaceId != widget.spaceId) return;
     final prompt = buildChatGptMonthlyPrompt(summary, _question.text);
     // Explicit, user-triggered copy only. No automatic data transmission.
     await Clipboard.setData(ClipboardData(text: prompt));
@@ -229,6 +244,9 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     final accent = AppColors.primaryPurple(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness);
+    final visibleSummary = _summaryForUserId != null &&
+        _summaryForUserId == widget.service.repository.currentUserId &&
+        _summaryForSpaceId == widget.spaceId ? _localSummary : null;
     final content = Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -326,7 +344,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                 ]),
                 const SizedBox(height: 6),
                 SelectableText(_answer!, style: theme.textTheme.bodyMedium),
-                if (_isError && _localSummary != null) ...[
+                if (_isError && visibleSummary != null) ...[
                   const SizedBox(height: 10),
                   TextButton.icon(
                     onPressed: () => setState(() =>
@@ -341,7 +359,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
             ),
           ),
         ],
-        if (_localSummary != null && !_busy) ...[
+        if (visibleSummary != null && !_busy) ...[
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: _copyForChatGpt,
@@ -353,7 +371,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                'automaticamente.',
             style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         ],
-        if (_isError && _showLocalSummary && _localSummary != null) ...[
+        if (_isError && _showLocalSummary && visibleSummary != null) ...[
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -368,7 +386,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: accent, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              SelectableText(buildLocalMonthlySummary(_localSummary!),
+              SelectableText(buildLocalMonthlySummary(visibleSummary!),
                 style: theme.textTheme.bodyMedium),
             ]),
           ),
