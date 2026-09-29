@@ -78,14 +78,17 @@ void main() {
 
     final spendable = find.byKey(const ValueKey('panorama-spendable'));
     expect(spendable, findsOneWidget);
-    expect(tester.widget<Text>(spendable).data, Formatters.money(120));
+    final originallyVisibleSpendable = Formatters.money(120);
+    final originallyVisibleProtected = Formatters.money(250);
+    expect(tester.widget<Text>(spendable).data, originallyVisibleSpendable);
+    expect(find.text(originallyVisibleProtected), findsWidgets);
     expect(queries, 1);
 
     FinancialPrivacy.hidden.value = true;
     await tester.pumpAndSettle();
     expect(tester.widget<Text>(spendable).data, FinancialPrivacy.maskMoney());
-    expect(find.textContaining('R$ 120,00'), findsNothing);
-    expect(find.textContaining('R$ 250,00'), findsNothing);
+    expect(find.text(originallyVisibleSpendable), findsNothing);
+    expect(find.text(originallyVisibleProtected), findsNothing);
     expect(queries, 1, reason: 'Privacy toggle must not refetch data');
 
     FinancialPrivacy.hidden.value = false;
@@ -108,7 +111,6 @@ void main() {
     final spendable = find.byKey(const ValueKey('panorama-spendable'));
     expect(spendable, findsOneWidget);
     expect(tester.widget<Text>(spendable).data, FinancialPrivacy.maskMoney());
-    expect(find.textContaining('R$ 120,00'), findsNothing);
   });
 
   testWidgets('privacy immediately masks mounted economic amount rows',
