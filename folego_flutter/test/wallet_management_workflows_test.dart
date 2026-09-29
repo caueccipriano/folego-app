@@ -113,7 +113,7 @@ void main() {
       expect(find.byKey(const ValueKey('wallet-add-card')), findsOneWidget);
       expect(find.byKey(const ValueKey('wallet-add-benefit')), findsOneWidget);
       expect(find.byKey(const ValueKey('wallet-add-debt')), findsOneWidget);
-      expect(find.text('usa o fluxo Debt 2.0 já existente'), findsOneWidget);
+      expect(find.text('acompanhe parcelas, saldo e pagamentos'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -205,8 +205,8 @@ void main() {
       );
 
       expect(find.byKey(const ValueKey('wallet-opening-balance')), findsNothing);
-      expect(find.textContaining('o saldo não é editável aqui'), findsOneWidget);
-      expect(find.textContaining('ajuste/reconciliação'), findsOneWidget);
+      expect(find.textContaining('para corrigir o saldo, registre um ajuste'), findsOneWidget);
+      expect(find.textContaining('o saldo é atualizado pelos lançamentos'), findsOneWidget);
     });
 
     testWidgets('benefit creation stays benefit and protected from available cash', (
