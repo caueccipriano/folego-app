@@ -87,12 +87,16 @@ Future<void> _cardMapping(WidgetTester tester, {
       findsOneWidget);
 }
 
-Future<void> _scrollTo(WidgetTester tester, Finder target) async {
+Future<void> _scrollTo(
+  WidgetTester tester,
+  Finder target, {
+  double delta = 200,
+}) async {
   final scrollable = find.descendant(
     of: find.byKey(const ValueKey('statement-import-csv-mapping')),
     matching: find.byType(Scrollable),
   ).first;
-  await tester.scrollUntilVisible(target, 200, scrollable: scrollable);
+  await tester.scrollUntilVisible(target, delta, scrollable: scrollable);
   await tester.pumpAndSettle();
 }
 
@@ -171,7 +175,10 @@ void main() {
       of: find.byKey(const ValueKey('statement-import-signed-amount-field')),
       matching: find.byType(DropdownButtonFormField<int>),
     );
-    await _scrollTo(tester, amountField);
+    // The amount field is ABOVE the sign selector. Scroll upward from the
+    // previously visible sign; positive scroll would move farther away from
+    // an unmounted lazily built amount field and produce a false test error.
+    await _scrollTo(tester, amountField, delta: -200);
     await tester.tap(amountField);
     await tester.pumpAndSettle();
     await tester.tap(find.text('não usar').last);
