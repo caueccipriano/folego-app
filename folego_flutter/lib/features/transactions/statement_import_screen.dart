@@ -688,6 +688,14 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         'Nada será lançado sem sua revisão.',
         key: ValueKey('statement-import-ambiguous-currency-guidance'),
       ),
+      const SizedBox(height: 8),
+      const Text(
+        'Datas como 05/06/2026 podem significar 5 de junho ou 6 de maio. '
+        'Se o CSV tiver datas assim, selecione DD/MM/AAAA ou MM/DD/AAAA '
+        'conforme o arquivo antes de continuar. '
+        'O Fôlego não vai escolher o mês por você.',
+        key: ValueKey('statement-import-ambiguous-date-guidance'),
+      ),
       const SizedBox(height: 12),
       ExpansionTile(title: const Text('campos opcionais'), children: [
         _ColumnMappingField(label: 'estabelecimento', value: mapping.merchantColumn, headers: csv.headers, examples: csv.examplesFor(mapping.merchantColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearMerchant: true) : mapping.copyWith(merchantColumn: value))),
