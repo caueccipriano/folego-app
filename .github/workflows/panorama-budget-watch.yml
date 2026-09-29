@@ -1,0 +1,54 @@
+name: Folego 360 budget risk watch
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/test/panorama_budget_watch_test.dart'
+      - 'folego_flutter/test/panorama_360_*'
+      - 'docs/FOLEGO_360_PRODUCT_BLUEPRINT.md'
+      - '.github/workflows/panorama-budget-watch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  budget-watch:
+    name: Parent-only thresholds and masked compact screens
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze budget-watch code and the entire app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_budget_watch.dart \
+            lib/features/panorama/panorama_360_data.dart \
+            lib/features/panorama/panorama_360_screen.dart \
+            test/panorama_budget_watch_test.dart
+          flutter analyze --no-pub
+      - name: Test independent category thresholds and economic budgets
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_budget_watch_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/flexible_budget_model_test.dart \
+            test/monthly_money_summary_test.dart
+      - name: State no user data access or actual bank-budget guarantee
+        run: |
+          {
+            echo 'Budget watch reuses scope-authorized existing parent rows.'
+            echo 'No notification, external banking sync or database changes.'
+            echo 'Synthetic UI and unit tests are not multiuser HTTPS acceptance.'
+          } >> "$GITHUB_STEP_SUMMARY"

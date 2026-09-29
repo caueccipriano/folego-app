@@ -64,6 +64,30 @@ connector, client-side reclassification, new DB table, cron job or paywall
 is introduced. Authentication/RLS and physical-device release gates from
 the first slice remain mandatory.
 
+## Third microdelivery: budget watch (draft, no notifications)
+
+Reuse existing **RLS-scoped, current-month parent category budget rows**
+from the Panorama 360's already-loaded budget overview. The watchlist
+highlights up to three categories that have crossed each category's
+configured warning threshold (or Fôlego's default 70% fallback). Sorting
+prioritizes exceeded categories by actual recorded overspend, followed by
+the nearest remaining limits. Zero/unconfigured budgets, children already
+aggregated into parents and invalid negative/non-finite values cannot
+trigger a false warning.
+
+This is an **informational read-only comparison against recorded data**,
+not a forecast, bank-sync claim, scheduled Push notification or advice
+to change spending. An unavailable budget RPC returns an unknown state;
+an empty or safely used budget returns no alert. Protected cash,
+card-payment cash movement and goal contributions are not reclassified
+or re-aggregated here. In global hide-values mode, both monetary amounts
+**and progress bars** disappear immediately so masked values cannot be
+inferred from precise percentage indicators.
+
+The initial design keeps the watch inside the EXISTING Panorama budget
+card, rather than adding new screens or requiring a separate setup.
+Authenticated multi-space staging QA remains a release blocker.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.

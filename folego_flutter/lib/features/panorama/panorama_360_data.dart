@@ -6,6 +6,7 @@ import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_goals.dart';
 import 'panorama_month_trend.dart';
+import 'panorama_budget_watch.dart';
 
 /// Every nullable field means "not verified / could not load", NOT a
 /// financial zero. An empty list means the scoped query succeeded but had
@@ -54,6 +55,10 @@ class Panorama360Data {
   /// their parent aggregation: adding them again would double consumption.
   BudgetMonthSummary? get budgetSummary =>
       budgets == null ? null : BudgetMonthSummary.fromItems(budgets!);
+
+  /// Only parent-category warnings, from the SAME authenticated space.
+  List<PanoramaBudgetWatchEntry>? get budgetWatch =>
+      PanoramaBudgetWatchEntry.fromBudgets(budgets);
 
   List<FinancialGoal>? get activeGoals => goals
       ?.where((goal) => goal.status == GoalStatus.active)
