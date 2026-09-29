@@ -227,7 +227,9 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     if (summary == null || _busy ||
         _summaryForUserId == null ||
         _summaryForUserId != widget.service.repository.currentUserId ||
-        _summaryForSpaceId != widget.spaceId) return;
+        _summaryForSpaceId != widget.spaceId) {
+      return;
+    }
     final prompt = buildChatGptMonthlyPrompt(summary, _question.text);
     // Explicit, user-triggered copy only. No automatic data transmission.
     await Clipboard.setData(ClipboardData(text: prompt));
@@ -386,7 +388,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: accent, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              SelectableText(buildLocalMonthlySummary(visibleSummary!),
+              SelectableText(buildLocalMonthlySummary(visibleSummary),
                 style: theme.textTheme.bodyMedium),
             ]),
           ),
