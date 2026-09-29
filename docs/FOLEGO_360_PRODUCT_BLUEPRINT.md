@@ -138,6 +138,39 @@ support requires a separately consented, anonymized actual export
 sample and source-specific tests. No customer file, login, access token
 or financial figure belongs in the repository or CI logs.
 
+## Eighth microdelivery: explain matched category movements (draft only)
+
+The existing historical financial comparison shows canonical economic totals
+for the last TWO COMPLETED months. This separate follow-up fetches the
+existing RLS-protected `get_budget_overview` for those **same two closed
+months** (two additional optional read-only RPCs), and surfaces the three
+largest **absolute differences in registered category spending**. Only
+active parent-category IDs appearing in both months are comparable:
+child budget rows are excluded to avoid double-counting. A renamed
+category keeps its identity through the stable ID, with the more recent
+display name; an archived, reparented, newly created, unmatched or
+duplicated category cannot acquire a fabricated past zero.
+
+- Both historical queries must succeed. One failure makes the comparison
+  unavailable, not a clean zero or a recommendation. A mismatched month
+  is rejected. Successfully loaded but empty/no-match histories have a
+  separate informative state. The comparison cannot assert that missing
+  external statements were imported or that all inactive categories
+  are historically available.
+- Uses **actual amount only** from the parent category RPC, not changes
+  to configured budget ceilings; negative actual amounts from net
+  refunds remain valid. Shows "registered a mais/menos", not a spending
+  judgment, ranking of people or predicted overspend.
+- In financial privacy mode, hide the **entire category movement content**
+  including category names and increase/decrease direction, since hiding
+  currency alone still reveals private spending patterns.
+- This keeps all views read-only and scoped to the selected authorized
+  financial space; no new SQL, data mutation, external connections,
+  paywall, analytics tracking or live deployment. Unit/widget tests use
+  fictional categories, including stable IDs, deleted/renamed rows,
+  duplicate IDs and narrow screen/privacy cases. Authenticated A/B
+  staging remains a separate release gate.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.

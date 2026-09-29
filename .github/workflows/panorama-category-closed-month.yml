@@ -1,0 +1,59 @@
+name: Folego 360 category month comparison
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/test/panorama_category_*'
+      - 'folego_flutter/test/panorama_360_*'
+      - '.github/workflows/panorama-category-closed-month.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closed-category-comparison:
+    name: Verified matched monthly categories and full privacy masks
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze new files plus entire Flutter application
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_category_trend.dart \
+            lib/features/panorama/panorama_category_comparison.dart \
+            lib/features/panorama/panorama_360_data.dart \
+            lib/features/panorama/panorama_360_screen.dart \
+            test/panorama_category_trend_test.dart \
+            test/panorama_category_comparison_test.dart
+          flutter analyze --no-pub
+      - name: Full Panorama economics and privacy regressions on fictional data
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_category_trend_test.dart \
+            test/panorama_category_comparison_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/panorama_month_trend_test.dart \
+            test/panorama_month_comparison_test.dart \
+            test/panorama_budget_watch_test.dart \
+            test/monthly_money_summary_test.dart
+      - name: State coverage limitations
+        run: |
+          {
+            echo 'Read-only, stable-ID matched active parent categories'
+            echo 'from exactly two COMPLETE recorded economic months.'
+            echo 'The synthetic CI does not prove full actual imported coverage.'
+            echo 'No customer financial data, Dev SQL write, payment or deploy.'
+          } >> "$GITHUB_STEP_SUMMARY"
