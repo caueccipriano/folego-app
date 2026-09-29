@@ -4,6 +4,7 @@ import '../../widgets/weekly_insights_card.dart';
 import '../../core/intelligence/purchase_scenario_service.dart';
 import '../../widgets/purchase_simulator_card.dart';
 import '../../widgets/financial_ai_card.dart';
+import '../../widgets/folego_home_section_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -403,27 +404,31 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   weeklyIntelligenceCard,
                   const SizedBox(height: 10),
-                  Card(
-                    clipBehavior: Clip.antiAlias,
+                  FolegoHomeSectionCard(
                     child: ExpansionTile(
                       key: const ValueKey('home-purchase-tools'),
-                      tilePadding: const EdgeInsets.symmetric(horizontal: 20),
-                      title: const Text('Simular uma compra', style: TextStyle(fontWeight: FontWeight.w700)),
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      tilePadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 6),
+                      title: const FolegoHomeSectionTitle('Simular uma compra'),
                       subtitle: const Text('Veja o impacto antes de gastar'),
-                      childrenPadding: const EdgeInsets.only(bottom: 8),
+                      childrenPadding: const EdgeInsets.only(bottom: 6),
                       children: [purchaseSimulator],
                     ),
                   ),
                   if (isPrivateAiTester) ...[
-                    const SizedBox(height: 8),
-                    Card(
-                      clipBehavior: Clip.antiAlias,
+                    const SizedBox(height: 10),
+                    FolegoHomeSectionCard(
                       child: ExpansionTile(
                         key: const ValueKey('home-ai-tools'),
-                        tilePadding: const EdgeInsets.symmetric(horizontal: 20),
-                        title: const Text('Pergunte ao Fôlego ✨', style: TextStyle(fontWeight: FontWeight.w700)),
+                        shape: const Border(),
+                        collapsedShape: const Border(),
+                        tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 6),
+                        title: const FolegoHomeSectionTitle('Pergunte ao Fôlego ✨'),
                         subtitle: const Text('Sua análise financeira com IA'),
-                        childrenPadding: const EdgeInsets.only(bottom: 8),
+                        childrenPadding: const EdgeInsets.only(bottom: 6),
                         children: [financialAiCard],
                       ),
                     ),
