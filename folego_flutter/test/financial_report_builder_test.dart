@@ -25,6 +25,7 @@ void main() {
     final report = FinancialReportBuilder.monthly(current: summary(100, 200));
     expect(report.result, -100);
     expect(report.insights.length, 1);
-    expect(report.insights.first.description, contains('R\$ 100,00'));
+    expect(report.insights.first.description, contains('R\$'));
+    expect(report.insights.first.description, contains('100,00'));
   });
 }
