@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/intelligence/financial_insights_service.dart';
@@ -29,13 +31,41 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId) _load();
   }
+  // Five independent backend tasks can settle BEFORE this card has built
+  // their individual FutureBuilders. Attach an early error observer so one
+  // unavailable optional source never triggers an unhandled Zone exception
+  // or crashes the rest of the Home dashboard. The ORIGINAL Future remains
+  // unchanged and its FutureBuilder will still display the actual error.
+  Future<T> _observe<T>(Future<T> Function() loader) {
+    final original = Future<T>.sync(loader);
+    unawaited(
+      original.then<void>(
+        (value) {},
+        onError: (Object error, StackTrace trace) {},
+      ),
+    );
+    return original;
+  }
+
   void _load() {
     final now = DateTime.now();
-    _report = widget.service.currentProgress(spaceId: widget.spaceId, asOf: now);
-    _budget = widget.service.flexibleBudget(spaceId: widget.spaceId, asOf: now);
-    _radar = widget.service.radar(spaceId: widget.spaceId);
-    _runway = widget.service.cashRunway(spaceId: widget.spaceId, asOf: now);
-    _repeated = widget.service.repeatedPurchases(spaceId: widget.spaceId, asOf: now);
+    _report = _observe(() => widget.service.currentProgress(
+          spaceId: widget.spaceId,
+          asOf: now,
+        ));
+    _budget = _observe(() => widget.service.flexibleBudget(
+          spaceId: widget.spaceId,
+          asOf: now,
+        ));
+    _radar = _observe(() => widget.service.radar(spaceId: widget.spaceId));
+    _runway = _observe(() => widget.service.cashRunway(
+          spaceId: widget.spaceId,
+          asOf: now,
+        ));
+    _repeated = _observe(() => widget.service.repeatedPurchases(
+          spaceId: widget.spaceId,
+          asOf: now,
+        ));
   }
   @override
   Widget build(BuildContext context) => FutureBuilder<CurrentProgressReport>(

@@ -8,6 +8,7 @@ import 'package:folego/data/models/onboarding_state.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/home_screen.dart';
 import 'package:folego/features/onboarding/onboarding_screen.dart';
+import 'package:folego/l10n/app_localizations.dart';
 
 class _MemoryPreferenceStore implements AppPreferenceStore {
   final Map<String, String> values = <String, String>{};
@@ -49,6 +50,16 @@ OnboardingState _setup({required bool hasAccount, required bool hasIncome}) {
   );
 }
 
+// The actual Fôlego app always installs AppLocalizations. Bare MaterialApp
+// in a widget test cannot render onboarding/first-use messages and causes
+// an artificial null-localization exception.
+Widget _testApp(Widget screen) => MaterialApp(
+      locale: const Locale('pt', 'BR'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: screen,
+    );
+
 void main() {
   test('first-run intro preference is local and persistent', () async {
     final store = _MemoryPreferenceStore();
@@ -63,8 +74,8 @@ void main() {
   testWidgets('onboarding is short, skippable and uses four concepts', (tester) async {
     var completed = 0;
     await tester.pumpWidget(
-      MaterialApp(
-        home: OnboardingScreen(
+      _testApp(
+        OnboardingScreen(
           onCompleted: () async => completed += 1,
           onSignOut: () async {},
         ),
@@ -90,8 +101,8 @@ void main() {
   testWidgets('onboarding skip never writes financial setup', (tester) async {
     var completed = 0;
     await tester.pumpWidget(
-      MaterialApp(
-        home: OnboardingScreen(
+      _testApp(
+        OnboardingScreen(
           onCompleted: () async => completed += 1,
           onSignOut: () async {},
         ),
@@ -105,8 +116,8 @@ void main() {
 
   testWidgets('first-use Home explains missing account instead of showing zero money', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: HomeScreen(
+      _testApp(
+        HomeScreen(
           space: _space,
           repository: _FirstUseRepository(_setup(hasAccount: false, hasIncome: false)),
         ),
@@ -114,7 +125,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('seu Fôlego ainda não tem de onde partir'), findsOneWidget);
+    expect(find.text('1. adicione uma conta'), findsOneWidget);
     expect(find.byKey(const ValueKey('first-use-add-account')), findsOneWidget);
     expect(find.text('R\$ 0,00'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -122,8 +133,8 @@ void main() {
 
   testWidgets('first-use Home explains missing recurring income', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: HomeScreen(
+      _testApp(
+        HomeScreen(
           space: _space,
           repository: _FirstUseRepository(_setup(hasAccount: true, hasIncome: false)),
         ),
@@ -131,8 +142,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('falta saber quando entra dinheiro'), findsOneWidget);
-    expect(find.textContaining('receita recorrente'), findsOneWidget);
+    expect(find.text('2. cadastre sua renda recorrente'), findsOneWidget);
+    expect(find.textContaining('receita recorrente'), findsWidgets);
     expect(find.text('R\$ 0,00'), findsNothing);
     expect(tester.takeException(), isNull);
   });

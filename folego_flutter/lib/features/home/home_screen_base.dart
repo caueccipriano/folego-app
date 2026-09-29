@@ -337,8 +337,14 @@ class _HomeScreenState extends State<HomeScreen> {
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
     );
-    final isPrivateAiTester = widget.repository.currentUserId ==
-        '5de8e34a-c6f5-4667-8fe0-2b4b89b42880';
+    // Experimental AI currently sends monthly aggregate financial totals to
+    // a provider. Keep OFF for everyone until a distinct opt-in, secure
+    // entitlement and provider/privacy review exist. Never target a person
+    // using a hard-coded account identifier or bypass normal consent.
+    const showExperimentalAi = bool.fromEnvironment(
+      'FOLEGO_EXPERIMENTAL_AI_REVIEWED',
+      defaultValue: false,
+    );
     final financialAiCard = FinancialAiCard(
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
@@ -412,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [purchaseSimulator],
                     ),
                   ),
-                  if (isPrivateAiTester) ...[
+                  if (showExperimentalAi) ...[
                     const SizedBox(height: 8),
                     Card(
                       clipBehavior: Clip.antiAlias,
@@ -453,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   purchaseSimulator,
                   const SizedBox(height: 14),
 
-                  if (isPrivateAiTester) financialAiCard,
+                  if (showExperimentalAi) financialAiCard,
                   const SizedBox(height: 14),
                   projectionInsight,
                   const SizedBox(height: 24),
@@ -499,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             purchaseSimulator,
                             const SizedBox(height: 16),
 
-                            if (isPrivateAiTester) financialAiCard,
+                            if (showExperimentalAi) financialAiCard,
                             const SizedBox(height: 16),
                             projectionInsight,
                           ],
@@ -892,47 +898,56 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  CategoryIconBadge(
-                    icon: AppIcons.calendar,
-                    color: primaryPurple,
-                    size: 32,
-                    iconSize: 16,
-                    radius: AppRadii.control,
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      'próximos movimentos',
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: primaryText,
+              LayoutBuilder(
+                builder: (context, available) {
+                  final narrow = available.maxWidth < 210;
+                  return Row(
+                    children: [
+                      CategoryIconBadge(
+                        icon: AppIcons.calendar,
+                        color: primaryPurple,
+                        size: 32,
+                        iconSize: 16,
+                        radius: AppRadii.control,
                       ),
-                    ),
-                  ),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 64),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'ver todos',
-                        maxLines: 1,
-                        style: AppTypography.label(
-                          context,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: primaryPurple,
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          'próximos movimentos',
+                          maxLines: narrow ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: primaryText,
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 3),
-                  Icon(AppIcons.chevronRight, size: 17, color: primaryPurple),
-                ],
+                      if (!narrow) ...[
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 64),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'ver todos',
+                              maxLines: 1,
+                              style: AppTypography.label(
+                                context,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: primaryPurple,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                      ],
+                      Icon(AppIcons.chevronRight, size: 17, color: primaryPurple),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 10),
               if (_upcomingUnavailable)
@@ -984,63 +999,104 @@ class _HomeScreenState extends State<HomeScreen> {
         : primaryText;
     final sign = event.isIncome ? '+' : '-';
 
-    return Row(
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: event.isIncome
-                ? AppColors.positiveText(brightness)
-                : AppColors.primaryPurple(brightness),
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 9),
-        SizedBox(
-          width: 54,
-          child: Text(
-            _futureDate(event.dueDate),
-            style: AppTypography.label(
-              context,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: secondaryText,
+    return LayoutBuilder(
+      builder: (context, available) {
+        // Cards can also be embedded in narrow split panes, not just full
+        // mobile screens. Fixed-width dates and money exceed 200px columns.
+        if (available.maxWidth < 220) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '${_futureDate(event.dueDate)} · ${event.name}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: primaryText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '$sign${Formatters.money(event.amount.abs())}',
+                    maxLines: 1,
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 11,
+                      color: amountColor,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+      return Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: event.isIncome
+                  ? AppColors.positiveText(brightness)
+                  : AppColors.primaryPurple(brightness),
+              shape: BoxShape.circle,
             ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            event.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: primaryText,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 108),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerRight,
+          const SizedBox(width: 9),
+          SizedBox(
+            width: 54,
             child: Text(
-              '$sign${Formatters.money(event.amount.abs())}',
-              maxLines: 1,
-              style: AppTypography.money(
+              _futureDate(event.dueDate),
+              style: AppTypography.label(
                 context,
-                fontSize: 11,
-                color: amountColor,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: secondaryText,
               ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              event.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.body(
+                context,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: primaryText,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 108),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                '$sign${Formatters.money(event.amount.abs())}',
+                maxLines: 1,
+                style: AppTypography.money(
+                  context,
+                  fontSize: 11,
+                  color: amountColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      },
     );
   }
 

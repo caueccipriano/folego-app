@@ -1,0 +1,58 @@
+name: Premium price parity (display-only)
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/core/subscriptions/subscription_service.dart'
+      - 'folego_flutter/lib/features/premium/premium_screen.dart'
+      - 'folego_flutter/test/premium_release_contract_test.dart'
+      - 'docs/revenuecat-launch-checklist.md'
+      - 'docs/store/publishing_checklist_v1.md'
+      - '.github/workflows/premium-price-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  price-and-safety-contract:
+    name: Flutter display, backend paywall lock and illustrative net target
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install application dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze price and paywall regressions
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/core/subscriptions/subscription_service.dart \
+            lib/features/premium/premium_screen.dart \
+            test/premium_release_contract_test.dart
+      - name: Verify approved Brazil marketing price and preserve checkout safeguards
+        working-directory: folego_flutter
+        run: flutter test test/premium_release_contract_test.dart
+      - name: Ensure publishing checklist and RevenueCat guide agree
+        run: |
+          grep -Fq 'R$ 9,90' docs/store/publishing_checklist_v1.md
+          grep -Fq 'R$ 9,90' docs/revenuecat-launch-checklist.md
+          if grep -Eiq 'R\$ ?14[.,]90' \
+            docs/revenuecat-launch-checklist.md \
+            folego_flutter/lib/core/subscriptions/subscription_service.dart \
+            folego_flutter/lib/features/premium/premium_screen.dart; then
+            echo 'FAIL: old R$14.90 marketing copy remains.'
+            exit 1
+          fi
+      - name: Explain commercial limitation
+        run: |
+          {
+            echo 'PASS: code, documentation and mock economics are aligned.'
+            echo 'No actual store SKU, localized paywall, RevenueCat offering'
+            echo 'or real payment was created, enabled or charged by this CI.'
+          } >> "$GITHUB_STEP_SUMMARY"

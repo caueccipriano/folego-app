@@ -304,6 +304,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
             for (final section in AgendaSection.values)
               if (grouped[section]?.isNotEmpty == true) ...[
                 _AgendaSectionHeader(
+                  key: ValueKey('agenda-section-${section.name}'),
                   label: agendaSectionLabel(section),
                   count: grouped[section]!.length,
                   overdue: section == AgendaSection.overdue,
@@ -427,6 +428,7 @@ class _AgendaHeroMetric extends StatelessWidget {
 
 class _AgendaSectionHeader extends StatelessWidget {
   const _AgendaSectionHeader({
+    super.key,
     required this.label,
     required this.count,
     required this.overdue,

@@ -99,8 +99,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('te sobra pra gastar'), findsOneWidget);
-    expect(find.textContaining('dinheiro disponível, sem benefícios'), findsOneWidget);
+    expect(find.text('quanto você pode gastar'), findsOneWidget);
+    expect(find.text('benefícios não entram neste valor'), findsOneWidget);
     expect(find.text('seu mês até agora'), findsOneWidget);
     expect(find.text('conta'), findsOneWidget);
     expect(find.text('cartões'), findsOneWidget);

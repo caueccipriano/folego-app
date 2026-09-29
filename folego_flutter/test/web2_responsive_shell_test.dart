@@ -154,7 +154,7 @@ void main() {
       repository: _HomeRepository(),
     )));
     await tester.pumpAndSettle();
-    final hero = tester.getTopLeft(find.text('te sobra pra gastar'));
+    final hero = tester.getTopLeft(find.text('quanto você pode gastar'));
     final action = tester.getTopLeft(find.text('gasto'));
     final expenses = tester.getTopLeft(find.text('seu mês até agora'));
     final upcoming = tester.getTopLeft(find.text('próximos movimentos'));

@@ -49,7 +49,9 @@ void main() {
       expect(logo, contains('Fôlego — porquinho'));
       expect(logo, contains('data:image/png;base64,'));
       expect(index, contains('icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__'));
-      expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
+      // iOS touch icon belongs in the page, while the manifest owns
+      // standard 192px install icons (verified in the manifest test below).
+      expect(index, contains('icons/Icon-180.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
       expect(workflow, contains('web/icons/folego-logo.svg'));
     });
