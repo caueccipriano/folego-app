@@ -37,6 +37,7 @@ import 'home_financial_hero.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 import '../plan/projection_navigation_scope.dart';
+import '../panorama/panorama_360_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.space, required this.repository});
@@ -315,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
       primaryText: primaryText,
       brightness: brightness,
     );
+    final panoramaEntry = _buildPanoramaEntry();
     final upcoming = _buildUpcomingCard(
       surface: surface,
       border: border,
@@ -385,6 +387,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
                   quickActions,
                   const SizedBox(height: 12),
+                  panoramaEntry,
+                  const SizedBox(height: 12),
                   monthlyMoney,
                   const SizedBox(height: 12),
                   upcoming,
@@ -438,6 +442,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 22),
+                  panoramaEntry,
+                  const SizedBox(height: 14),
                   monthlyMoney,
                   const SizedBox(height: 14),
                   intelligenceCard,
@@ -474,6 +480,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 30),
+                  panoramaEntry,
+                  const SizedBox(height: 18),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -737,6 +745,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHero({required FolegoSnapshot snapshot}) {
     return HomeFinancialHero(snapshot: snapshot);
+  }
+
+  /// Reuses existing verified sources without adding a new bottom tab.
+  Widget _buildPanoramaEntry() {
+    final brightness = Theme.of(context).brightness;
+    return Material(
+      key: const ValueKey('home-panorama-360-entry'),
+      color: AppColors.surface(brightness),
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => Panorama360Screen(
+            repository: widget.repository,
+            space: widget.space,
+          ),
+        )),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            border: Border.all(color: AppColors.border(brightness)),
+          ),
+          child: Row(children: [
+            Icon(
+              AppIcons.plan,
+              color: AppColors.primaryPurple(brightness),
+              size: 24,
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Panorama 360',
+                    style: AppTypography.section(context, fontSize: 13),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'seu disponível, mês, limites e metas juntos',
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 11,
+                      color: AppColors.secondaryText(brightness),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(AppIcons.chevronRight, size: 19),
+          ]),
+        ),
+      ),
+    );
   }
 
   Widget _buildQuickActions({
