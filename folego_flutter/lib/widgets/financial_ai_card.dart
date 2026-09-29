@@ -291,8 +291,12 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         SizedBox(width: double.infinity, child: OutlinedButton.icon(
           onPressed: _busy ? null : _ask,
           icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-          label: const Text('Perguntar à IA (API limitada)'),
+          label: const Text('Perguntar à IA'),
         )),
+        Text('A IA online usa uma API cobrada separadamente do ChatGPT Pro '
+             'e pode estar indisponível. Ela recebe apenas os totais do mês, '
+             'nunca lançamentos individuais.',
+          style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         if (_answer != null) ...[
           const SizedBox(height: 14),
           Semantics(
