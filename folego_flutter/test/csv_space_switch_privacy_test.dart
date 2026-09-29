@@ -131,4 +131,85 @@ void main() {
     expect(find.text('fictional-A.csv'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('old A staging response cannot open its review in switched B',
+      (tester) async {
+    final repo = _FakeRepo();
+    final oldStage = Completer<String>();
+    var aStaged = 0;
+    var staleARowsFetched = 0;
+    const reused = ValueKey('same-import-route');
+
+    await tester.pumpWidget(MaterialApp(
+      home: StatementImportScreen(
+        key: reused,
+        repository: repo,
+        spaceId: 'synthetic-space-A',
+        bootstrapOverride: () async => _fixture('A'),
+        pickOverride: () async => _file('A'),
+        stageOverride: ({
+          required fileType,
+          required sourceKind,
+          required sourceAccountId,
+          required sourceCardId,
+          required sourceInstitution,
+          required fingerprint,
+          required configuration,
+          required candidates,
+        }) {
+          aStaged++;
+          expect(sourceAccountId, 'fictional-A-account');
+          expect(sourceCardId, isNull);
+          return oldStage.future; // Fictional pending API response; NO server.
+        },
+        rowsLoaderOverride: (_) async {
+          staleARowsFetched++;
+          return const <StatementImportRow>[];
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('statement-import-pick-file')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Fictitious account A').last);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('statement-import-destination-continue')),
+    );
+    await tester.pumpAndSettle();
+    final mapping =
+        find.byKey(const ValueKey('statement-import-csv-mapping'));
+    await tester.drag(mapping, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('statement-import-stage-csv')));
+    await tester.pump(); // A's staging request is now pending.
+    expect(aStaged, 1);
+
+    await tester.pumpWidget(MaterialApp(
+      home: StatementImportScreen(
+        key: reused,
+        repository: repo,
+        spaceId: 'synthetic-space-B',
+        bootstrapOverride: () async => _fixture('B'),
+        pickOverride: () async => _file('B'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    oldStage.complete('old-A-batch-id');
+    await tester.pumpAndSettle();
+
+    expect(staleARowsFetched, 0);
+    expect(find.text('fictional-A.csv'), findsNothing);
+    expect(find.byKey(const ValueKey('statement-import-review-mobile')),
+        findsNothing);
+    expect(find.byKey(const ValueKey('statement-import-pick-file')),
+        findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('statement-import-pick-file')));
+    await tester.pumpAndSettle();
+    expect(find.text('fictional-B.csv'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
 }
