@@ -46,6 +46,8 @@ jobs:
             test/panorama_360_data_test.dart \
             test/panorama_360_screen_test.dart \
             test/panorama_budget_watch_test.dart \
+            test/panorama_category_changes_test.dart \
+            test/panorama_category_change_card_test.dart \
             test/panorama_month_comparison_test.dart \
             test/panorama_month_trend_test.dart \
             test/panorama_upcoming_navigation_test.dart \
@@ -57,6 +59,7 @@ jobs:
             test/csv_card_sign_ui_test.dart \
             test/csv_ambiguous_date_test.dart \
             test/csv_ambiguous_date_ui_test.dart \
+            test/csv_space_switch_privacy_test.dart \
             test/statement_import_contract_test.dart \
             test/statement_import_parser_test.dart \
             test/statement_import_qa_synthetic_test.dart \

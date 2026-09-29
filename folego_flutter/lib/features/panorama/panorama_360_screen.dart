@@ -17,6 +17,7 @@ import '../transactions/transactions_screen.dart';
 import 'panorama_360_data.dart';
 import 'panorama_month_comparison.dart';
 import 'panorama_budget_watch.dart';
+import 'panorama_category_change_card.dart';
 
 /// Combines existing canonical sources; opening this screen writes nothing.
 class Panorama360Screen extends StatefulWidget {
@@ -186,6 +187,10 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                           _economics(data.monthlyMoney),
                           const SizedBox(height: 12),
                           PanoramaMonthComparison(trend: data.closedMonthTrend),
+                          const SizedBox(height: 12),
+                          PanoramaCategoryChangeCard(
+                            comparison: data.categoryChanges,
+                          ),
                           const SizedBox(height: 12),
                           _budgetCard(data),
                           const SizedBox(height: 12),

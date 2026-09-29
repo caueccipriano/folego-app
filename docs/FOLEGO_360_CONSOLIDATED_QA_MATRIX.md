@@ -18,8 +18,8 @@ The latest stacked draft integration starts with:
 - PR #34 mandatory signed credit-card CSV purchase polarity consent;
 - PR #44 no guessed DD/MM vs MM/DD monthly competence;
 - PR #45 approved R$9.90/month **marketing label only**, with no billing.
-- This PR: run previously independent money, import, price and Push browser
-  synthetic contracts **on the SAME integrated commit**.
+- This integration patch: add PR #39's separately green **closed-month matched parent-category differences** to the R$9.90 consolidated QA candidate, with an extra privacy guard hiding **category names and direction** while values are masked. The new tests are part of the SAME integrated Flutter CI gate.
+- Existing combined QA: run previously independent money, import, price and Push browser synthetic contracts **on the SAME integrated commit**.
 
 The work remains in draft GitHub branches. Neither isolated Supabase
 migrations nor a real public deployment have been made through this
@@ -30,11 +30,39 @@ integration.
 | Domain | Automated evidence expected in combined CI | Independent real acceptance still required |
 | --- | --- | --- |
 | Financial totals | Canonical month and Panorama regression cases | Fictional Auth A/B sessions, independent spaces, deliberately shared household roles; real PostgREST RLS |
-| Statement migration | Fictional CSV amount/date/card sign parsing, explicit UI decisions, staged duplication tests | Redacted consented samples for each *actual* claimed bank/app format, independent staging import writes |
+| Statement migration | Fictional CSV amount/date/card sign parsing (including direct-parser opt-in), explicit UI decisions, staged duplication and async A→B financial-space route isolation tests | Redacted consented samples for each *actual* claimed bank/app format, independent staging import writes and authenticated A/B cross-account proof |
 | Premium | Display regression for approved R$9.90, web checkout locked | Apple/Google store pricing, RevenueCat offerings, purchase, refund, renewal and restore with synthetic sandbox accounts |
 | Device Push | JS browser two-tap/owner-recovery and Flutter UI contracts | Genuine installed physical iPhone Home Screen PWA, APNs/Android delivery, expired/revoked sessions while app closed |
 | Responsiveness | GitHub cross-device synthetic Playwright workflow | Actual older small iPhone/Android and accessible large-font/dark-mode review |
 | Account deletion | Prior isolated role/server regressions in draft branches | End-to-end owned/shared fictional space deletion and recovery decisions, approved support runbook |
+
+## Reconciled synthetic safety branches (still not physical staging)
+
+The other independently green release paths were separately based on
+conflicting import/date implementations. The current consolidation
+**preserves PR #44's full-file locale evidence and user-facing warnings**
+while porting the isolated protection implemented in drafts
+[#38](https://github.com/caueccipriano/folego-app/pull/38)
+and [#40](https://github.com/caueccipriano/folego-app/pull/40):
+
+- Direct signed-card CSV parser calls must carry an explicitly selected
+  purchase-sign convention; no longer default silently to negative purchases.
+  The original UI selection and separate debit/credit account imports remain.
+- A reused Flutter importer route **immediately clears** financial-space A
+  file/account/row state when showing B; stale asynchronous A bootstrap,
+  picker, stage, confirmation and cancellation responses are discarded by
+  a guarded route epoch. **Already dispatched server writes are NOT canceled**
+  by a local widget check, so signed-session and RLS staging are mandatory.
+- The two-closed-month category analysis is integrated with the exact
+  approved R$9.90 marketing display and now hides categories/direction
+  **and** amounts while the privacy mask is enabled.
+
+Both the new fictional A/B widget tests and direct parser default-deny
+case have been added to the combined Flutter CI. Their latest exact-head
+result must be verified before review. Real authenticated multiuser,
+actual cross-device browser and closed-PWA Push revocation remain separate
+release gates. Standalone category draft #47 is an alternative and must
+NOT be merged on top of this integrated implementation.
 
 ## Blockers outside this PR
 

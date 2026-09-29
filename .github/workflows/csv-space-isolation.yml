@@ -1,0 +1,56 @@
+name: CSV import financial-space lifecycle isolation
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/transactions/statement_import_screen.dart'
+      - 'folego_flutter/test/csv_space_switch_privacy_test.dart'
+      - '.github/workflows/csv-space-isolation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-cross-space-stale-state:
+    name: Discard prior user/household async CSV state
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze integrated lifecycle guard and whole app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/transactions/statement_import_screen.dart \
+            test/csv_space_switch_privacy_test.dart
+          flutter analyze --no-pub
+      - name: Prove synthetic A-to-B stale async protection and importer integrity
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/csv_space_switch_privacy_test.dart \
+            test/csv_ambiguous_date_test.dart \
+            test/csv_card_sign_convention_test.dart \
+            test/csv_card_sign_ui_test.dart \
+            test/portable_csv_header_mapping_test.dart \
+            test/statement_import_ui_test.dart \
+            test/statement_import_contract_test.dart \
+            test/statement_import_qa_synthetic_test.dart
+      - name: Describe truthful verification boundaries
+        run: |
+          {
+            echo 'Client route epoch and old A callback isolation were'
+            echo 'verified only on synthetic Flutter widget futures.'
+            echo 'This does not cancel an already-dispatched server request.'
+            echo 'Authenticated separate-project fake A/B RLS, real iPhone'
+            echo 'and full device-session revocation remain launch blockers.'
+            echo 'No real user data, migration, merge or deployment occurred.'
+          } >> "$GITHUB_STEP_SUMMARY"
