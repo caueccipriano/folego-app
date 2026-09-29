@@ -631,6 +631,16 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
           error: false,
         ),
       ],
+      if (mapping.dateFormat == CsvDateFormat.auto &&
+          csv.hasAmbiguousDateSamples(mapping.dateColumn)) ...[
+        const SizedBox(height: 10),
+        const _MessageBox(
+          text: 'Há datas que podem significar dias diferentes conforme '
+              'o país (ex.: 03/04). Selecione DD/MM/AAAA ou MM/DD/AAAA '
+              'antes de importar. O Fôlego não decide por você.',
+          error: false,
+        ),
+      ],
       const SizedBox(height: 14),
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
       _ColumnMappingField(label: 'descrição *', value: mapping.descriptionColumn, headers: csv.headers, examples: csv.examplesFor(mapping.descriptionColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(descriptionColumn: value))),
@@ -679,7 +689,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       Row(children: [
         Expanded(child: DropdownButtonFormField<CsvDecimalFormat>(initialValue: mapping.decimalFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato decimal'), items: const [DropdownMenuItem(value: CsvDecimalFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.brazilian, child: Text('1.234,56', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.american, child: Text('1,234.56', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(decimalFormat: value)))),
         const SizedBox(width: 10),
-        Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateFormat: value)))),
+        Expanded(child: DropdownButtonFormField<CsvDateFormat>(key: const ValueKey('statement-import-date-format'), initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateFormat: value)))),
       ]),
       const SizedBox(height: 8),
       const Text(

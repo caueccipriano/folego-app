@@ -143,6 +143,15 @@ class CsvImportDocument {
   final CsvImportMapping suggestedMapping;
   final String encoding;
 
+  /// Inspects fictional or locally selected file rows only. The UI can
+  /// proactively ask the user for a date format without attempting to infer
+  /// the locale from the country, category, card or another account.
+  bool hasAmbiguousDateSamples(int? column) {
+    if (column == null || column < 0) return false;
+    return rows.any((row) => column < row.length &&
+        _ambiguousCsvDate(row[column]));
+  }
+
   List<String> examplesFor(int? column, {int limit = 5}) {
     if (column == null || column < 0) return const <String>[];
     return rows
@@ -611,9 +620,25 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
   return negative ? -minor : minor;
 }
 
+/// Exactly two plausible but different month/day interpretations are
+/// ambiguous. Identical values (04/04) are equal in both valid conventions.
+bool _ambiguousCsvDate(String raw) {
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-]\d{2,4}').firstMatch(raw.trim());
+  if (match == null) return false;
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  return first >= 1 && first <= 12 &&
+      second >= 1 && second <= 12 && first != second;
+}
+
 ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
   final value = raw.trim();
   if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.auto && _ambiguousCsvDate(value)) {
+    throw const StatementImportParseException(
+      'data ambígua: selecione DD/MM/AAAA ou MM/DD/AAAA antes de importar',
+    );
+  }
   if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
     final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
     if (match == null) throw const FormatException('date');
