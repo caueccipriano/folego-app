@@ -97,13 +97,15 @@ void main() {
       );
       expect(br, hasLength(2));
       expect(br.last.localDate, '2026-04-03');
-      final us = doc.buildCandidates(
-        mapping: doc.suggestedMapping.copyWith(dateFormat: CsvDateFormat.mdy),
-        sourceKind: StatementImportSourceKind.account,
+      // The first row's 16/04 is invalid under MDY: a mixed-format file
+      // must fail rather than silently flip dates per row.
+      expect(
+        () => doc.buildCandidates(
+          mapping: doc.suggestedMapping.copyWith(dateFormat: CsvDateFormat.mdy),
+          sourceKind: StatementImportSourceKind.account,
+        ),
+        throwsA(isA<StatementImportParseException>()),
       );
-      // First row (16/04) invalid under US layout: never silently shift dates
-      // across a file using row-specific formatting guesses.
-      expect(us, isNotNull);
     });
   });
 
