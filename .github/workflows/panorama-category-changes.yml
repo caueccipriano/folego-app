@@ -1,0 +1,61 @@
+name: Folego 360 category explanations
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/test/panorama_category_*'
+      - 'folego_flutter/test/panorama_360_*'
+      - '.github/workflows/panorama-category-changes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  category-explanations:
+    name: Comparable historical categories and privacy on compact screens
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze category comparison, dashboard and full app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_category_changes.dart \
+            lib/features/panorama/panorama_category_change_card.dart \
+            lib/features/panorama/panorama_360_data.dart \
+            lib/features/panorama/panorama_360_screen.dart \
+            test/panorama_category_changes_test.dart \
+            test/panorama_category_change_card_test.dart
+          flutter analyze --no-pub
+      - name: Verify no double count, missing months and global masking
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_category_changes_test.dart \
+            test/panorama_category_change_card_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/panorama_month_trend_test.dart \
+            test/panorama_month_comparison_test.dart \
+            test/panorama_budget_watch_test.dart \
+            test/monthly_money_summary_test.dart
+      - name: Document verification boundaries
+        run: |
+          {
+            echo 'Compared only matching parent category IDs in two complete'
+            echo 'months from the scoped canonical budget RPC, using synthetic'
+            echo 'Flutter fixtures. Null source is never a fabricated zero.'
+            echo 'Not proven: real bank completeness, authenticated A/B staging,'
+            echo 'provider-specific imports or physical iPhone notifications.'
+            echo 'No linked Dev mutations, merges or live deployments.'
+          } >> "$GITHUB_STEP_SUMMARY"
