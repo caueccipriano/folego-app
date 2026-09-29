@@ -19,11 +19,12 @@ void main() {
       current: summary(1000, 800), previous: summary(1000, 500));
     expect(report.result, 200);
     expect(report.insights.length, 2);
-    expect(report.insights.last.description, contains('60.0%'));
+    expect(report.insights.last.description, contains('60,0%'));
   });
   test('sem mês anterior não inventa tendência', () {
     final report = FinancialReportBuilder.monthly(current: summary(100, 200));
     expect(report.result, -100);
     expect(report.insights.length, 1);
+    expect(report.insights.first.description, contains('R\$ 100,00'));
   });
 }
