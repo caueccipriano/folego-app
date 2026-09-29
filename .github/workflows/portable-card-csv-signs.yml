@@ -1,0 +1,57 @@
+name: Explicit card CSV sign conventions
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/transactions/statement_import_parser.dart'
+      - 'folego_flutter/lib/features/transactions/statement_import_screen.dart'
+      - 'folego_flutter/test/portable_card_*'
+      - 'folego_flutter/test/portable_csv_header_mapping_test.dart'
+      - '.github/workflows/portable-card-csv-signs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-card-csv-review:
+    name: Fictional card-sign choice with no accidental credits
+    runs-on: ubuntu-latest
+    timeout-minutes: 23
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze signed-card importer and whole Flutter application
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/transactions/statement_import_parser.dart \
+            lib/features/transactions/statement_import_screen.dart \
+            test/portable_card_csv_sign_test.dart \
+            test/portable_card_sign_ui_test.dart
+          flutter analyze --no-pub
+      - name: Test account/card/benefit direction and actual compact UI tap
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/portable_card_csv_sign_test.dart \
+            test/portable_card_sign_ui_test.dart \
+            test/portable_csv_header_mapping_test.dart \
+            test/statement_import_parser_test.dart \
+            test/statement_import_qa_synthetic_test.dart \
+            test/statement_import_ui_test.dart
+      - name: Record truthful coverage
+        run: |
+          {
+            echo 'Explicit signed-card convention verified with invented files.'
+            echo 'The original CSV/OFX pipeline still requires staging,'
+            echo 'row-by-row duplicate review and deliberate confirmation.'
+            echo 'No real bank/app export, customer data, external provider'
+            echo 'connection or production import was used in these tests.'
+          } >> "$GITHUB_STEP_SUMMARY"
