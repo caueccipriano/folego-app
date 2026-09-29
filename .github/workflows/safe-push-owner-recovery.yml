@@ -1,0 +1,108 @@
+name: Safe cross-account PWA Push recovery
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20260929103000_owner_scoped_push_recovery_status.sql'
+      - 'supabase/tests/owner_scoped_push_recovery_acceptance.sql'
+      - 'folego_flutter/lib/core/notifications/**'
+      - 'folego_flutter/lib/features/profile/notification_settings_screen.dart'
+      - 'folego_flutter/web/folego_push_bridge.js'
+      - 'folego_flutter/web/tests/folego_push_recovery_bridge.test.cjs'
+      - 'folego_flutter/test/safe_push_recovery_test.dart'
+      - '.github/workflows/safe-push-owner-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  server-owner-boundaries:
+    name: Synthetic A/B recovery and revoked Auth sessions
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: temporary_recovery_fixture
+          POSTGRES_DB: folego_recovery_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: temporary_recovery_fixture
+      PGDATABASE: folego_recovery_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm database is disposable and local
+        run: |
+          test "$PGHOST" = '127.0.0.1'
+          test "$PGDATABASE" = 'folego_recovery_ci'
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Run actual previous and new migrations on fictitious identities
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/verified_push_session_fixture.sql \
+            -f supabase/tests/verified_push_session_before_fix.sql \
+            -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
+            -f supabase/migrations/20260929103000_owner_scoped_push_recovery_status.sql \
+            -f supabase/tests/owner_scoped_push_recovery_acceptance.sql
+
+  existing-browser-js:
+    name: Read-only browser inspection with no auto-consent
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated browser bridge tests
+        run: node --test folego_flutter/web/tests/folego_push_recovery_bridge.test.cjs
+      - name: Check browser bridge syntax
+        run: node --check folego_flutter/web/folego_push_bridge.js
+
+  flutter-manual-recovery:
+    name: Flutter manual consent and shared-browser operation queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze changed files and entire Flutter codebase
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/core/notifications/push_recovery.dart \
+            lib/core/notifications/notification_adapter_web.dart \
+            lib/core/notifications/notification_service.dart \
+            lib/features/profile/notification_settings_screen.dart \
+            test/safe_push_recovery_test.dart
+          flutter analyze --no-pub
+      - name: Run recovery, notification lifecycle and profile tests
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/safe_push_recovery_test.dart \
+            test/notification_service_test.dart \
+            test/notification_runtime_test.dart \
+            test/notification_preferences_hardening_test.dart \
+            test/notification_automation_foundation_test.dart
