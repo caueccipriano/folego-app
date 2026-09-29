@@ -146,9 +146,9 @@ void main() {
         '27/09/2026;03/04/2026;Fictício um;-10,00\n'
         '28/09/2026;04/05/2026;Fictício dois;-20,00\n',
       );
-      // Conflicting date candidates are already unmapped by the previous
-      // generic import safety task; only deliberate mapping can continue.
-      expect(doc.suggestedMapping.dateColumn, isNull);
+      // An exact "Data" header is the unique preferred suggestion. If
+      // the person selects the other date column, it must be rescanned.
+      expect(doc.suggestedMapping.dateColumn, 0);
       final dateIndex0 = doc.suggestedMapping.copyWith(dateColumn: 0);
       final dateIndex1 = doc.suggestedMapping.copyWith(dateColumn: 1);
       expect(doc.autoDateWarning(dateIndex0), isNull);
