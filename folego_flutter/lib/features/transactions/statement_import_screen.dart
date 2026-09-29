@@ -605,6 +605,15 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     final mapping = _mapping ?? csv.suggestedMapping;
     return ListView(key: const ValueKey('statement-import-csv-mapping'), padding: const EdgeInsets.fromLTRB(0, 6, 0, 32), children: [
       const _IntroCard(icon: AppIcons.settings, title: 'como esse CSV está organizado?', text: 'confira o mapeamento. abaixo de cada campo mostramos valores reais do arquivo antes de criar o staging.'),
+      if (!mapping.isComplete) ...[
+        const SizedBox(height: 10),
+        const _MessageBox(
+          text: 'Algumas colunas estão indefinidas ou parecem ambíguas. '
+              'Escolha a data, a descrição e o valor correto antes de continuar. '
+              'O Fôlego não adivinha qual coluna representa seu dinheiro.',
+          error: false,
+        ),
+      ],
       const SizedBox(height: 14),
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
       _ColumnMappingField(label: 'descrição *', value: mapping.descriptionColumn, headers: csv.headers, examples: csv.examplesFor(mapping.descriptionColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(descriptionColumn: value))),
@@ -620,6 +629,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         const SizedBox(width: 10),
         Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateFormat: value)))),
       ]),
+      const SizedBox(height: 8),
+      const Text(
+        'Atenção: valores como 1.234 ou 1,234 são ambíguos. '
+        'Confirme o formato decimal antes de importar. '
+        'Nada será lançado sem sua revisão.',
+        key: ValueKey('statement-import-ambiguous-currency-guidance'),
+      ),
       const SizedBox(height: 12),
       ExpansionTile(title: const Text('campos opcionais'), children: [
         _ColumnMappingField(label: 'estabelecimento', value: mapping.merchantColumn, headers: csv.headers, examples: csv.examplesFor(mapping.merchantColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearMerchant: true) : mapping.copyWith(merchantColumn: value))),

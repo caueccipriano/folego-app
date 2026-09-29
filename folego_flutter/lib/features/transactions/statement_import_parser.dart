@@ -473,28 +473,85 @@ List<List<String>> parseCsvRows(String text, String delimiter) {
   return rows;
 }
 
+/// Recognizes generic CSV export headings, not any vendor-private format.
+/// Conflicting financial columns remain UNMAPPED for the user to review.
 CsvImportMapping suggestCsvMapping(List<String> headers) {
-  int? find(List<RegExp> patterns) {
-    for (var i = 0; i < headers.length; i++) {
-      final normalized = _normalize(headers[i]);
-      if (patterns.any((pattern) => pattern.hasMatch(normalized))) return i;
+  final labels = headers
+      .map((h) => _normalize(h)
+          .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim())
+      .toList(growable: false);
+
+  ({int? index, bool ambiguous}) choose(List<RegExp> tiers) {
+    for (final pattern in tiers) {
+      final matches = <int>[];
+      for (var i = 0; i < labels.length; i++) {
+        if (pattern.hasMatch(labels[i])) matches.add(i);
+      }
+      if (matches.length > 1) return (index: null, ambiguous: true);
+      if (matches.length == 1) return (index: matches.single, ambiguous: false);
     }
-    return null;
+    return (index: null, ambiguous: false);
   }
 
+  final date = choose([
+    RegExp(r'^(data|date|transaction date)$'),
+    RegExp(r'^(data|date) (da |de |do )?(transacao|movimentacao|compra|lancamento|operacao|transaction|purchase)$'),
+    RegExp(r'^dt (mov|lan|post)'),
+  ]);
+  final description = choose([
+    RegExp(r'^(descricao|description|historico|memo|detalhes|details)$'),
+    RegExp(r'^(descricao|description|historico|detalhes) (da |de |do )?(transacao|movimentacao|compra|lancamento)$'),
+    RegExp(r'^(nome|titulo) (da |de |do )?(transacao|movimentacao|lancamento)$'),
+    RegExp(r'^(estabelecimento|merchant|favorecido)$'),
+  ]);
+  // "Valor (R$)" becomes "valor r". Ignore balances, installments and
+  // interest: none represents a signed, actual transaction amount.
+  final signed = choose([
+    RegExp(r'^(valor|amount|quantia|trnamt)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (da |de |do )?(transacao|movimentacao|lancamento|operacao|transaction)$'),
+    RegExp(r'^(valor|amount) (total|liquido|net|signed)$'),
+  ]);
+  final debit = choose([
+    RegExp(r'^(debito|debit|saida)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (do |de |da )?(debito|debit|saida)$'),
+  ]);
+  final credit = choose([
+    RegExp(r'^(credito|credit|entrada)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (do |de |da )?(credito|credit|entrada)$'),
+  ]);
+  // Prefer one uniquely labeled signed amount over split fields, never sum
+  // both. Ambiguity forces manual selection in the existing mapping UI.
+  final ambiguousMoney = signed.ambiguous ||
+      (signed.index == null && (debit.ambiguous || credit.ambiguous));
+  int? optional(List<RegExp> patterns) => choose(patterns).index;
+
   return CsvImportMapping(
-    dateColumn: find([RegExp(r'^data$'), RegExp(r'date'), RegExp(r'dt.*(mov|lan|post)')]),
-    descriptionColumn: find([RegExp(r'descri'), RegExp(r'histor'), RegExp(r'description'), RegExp(r'memo'), RegExp(r'^name$')]),
-    amountColumn: find([RegExp(r'^valor$'), RegExp(r'amount'), RegExp(r'trnamt')]),
-    debitColumn: find([RegExp(r'debito'), RegExp(r'^debit$'), RegExp(r'valor.*deb')]),
-    creditColumn: find([RegExp(r'credito'), RegExp(r'^credit$'), RegExp(r'valor.*cred')]),
-    merchantColumn: find([RegExp(r'estabele'), RegExp(r'merchant'), RegExp(r'favorec')]),
-    categoryColumn: find([RegExp(r'categoria'), RegExp(r'category')]),
-    externalIdColumn: find([RegExp(r'fitid'), RegExp(r'id.*extern'), RegExp(r'transaction.*id'), RegExp(r'^id$')]),
-    documentColumn: find([RegExp(r'document'), RegExp(r'checknum'), RegExp(r'numero.*doc')]),
-    balanceColumn: find([RegExp(r'saldo'), RegExp(r'balance')]),
-    typeColumn: find([RegExp(r'^tipo$'), RegExp(r'type'), RegExp(r'trntype')]),
-    noteColumn: find([RegExp(r'observ'), RegExp(r'note')]),
+    dateColumn: date.index,
+    descriptionColumn: description.index,
+    amountColumn: ambiguousMoney ? null : signed.index,
+    debitColumn: ambiguousMoney || signed.index != null ? null : debit.index,
+    creditColumn: ambiguousMoney || signed.index != null ? null : credit.index,
+    merchantColumn: optional([
+      RegExp(r'^(estabelecimento|merchant|favorecido|favorecida)$'),
+    ]),
+    categoryColumn: optional([RegExp(r'^(categoria|category|subcategoria)$')]),
+    externalIdColumn: optional([
+      RegExp(r'^(fitid|id|id externo|id transacao|transaction id)$'),
+    ]),
+    documentColumn: optional([
+      RegExp(r'^(documento|document|checknum|numero documento)$'),
+    ]),
+    balanceColumn: optional([
+      RegExp(r'^(saldo|balance|running balance|saldo apos transacao)$'),
+    ]),
+    typeColumn: optional([
+      RegExp(r'^(tipo|type|trntype|tipo transacao)$'),
+    ]),
+    noteColumn: optional([
+      RegExp(r'^(observacao|observacoes|note|notas)$'),
+    ]),
   );
 }
 
@@ -508,6 +565,14 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
   String normalized;
   final comma = value.lastIndexOf(',');
   final dot = value.lastIndexOf('.');
+  // A lone three-digit separator ("1.234"/"1,234") can mean two
+  // radically different amounts. Require explicit BR/US decimal selection.
+  if (format == CsvDecimalFormat.auto &&
+      RegExp(r'^[0-9]{1,3}[.,][0-9]{3}$').hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: selecione manualmente o formato decimal do CSV',
+    );
+  }
   final effective = format == CsvDecimalFormat.auto
       ? (comma >= 0 && dot >= 0
           ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
@@ -620,7 +685,7 @@ void _guardFileSize(Uint8List bytes) {
 
 bool _looksLikeHeader(List<List<String>> rows) {
   if (rows.length < 2) return true;
-  const tokens = <String>['data', 'date', 'descr', 'histor', 'valor', 'amount', 'debito', 'credito', 'merchant', 'fitid', 'saldo', 'tipo'];
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'detalh', 'valor', 'quantia', 'amount', 'debito', 'credito', 'entrada', 'saida', 'merchant', 'fitid', 'saldo', 'categoria', 'tipo'];
   final first = rows.first.map(_normalize).toList();
   final hits = first.where((cell) => tokens.any(cell.contains)).length;
   if (hits >= 2) return true;

@@ -104,6 +104,40 @@ does not issue a second network query to draw the preview. Synthetic
 iPhone-sized interaction tests verify the tap; broader authenticated
 multi-account staging remains an independent release blocker.
 
+## Fifth microdelivery: safer migration from CSV exports (draft)
+
+The existing Fôlego import wizard already supports **CSV/OFX staging,
+source-account selection, per-row preview, duplicate review and explicit
+confirmation**. Rather than create a second importer or claim direct
+access to competitors' private APIs, this enhancement improves the
+existing generic CSV column suggestions using **fictional** Brazilian and
+English samples only:
+
+- Recognizes common headers such as `Data da Transação`, `Histórico`,
+  `Valor (R$)`, separate `Débito/Crédito` and `Saldo após transação`.
+  A running balance remains optional metadata, never a new transaction.
+- Selects unambiguous exact headings before less-specific alternatives.
+  Duplicate, conflicting amount/date/debit candidates stay **unmapped**
+  and require the person importing to choose the correct column.
+- Does not confuse an installment amount, interest, fee or bank balance
+  with the signed transaction value. Where both signed value and
+  debit/credit columns exist, the unambiguous signed value takes
+  precedence and is never summed twice.
+- Blocks ambiguous automatic interpretation of a lone
+  `1.234`/`1,234`: the importer explicitly requests a decimal
+  locale instead of risking a thousand-fold amount error. The review
+  screen explains how to resolve uncertain mappings.
+- Preserves original staging, row classification, deliberate duplicate
+  review and manual confirmation, with NO silent imports.
+
+**Compatibility is generic, not certified against any specific
+Organizze or Mobills export layout.** We have not accessed a Premium
+account, copied an external service's schema, used private integration
+endpoints or imported customer financial records. Authentic migration
+support requires a separately consented, anonymized actual export
+sample and source-specific tests. No customer file, login, access token
+or financial figure belongs in the repository or CI logs.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.
