@@ -94,7 +94,7 @@ class NotificationService {
   Future<ExistingPushRecoveryStatus> inspectExistingPush() async {
     final adapter = _adapter;
     if (adapter is PushDeviceRecovery) {
-      return adapter.inspectExistingPush();
+      return (adapter as PushDeviceRecovery).inspectExistingPush();
     }
     return ExistingPushRecoveryStatus.unavailable;
   }
@@ -103,7 +103,7 @@ class NotificationService {
   Future<NotificationPermissionStatus> rebindPreviouslyOwnedPush() async {
     final adapter = _adapter;
     if (adapter is PushDeviceRecovery) {
-      return adapter.rebindPreviouslyOwnedPush();
+      return (adapter as PushDeviceRecovery).rebindPreviouslyOwnedPush();
     }
     return NotificationPermissionStatus.unsupported;
   }
