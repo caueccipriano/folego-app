@@ -506,7 +506,1267 @@ CsvImportMapping suggestCsvMapping(List<String> headers) {
     RegExp(r'^dt (mov|lan|post)'),
   ]);
   final description = choose([
-    RegExp(r'^(descricao|description|historico|memo|detalhes)$'),
+    RegExp(r'^(descricao|description|historico|memo|detalhes|details)
+    RegExp(
+      r'^(descricao|description|historico|detalhes) '
+      r'(da |de |do )?(transacao|movimentacao|compra|lancamento)$',
+    ),
+    RegExp(r'^(nome|titulo) (da |de |do )?(transacao|movimentacao|lancamento)$'),
+    RegExp(r'^(estabelecimento|merchant|favorecido)$'),
+  ]);
+
+  // "Valor (R$)" normalizes to "valor r". Do NOT auto-map a balance,
+  // installment amount, interest amount or a random first "valor" column.
+  final signed = choose([
+    RegExp(r'^(valor|amount|quantia|trnamt)( r| brl)?$'),
+    RegExp(
+      r'^(valor|amount) (da |de |do )?'
+      r'(transacao|movimentacao|lancamento|operacao|transaction)$',
+    ),
+    RegExp(r'^(valor|amount) (total|liquido|net|signed)$'),
+  ]);
+  final debit = choose([
+    RegExp(r'^(debito|debit|saida)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (do |de |da )?(debito|debit|saida)$'),
+  ]);
+  final credit = choose([
+    RegExp(r'^(credito|credit|entrada)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (do |de |da )?(credito|credit|entrada)$'),
+  ]);
+
+  // When a signed amount is uniquely labeled it is the single source of
+  // truth, not a second sum of debit/credit. Ambiguous labels make ALL money
+  // suggestions empty so the user must choose them in the review form.
+  final ambiguousMoney = signed.ambiguous ||
+      (signed.index == null && (debit.ambiguous || credit.ambiguous));
+  int? optional(List<RegExp> patterns) => choose(patterns).index;
+
+  return CsvImportMapping(
+    dateColumn: date.index,
+    descriptionColumn: description.index,
+    amountColumn: ambiguousMoney ? null : signed.index,
+    debitColumn: ambiguousMoney || signed.index != null ? null : debit.index,
+    creditColumn: ambiguousMoney || signed.index != null ? null : credit.index,
+    merchantColumn: optional([
+      RegExp(r'^(estabelecimento|merchant|favorecido|favorecida)$'),
+    ]),
+    categoryColumn: optional([
+      RegExp(r'^(categoria|category|subcategoria)$'),
+    ]),
+    externalIdColumn: optional([
+      RegExp(r'^(fitid|id|id externo|id transacao|transaction id)$'),
+    ]),
+    documentColumn: optional([
+      RegExp(r'^(documento|document|checknum|numero documento)$'),
+    ]),
+    balanceColumn: optional([
+      RegExp(r'^(saldo|balance|running balance|saldo apos transacao)
+    ]),
+    typeColumn: optional([
+      RegExp(r'^(tipo|type|trntype|tipo transacao)$'),
+    ]),
+    noteColumn: optional([
+      RegExp(r'^(observacao|observacoes|note|notas)$'),
+    ]),
+  );
+}
+
+int parseMoneyMinor(String raw, CsvDecimalFormat format) {
+  var value = raw.trim().replaceAll(RegExp(r'[^0-9,\.\-+()]'), '');
+  if (value.isEmpty) throw const FormatException('money');
+  var negative = value.startsWith('-') || (value.startsWith('(') && value.endsWith(')'));
+  value = value.replaceAll(RegExp(r'[+\-()]'), '');
+  if (value.isEmpty) throw const FormatException('money');
+
+  String normalized;
+  final comma = value.lastIndexOf(',');
+  final dot = value.lastIndexOf('.');
+  // A lone thousands-style separator is ambiguous in autodetect:
+  // "1.234" could represent 1234.00 or 1.234. Never silently guess.
+  if (format == CsvDecimalFormat.auto &&
+      RegExp(r'^[0-9]{1,3}[.,][0-9]{3}      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
+  final value = raw.trim();
+  if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+    if (match == null) throw const FormatException('date');
+    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+  }
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  if (match == null) throw const FormatException('date');
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  var year = int.parse(match.group(3)!);
+  if (year < 100) year += year >= 70 ? 1900 : 2000;
+  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+}
+
+ParsedStatementDate parseOfxDate(String raw) {
+  final value = raw.trim();
+  final match = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?(?:\.\d+)?(?:\[([+-]?\d+(?:\.\d+)?):[^\]]+\])?').firstMatch(value);
+  if (match == null) throw const StatementImportParseException('algumas datas do OFX precisam ser revisadas');
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final hour = int.tryParse(match.group(4) ?? '') ?? 12;
+  final minute = int.tryParse(match.group(5) ?? '') ?? 0;
+  final second = int.tryParse(match.group(6) ?? '') ?? 0;
+  final offsetText = match.group(7);
+  if (offsetText == null) return _dateOnly(year, month, day);
+  final offsetMinutes = (double.parse(offsetText) * 60).round();
+  final utc = DateTime.utc(year, month, day, hour, minute, second).subtract(Duration(minutes: offsetMinutes));
+  return ParsedStatementDate(utc, false, null);
+}
+
+StatementRowClassification classifyStatementRow({
+  required StatementImportSourceKind sourceKind,
+  required StatementImportDirection direction,
+  required String description,
+  String? sourceType,
+}) {
+  final text = _normalize('$description ${sourceType ?? ''}');
+  final opening = RegExp(r'(saldo inicial|saldo anterior|opening balance|beginning balance)').hasMatch(text);
+  if (opening) {
+    return const StatementRowClassification(StatementImportCandidateType.unknown, null, .99, 'saldo de abertura precisa de revisão e nunca vira receita automaticamente');
+  }
+  final cardPayment = RegExp(r'(pagamento.*cart|pgto.*(fat|cart)|pag.*fatura|card payment|payment thank)').hasMatch(text);
+  if (cardPayment) {
+    return const StatementRowClassification(StatementImportCandidateType.cardPaymentCandidate, null, .90, 'parece pagamento de cartão; associe a uma fatura antes de importar');
+  }
+  final refund = RegExp(r'(estorno|refund|reversal|chargeback|reembolso)').hasMatch(text);
+  if (refund) {
+    return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .88, 'parece estorno/reembolso; o vínculo original precisa ser revisado');
+  }
+  final transfer = RegExp(r'(transferencia entre contas|transf.*propria|resgate.*invest|aplicacao.*invest)').hasMatch(text);
+  if (transfer) {
+    return const StatementRowClassification(StatementImportCandidateType.transferCandidate, null, .82, 'parece movimentação entre contas próprias; confirme a contraparte');
+  }
+
+  switch (sourceKind) {
+    case StatementImportSourceKind.card:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.cardPurchase, StatementImportFinalType.cardPurchase, .92, 'débito em extrato de cartão');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .60, 'crédito em cartão pode ser pagamento, ajuste ou estorno');
+    case StatementImportSourceKind.benefit:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.benefitExpense, StatementImportFinalType.benefitExpense, .95, 'débito em benefício');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.benefitCredit, StatementImportFinalType.benefitCredit, .95, 'crédito em benefício');
+    case StatementImportSourceKind.account:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.expense, StatementImportFinalType.expense, .85, 'débito em conta bancária');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.income, StatementImportFinalType.income, .78, 'crédito em conta bancária');
+  }
+}
+
+void _guardFileSize(Uint8List bytes) {
+  if (bytes.isEmpty) throw const StatementImportParseException('o arquivo está vazio');
+  if (bytes.length > statementImportMaxBytes) {
+    throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
+  }
+}
+
+(String, String) _decodeText(Uint8List bytes) {
+  try {
+    return (utf8.decode(bytes, allowMalformed: false), 'utf-8');
+  } catch (_) {
+    return (latin1.decode(bytes, allowInvalid: true), 'latin-1');
+  }
+}
+
+bool _looksLikeHeader(List<List<String>> rows) {
+  if (rows.length < 2) return true;
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'detalh', 'valor', 'quantia', 'amount', 'debito', 'credito', 'entrada', 'saida', 'merchant', 'fitid', 'saldo', 'categoria', 'tipo'];
+  final first = rows.first.map(_normalize).toList();
+  final hits = first.where((cell) => tokens.any(cell.contains)).length;
+  if (hits >= 2) return true;
+  final firstNumeric = first.where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  final secondNumeric = rows[1].map((cell) => cell.trim()).where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  return firstNumeric == 0 && secondNumeric > 0;
+}
+
+String _cell(List<String> row, int index) {
+  if (index < 0 || index >= row.length) throw const FormatException('column');
+  return row[index];
+}
+
+String? _optionalCell(List<String> row, int? index) {
+  if (index == null || index < 0 || index >= row.length) return null;
+  final value = row[index].trim();
+  return value.isEmpty ? null : value;
+}
+
+ParsedStatementDate _dateOnly(int year, int month, int day) {
+  final date = DateTime(year, month, day, 12);
+  if (date.year != year || date.month != month || date.day != day) throw const FormatException('date');
+  String two(int value) => value.toString().padLeft(2, '0');
+  return ParsedStatementDate(date, true, '$year-${two(month)}-${two(day)}');
+}
+
+int _parseOfxAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final value = num.parse(normalized);
+  return (value * 100).round();
+}
+
+List<String> _ofxTransactionBlocks(String text) {
+  final matches = RegExp(r'<STMTTRN\b[^>]*>(.*?)(?=</STMTTRN\s*>|<STMTTRN\b|</BANKTRANLIST|</CCSTMTTRNRS|$)', caseSensitive: false, dotAll: true).allMatches(text);
+  return matches.map((match) => match.group(1) ?? '').where((block) => block.trim().isNotEmpty).toList(growable: false);
+}
+
+String? _tag(String text, String name) {
+  final escaped = RegExp.escape(name);
+  final xml = RegExp('<$escaped\\b[^>]*>\\s*(.*?)\\s*</$escaped\\s*>', caseSensitive: false, dotAll: true).firstMatch(text);
+  if (xml != null) return _cleanTagValue(xml.group(1));
+  final sgml = RegExp('<$escaped\\b[^>]*>\\s*([^<\\r\\n]+)', caseSensitive: false).firstMatch(text);
+  return _cleanTagValue(sgml?.group(1));
+}
+
+String? _cleanTagValue(String? value) {
+  final trimmed = value?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+String _normalize(String value) {
+  var result = value.toLowerCase().trim();
+  const from = 'áàãâäéèêëíìîïóòõôöúùûüç';
+  const to = 'aaaaaeeeeiiiiooooouuuuc';
+  for (var i = 0; i < from.length; i++) {
+    result = result.replaceAll(from[i], to[i]);
+  }
+  return result.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class _ParsedMoney {
+  const _ParsedMoney({required this.amountMinor, required this.direction});
+  final int amountMinor;
+  final StatementImportDirection direction;
+}
+).hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: selecione manualmente o formato decimal do CSV',
+    );
+  }
+  final effective = format == CsvDecimalFormat.auto
+      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
+  final value = raw.trim();
+  if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+    if (match == null) throw const FormatException('date');
+    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+  }
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  if (match == null) throw const FormatException('date');
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  var year = int.parse(match.group(3)!);
+  if (year < 100) year += year >= 70 ? 1900 : 2000;
+  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+}
+
+ParsedStatementDate parseOfxDate(String raw) {
+  final value = raw.trim();
+  final match = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?(?:\.\d+)?(?:\[([+-]?\d+(?:\.\d+)?):[^\]]+\])?').firstMatch(value);
+  if (match == null) throw const StatementImportParseException('algumas datas do OFX precisam ser revisadas');
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final hour = int.tryParse(match.group(4) ?? '') ?? 12;
+  final minute = int.tryParse(match.group(5) ?? '') ?? 0;
+  final second = int.tryParse(match.group(6) ?? '') ?? 0;
+  final offsetText = match.group(7);
+  if (offsetText == null) return _dateOnly(year, month, day);
+  final offsetMinutes = (double.parse(offsetText) * 60).round();
+  final utc = DateTime.utc(year, month, day, hour, minute, second).subtract(Duration(minutes: offsetMinutes));
+  return ParsedStatementDate(utc, false, null);
+}
+
+StatementRowClassification classifyStatementRow({
+  required StatementImportSourceKind sourceKind,
+  required StatementImportDirection direction,
+  required String description,
+  String? sourceType,
+}) {
+  final text = _normalize('$description ${sourceType ?? ''}');
+  final opening = RegExp(r'(saldo inicial|saldo anterior|opening balance|beginning balance)').hasMatch(text);
+  if (opening) {
+    return const StatementRowClassification(StatementImportCandidateType.unknown, null, .99, 'saldo de abertura precisa de revisão e nunca vira receita automaticamente');
+  }
+  final cardPayment = RegExp(r'(pagamento.*cart|pgto.*(fat|cart)|pag.*fatura|card payment|payment thank)').hasMatch(text);
+  if (cardPayment) {
+    return const StatementRowClassification(StatementImportCandidateType.cardPaymentCandidate, null, .90, 'parece pagamento de cartão; associe a uma fatura antes de importar');
+  }
+  final refund = RegExp(r'(estorno|refund|reversal|chargeback|reembolso)').hasMatch(text);
+  if (refund) {
+    return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .88, 'parece estorno/reembolso; o vínculo original precisa ser revisado');
+  }
+  final transfer = RegExp(r'(transferencia entre contas|transf.*propria|resgate.*invest|aplicacao.*invest)').hasMatch(text);
+  if (transfer) {
+    return const StatementRowClassification(StatementImportCandidateType.transferCandidate, null, .82, 'parece movimentação entre contas próprias; confirme a contraparte');
+  }
+
+  switch (sourceKind) {
+    case StatementImportSourceKind.card:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.cardPurchase, StatementImportFinalType.cardPurchase, .92, 'débito em extrato de cartão');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .60, 'crédito em cartão pode ser pagamento, ajuste ou estorno');
+    case StatementImportSourceKind.benefit:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.benefitExpense, StatementImportFinalType.benefitExpense, .95, 'débito em benefício');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.benefitCredit, StatementImportFinalType.benefitCredit, .95, 'crédito em benefício');
+    case StatementImportSourceKind.account:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.expense, StatementImportFinalType.expense, .85, 'débito em conta bancária');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.income, StatementImportFinalType.income, .78, 'crédito em conta bancária');
+  }
+}
+
+void _guardFileSize(Uint8List bytes) {
+  if (bytes.isEmpty) throw const StatementImportParseException('o arquivo está vazio');
+  if (bytes.length > statementImportMaxBytes) {
+    throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
+  }
+}
+
+(String, String) _decodeText(Uint8List bytes) {
+  try {
+    return (utf8.decode(bytes, allowMalformed: false), 'utf-8');
+  } catch (_) {
+    return (latin1.decode(bytes, allowInvalid: true), 'latin-1');
+  }
+}
+
+bool _looksLikeHeader(List<List<String>> rows) {
+  if (rows.length < 2) return true;
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'valor', 'amount', 'debito', 'credito', 'merchant', 'fitid', 'saldo', 'tipo'];
+  final first = rows.first.map(_normalize).toList();
+  final hits = first.where((cell) => tokens.any(cell.contains)).length;
+  if (hits >= 2) return true;
+  final firstNumeric = first.where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  final secondNumeric = rows[1].map((cell) => cell.trim()).where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  return firstNumeric == 0 && secondNumeric > 0;
+}
+
+String _cell(List<String> row, int index) {
+  if (index < 0 || index >= row.length) throw const FormatException('column');
+  return row[index];
+}
+
+String? _optionalCell(List<String> row, int? index) {
+  if (index == null || index < 0 || index >= row.length) return null;
+  final value = row[index].trim();
+  return value.isEmpty ? null : value;
+}
+
+ParsedStatementDate _dateOnly(int year, int month, int day) {
+  final date = DateTime(year, month, day, 12);
+  if (date.year != year || date.month != month || date.day != day) throw const FormatException('date');
+  String two(int value) => value.toString().padLeft(2, '0');
+  return ParsedStatementDate(date, true, '$year-${two(month)}-${two(day)}');
+}
+
+int _parseOfxAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final value = num.parse(normalized);
+  return (value * 100).round();
+}
+
+List<String> _ofxTransactionBlocks(String text) {
+  final matches = RegExp(r'<STMTTRN\b[^>]*>(.*?)(?=</STMTTRN\s*>|<STMTTRN\b|</BANKTRANLIST|</CCSTMTTRNRS|$)', caseSensitive: false, dotAll: true).allMatches(text);
+  return matches.map((match) => match.group(1) ?? '').where((block) => block.trim().isNotEmpty).toList(growable: false);
+}
+
+String? _tag(String text, String name) {
+  final escaped = RegExp.escape(name);
+  final xml = RegExp('<$escaped\\b[^>]*>\\s*(.*?)\\s*</$escaped\\s*>', caseSensitive: false, dotAll: true).firstMatch(text);
+  if (xml != null) return _cleanTagValue(xml.group(1));
+  final sgml = RegExp('<$escaped\\b[^>]*>\\s*([^<\\r\\n]+)', caseSensitive: false).firstMatch(text);
+  return _cleanTagValue(sgml?.group(1));
+}
+
+String? _cleanTagValue(String? value) {
+  final trimmed = value?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+String _normalize(String value) {
+  var result = value.toLowerCase().trim();
+  const from = 'áàãâäéèêëíìîïóòõôöúùûüç';
+  const to = 'aaaaaeeeeiiiiooooouuuuc';
+  for (var i = 0; i < from.length; i++) {
+    result = result.replaceAll(from[i], to[i]);
+  }
+  return result.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class _ParsedMoney {
+  const _ParsedMoney({required this.amountMinor, required this.direction});
+  final int amountMinor;
+  final StatementImportDirection direction;
+}
+),
+    RegExp(
+      r'^(descricao|description|historico|detalhes) '
+      r'(da |de |do )?(transacao|movimentacao|compra|lancamento)$',
+    ),
+    RegExp(r'^(nome|titulo) (da |de |do )?(transacao|movimentacao|lancamento)$'),
+    RegExp(r'^(estabelecimento|merchant|favorecido)$'),
+  ]);
+
+  // "Valor (R$)" normalizes to "valor r". Do NOT auto-map a balance,
+  // installment amount, interest amount or a random first "valor" column.
+  final signed = choose([
+    RegExp(r'^(valor|amount|quantia|trnamt)( r| brl)?$'),
+    RegExp(
+      r'^(valor|amount) (da |de |do )?'
+      r'(transacao|movimentacao|lancamento|operacao|transaction)$',
+    ),
+    RegExp(r'^(valor|amount) (total|liquido|net|signed)$'),
+  ]);
+  final debit = choose([
+    RegExp(r'^(debito|debit|saida)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (do |de |da )?(debito|debit|saida)$'),
+  ]);
+  final credit = choose([
+    RegExp(r'^(credito|credit|entrada)( r| brl)?$'),
+    RegExp(r'^(valor|amount) (do |de |da )?(credito|credit|entrada)$'),
+  ]);
+
+  // When a signed amount is uniquely labeled it is the single source of
+  // truth, not a second sum of debit/credit. Ambiguous labels make ALL money
+  // suggestions empty so the user must choose them in the review form.
+  final ambiguousMoney = signed.ambiguous ||
+      (signed.index == null && (debit.ambiguous || credit.ambiguous));
+  int? optional(List<RegExp> patterns) => choose(patterns).index;
+
+  return CsvImportMapping(
+    dateColumn: date.index,
+    descriptionColumn: description.index,
+    amountColumn: ambiguousMoney ? null : signed.index,
+    debitColumn: ambiguousMoney || signed.index != null ? null : debit.index,
+    creditColumn: ambiguousMoney || signed.index != null ? null : credit.index,
+    merchantColumn: optional([
+      RegExp(r'^(estabelecimento|merchant|favorecido|favorecida)$'),
+    ]),
+    categoryColumn: optional([
+      RegExp(r'^(categoria|category|subcategoria)$'),
+    ]),
+    externalIdColumn: optional([
+      RegExp(r'^(fitid|id|id externo|id transacao|transaction id)$'),
+    ]),
+    documentColumn: optional([
+      RegExp(r'^(documento|document|checknum|numero documento)$'),
+    ]),
+    balanceColumn: optional([
+      RegExp(r'^(saldo|balance|saldo apos transacao)$'),
+    ]),
+    typeColumn: optional([
+      RegExp(r'^(tipo|type|trntype|tipo transacao)$'),
+    ]),
+    noteColumn: optional([
+      RegExp(r'^(observacao|observacoes|note|notas)$'),
+    ]),
+  );
+}
+
+int parseMoneyMinor(String raw, CsvDecimalFormat format) {
+  var value = raw.trim().replaceAll(RegExp(r'[^0-9,\.\-+()]'), '');
+  if (value.isEmpty) throw const FormatException('money');
+  var negative = value.startsWith('-') || (value.startsWith('(') && value.endsWith(')'));
+  value = value.replaceAll(RegExp(r'[+\-()]'), '');
+  if (value.isEmpty) throw const FormatException('money');
+
+  String normalized;
+  final comma = value.lastIndexOf(',');
+  final dot = value.lastIndexOf('.');
+  // A lone thousands-style separator is ambiguous in autodetect:
+  // "1.234" could represent 1234.00 or 1.234. Never silently guess.
+  if (format == CsvDecimalFormat.auto &&
+      RegExp(r'^[0-9]{1,3}[.,][0-9]{3}      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
+  final value = raw.trim();
+  if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+    if (match == null) throw const FormatException('date');
+    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+  }
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  if (match == null) throw const FormatException('date');
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  var year = int.parse(match.group(3)!);
+  if (year < 100) year += year >= 70 ? 1900 : 2000;
+  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+}
+
+ParsedStatementDate parseOfxDate(String raw) {
+  final value = raw.trim();
+  final match = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?(?:\.\d+)?(?:\[([+-]?\d+(?:\.\d+)?):[^\]]+\])?').firstMatch(value);
+  if (match == null) throw const StatementImportParseException('algumas datas do OFX precisam ser revisadas');
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final hour = int.tryParse(match.group(4) ?? '') ?? 12;
+  final minute = int.tryParse(match.group(5) ?? '') ?? 0;
+  final second = int.tryParse(match.group(6) ?? '') ?? 0;
+  final offsetText = match.group(7);
+  if (offsetText == null) return _dateOnly(year, month, day);
+  final offsetMinutes = (double.parse(offsetText) * 60).round();
+  final utc = DateTime.utc(year, month, day, hour, minute, second).subtract(Duration(minutes: offsetMinutes));
+  return ParsedStatementDate(utc, false, null);
+}
+
+StatementRowClassification classifyStatementRow({
+  required StatementImportSourceKind sourceKind,
+  required StatementImportDirection direction,
+  required String description,
+  String? sourceType,
+}) {
+  final text = _normalize('$description ${sourceType ?? ''}');
+  final opening = RegExp(r'(saldo inicial|saldo anterior|opening balance|beginning balance)').hasMatch(text);
+  if (opening) {
+    return const StatementRowClassification(StatementImportCandidateType.unknown, null, .99, 'saldo de abertura precisa de revisão e nunca vira receita automaticamente');
+  }
+  final cardPayment = RegExp(r'(pagamento.*cart|pgto.*(fat|cart)|pag.*fatura|card payment|payment thank)').hasMatch(text);
+  if (cardPayment) {
+    return const StatementRowClassification(StatementImportCandidateType.cardPaymentCandidate, null, .90, 'parece pagamento de cartão; associe a uma fatura antes de importar');
+  }
+  final refund = RegExp(r'(estorno|refund|reversal|chargeback|reembolso)').hasMatch(text);
+  if (refund) {
+    return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .88, 'parece estorno/reembolso; o vínculo original precisa ser revisado');
+  }
+  final transfer = RegExp(r'(transferencia entre contas|transf.*propria|resgate.*invest|aplicacao.*invest)').hasMatch(text);
+  if (transfer) {
+    return const StatementRowClassification(StatementImportCandidateType.transferCandidate, null, .82, 'parece movimentação entre contas próprias; confirme a contraparte');
+  }
+
+  switch (sourceKind) {
+    case StatementImportSourceKind.card:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.cardPurchase, StatementImportFinalType.cardPurchase, .92, 'débito em extrato de cartão');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .60, 'crédito em cartão pode ser pagamento, ajuste ou estorno');
+    case StatementImportSourceKind.benefit:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.benefitExpense, StatementImportFinalType.benefitExpense, .95, 'débito em benefício');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.benefitCredit, StatementImportFinalType.benefitCredit, .95, 'crédito em benefício');
+    case StatementImportSourceKind.account:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.expense, StatementImportFinalType.expense, .85, 'débito em conta bancária');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.income, StatementImportFinalType.income, .78, 'crédito em conta bancária');
+  }
+}
+
+void _guardFileSize(Uint8List bytes) {
+  if (bytes.isEmpty) throw const StatementImportParseException('o arquivo está vazio');
+  if (bytes.length > statementImportMaxBytes) {
+    throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
+  }
+}
+
+(String, String) _decodeText(Uint8List bytes) {
+  try {
+    return (utf8.decode(bytes, allowMalformed: false), 'utf-8');
+  } catch (_) {
+    return (latin1.decode(bytes, allowInvalid: true), 'latin-1');
+  }
+}
+
+bool _looksLikeHeader(List<List<String>> rows) {
+  if (rows.length < 2) return true;
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'detalh', 'valor', 'quantia', 'amount', 'debito', 'credito', 'entrada', 'saida', 'merchant', 'fitid', 'saldo', 'categoria', 'tipo'];
+  final first = rows.first.map(_normalize).toList();
+  final hits = first.where((cell) => tokens.any(cell.contains)).length;
+  if (hits >= 2) return true;
+  final firstNumeric = first.where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  final secondNumeric = rows[1].map((cell) => cell.trim()).where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  return firstNumeric == 0 && secondNumeric > 0;
+}
+
+String _cell(List<String> row, int index) {
+  if (index < 0 || index >= row.length) throw const FormatException('column');
+  return row[index];
+}
+
+String? _optionalCell(List<String> row, int? index) {
+  if (index == null || index < 0 || index >= row.length) return null;
+  final value = row[index].trim();
+  return value.isEmpty ? null : value;
+}
+
+ParsedStatementDate _dateOnly(int year, int month, int day) {
+  final date = DateTime(year, month, day, 12);
+  if (date.year != year || date.month != month || date.day != day) throw const FormatException('date');
+  String two(int value) => value.toString().padLeft(2, '0');
+  return ParsedStatementDate(date, true, '$year-${two(month)}-${two(day)}');
+}
+
+int _parseOfxAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final value = num.parse(normalized);
+  return (value * 100).round();
+}
+
+List<String> _ofxTransactionBlocks(String text) {
+  final matches = RegExp(r'<STMTTRN\b[^>]*>(.*?)(?=</STMTTRN\s*>|<STMTTRN\b|</BANKTRANLIST|</CCSTMTTRNRS|$)', caseSensitive: false, dotAll: true).allMatches(text);
+  return matches.map((match) => match.group(1) ?? '').where((block) => block.trim().isNotEmpty).toList(growable: false);
+}
+
+String? _tag(String text, String name) {
+  final escaped = RegExp.escape(name);
+  final xml = RegExp('<$escaped\\b[^>]*>\\s*(.*?)\\s*</$escaped\\s*>', caseSensitive: false, dotAll: true).firstMatch(text);
+  if (xml != null) return _cleanTagValue(xml.group(1));
+  final sgml = RegExp('<$escaped\\b[^>]*>\\s*([^<\\r\\n]+)', caseSensitive: false).firstMatch(text);
+  return _cleanTagValue(sgml?.group(1));
+}
+
+String? _cleanTagValue(String? value) {
+  final trimmed = value?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+String _normalize(String value) {
+  var result = value.toLowerCase().trim();
+  const from = 'áàãâäéèêëíìîïóòõôöúùûüç';
+  const to = 'aaaaaeeeeiiiiooooouuuuc';
+  for (var i = 0; i < from.length; i++) {
+    result = result.replaceAll(from[i], to[i]);
+  }
+  return result.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class _ParsedMoney {
+  const _ParsedMoney({required this.amountMinor, required this.direction});
+  final int amountMinor;
+  final StatementImportDirection direction;
+}
+).hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: selecione manualmente o formato decimal do CSV',
+    );
+  }
+  final effective = format == CsvDecimalFormat.auto
+      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
+  final value = raw.trim();
+  if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+    if (match == null) throw const FormatException('date');
+    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+  }
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  if (match == null) throw const FormatException('date');
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  var year = int.parse(match.group(3)!);
+  if (year < 100) year += year >= 70 ? 1900 : 2000;
+  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+}
+
+ParsedStatementDate parseOfxDate(String raw) {
+  final value = raw.trim();
+  final match = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?(?:\.\d+)?(?:\[([+-]?\d+(?:\.\d+)?):[^\]]+\])?').firstMatch(value);
+  if (match == null) throw const StatementImportParseException('algumas datas do OFX precisam ser revisadas');
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final hour = int.tryParse(match.group(4) ?? '') ?? 12;
+  final minute = int.tryParse(match.group(5) ?? '') ?? 0;
+  final second = int.tryParse(match.group(6) ?? '') ?? 0;
+  final offsetText = match.group(7);
+  if (offsetText == null) return _dateOnly(year, month, day);
+  final offsetMinutes = (double.parse(offsetText) * 60).round();
+  final utc = DateTime.utc(year, month, day, hour, minute, second).subtract(Duration(minutes: offsetMinutes));
+  return ParsedStatementDate(utc, false, null);
+}
+
+StatementRowClassification classifyStatementRow({
+  required StatementImportSourceKind sourceKind,
+  required StatementImportDirection direction,
+  required String description,
+  String? sourceType,
+}) {
+  final text = _normalize('$description ${sourceType ?? ''}');
+  final opening = RegExp(r'(saldo inicial|saldo anterior|opening balance|beginning balance)').hasMatch(text);
+  if (opening) {
+    return const StatementRowClassification(StatementImportCandidateType.unknown, null, .99, 'saldo de abertura precisa de revisão e nunca vira receita automaticamente');
+  }
+  final cardPayment = RegExp(r'(pagamento.*cart|pgto.*(fat|cart)|pag.*fatura|card payment|payment thank)').hasMatch(text);
+  if (cardPayment) {
+    return const StatementRowClassification(StatementImportCandidateType.cardPaymentCandidate, null, .90, 'parece pagamento de cartão; associe a uma fatura antes de importar');
+  }
+  final refund = RegExp(r'(estorno|refund|reversal|chargeback|reembolso)').hasMatch(text);
+  if (refund) {
+    return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .88, 'parece estorno/reembolso; o vínculo original precisa ser revisado');
+  }
+  final transfer = RegExp(r'(transferencia entre contas|transf.*propria|resgate.*invest|aplicacao.*invest)').hasMatch(text);
+  if (transfer) {
+    return const StatementRowClassification(StatementImportCandidateType.transferCandidate, null, .82, 'parece movimentação entre contas próprias; confirme a contraparte');
+  }
+
+  switch (sourceKind) {
+    case StatementImportSourceKind.card:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.cardPurchase, StatementImportFinalType.cardPurchase, .92, 'débito em extrato de cartão');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .60, 'crédito em cartão pode ser pagamento, ajuste ou estorno');
+    case StatementImportSourceKind.benefit:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.benefitExpense, StatementImportFinalType.benefitExpense, .95, 'débito em benefício');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.benefitCredit, StatementImportFinalType.benefitCredit, .95, 'crédito em benefício');
+    case StatementImportSourceKind.account:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.expense, StatementImportFinalType.expense, .85, 'débito em conta bancária');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.income, StatementImportFinalType.income, .78, 'crédito em conta bancária');
+  }
+}
+
+void _guardFileSize(Uint8List bytes) {
+  if (bytes.isEmpty) throw const StatementImportParseException('o arquivo está vazio');
+  if (bytes.length > statementImportMaxBytes) {
+    throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
+  }
+}
+
+(String, String) _decodeText(Uint8List bytes) {
+  try {
+    return (utf8.decode(bytes, allowMalformed: false), 'utf-8');
+  } catch (_) {
+    return (latin1.decode(bytes, allowInvalid: true), 'latin-1');
+  }
+}
+
+bool _looksLikeHeader(List<List<String>> rows) {
+  if (rows.length < 2) return true;
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'valor', 'amount', 'debito', 'credito', 'merchant', 'fitid', 'saldo', 'tipo'];
+  final first = rows.first.map(_normalize).toList();
+  final hits = first.where((cell) => tokens.any(cell.contains)).length;
+  if (hits >= 2) return true;
+  final firstNumeric = first.where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  final secondNumeric = rows[1].map((cell) => cell.trim()).where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  return firstNumeric == 0 && secondNumeric > 0;
+}
+
+String _cell(List<String> row, int index) {
+  if (index < 0 || index >= row.length) throw const FormatException('column');
+  return row[index];
+}
+
+String? _optionalCell(List<String> row, int? index) {
+  if (index == null || index < 0 || index >= row.length) return null;
+  final value = row[index].trim();
+  return value.isEmpty ? null : value;
+}
+
+ParsedStatementDate _dateOnly(int year, int month, int day) {
+  final date = DateTime(year, month, day, 12);
+  if (date.year != year || date.month != month || date.day != day) throw const FormatException('date');
+  String two(int value) => value.toString().padLeft(2, '0');
+  return ParsedStatementDate(date, true, '$year-${two(month)}-${two(day)}');
+}
+
+int _parseOfxAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final value = num.parse(normalized);
+  return (value * 100).round();
+}
+
+List<String> _ofxTransactionBlocks(String text) {
+  final matches = RegExp(r'<STMTTRN\b[^>]*>(.*?)(?=</STMTTRN\s*>|<STMTTRN\b|</BANKTRANLIST|</CCSTMTTRNRS|$)', caseSensitive: false, dotAll: true).allMatches(text);
+  return matches.map((match) => match.group(1) ?? '').where((block) => block.trim().isNotEmpty).toList(growable: false);
+}
+
+String? _tag(String text, String name) {
+  final escaped = RegExp.escape(name);
+  final xml = RegExp('<$escaped\\b[^>]*>\\s*(.*?)\\s*</$escaped\\s*>', caseSensitive: false, dotAll: true).firstMatch(text);
+  if (xml != null) return _cleanTagValue(xml.group(1));
+  final sgml = RegExp('<$escaped\\b[^>]*>\\s*([^<\\r\\n]+)', caseSensitive: false).firstMatch(text);
+  return _cleanTagValue(sgml?.group(1));
+}
+
+String? _cleanTagValue(String? value) {
+  final trimmed = value?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+String _normalize(String value) {
+  var result = value.toLowerCase().trim();
+  const from = 'áàãâäéèêëíìîïóòõôöúùûüç';
+  const to = 'aaaaaeeeeiiiiooooouuuuc';
+  for (var i = 0; i < from.length; i++) {
+    result = result.replaceAll(from[i], to[i]);
+  }
+  return result.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class _ParsedMoney {
+  const _ParsedMoney({required this.amountMinor, required this.direction});
+  final int amountMinor;
+  final StatementImportDirection direction;
+}
+),
+    ]),
+    typeColumn: optional([
+      RegExp(r'^(tipo|type|trntype|tipo transacao)$'),
+    ]),
+    noteColumn: optional([
+      RegExp(r'^(observacao|observacoes|note|notas)$'),
+    ]),
+  );
+}
+
+int parseMoneyMinor(String raw, CsvDecimalFormat format) {
+  var value = raw.trim().replaceAll(RegExp(r'[^0-9,\.\-+()]'), '');
+  if (value.isEmpty) throw const FormatException('money');
+  var negative = value.startsWith('-') || (value.startsWith('(') && value.endsWith(')'));
+  value = value.replaceAll(RegExp(r'[+\-()]'), '');
+  if (value.isEmpty) throw const FormatException('money');
+
+  String normalized;
+  final comma = value.lastIndexOf(',');
+  final dot = value.lastIndexOf('.');
+  // A lone thousands-style separator is ambiguous in autodetect:
+  // "1.234" could represent 1234.00 or 1.234. Never silently guess.
+  if (format == CsvDecimalFormat.auto &&
+      RegExp(r'^[0-9]{1,3}[.,][0-9]{3}      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
+  final value = raw.trim();
+  if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+    if (match == null) throw const FormatException('date');
+    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+  }
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  if (match == null) throw const FormatException('date');
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  var year = int.parse(match.group(3)!);
+  if (year < 100) year += year >= 70 ? 1900 : 2000;
+  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+}
+
+ParsedStatementDate parseOfxDate(String raw) {
+  final value = raw.trim();
+  final match = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?(?:\.\d+)?(?:\[([+-]?\d+(?:\.\d+)?):[^\]]+\])?').firstMatch(value);
+  if (match == null) throw const StatementImportParseException('algumas datas do OFX precisam ser revisadas');
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final hour = int.tryParse(match.group(4) ?? '') ?? 12;
+  final minute = int.tryParse(match.group(5) ?? '') ?? 0;
+  final second = int.tryParse(match.group(6) ?? '') ?? 0;
+  final offsetText = match.group(7);
+  if (offsetText == null) return _dateOnly(year, month, day);
+  final offsetMinutes = (double.parse(offsetText) * 60).round();
+  final utc = DateTime.utc(year, month, day, hour, minute, second).subtract(Duration(minutes: offsetMinutes));
+  return ParsedStatementDate(utc, false, null);
+}
+
+StatementRowClassification classifyStatementRow({
+  required StatementImportSourceKind sourceKind,
+  required StatementImportDirection direction,
+  required String description,
+  String? sourceType,
+}) {
+  final text = _normalize('$description ${sourceType ?? ''}');
+  final opening = RegExp(r'(saldo inicial|saldo anterior|opening balance|beginning balance)').hasMatch(text);
+  if (opening) {
+    return const StatementRowClassification(StatementImportCandidateType.unknown, null, .99, 'saldo de abertura precisa de revisão e nunca vira receita automaticamente');
+  }
+  final cardPayment = RegExp(r'(pagamento.*cart|pgto.*(fat|cart)|pag.*fatura|card payment|payment thank)').hasMatch(text);
+  if (cardPayment) {
+    return const StatementRowClassification(StatementImportCandidateType.cardPaymentCandidate, null, .90, 'parece pagamento de cartão; associe a uma fatura antes de importar');
+  }
+  final refund = RegExp(r'(estorno|refund|reversal|chargeback|reembolso)').hasMatch(text);
+  if (refund) {
+    return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .88, 'parece estorno/reembolso; o vínculo original precisa ser revisado');
+  }
+  final transfer = RegExp(r'(transferencia entre contas|transf.*propria|resgate.*invest|aplicacao.*invest)').hasMatch(text);
+  if (transfer) {
+    return const StatementRowClassification(StatementImportCandidateType.transferCandidate, null, .82, 'parece movimentação entre contas próprias; confirme a contraparte');
+  }
+
+  switch (sourceKind) {
+    case StatementImportSourceKind.card:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.cardPurchase, StatementImportFinalType.cardPurchase, .92, 'débito em extrato de cartão');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .60, 'crédito em cartão pode ser pagamento, ajuste ou estorno');
+    case StatementImportSourceKind.benefit:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.benefitExpense, StatementImportFinalType.benefitExpense, .95, 'débito em benefício');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.benefitCredit, StatementImportFinalType.benefitCredit, .95, 'crédito em benefício');
+    case StatementImportSourceKind.account:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.expense, StatementImportFinalType.expense, .85, 'débito em conta bancária');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.income, StatementImportFinalType.income, .78, 'crédito em conta bancária');
+  }
+}
+
+void _guardFileSize(Uint8List bytes) {
+  if (bytes.isEmpty) throw const StatementImportParseException('o arquivo está vazio');
+  if (bytes.length > statementImportMaxBytes) {
+    throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
+  }
+}
+
+(String, String) _decodeText(Uint8List bytes) {
+  try {
+    return (utf8.decode(bytes, allowMalformed: false), 'utf-8');
+  } catch (_) {
+    return (latin1.decode(bytes, allowInvalid: true), 'latin-1');
+  }
+}
+
+bool _looksLikeHeader(List<List<String>> rows) {
+  if (rows.length < 2) return true;
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'detalh', 'valor', 'quantia', 'amount', 'debito', 'credito', 'entrada', 'saida', 'merchant', 'fitid', 'saldo', 'categoria', 'tipo'];
+  final first = rows.first.map(_normalize).toList();
+  final hits = first.where((cell) => tokens.any(cell.contains)).length;
+  if (hits >= 2) return true;
+  final firstNumeric = first.where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  final secondNumeric = rows[1].map((cell) => cell.trim()).where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  return firstNumeric == 0 && secondNumeric > 0;
+}
+
+String _cell(List<String> row, int index) {
+  if (index < 0 || index >= row.length) throw const FormatException('column');
+  return row[index];
+}
+
+String? _optionalCell(List<String> row, int? index) {
+  if (index == null || index < 0 || index >= row.length) return null;
+  final value = row[index].trim();
+  return value.isEmpty ? null : value;
+}
+
+ParsedStatementDate _dateOnly(int year, int month, int day) {
+  final date = DateTime(year, month, day, 12);
+  if (date.year != year || date.month != month || date.day != day) throw const FormatException('date');
+  String two(int value) => value.toString().padLeft(2, '0');
+  return ParsedStatementDate(date, true, '$year-${two(month)}-${two(day)}');
+}
+
+int _parseOfxAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final value = num.parse(normalized);
+  return (value * 100).round();
+}
+
+List<String> _ofxTransactionBlocks(String text) {
+  final matches = RegExp(r'<STMTTRN\b[^>]*>(.*?)(?=</STMTTRN\s*>|<STMTTRN\b|</BANKTRANLIST|</CCSTMTTRNRS|$)', caseSensitive: false, dotAll: true).allMatches(text);
+  return matches.map((match) => match.group(1) ?? '').where((block) => block.trim().isNotEmpty).toList(growable: false);
+}
+
+String? _tag(String text, String name) {
+  final escaped = RegExp.escape(name);
+  final xml = RegExp('<$escaped\\b[^>]*>\\s*(.*?)\\s*</$escaped\\s*>', caseSensitive: false, dotAll: true).firstMatch(text);
+  if (xml != null) return _cleanTagValue(xml.group(1));
+  final sgml = RegExp('<$escaped\\b[^>]*>\\s*([^<\\r\\n]+)', caseSensitive: false).firstMatch(text);
+  return _cleanTagValue(sgml?.group(1));
+}
+
+String? _cleanTagValue(String? value) {
+  final trimmed = value?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+String _normalize(String value) {
+  var result = value.toLowerCase().trim();
+  const from = 'áàãâäéèêëíìîïóòõôöúùûüç';
+  const to = 'aaaaaeeeeiiiiooooouuuuc';
+  for (var i = 0; i < from.length; i++) {
+    result = result.replaceAll(from[i], to[i]);
+  }
+  return result.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class _ParsedMoney {
+  const _ParsedMoney({required this.amountMinor, required this.direction});
+  final int amountMinor;
+  final StatementImportDirection direction;
+}
+).hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: selecione manualmente o formato decimal do CSV',
+    );
+  }
+  final effective = format == CsvDecimalFormat.auto
+      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
+  final value = raw.trim();
+  if (value.isEmpty) throw const FormatException('date');
+  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+    if (match == null) throw const FormatException('date');
+    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+  }
+  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  if (match == null) throw const FormatException('date');
+  final first = int.parse(match.group(1)!);
+  final second = int.parse(match.group(2)!);
+  var year = int.parse(match.group(3)!);
+  if (year < 100) year += year >= 70 ? 1900 : 2000;
+  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
+  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+}
+
+ParsedStatementDate parseOfxDate(String raw) {
+  final value = raw.trim();
+  final match = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?(?:\.\d+)?(?:\[([+-]?\d+(?:\.\d+)?):[^\]]+\])?').firstMatch(value);
+  if (match == null) throw const StatementImportParseException('algumas datas do OFX precisam ser revisadas');
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final hour = int.tryParse(match.group(4) ?? '') ?? 12;
+  final minute = int.tryParse(match.group(5) ?? '') ?? 0;
+  final second = int.tryParse(match.group(6) ?? '') ?? 0;
+  final offsetText = match.group(7);
+  if (offsetText == null) return _dateOnly(year, month, day);
+  final offsetMinutes = (double.parse(offsetText) * 60).round();
+  final utc = DateTime.utc(year, month, day, hour, minute, second).subtract(Duration(minutes: offsetMinutes));
+  return ParsedStatementDate(utc, false, null);
+}
+
+StatementRowClassification classifyStatementRow({
+  required StatementImportSourceKind sourceKind,
+  required StatementImportDirection direction,
+  required String description,
+  String? sourceType,
+}) {
+  final text = _normalize('$description ${sourceType ?? ''}');
+  final opening = RegExp(r'(saldo inicial|saldo anterior|opening balance|beginning balance)').hasMatch(text);
+  if (opening) {
+    return const StatementRowClassification(StatementImportCandidateType.unknown, null, .99, 'saldo de abertura precisa de revisão e nunca vira receita automaticamente');
+  }
+  final cardPayment = RegExp(r'(pagamento.*cart|pgto.*(fat|cart)|pag.*fatura|card payment|payment thank)').hasMatch(text);
+  if (cardPayment) {
+    return const StatementRowClassification(StatementImportCandidateType.cardPaymentCandidate, null, .90, 'parece pagamento de cartão; associe a uma fatura antes de importar');
+  }
+  final refund = RegExp(r'(estorno|refund|reversal|chargeback|reembolso)').hasMatch(text);
+  if (refund) {
+    return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .88, 'parece estorno/reembolso; o vínculo original precisa ser revisado');
+  }
+  final transfer = RegExp(r'(transferencia entre contas|transf.*propria|resgate.*invest|aplicacao.*invest)').hasMatch(text);
+  if (transfer) {
+    return const StatementRowClassification(StatementImportCandidateType.transferCandidate, null, .82, 'parece movimentação entre contas próprias; confirme a contraparte');
+  }
+
+  switch (sourceKind) {
+    case StatementImportSourceKind.card:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.cardPurchase, StatementImportFinalType.cardPurchase, .92, 'débito em extrato de cartão');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.refundCandidate, null, .60, 'crédito em cartão pode ser pagamento, ajuste ou estorno');
+    case StatementImportSourceKind.benefit:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.benefitExpense, StatementImportFinalType.benefitExpense, .95, 'débito em benefício');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.benefitCredit, StatementImportFinalType.benefitCredit, .95, 'crédito em benefício');
+    case StatementImportSourceKind.account:
+      if (direction == StatementImportDirection.debit) {
+        return const StatementRowClassification(StatementImportCandidateType.expense, StatementImportFinalType.expense, .85, 'débito em conta bancária');
+      }
+      return const StatementRowClassification(StatementImportCandidateType.income, StatementImportFinalType.income, .78, 'crédito em conta bancária');
+  }
+}
+
+void _guardFileSize(Uint8List bytes) {
+  if (bytes.isEmpty) throw const StatementImportParseException('o arquivo está vazio');
+  if (bytes.length > statementImportMaxBytes) {
+    throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
+  }
+}
+
+(String, String) _decodeText(Uint8List bytes) {
+  try {
+    return (utf8.decode(bytes, allowMalformed: false), 'utf-8');
+  } catch (_) {
+    return (latin1.decode(bytes, allowInvalid: true), 'latin-1');
+  }
+}
+
+bool _looksLikeHeader(List<List<String>> rows) {
+  if (rows.length < 2) return true;
+  const tokens = <String>['data', 'date', 'descr', 'histor', 'valor', 'amount', 'debito', 'credito', 'merchant', 'fitid', 'saldo', 'tipo'];
+  final first = rows.first.map(_normalize).toList();
+  final hits = first.where((cell) => tokens.any(cell.contains)).length;
+  if (hits >= 2) return true;
+  final firstNumeric = first.where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  final secondNumeric = rows[1].map((cell) => cell.trim()).where((cell) => RegExp(r'^[-+]?\d+[,.]?\d*$').hasMatch(cell)).length;
+  return firstNumeric == 0 && secondNumeric > 0;
+}
+
+String _cell(List<String> row, int index) {
+  if (index < 0 || index >= row.length) throw const FormatException('column');
+  return row[index];
+}
+
+String? _optionalCell(List<String> row, int? index) {
+  if (index == null || index < 0 || index >= row.length) return null;
+  final value = row[index].trim();
+  return value.isEmpty ? null : value;
+}
+
+ParsedStatementDate _dateOnly(int year, int month, int day) {
+  final date = DateTime(year, month, day, 12);
+  if (date.year != year || date.month != month || date.day != day) throw const FormatException('date');
+  String two(int value) => value.toString().padLeft(2, '0');
+  return ParsedStatementDate(date, true, '$year-${two(month)}-${two(day)}');
+}
+
+int _parseOfxAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final value = num.parse(normalized);
+  return (value * 100).round();
+}
+
+List<String> _ofxTransactionBlocks(String text) {
+  final matches = RegExp(r'<STMTTRN\b[^>]*>(.*?)(?=</STMTTRN\s*>|<STMTTRN\b|</BANKTRANLIST|</CCSTMTTRNRS|$)', caseSensitive: false, dotAll: true).allMatches(text);
+  return matches.map((match) => match.group(1) ?? '').where((block) => block.trim().isNotEmpty).toList(growable: false);
+}
+
+String? _tag(String text, String name) {
+  final escaped = RegExp.escape(name);
+  final xml = RegExp('<$escaped\\b[^>]*>\\s*(.*?)\\s*</$escaped\\s*>', caseSensitive: false, dotAll: true).firstMatch(text);
+  if (xml != null) return _cleanTagValue(xml.group(1));
+  final sgml = RegExp('<$escaped\\b[^>]*>\\s*([^<\\r\\n]+)', caseSensitive: false).firstMatch(text);
+  return _cleanTagValue(sgml?.group(1));
+}
+
+String? _cleanTagValue(String? value) {
+  final trimmed = value?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+String _normalize(String value) {
+  var result = value.toLowerCase().trim();
+  const from = 'áàãâäéèêëíìîïóòõôöúùûüç';
+  const to = 'aaaaaeeeeiiiiooooouuuuc';
+  for (var i = 0; i < from.length; i++) {
+    result = result.replaceAll(from[i], to[i]);
+  }
+  return result.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class _ParsedMoney {
+  const _ParsedMoney({required this.amountMinor, required this.direction});
+  final int amountMinor;
+  final StatementImportDirection direction;
+}
+),
     RegExp(
       r'^(descricao|description|historico|detalhes) '
       r'(da |de |do )?(transacao|movimentacao|compra|lancamento)$',
