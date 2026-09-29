@@ -337,8 +337,14 @@ class _HomeScreenState extends State<HomeScreen> {
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
     );
-    final isPrivateAiTester = widget.repository.currentUserId ==
-        '5de8e34a-c6f5-4667-8fe0-2b4b89b42880';
+    // Experimental AI currently sends monthly aggregate financial totals to
+    // a provider. Keep OFF for everyone until a distinct opt-in, secure
+    // entitlement and provider/privacy review exist. Never target a person
+    // using a hard-coded account identifier or bypass normal consent.
+    const showExperimentalAi = bool.fromEnvironment(
+      'FOLEGO_EXPERIMENTAL_AI_REVIEWED',
+      defaultValue: false,
+    );
     final financialAiCard = FinancialAiCard(
       service: FinancialInsightsService(widget.repository),
       spaceId: widget.space.id,
@@ -412,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [purchaseSimulator],
                     ),
                   ),
-                  if (isPrivateAiTester) ...[
+                  if (showExperimentalAi) ...[
                     const SizedBox(height: 8),
                     Card(
                       clipBehavior: Clip.antiAlias,
@@ -453,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   purchaseSimulator,
                   const SizedBox(height: 14),
 
-                  if (isPrivateAiTester) financialAiCard,
+                  if (showExperimentalAi) financialAiCard,
                   const SizedBox(height: 14),
                   projectionInsight,
                   const SizedBox(height: 24),
@@ -499,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             purchaseSimulator,
                             const SizedBox(height: 16),
 
-                            if (isPrivateAiTester) financialAiCard,
+                            if (showExperimentalAi) financialAiCard,
                             const SizedBox(height: 16),
                             projectionInsight,
                           ],
