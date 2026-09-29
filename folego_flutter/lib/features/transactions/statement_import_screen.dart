@@ -487,10 +487,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   Future<void> _confirmImport() async {
-    if (_loading || _batchId == null) return;
+    if (_loading || _bootstrapping || _batchId == null) return;
     final invalid = _rows.where((row) => _validationError(row) != null).toList();
     if (invalid.isNotEmpty) {
-      setState(() { _reviewFilter = _ReviewFilter.pending; _error = '${invalid.length} item(ns) selecionado(s) ainda precisam de revisão'; });
+      setState(() {
+        _reviewFilter = _ReviewFilter.pending;
+        _error = '${invalid.length} item(ns) selecionado(s) ainda precisam de revisão';
+      });
       return;
     }
     final included = _rows.where((row) => row.selected).toList();
@@ -498,33 +501,62 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       setState(() => _error = 'selecione pelo menos um lançamento para importar');
       return;
     }
+
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
+    final selectedRepository = widget.repository;
+    final batchId = _batchId!;
+    final selectedRows = List<StatementImportRow>.of(_rows, growable: false);
     setState(() { _loading = true; _error = null; });
     try {
       final update = widget.updateOverride;
       if (update != null) {
-        await update(_batchId!, _rows);
+        await update(batchId, selectedRows);
       } else {
-        await widget.repository.updateStatementImportRows(spaceId: widget.spaceId, batchId: _batchId!, rows: _rows);
+        await selectedRepository.updateStatementImportRows(
+          spaceId: selectedSpaceId, batchId: batchId, rows: selectedRows,
+        );
       }
+      // A changed financial space must never confirm a stale batch using
+      // the newly mounted route's repository or user permissions.
+      if (!mounted || epoch != _spaceEpoch) return;
       final confirm = widget.confirmOverride;
       final result = confirm != null
-          ? await confirm(_batchId!)
-          : await widget.repository.confirmStatementImport(spaceId: widget.spaceId, batchId: _batchId!);
-      final refreshed = await _loadRows(_batchId!);
-      if (!mounted) return;
-      setState(() { _result = result; _rows = refreshed; _step = _ImportStep.result; });
+          ? await confirm(batchId)
+          : await selectedRepository.confirmStatementImport(
+              spaceId: selectedSpaceId, batchId: batchId,
+            );
+      if (!mounted || epoch != _spaceEpoch) return;
+      final refreshed = await _loadRows(batchId);
+      if (!mounted || epoch != _spaceEpoch) return;
+      setState(() {
+        _result = result;
+        _rows = refreshed;
+        _step = _ImportStep.result;
+      });
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _loading = false);
+      }
     }
   }
 
   Future<void> _cancelImport() async {
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
+    final selectedRepository = widget.repository;
     final batchId = _batchId;
-    if (batchId == null) { Navigator.of(context).pop(false); return; }
+    if (batchId == null) {
+      Navigator.of(context).pop(false);
+      return;
+    }
     if (_rows.any((row) => row.status == StatementImportRowStatus.imported)) {
-      setState(() => _error = 'parte deste lote já virou histórico financeiro e não pode ser apagada em massa');
+      setState(() => _error =
+          'parte deste lote já virou histórico financeiro e não pode ser apagada em massa');
       return;
     }
     try {
@@ -532,11 +564,17 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       if (cancel != null) {
         await cancel(batchId);
       } else {
-        await widget.repository.cancelStatementImport(spaceId: widget.spaceId, batchId: batchId);
+        await selectedRepository.cancelStatementImport(
+          spaceId: selectedSpaceId, batchId: batchId,
+        );
       }
-      if (mounted) Navigator.of(context).pop(false);
+      if (mounted && epoch == _spaceEpoch) {
+        Navigator.of(context).pop(false);
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     }
   }
 
