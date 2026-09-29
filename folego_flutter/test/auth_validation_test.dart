@@ -45,13 +45,20 @@ void main() {
       );
     });
 
-    test('senha de cadastro exige pelo menos 8 caracteres', () {
+    test('signup honors the actual minimum password length', () {
+      final length = AuthValidation.minimumPasswordLength;
       expect(
-        AuthValidation.password('1234567', enforceMinimum: true),
-        contains('8 caracteres'),
+        AuthValidation.password(
+          List.filled(length - 1, 'a').join(),
+          enforceMinimum: true,
+        ),
+        contains('$length caracteres'),
       );
       expect(
-        AuthValidation.password('12345678', enforceMinimum: true),
+        AuthValidation.password(
+          List.filled(length, 'a').join(),
+          enforceMinimum: true,
+        ),
         isNull,
       );
     });
