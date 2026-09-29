@@ -112,6 +112,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('DD/MM/AAAA').last);
     await tester.pumpAndSettle();
+    expect(find.textContaining('o arquivo contém datas ambíguas'), findsNothing);
+    expect(
+      find.textContaining('Encontramos datas que podem representar'),
+      findsNothing,
+    );
 
     await tester.scrollUntilVisible(stage, 210, scrollable: scrollable);
     await tester.tap(stage);
