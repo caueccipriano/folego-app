@@ -102,13 +102,24 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y postgresql-client
           fi
-      - name: Run both actual Push migrations on synthetic revoked A/B sessions
+      - name: Test server session revocation on an isolated fake database
         run: |
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/verified_push_session_fixture.sql \
             -f supabase/tests/verified_push_session_before_fix.sql \
             -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
-            -f supabase/tests/verified_push_session_acceptance.sql \
+            -f supabase/tests/verified_push_session_acceptance.sql
+      - name: Test owner recovery on a SECOND pristine synthetic database
+        run: |
+          # The revocation acceptance test deliberately expires and deletes
+          # all fake sessions. Owner recovery must start with LIVE fictitious
+          # sessions; executing both acceptances on one state falsely fails.
+          psql -X -d postgres -v ON_ERROR_STOP=1 \
+            -c 'CREATE DATABASE folego_integrated_recovery_ci'
+          PGDATABASE=folego_integrated_recovery_ci psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/verified_push_session_fixture.sql \
+            -f supabase/tests/verified_push_session_before_fix.sql \
+            -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
             -f supabase/migrations/20260929103000_owner_scoped_push_recovery_status.sql \
             -f supabase/tests/owner_scoped_push_recovery_acceptance.sql
 
