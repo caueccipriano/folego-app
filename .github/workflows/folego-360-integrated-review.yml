@@ -1,0 +1,67 @@
+name: Folego 360 integrated prelaunch code review
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/**'
+      - 'qa/staging/**'
+      - 'qa/tests/integrated-folego-360-release.test.mjs'
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+      - 'docs/revenuecat-launch-checklist.md'
+      - 'docs/FOLEGO_360_INTEGRATED_RELEASE_REVIEW.md'
+      - '.github/workflows/folego-360-integrated-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-safety-contracts:
+    name: Integrated release source contracts and fake-user guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No secrets, no network — deterministic source/safety checks
+        run: |
+          node --test \
+            qa/tests/integrated-folego-360-release.test.mjs \
+            qa/staging/staging-guard.test.mjs
+      - name: Declare exact coverage
+        run: |
+          {
+            echo 'Passed static assertions on the exact merged REVIEW HEAD.'
+            echo 'Staging credentials and production customer data were NOT accessed.'
+            echo 'This job cannot attest real Auth A/B isolation or physical iOS.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  all-flutter-regressions:
+    name: Full Flutter analyze and all unit/widget regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze the ENTIRE consolidated app
+        working-directory: folego_flutter
+        run: flutter analyze --no-pub
+      - name: Run ENTIRE local Flutter test tree with no customer backend
+        working-directory: folego_flutter
+        run: flutter test --no-pub --concurrency=3
+      - name: Explicit boundary
+        run: |
+          {
+            echo 'All local Flutter tests ran against code and synthetic data.'
+            echo 'This job cannot replace manual isolated staging,'
+            echo 'physical installed iOS/Android or store sandbox QA.'
+          } >> "$GITHUB_STEP_SUMMARY"
