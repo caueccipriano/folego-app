@@ -62,7 +62,7 @@ class _FakePushRecovery extends Fake
   }
 }
 
-Future<void> showScreen(
+Future<void> _showScreen(
   WidgetTester tester,
   _FakePushRecovery adapter,
 ) async {
@@ -91,7 +91,7 @@ void main() {
     final adapter = _FakePushRecovery(
       ExistingPushRecoveryStatus.needsRebind,
     );
-    await showScreen(tester, adapter);
+    await _showScreen(tester, adapter);
 
     expect(find.text('reativar meus alertas'), findsOneWidget);
     expect(adapter.explicitRebindCalls, 0);
@@ -109,7 +109,7 @@ void main() {
     final adapter = _FakePushRecovery(
       ExistingPushRecoveryStatus.needsEnrollment,
     );
-    await showScreen(tester, adapter);
+    await _showScreen(tester, adapter);
 
     expect(find.text('ativar neste dispositivo'), findsOneWidget);
     expect(find.text('reativar meus alertas'), findsNothing);
@@ -126,7 +126,7 @@ void main() {
     final adapter = _FakePushRecovery(
       ExistingPushRecoveryStatus.lookupFailed,
     );
-    await showScreen(tester, adapter);
+    await _showScreen(tester, adapter);
 
     expect(find.text('verificação temporariamente indisponível'), findsOneWidget);
     expect(find.byKey(const ValueKey('push-safe-recovery-button')), findsNothing);
