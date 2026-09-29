@@ -76,9 +76,9 @@ void main() {
     final source = File(
       'lib/features/panorama/panorama_360_screen.dart',
     ).readAsStringSync();
-    expect(source, contains("onAction: _upcoming,"));
-    expect(source, contains("builder: (_) => UpcomingEventsScreen("));
-    expect(source, contains("spaceId: widget.space.id,"));
-    expect(source, contains("onUpcomingRequested"));
+    expect(source, contains('onAction: _upcoming,'));
+    expect(source, contains('builder: (_) => UpcomingEventsScreen('));
+    expect(source, contains('spaceId: widget.space.id,'));
+    expect(source, contains('onUpcomingRequested'));
   });
 }
