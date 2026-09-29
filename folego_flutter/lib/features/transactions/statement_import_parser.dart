@@ -152,6 +152,33 @@ class CsvImportDocument {
         .toList(growable: false);
   }
 
+  /// Preflight the entire selected date column, not just sample rows, so the
+  /// UI can request date order BEFORE any remote staging request.
+  bool hasAmbiguousDateValues(CsvImportMapping mapping) {
+    final column = mapping.dateColumn;
+    if (column == null || mapping.dateFormat != CsvDateFormat.auto) {
+      return false;
+    }
+    final numericDate = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-]\d{2,4}(?:$|\s)');
+    for (final row in rows) {
+      if (column >= row.length) continue;
+      final match = numericDate.firstMatch(row[column].trim());
+      if (match == null) continue;
+      final first = int.tryParse(match.group(1) ?? '');
+      final second = int.tryParse(match.group(2) ?? '');
+      if (first != null &&
+          second != null &&
+          first >= 1 &&
+          second >= 1 &&
+          first <= 12 &&
+          second <= 12 &&
+          first != second) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   List<StatementImportCandidate> buildCandidates({
     required CsvImportMapping mapping,
     required StatementImportSourceKind sourceKind,
