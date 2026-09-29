@@ -122,13 +122,48 @@ void main() {
       'Data;Descrição;Valor\n'
       '28/09/2026;COMPRA FICTÍCIA;35,90\n',
     );
-    expect(doc.suggestedMapping.cardSignConvention, negativeConvention);
+    expect(doc.suggestedMapping.cardSignConvention,
+        CsvCardSignConvention.unselected);
     final chosen = doc.suggestedMapping.copyWith(
       cardSignConvention: positiveConvention,
     );
     expect(chosen.toJson()['card_sign_convention'], 'purchasesPositive');
     expect(chosen.amountColumn, 2);
     expect(chosen.isComplete, isTrue);
+  });
+
+  test('direct signed-card parser is fail-closed until sign is explicitly set', () {
+    final doc = _fictional(
+      'Data;Descrição;Valor\n'
+      '28/09/2026;COMPRA FICTÍCIA;35,90\n',
+    );
+    final unmapped = doc.suggestedMapping.copyWith(
+      dateFormat: CsvDateFormat.dmy,
+      decimalFormat: CsvDecimalFormat.brazilian,
+    );
+    expect(unmapped.cardSignConvention, CsvCardSignConvention.unselected);
+    expect(
+      () => doc.buildCandidates(
+        sourceKind: StatementImportSourceKind.card,
+        mapping: unmapped,
+      ),
+      throwsA(isA<StatementImportParseException>()),
+    );
+    expect(
+      doc.buildCandidates(
+        sourceKind: StatementImportSourceKind.account,
+        mapping: unmapped,
+      ).single.finalType,
+      StatementImportFinalType.income,
+    );
+    final confirmed = doc.buildCandidates(
+      sourceKind: StatementImportSourceKind.card,
+      mapping: unmapped.copyWith(
+        cardSignConvention: CsvCardSignConvention.purchasesPositive,
+      ),
+    );
+    expect(confirmed.single.direction, StatementImportDirection.debit);
+    expect(confirmed.single.finalType, StatementImportFinalType.cardPurchase);
   });
 
   test('without positive opt-in a positive signed card amount stays for review', () {
