@@ -9,7 +9,7 @@ import 'package:folego/widgets/financial_ai_card.dart';
 
 class _FictionalRepository implements FolegoRepository {
   _FictionalRepository(this.identity);
-  final String identity;
+  String identity;
   final summary = Completer<MonthlyMoneySummary>();
 
   @override
@@ -80,4 +80,21 @@ void main() {
     expect(find.text('Copiar totais e pergunta para meu ChatGPT'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('completed local answer is hidden if same repository changes Auth',
+      (tester) async {
+    final repo = _FictionalRepository('fictional-A');
+    await tester.pumpWidget(_screen(repo, 'space-A'));
+    await tester.enterText(find.byType(TextField), 'Como está meu mês?');
+    await tester.tap(find.text('Analisar sem limite'));
+    repo.summary.complete(_month(777777, 10));
+    await tester.pump();
+    expect(find.textContaining('777.777'), findsWidgets);
+    repo.identity = 'fictional-B';
+    await tester.pumpWidget(_screen(repo, 'space-A'));
+    await tester.pump();
+    expect(find.textContaining('777.777'), findsNothing);
+    expect(find.text('Copiar totais e pergunta para meu ChatGPT'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }
