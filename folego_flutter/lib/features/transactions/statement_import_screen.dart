@@ -620,6 +620,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   Widget _mappingStep() {
     final csv = _csv!;
     final mapping = _mapping ?? csv.suggestedMapping;
+    final dateWarning = csv.autoDateWarning(mapping);
     return ListView(key: const ValueKey('statement-import-csv-mapping'), padding: const EdgeInsets.fromLTRB(0, 6, 0, 32), children: [
       const _IntroCard(icon: AppIcons.settings, title: 'como esse CSV está organizado?', text: 'confira o mapeamento. abaixo de cada campo mostramos valores reais do arquivo antes de criar o staging.'),
       if (!mapping.isComplete) ...[
@@ -630,6 +631,10 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
               'O Fôlego não adivinha qual coluna representa seu dinheiro.',
           error: false,
         ),
+      ],
+      if (dateWarning != null) ...[
+        const SizedBox(height: 10),
+        _MessageBox(text: dateWarning, error: false),
       ],
       const SizedBox(height: 14),
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
@@ -681,6 +686,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         const SizedBox(width: 10),
         Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateFormat: value)))),
       ]),
+      const SizedBox(height: 8),
+      const Text(
+        'Datas como 03/04/2026 também podem ter dois sentidos. '
+        'Quando o extrato não contém datas que resolvam a dúvida, '
+        'escolha DD/MM ou MM/DD acima antes de continuar.',
+        key: ValueKey('statement-import-ambiguous-date-guidance'),
+      ),
       const SizedBox(height: 8),
       const Text(
         'Atenção: valores como 1.234 ou 1,234 são ambíguos. '
