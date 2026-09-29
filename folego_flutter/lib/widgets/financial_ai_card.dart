@@ -53,12 +53,14 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       setState(() => _answer = data['answer'] as String);
     } on FunctionException catch (error) {
       final details = error.details;
-      if (mounted) setState(() {
-        _isError = true;
-        _answer = details is Map && details['error'] is String
-            ? details['error'] as String
-            : 'O assistente está indisponível no momento. Tente novamente mais tarde.';
-      });
+      if (mounted) {
+        setState(() {
+          _isError = true;
+          _answer = details is Map && details['error'] is String
+              ? details['error'] as String
+              : 'O assistente está indisponível no momento. Tente novamente mais tarde.';
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() { _isError = true; _answer =
