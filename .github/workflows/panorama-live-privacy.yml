@@ -1,0 +1,52 @@
+name: Panorama 360 live financial privacy
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/test/panorama_live_privacy_test.dart'
+      - 'docs/FOLEGO_360_PRODUCT_BLUEPRINT.md'
+      - '.github/workflows/panorama-live-privacy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-privacy:
+    name: Instant privacy mask across mounted, delayed and historical data
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze changes and the full app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_360_screen.dart \
+            test/panorama_live_privacy_test.dart
+          flutter analyze --no-pub
+      - name: Run synthetic global privacy and previous Panorama regressions
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_live_privacy_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/panorama_month_comparison_test.dart \
+            test/panorama_budget_watch_test.dart
+      - name: Scope of evidence
+        run: |
+          {
+            echo 'Privacy regressions use only invented financial data.'
+            echo 'Instant mask is verified for mounted and delayed UI states.'
+            echo 'The test does not inspect customer data or prove physical'
+            echo 'iPhone privacy, browser storage security or session revocation.'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -104,6 +104,24 @@ does not issue a second network query to draw the preview. Synthetic
 iPhone-sized interaction tests verify the tap; broader authenticated
 multi-account staging remains an independent release blocker.
 
+## Independent microdelivery: immediately hide all mounted financial values
+
+The existing `Formatters.money` already respects Fôlego's global
+hide-values setting, but a mounted Panorama card might not rebuild
+automatically if the preference changes elsewhere while the page is
+still open. The Panorama 360 parent now **listens** to the global
+`FinancialPrivacy.hidden` notifier and re-renders ALL mounted
+amounts as soon as the privacy mode changes. It does NOT refetch
+account data or store extra copies of financial records.
+
+Synthetic Flutter tests cover values that were already rendered,
+privacy enabled during a still-pending async load, exact historical
+value disappearance after a toggle and unmasking when explicitly
+requested. Month-comparison and category-watch children retain their
+own listeners for independent use. This is UI privacy hardening, not
+encryption or a substitute for session-scoped RLS, shared-device Push
+revocation or physical iPhone/HTTPS testing.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.
