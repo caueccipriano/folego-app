@@ -107,6 +107,9 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   bool _loading = false;
   bool _bootstrapping = true;
   String? _error;
+  // Invalidates every pending file read/bootstrap/staging operation whenever
+  // the authorized financial-space context changes on this same route.
+  int _spaceEpoch = 0;
 
   StatementImportPickedFile? _file;
   StatementImportFileType? _fileType;
@@ -140,16 +143,56 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant StatementImportScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spaceId == widget.spaceId &&
+        identical(oldWidget.repository, widget.repository)) {
+      return;
+    }
+    ++_spaceEpoch;
+    // Flutter may reuse the same keyed route when switching spaces. Never
+    // show A's queued rows, source account IDs, mapping or pending results in
+    // B's route, even while B's bootstrap is still loading.
+    _step = _ImportStep.file;
+    _loading = false;
+    _bootstrapping = true;
+    _error = null;
+    _file = null;
+    _fileType = null;
+    _csv = null;
+    _mapping = null;
+    _cardSignChoice = null;
+    _sourceKind = StatementImportSourceKind.account;
+    _sourceId = null;
+    _sourceInstitution = null;
+    _batchId = null;
+    _rows = const <StatementImportRow>[];
+    _result = null;
+    _paymentAccounts = const <AccountItem>[];
+    _benefitAccounts = const <AccountItem>[];
+    _cards = const <CreditCardItem>[];
+    _expenseCategories = const <CategoryItem>[];
+    _incomeCategories = const <CategoryItem>[];
+    _invoices = const <StatementImportInvoiceOption>[];
+    _reviewFilter = _ReviewFilter.all;
+    _bulkCategoryId = null;
+    _search.clear();
+    _loadBootstrap();
+  }
+
+  @override
   void dispose() {
+    ++_spaceEpoch;
     _search.dispose();
     super.dispose();
   }
 
   Future<void> _loadBootstrap() async {
+    final epoch = _spaceEpoch;
     try {
       final override = widget.bootstrapOverride;
       final data = override != null ? await override() : await _defaultBootstrap();
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() {
         _paymentAccounts = data.paymentAccounts;
         _benefitAccounts = data.benefitAccounts;
@@ -160,7 +203,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         _bootstrapping = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() {
         _bootstrapping = false;
         _error = 'não consegui carregar contas, cartões e categorias';
@@ -188,7 +231,8 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   Future<void> _pickFile() async {
-    if (_loading) return;
+    if (_loading || _bootstrapping) return;
+    final epoch = _spaceEpoch;
     setState(() { _loading = true; _error = null; });
     try {
       final override = widget.pickOverride;
@@ -211,7 +255,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
           picked = StatementImportPickedFile(name: platformFile.name, bytes: bytes);
         }
       }
-      if (picked == null) return;
+      if (picked == null || !mounted || epoch != _spaceEpoch) return;
       if (picked.bytes.length > statementImportMaxBytes) {
         throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
       }
@@ -222,7 +266,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       final type = extension == 'ofx' ? StatementImportFileType.ofx : StatementImportFileType.csv;
       CsvImportDocument? csv;
       if (type == StatementImportFileType.csv) csv = parseCsvImport(picked.bytes);
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() {
         _file = picked;
         _fileType = type;
@@ -234,9 +278,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         _step = _ImportStep.destination;
       });
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -342,7 +390,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     List<StatementImportCandidate> candidates, {
     required Map<String, dynamic> configuration,
   }) async {
-    if (_loading || _file == null || _sourceId == null || _fileType == null) return;
+    if (_loading || _bootstrapping || _file == null ||
+        _sourceId == null || _fileType == null ||
+        !_sourceOptions.any((option) => _sourceIdOf(option) == _sourceId)) {
+      return;
+    }
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
     setState(() { _loading = true; _error = null; });
     try {
       final sourceAccountId = _sourceKind == StatementImportSourceKind.card ? null : _sourceId;
@@ -357,20 +411,25 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
               configuration: configuration, candidates: candidates,
             )
           : await widget.repository.stageStatementImport(
-              spaceId: widget.spaceId, filename: _file!.name,
+              spaceId: selectedSpaceId, filename: _file!.name,
               fileType: _fileType!, sourceKind: _sourceKind,
               sourceAccountId: sourceAccountId, sourceCardId: sourceCardId,
               sourceInstitution: _sourceInstitution,
               fileFingerprint: statementFileFingerprint(_file!.bytes),
               configuration: configuration, candidates: candidates,
             );
+      if (!mounted || epoch != _spaceEpoch) return;
       final rows = await _loadRows(batchId);
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() { _batchId = batchId; _rows = rows; _step = _ImportStep.review; });
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -387,21 +446,26 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   Future<void> _openCategoryManagement(String kind) async {
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CategoryManagementScreen(
           repository: widget.repository,
-          spaceId: widget.spaceId,
+          spaceId: selectedSpaceId,
           initialKind: kind,
           returnCreated: true,
         ),
       ),
     );
+    if (epoch != _spaceEpoch || !mounted) return;
     if (widget.bootstrapOverride == null) {
       try {
-        final expense = await widget.repository.listExpenseCategoryCatalog(widget.spaceId);
-        final income = await widget.repository.listIncomeCategoryCatalog(widget.spaceId);
-        if (mounted) setState(() { _expenseCategories = expense; _incomeCategories = income; });
+        final expense = await widget.repository.listExpenseCategoryCatalog(selectedSpaceId);
+        final income = await widget.repository.listIncomeCategoryCatalog(selectedSpaceId);
+        if (mounted && epoch == _spaceEpoch) {
+          setState(() { _expenseCategories = expense; _incomeCategories = income; });
+        }
       } catch (_) {}
     }
   }
@@ -423,10 +487,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   Future<void> _confirmImport() async {
-    if (_loading || _batchId == null) return;
+    if (_loading || _bootstrapping || _batchId == null) return;
     final invalid = _rows.where((row) => _validationError(row) != null).toList();
     if (invalid.isNotEmpty) {
-      setState(() { _reviewFilter = _ReviewFilter.pending; _error = '${invalid.length} item(ns) selecionado(s) ainda precisam de revisão'; });
+      setState(() {
+        _reviewFilter = _ReviewFilter.pending;
+        _error = '${invalid.length} item(ns) selecionado(s) ainda precisam de revisão';
+      });
       return;
     }
     final included = _rows.where((row) => row.selected).toList();
@@ -434,33 +501,62 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       setState(() => _error = 'selecione pelo menos um lançamento para importar');
       return;
     }
+
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
+    final selectedRepository = widget.repository;
+    final batchId = _batchId!;
+    final selectedRows = List<StatementImportRow>.of(_rows, growable: false);
     setState(() { _loading = true; _error = null; });
     try {
       final update = widget.updateOverride;
       if (update != null) {
-        await update(_batchId!, _rows);
+        await update(batchId, selectedRows);
       } else {
-        await widget.repository.updateStatementImportRows(spaceId: widget.spaceId, batchId: _batchId!, rows: _rows);
+        await selectedRepository.updateStatementImportRows(
+          spaceId: selectedSpaceId, batchId: batchId, rows: selectedRows,
+        );
       }
+      // A changed financial space must never confirm a stale batch using
+      // the newly mounted route's repository or user permissions.
+      if (!mounted || epoch != _spaceEpoch) return;
       final confirm = widget.confirmOverride;
       final result = confirm != null
-          ? await confirm(_batchId!)
-          : await widget.repository.confirmStatementImport(spaceId: widget.spaceId, batchId: _batchId!);
-      final refreshed = await _loadRows(_batchId!);
-      if (!mounted) return;
-      setState(() { _result = result; _rows = refreshed; _step = _ImportStep.result; });
+          ? await confirm(batchId)
+          : await selectedRepository.confirmStatementImport(
+              spaceId: selectedSpaceId, batchId: batchId,
+            );
+      if (!mounted || epoch != _spaceEpoch) return;
+      final refreshed = await _loadRows(batchId);
+      if (!mounted || epoch != _spaceEpoch) return;
+      setState(() {
+        _result = result;
+        _rows = refreshed;
+        _step = _ImportStep.result;
+      });
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _loading = false);
+      }
     }
   }
 
   Future<void> _cancelImport() async {
+    final epoch = _spaceEpoch;
+    final selectedSpaceId = widget.spaceId;
+    final selectedRepository = widget.repository;
     final batchId = _batchId;
-    if (batchId == null) { Navigator.of(context).pop(false); return; }
+    if (batchId == null) {
+      Navigator.of(context).pop(false);
+      return;
+    }
     if (_rows.any((row) => row.status == StatementImportRowStatus.imported)) {
-      setState(() => _error = 'parte deste lote já virou histórico financeiro e não pode ser apagada em massa');
+      setState(() => _error =
+          'parte deste lote já virou histórico financeiro e não pode ser apagada em massa');
       return;
     }
     try {
@@ -468,11 +564,17 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       if (cancel != null) {
         await cancel(batchId);
       } else {
-        await widget.repository.cancelStatementImport(spaceId: widget.spaceId, batchId: batchId);
+        await selectedRepository.cancelStatementImport(
+          spaceId: selectedSpaceId, batchId: batchId,
+        );
       }
-      if (mounted) Navigator.of(context).pop(false);
+      if (mounted && epoch == _spaceEpoch) {
+        Navigator.of(context).pop(false);
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     }
   }
 
