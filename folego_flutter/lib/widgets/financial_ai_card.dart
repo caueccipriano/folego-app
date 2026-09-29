@@ -29,16 +29,19 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     setState(() { _busy = true; _answer = null; _isError = false; });
     try {
       final month = DateTime.now();
-      final report = await widget.service.monthly(spaceId: widget.spaceId, month: month);
+      // Only current totals are needed; an unavailable previous month cannot block the question.
+      final summary = await widget.service.repository.getMonthlyMoneySummary(
+        spaceId: widget.spaceId, periodMonth: DateTime(month.year, month.month),
+      );
       final result = await Supabase.instance.client.functions.invoke(
         'financial-ai',
         body: {
           'question': question,
           'context': {
             'month': '${month.year}-${month.month.toString().padLeft(2, '0')}',
-            'income': report.income,
-            'expenses': report.expenses,
-            'result': report.result,
+            'income': summary.realIncome,
+            'expenses': summary.competenceExpenses,
+            'result': summary.economicResult,
           },
         },
       );
