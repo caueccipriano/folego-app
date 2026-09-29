@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -16,7 +17,12 @@ class PanoramaMonthComparison extends StatelessWidget {
   final PanoramaClosedMonthTrend? trend;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+        valueListenable: FinancialPrivacy.hidden,
+        builder: (context, _, __) => _buildCard(context),
+      );
+
+  Widget _buildCard(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final color = AppColors.primaryText(brightness);
     final muted = AppColors.secondaryText(brightness);
