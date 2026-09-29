@@ -19,7 +19,7 @@ class PanoramaMonthComparison extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<bool>(
         valueListenable: FinancialPrivacy.hidden,
-        builder: (context, _, __) => _buildCard(context),
+        builder: (context, _, _) => _buildCard(context),
       );
 
   Widget _buildCard(BuildContext context) {
