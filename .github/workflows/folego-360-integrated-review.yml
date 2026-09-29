@@ -28,9 +28,11 @@ jobs:
           node-version: '22'
       - name: No secrets, no network — deterministic source/safety checks
         run: |
+          node --check folego_flutter/web/folego_push_bridge.js
           node --test \
             qa/tests/integrated-folego-360-release.test.mjs \
-            qa/staging/staging-guard.test.mjs
+            qa/staging/staging-guard.test.mjs \
+            folego_flutter/web/tests/folego_push_recovery_bridge.test.cjs
       - name: Declare exact coverage
         run: |
           {
@@ -64,4 +66,100 @@ jobs:
             echo 'All local Flutter tests ran against code and synthetic data.'
             echo 'This job cannot replace manual isolated staging,'
             echo 'physical installed iOS/Android or store sandbox QA.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  disposable-push-database:
+    name: Full server/owner session migration on disposable PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_integrated_ci_only
+          POSTGRES_DB: folego_integrated_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: disposable_integrated_ci_only
+      PGDATABASE: folego_integrated_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject any nonlocal or non-fixture database
+        run: |
+          test "$PGHOST" = '127.0.0.1'
+          test "$PGDATABASE" = 'folego_integrated_ci'
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Run both actual Push migrations on synthetic revoked A/B sessions
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/verified_push_session_fixture.sql \
+            -f supabase/tests/verified_push_session_before_fix.sql \
+            -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
+            -f supabase/tests/verified_push_session_acceptance.sql \
+            -f supabase/migrations/20260929103000_owner_scoped_push_recovery_status.sql \
+            -f supabase/tests/owner_scoped_push_recovery_acceptance.sql
+
+  edge-synthetic-security:
+    name: Edge fail-closed per-send session checks and Deno type validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Verify expired/revoked sessions fail closed
+        run: deno test supabase/functions/_shared/verified_push_subscriptions_test.ts
+      - name: Validate actual financial Push and daily summary dispatchers
+        run: |
+          deno check \
+            supabase/functions/folego-push-dispatch/index.ts \
+            supabase/functions/folego-daily-summary/index.ts
+          grep -q 'loadVerifiedPushSubscriptions' supabase/functions/folego-push-dispatch/index.ts
+          grep -q 'isPushSubscriptionStillActive' supabase/functions/folego-push-dispatch/index.ts
+          grep -q 'loadVerifiedPushSubscriptions' supabase/functions/folego-daily-summary/index.ts
+          grep -q 'isPushSubscriptionStillActive' supabase/functions/folego-daily-summary/index.ts
+
+  iphone-webkit-synthetic:
+    name: Installed-PWA gesture simulation in Linux WebKit
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    env:
+      QA_BASE_URL: 'http://127.0.0.1:4173/'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install standalone synthetic WebKit runner
+        working-directory: qa
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps webkit
+      - name: Verify touch-triggered consent and re-enrollment in WebKit
+        working-directory: qa
+        run: |
+          npx playwright test tests/ios-push-gesture.spec.ts \
+            --project=iphone-15-pro \
+            --project=iphone-compact
+      - name: Report that real native Apple Push remains unverified
+        if: always()
+        run: |
+          {
+            echo 'Linux WebKit simulated an installed iPhone PWA with'
+            echo 'fictional browser Push and Notification APIs.'
+            echo 'This is NOT actual physical iPhone/APNs delivery testing.'
           } >> "$GITHUB_STEP_SUMMARY"
