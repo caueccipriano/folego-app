@@ -117,12 +117,72 @@ void main() {
     expect(rows[1].finalType, isNull);
   });
 
+  test('direct parser API refuses unselected signed credit-card CSV', () {
+    final doc = _fictional(
+      'Data;Descrição;Valor\n'
+      '28/09/2026;COMPRA FICTÍCIA;35,90\n',
+    );
+    final mapping = doc.suggestedMapping.copyWith(
+      dateFormat: CsvDateFormat.dmy,
+      decimalFormat: CsvDecimalFormat.brazilian,
+    );
+    expect(mapping.cardSignConvention, CsvCardSignConvention.unselected);
+    expect(
+      () => doc.buildCandidates(
+        sourceKind: StatementImportSourceKind.card,
+        mapping: mapping,
+      ),
+      throwsA(isA<StatementImportParseException>()),
+    );
+    // An independent caller cannot make a signed-card purchase look like
+    // a refund merely because the Flutter widget was bypassed.
+    final explicit = doc.buildCandidates(
+      sourceKind: StatementImportSourceKind.card,
+      mapping: mapping.copyWith(cardSignConvention: positiveConvention),
+    );
+    expect(explicit.single.direction, StatementImportDirection.debit);
+    expect(explicit.single.finalType, StatementImportFinalType.cardPurchase);
+  });
+
+  test('unselected sign never blocks split-card debit/credit or bank source',
+      () {
+    final split = _fictional(
+      'Data;Descrição;Débito;Crédito\n'
+      '28/09/2026;COMPRA FICTÍCIA;35,90;\n',
+    );
+    expect(split.suggestedMapping.cardSignConvention,
+        CsvCardSignConvention.unselected);
+    final card = split.buildCandidates(
+      sourceKind: StatementImportSourceKind.card,
+      mapping: split.suggestedMapping.copyWith(
+        dateFormat: CsvDateFormat.dmy,
+        decimalFormat: CsvDecimalFormat.brazilian,
+      ),
+    );
+    expect(card.single.finalType, StatementImportFinalType.cardPurchase);
+
+    final account = _fictional(
+      'Data;Descrição;Valor\n'
+      '28/09/2026;DESPESA FICTÍCIA;-35,90\n',
+    );
+    final rows = account.buildCandidates(
+      sourceKind: StatementImportSourceKind.account,
+      mapping: account.suggestedMapping.copyWith(
+        dateFormat: CsvDateFormat.dmy,
+        decimalFormat: CsvDecimalFormat.brazilian,
+      ),
+    );
+    expect(rows.single.direction, StatementImportDirection.debit);
+    expect(rows.single.finalType, StatementImportFinalType.expense);
+  });
+
   test('mapping persists audited signed-card interpretation in stage config', () {
     final doc = _fictional(
       'Data;Descrição;Valor\n'
       '28/09/2026;COMPRA FICTÍCIA;35,90\n',
     );
-    expect(doc.suggestedMapping.cardSignConvention, negativeConvention);
+    expect(doc.suggestedMapping.cardSignConvention,
+        CsvCardSignConvention.unselected);
     final chosen = doc.suggestedMapping.copyWith(
       cardSignConvention: positiveConvention,
     );
