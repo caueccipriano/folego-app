@@ -1,0 +1,62 @@
+name: Folego 360 closed-month trends
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/test/panorama_month_*'
+      - 'folego_flutter/test/panorama_360_*'
+      - 'docs/FOLEGO_360_PRODUCT_BLUEPRINT.md'
+      - '.github/workflows/panorama-closed-month-trends.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  comparable-economic-months:
+    name: Two complete months, cash-vs-expense and masked widget tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Verify Dart and full-app static analysis
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_month_trend.dart \
+            lib/features/panorama/panorama_month_comparison.dart \
+            lib/features/panorama/panorama_360_data.dart \
+            lib/features/panorama/panorama_360_screen.dart \
+            test/panorama_month_trend_test.dart \
+            test/panorama_month_comparison_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart
+          flutter analyze --no-pub
+      - name: Canonical economic comparison and all-user regression suite
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_month_trend_test.dart \
+            test/panorama_month_comparison_test.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/monthly_money_summary_test.dart \
+            test/flexible_budget_model_test.dart \
+            test/financial_goal_test.dart \
+            test/wallet_benefit_separation_test.dart
+      - name: Report actual verification boundaries
+        run: |
+          {
+            echo 'Historical comparison is a read-only overlay on canonical'
+            echo 'economic monthly summaries, for two CLOSED months only.'
+            echo 'Synthetic automated tests are not authenticated staging'
+            echo 'or real customer-data reconciliation. No live deploy performed.'
+          } >> "$GITHUB_STEP_SUMMARY"

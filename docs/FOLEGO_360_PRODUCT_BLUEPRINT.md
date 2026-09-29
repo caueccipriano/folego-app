@@ -38,6 +38,32 @@ A new **Panorama 360** screen, accessible from Home as its own clearly labeled c
 
 This slice intentionally requires no SQL migration, new customer data, bank access, browser instrumentation, notifications, third-party APIs or Premium charge. Backend/Flutter UI integration must pass static analysis + synthetic widget/unit testing before review. No direct connected Dev writes or deployment.
 
+## Second microdelivery: comparable historical months (draft, not deployed)
+
+This follow-up adds a read-only monthly comparison beneath the current-month
+economic summary. It uses the same canonical `get_monthly_money_summary` RPC
+**for the last TWO COMPLETED months** (e.g., in September compare July and
+August, not incomplete September against complete August). Backend failures
+and missing comparison periods remain **unavailable** rather than fabricated
+zeroes. Verified months with no recorded movements receive a distinct
+recorded-empty state; the UI never assumes all external bank activity has
+been imported.
+
+Metrics are the canonical `realIncome`, `competenceExpenses`, and
+`economicResult` already used by the main dashboard. A card payment,
+same-owner transfer or reserve movement cannot be added again as a new
+expense. An absolute expense difference is informational, NOT an assessment
+that the user spent irresponsibly and not a percentage when the baseline
+month has no entries. Historical amounts listen to the global Fôlego
+privacy-mask toggle and immediately hide when it changes.
+
+This optional history fetch is financial-space scoped and read-only,
+parallel to other queries. A missing historical response never suppresses
+already verified current-month balances, budgets or goals. No banking
+connector, client-side reclassification, new DB table, cron job or paywall
+is introduced. Authentication/RLS and physical-device release gates from
+the first slice remain mandatory.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.
