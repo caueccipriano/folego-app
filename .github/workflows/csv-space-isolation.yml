@@ -1,0 +1,52 @@
+name: CSV import financial-space lifecycle isolation
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/transactions/statement_import_screen.dart'
+      - 'folego_flutter/test/csv_space_switch_privacy_test.dart'
+      - '.github/workflows/csv-space-isolation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-cross-space-stale-state:
+    name: Discard prior user/household async CSV state
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze security guard and entire app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/transactions/statement_import_screen.dart \
+            test/csv_space_switch_privacy_test.dart
+          flutter analyze --no-pub
+      - name: Test stale A bootstrap/picker and existing import/card regressions
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/csv_space_switch_privacy_test.dart \
+            test/csv_ambiguous_date_widget_test.dart \
+            test/csv_card_sign_ui_test.dart \
+            test/statement_import_ui_test.dart \
+            test/statement_import_contract_test.dart \
+            test/statement_import_qa_synthetic_test.dart
+      - name: Describe independent staging limitation
+        run: |
+          {
+            echo 'These are synthetic widget/source lifecycle regression tests.'
+            echo 'True signed JWT all-user A/B RLS staging, real device'
+            echo 'notification/session revocation and payment sandbox'
+            echo 'remain required before releasing the app.'
+          } >> "$GITHUB_STEP_SUMMARY"
