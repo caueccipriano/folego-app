@@ -6,6 +6,8 @@ import '../core/intelligence/budget_pace.dart';
 import '../core/intelligence/financial_radar.dart';
 import '../core/intelligence/cash_runway_preparation.dart';
 import 'runway_what_if_card.dart';
+import 'folego_home_section_card.dart';
+import '../core/theme/app_colors.dart';
 import '../data/models/budget_overview_item.dart';
 
 class WeeklyInsightsCard extends StatefulWidget {
@@ -27,7 +29,10 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
   @override
   void didUpdateWidget(covariant WeeklyInsightsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.spaceId != widget.spaceId) _load();
+    if (oldWidget.spaceId != widget.spaceId ||
+        !identical(oldWidget.service.repository, widget.service.repository)) {
+      _load();
+    }
   }
   void _load() {
     final now = DateTime.now();
@@ -43,7 +48,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
     builder: (context, snapshot) {
       final en = Localizations.localeOf(context).languageCode == 'en';
       if (!snapshot.hasData) {
-        return Card(child: ListTile(
+        return FolegoHomeSectionCard(child: ListTile(
           title: Text(snapshot.hasError
               ? (en ? 'Insights unavailable' : 'Insights indisponíveis')
               : (en ? 'Preparing your insights…' : 'Preparando seus insights…')),
@@ -86,15 +91,15 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
             ? 'There are no expenses in the comparable period last week. Keep logging transactions for better insights.'
             : 'Não há despesas no período equivalente da semana passada. Continue registrando lançamentos para melhorar os insights.');
       }
-      return Card(
-        clipBehavior: Clip.antiAlias,
+      return FolegoHomeSectionCard(
         child: ExpansionTile(
           key: ValueKey('weekly-insights-${widget.spaceId}'),
           initiallyExpanded: false,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          title: Text(en ? 'Your money this week' : 'Seu dinheiro nesta semana',
-              style: Theme.of(context).textTheme.titleMedium),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          title: FolegoHomeSectionTitle(en ? 'Your money this week' : 'Seu dinheiro nesta semana'),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Wrap(spacing: 16, runSpacing: 8, children: [
@@ -103,17 +108,29 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
             ]),
           ),
           children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              tooltip: en ? 'Refresh insights' : 'Atualizar insights',
-              icon: const Icon(Icons.refresh),
-              onPressed: () => setState(_load),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(en ? 'Monday through today · same weekdays last week'
+                    : 'De segunda até hoje · mesmos dias da semana passada',
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
+              IconButton(
+                tooltip: en ? 'Refresh insights' : 'Atualizar insights',
+                icon: Icon(Icons.refresh, size: 20,
+                    color: AppColors.primaryPurple(Theme.of(context).brightness)),
+                onPressed: () => setState(_load),
+              ),
+            ],
           ),
-          Text(en ? 'Monday through today · compared with the same days last week'
-              : 'De segunda até agora · comparação com os mesmos dias da semana passada',
-              style: Theme.of(context).textTheme.bodySmall),
+          if (report.weekIncome == 0 && report.weekExpenses == 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(en
+                  ? 'No income or spending recorded so far this week.'
+                  : 'Nenhuma receita ou despesa registrada nesta semana até agora.',
+                  style: Theme.of(context).textTheme.bodySmall),
+            ),
           const SizedBox(height: 12),
           Text(en ? 'Last week (same days): ${money.format(report.previousWeekExpenses)}'
               : 'Semana passada (mesmos dias): ${money.format(report.previousWeekExpenses)}'),
@@ -121,7 +138,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
           Text(en ? 'This month so far' : 'Seu mês até agora',
               style: Theme.of(context).textTheme.titleSmall),
           Text(money.format(report.monthExpenses),
-              style: Theme.of(context).textTheme.titleLarge),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           Text(report.previousMonthComparable
               ? (en
                   ? 'Previous month, same period: ${money.format(report.previousMonthExpenses)}'
@@ -132,7 +149,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
               style: Theme.of(context).textTheme.bodySmall),
           const Divider(height: 26),
           Text(en ? 'Insights and next steps' : 'Insights e próximos passos',
-              style: Theme.of(context).textTheme.titleSmall),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           for (final tip in tips.take(2))
             Padding(
@@ -157,13 +174,17 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(en ? 'Repeated purchases to review' : 'Compras repetidas para revisar',
-                        style: Theme.of(context).textTheme.titleSmall),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     for (final item in repeated)
                       ListTile(
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        minLeadingWidth: 26,
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.repeat),
-                        title: Text(item.description),
+                        leading: const Icon(Icons.repeat, size: 20),
+                        title: Text(item.description,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                         subtitle: Text(en
                             ? '${item.occurrences} purchases this month · ${money.format(item.total)}'
                             : '${item.occurrences} compras neste mês · ${money.format(item.total)}'),
@@ -220,7 +241,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(en ? 'Your flexible budget' : 'Seu orçamento flexível',
-                        style: Theme.of(context).textTheme.titleSmall),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 6),
                     LinearProgressIndicator(
                       value: budget.usageRatio.clamp(0.0, 1.0),
@@ -242,7 +263,7 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                     if (pace.canEstimate) ...[
                       const SizedBox(height: 10),
                       Text(en ? 'At your current pace' : 'No seu ritmo atual',
-                          style: Theme.of(context).textTheme.titleSmall),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       Text(en
                           ? 'Estimated month-end flexible spending: ${money.format(pace.projectedMonthSpending)}'
                           : 'Estimativa de gastos flexíveis até o fim do mês: ${money.format(pace.projectedMonthSpending)}'),
@@ -389,18 +410,30 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Divider(height: 26),
-                  Text(en ? 'Upcoming months radar' : 'Radar dos próximos meses',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 4),
+                  FolegoHomeSectionTitle(en ? 'Upcoming months radar' : 'Radar dos próximos meses', size: 13),
+                  const SizedBox(height: 8),
                   for (final month in radar.months.take(3))
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      title: Text(monthFormat.format(month.month)),
-                      subtitle: Text(en
-                          ? 'Projected month-end balance'
-                          : 'Saldo projetado ao fim do mês'),
-                      trailing: Text(money.format(month.closingProjected)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(monthFormat.format(month.month),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600)),
+                              Text(en ? 'Projected month-end balance' : 'Saldo ao fim do mês',
+                                style: Theme.of(context).textTheme.bodySmall),
+                            ],
+                          )),
+                          const SizedBox(width: 8),
+                          Text(money.format(month.closingProjected),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700)),
+                        ],
+                      ),
                     ),
                   if (radar.firstNegativeMonth != null)
                     Text(en
@@ -433,7 +466,8 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: Theme.of(context).textTheme.bodySmall),
-      Text(value, style: Theme.of(context).textTheme.titleMedium),
+      Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()])),
     ],
   );
 }

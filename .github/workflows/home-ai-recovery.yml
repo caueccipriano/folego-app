@@ -1,0 +1,50 @@
+name: Folego home polish and AI diagnostics QA
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/widgets/**'
+      - 'folego_flutter/lib/features/home/home_screen_base.dart'
+      - 'folego_flutter/lib/core/intelligence/financial_report_builder.dart'
+      - 'folego_flutter/test/monthly_insights_home_polish_test.dart'
+      - 'folego_flutter/test/local_monthly_summary_test.dart'
+      - 'folego_flutter/test/local_monthly_answers_test.dart'
+      - 'folego_flutter/test/personal_unlimited_analysis_test.dart'
+      - 'folego_flutter/test/financial_report_builder_test.dart'
+      - 'supabase/functions/financial-ai/**'
+      - '.github/workflows/home-ai-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-home:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze all Flutter code
+        working-directory: folego_flutter
+        run: flutter analyze --no-pub
+      - name: Run new mobile visual and locale regression
+        working-directory: folego_flutter
+        run: |
+          flutter test             test/monthly_insights_home_polish_test.dart             test/financial_report_builder_test.dart             test/financial_intelligence_test.dart             test/home_financial_copy_test.dart test/local_monthly_summary_test.dart test/financial_ai_card_privacy_test.dart test/local_monthly_answers_test.dart test/personal_unlimited_analysis_test.dart
+  edge-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validate Edge Function TypeScript
+        run: |
+          deno check supabase/functions/financial-ai/index.ts
+          deno test supabase/functions/financial-ai/provider_error_test.ts

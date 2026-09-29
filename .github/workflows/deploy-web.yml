@@ -5,6 +5,7 @@ on:
     branches:
       - feat/transactions-recurring
       - feat/financial-intelligence-20260926
+      - fix/ai-cors-home-polish-20260929
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/deploy-web.yml'

@@ -3,9 +3,10 @@ import 'package:intl/intl.dart';
 import '../core/intelligence/purchase_scenario_service.dart';
 
 class PurchaseSimulatorCard extends StatefulWidget {
-  const PurchaseSimulatorCard({super.key, required this.service, required this.spaceId});
+  const PurchaseSimulatorCard({super.key, required this.service, required this.spaceId, this.embedded = false});
   final PurchaseScenarioService service;
   final String spaceId;
+  final bool embedded;
   @override
   State<PurchaseSimulatorCard> createState() => _PurchaseSimulatorCardState();
 }
@@ -70,12 +71,14 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
   Widget build(BuildContext context) {
     final english = _english;
     final risk = _hasResult && _firstNegativeMonth != null;
-    return Card(child: Padding(
-      padding: const EdgeInsets.all(16),
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(widget.embedded ? 20 : 16, 16, widget.embedded ? 20 : 16, 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(english ? 'What if I buy it?' : 'E se eu comprar?',
-            style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
+        if (!widget.embedded) ...[
+          Text(english ? 'What if I buy it?' : 'E se eu comprar?',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+        ],
         Text(english
             ? 'Estimate the impact without recording a transaction.'
             : 'Veja o impacto estimado sem registrar nenhum gasto.'),
@@ -113,7 +116,7 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
           const SizedBox(height: 18),
           const Divider(),
           Text(english ? 'Your estimated result' : 'Resultado estimado',
-              style: Theme.of(context).textTheme.titleMedium),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           _ResultMetric(
             label: english ? 'Estimated installment' : 'Parcela estimada',
@@ -160,7 +163,8 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
           ),
         ],
       ]),
-    ));
+    );
+    return widget.embedded ? content : Card(child: content);
   }
 }
 

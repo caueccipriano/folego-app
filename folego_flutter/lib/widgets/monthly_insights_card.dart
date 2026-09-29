@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/intelligence/financial_report_builder.dart';
 import '../core/intelligence/financial_insights_service.dart';
+import 'folego_home_section_card.dart';
 
 /// Resumo compacto na Home: explicações ficam disponíveis sob demanda.
 class MonthlyInsightsCard extends StatefulWidget {
@@ -20,6 +21,7 @@ class MonthlyInsightsCard extends StatefulWidget {
 
 class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
   late Future<MonthlyIntelligenceReport> _report;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -31,8 +33,10 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
   void didUpdateWidget(covariant MonthlyInsightsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId ||
+        !identical(oldWidget.service.repository, widget.service.repository) ||
         oldWidget.month.year != widget.month.year ||
         oldWidget.month.month != widget.month.month) {
+      _expanded = false;
       _load();
     }
   }
@@ -50,7 +54,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
       future: _report,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Card(
+          return const FolegoHomeSectionCard(
             child: ListTile(
               leading: SizedBox.square(
                 dimension: 20,
@@ -61,7 +65,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
           );
         }
         if (snapshot.hasError || !snapshot.hasData) {
-          return Card(
+          return FolegoHomeSectionCard(
             child: ListTile(
               title: const Text('Análise indisponível'),
               subtitle: const Text('Seus lançamentos não foram alterados.'),
@@ -76,26 +80,24 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
 
         final insights = snapshot.data!.insights.toList();
         if (insights.isEmpty) {
-          return const Card(
+          return const FolegoHomeSectionCard(
             child: ListTile(
-              title: Text('Seu mês em perspectiva'),
+              title: FolegoHomeSectionTitle('Seu mês em perspectiva'),
               subtitle: Text('Sem observações novas por enquanto.'),
             ),
           );
         }
-        return Card(
-          clipBehavior: Clip.antiAlias,
+        return FolegoHomeSectionCard(
           child: ExpansionTile(
             key: ValueKey('monthly-insights-${widget.spaceId}-${widget.month.year}-${widget.month.month}'),
             initiallyExpanded: false,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-            title: Text(
-              'Seu mês em perspectiva',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8),
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+            shape: const Border(),
+            collapsedShape: const Border(),
+            childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+            title: const FolegoHomeSectionTitle('Seu mês em perspectiva'),
+            subtitle: _expanded ? null : Padding(
+              padding: const EdgeInsets.only(top: 6),
               child: Text(
                 insights.first.title,
                 maxLines: 1,
@@ -103,7 +105,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
-            trailing: const Icon(Icons.expand_more),
+            onExpansionChanged: (expanded) => setState(() => _expanded = expanded),
             children: [
               for (final insight in insights)
                 Padding(
@@ -112,7 +114,7 @@ class _MonthlyInsightsCardState extends State<MonthlyInsightsCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(insight.title,
-                          style: Theme.of(context).textTheme.titleSmall),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text(insight.description,
                           style: Theme.of(context).textTheme.bodyMedium),

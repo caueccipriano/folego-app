@@ -1,11 +1,20 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { classifyProviderFailure } from './provider_error.ts';
 
-const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+// Flutter web sends a browser preflight before the authenticated POST.
+const headers = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-store',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 function respond(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers });
 }
 
 Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (request.method !== 'POST') return respond(405, 'Método não permitido.');
   const jwt = request.headers.get('Authorization')?.replace(/^Bearer /i, '');
   if (!jwt) return respond(401, 'Entre na sua conta.');
@@ -59,15 +68,39 @@ Deno.serve(async (request) => {
         }),
       });
     } finally { clearTimeout(timeout); }
-    if (!upstream.ok) return respond(502, 'IA indisponível no momento. Sua pergunta não será descontada.');
+    if (!upstream.ok) {
+      // Parse provider payload only to obtain coarse known identifiers. Do not
+      // emit the raw response or any of the user's financial context to logs.
+      let providerCode: unknown = null;
+      let providerType: unknown = null;
+      try {
+        const failure = await upstream.json();
+        providerCode = failure?.error?.code;
+        providerType = failure?.error?.type;
+      } catch { /* Non-JSON upstream error: classify by HTTP status. */ }
+      const classification = classifyProviderFailure(
+        upstream.status, providerCode, providerType,
+      );
+      console.warn('financial-ai provider_failure', {
+        status: upstream.status, reason: classification.kind,
+      });
+      return respond(classification.status, classification.message);
+    }
     const data = await upstream.json();
     const answer = (data.output ?? []).flatMap((item: { content?: { type?: string; text?: string }[] }) => item.content ?? [])
       .filter((part: { type?: string }) => part.type === 'output_text')
       .map((part: { text?: string }) => part.text ?? '').join('\n').trim();
-    if (!answer) return respond(502, 'A IA não retornou uma resposta.');
+    if (!answer) { console.warn('financial-ai empty_provider_output'); return respond(502, 'A IA não retornou uma resposta. Nenhuma pergunta descontada.'); }
     delivered = true;
     return new Response(JSON.stringify({ answer }), { status: 200, headers });
-  } catch { return respond(502, 'IA indisponível no momento. Sua pergunta não será descontada.'); }
+  } catch (error) {
+    // A timeout differs from an HTTP provider rejection; keep both observable
+    // without exposing prompts, secrets or financial data to logs.
+    const reason = error instanceof Error && error.name === 'AbortError'
+      ? 'timeout' : 'request_failed';
+    console.warn('financial-ai transport_failure', { reason });
+    return respond(502, 'A conexão com a IA falhou. Tente novamente; nenhuma pergunta descontada.');
+  }
   finally {
     if (!delivered) {
       const { error: refundError } = await admin.rpc('refund_premium_ai_question', { p_user_id: auth.user.id });
