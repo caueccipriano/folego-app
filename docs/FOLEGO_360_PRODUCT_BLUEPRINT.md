@@ -138,6 +138,41 @@ support requires a separately consented, anonymized actual export
 sample and source-specific tests. No customer file, login, access token
 or financial figure belongs in the repository or CI logs.
 
+## Category explanations microdelivery (draft only)
+
+The next original Fôlego 360 section answers **"which recorded
+categories changed between my last two complete months?"** using the
+existing financial-space-scoped `get_budget_overview` RPC twice with
+explicit prior closed periods, independent of current-month metrics.
+
+- Only exact stable **parent category IDs present in both periods** are
+  compared; child totals must not be added twice. Display the later
+  name if a category was renamed while retaining its stable ID.
+- Rank a maximum of three differences by absolute recorded amount,
+  neutrally identifying whether spending increased or decreased. Never
+  present an increase as inherently bad or a fall as necessarily good.
+- Missing or failed RPCs display *unavailable*; two successful queries
+  with no shared parent categories display *no comparable categories*.
+  Comparable unchanged categories receive a third distinct state.
+- Duplicated/malformed category records and negative/net-refund values
+  are excluded from comparisons instead of generating apparently
+  precise, potentially false explanations. A category missing in one
+  month is **not** assumed to have had zero expenses.
+- Global hide-values masks both currency and change direction instantly
+  in this card. The user is told that the report only includes returned
+  budget-category records and that import or recategorization changes
+  can affect the result. It is **not** a claim that all bank expenditures
+  have been captured.
+- These are two additional **optional read-only scoped** queries with no
+  migrations, server-side scheduler, new bank permissions, LLM calls,
+  charges or account mutations. Failure cannot turn current verified
+  spendable balances or plans into fake zeros.
+
+Keep this draft separate from the outstanding import route lifecycle
+fix in PR #36. Their branch histories have diverged; review/reconcile
+both changes before final integration. Actual independently
+authenticated A/B staging and installed-iPhone QA remain required.
+
 ## What we deliberately do NOT ship as part of the first screen
 
 - Silent bank sync / Open Finance or claims of equivalent institutional partnerships. Banking connectors have per-connected-account cost, provider and Central Bank compliance constraints; evaluate unit economics before offering at low price.
