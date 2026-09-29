@@ -70,8 +70,17 @@ test('financial push is scoped to a verified Auth session before delivery', () =
   );
   const push = source('supabase/functions/folego-push-dispatch/index.ts');
   const digest = source('supabase/functions/folego-daily-summary/index.ts');
+  const helper = source(
+    'supabase/functions/_shared/verified_push_subscriptions.ts',
+  );
   assert.ok(migrations.includes('auth.sessions'));
   assert.ok(migrations.includes('session_id'));
-  assert.ok(push.includes('get_active_web_push_subscriptions'));
-  assert.ok(digest.includes('get_active_web_push_subscriptions'));
+  // Both Edge dispatchers share one server-only RPC wrapper and recheck
+  // each delivery; the raw RPC name lives in that shared helper, not
+  // duplicated inside each dispatcher.
+  assert.ok(helper.includes('get_active_web_push_subscriptions'));
+  for (const dispatcher of [push, digest]) {
+    assert.ok(dispatcher.includes('loadVerifiedPushSubscriptions'));
+    assert.ok(dispatcher.includes('isPushSubscriptionStillActive'));
+  }
 });
