@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/financial_space.dart';
@@ -71,7 +73,12 @@ void main() {
     // This static contract complements the interactive synthetic tap test.
     // The production callback must not accidentally return to Transactions.
     // The independent screen receives the SAME selected authorized space.
-    const expected = 'UpcomingEventsScreen(';
-    expect(expected, isNotEmpty);
+    final source = File(
+      'lib/features/panorama/panorama_360_screen.dart',
+    ).readAsStringSync();
+    expect(source, contains("onAction: _upcoming,"));
+    expect(source, contains("builder: (_) => UpcomingEventsScreen("));
+    expect(source, contains("spaceId: widget.space.id,"));
+    expect(source, contains("onUpcomingRequested"));
   });
 }
