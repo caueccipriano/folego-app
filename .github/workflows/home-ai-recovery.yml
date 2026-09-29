@@ -8,6 +8,8 @@ on:
       - 'folego_flutter/lib/core/intelligence/financial_report_builder.dart'
       - 'folego_flutter/test/monthly_insights_home_polish_test.dart'
       - 'folego_flutter/test/local_monthly_summary_test.dart'
+      - 'folego_flutter/test/local_monthly_answers_test.dart'
+      - 'folego_flutter/test/personal_unlimited_analysis_test.dart'
       - 'folego_flutter/test/financial_report_builder_test.dart'
       - 'supabase/functions/financial-ai/**'
       - '.github/workflows/home-ai-recovery.yml'
@@ -34,7 +36,7 @@ jobs:
       - name: Run new mobile visual and locale regression
         working-directory: folego_flutter
         run: |
-          flutter test             test/monthly_insights_home_polish_test.dart             test/financial_report_builder_test.dart             test/financial_intelligence_test.dart             test/home_financial_copy_test.dart test/local_monthly_summary_test.dart test/financial_ai_card_privacy_test.dart
+          flutter test             test/monthly_insights_home_polish_test.dart             test/financial_report_builder_test.dart             test/financial_intelligence_test.dart             test/home_financial_copy_test.dart test/local_monthly_summary_test.dart test/financial_ai_card_privacy_test.dart test/local_monthly_answers_test.dart test/personal_unlimited_analysis_test.dart
   edge-check:
     runs-on: ubuntu-latest
     steps:
