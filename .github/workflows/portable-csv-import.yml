@@ -1,0 +1,56 @@
+name: Portable CSV import integrity
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/transactions/statement_import_parser.dart'
+      - 'folego_flutter/lib/features/transactions/statement_import_screen.dart'
+      - 'folego_flutter/test/portable_csv_header_mapping_test.dart'
+      - 'folego_flutter/test/statement_import_*'
+      - 'docs/FOLEGO_360_PRODUCT_BLUEPRINT.md'
+      - '.github/workflows/portable-csv-import.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-import:
+    name: No guessed columns, no thousand-fold money mistakes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze parser, import wizard and full app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/transactions/statement_import_parser.dart \
+            lib/features/transactions/statement_import_screen.dart \
+            test/portable_csv_header_mapping_test.dart
+          flutter analyze --no-pub
+      - name: Synthetic CSV and existing importer regression tests
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/portable_csv_header_mapping_test.dart \
+            test/statement_import_parser_test.dart \
+            test/statement_import_qa_synthetic_test.dart \
+            test/statement_import_ui_test.dart
+      - name: Describe verification boundary
+        run: |
+          {
+            echo 'Only fictional CSV fixtures and existing importer regressions.'
+            echo 'No real Organizze or Mobills exports were accessed.'
+            echo 'No customer financial data, staging imports, API writes'
+            echo 'or automatic changes to linked Dev/production occurred.'
+            echo 'An actual third-party format remains unverified until an'
+            echo 'explicitly consented REDACTED sample is supplied and tested.'
+          } >> "$GITHUB_STEP_SUMMARY"
