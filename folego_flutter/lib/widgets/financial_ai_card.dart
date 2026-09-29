@@ -66,6 +66,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     if (question.length < 3 || question.length > 500) {
       setState(() {
         _isError = true;
+        _answerForUserId = widget.service.repository.currentUserId;
+        _answerForSpaceId = widget.spaceId;
         _answer = 'Escreva uma pergunta de 3 a 500 caracteres.';
       });
       return;
@@ -119,9 +121,14 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       final data = result.data;
       if (!current()) return;
       if (result.status != 200 || data is! Map || data['answer'] is! String) {
-        setState(() { _isError = true; _answer = data is Map && data['error'] is String
-            ? data['error'] as String
-            : 'O assistente ainda não está disponível. Tente novamente.'; });
+        setState(() {
+          _isError = true;
+          _answerForUserId = userId;
+          _answerForSpaceId = spaceId;
+          _answer = data is Map && data['error'] is String
+              ? data['error'] as String
+              : 'O assistente ainda não está disponível. Tente novamente.';
+        });
         return;
       }
       setState(() {
@@ -134,6 +141,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       if (current()) {
         setState(() {
           _isError = true;
+          _answerForUserId = userId;
+          _answerForSpaceId = spaceId;
           _answer = details is Map && details['error'] is String
               ? details['error'] as String
               : 'O assistente está indisponível no momento. Tente novamente mais tarde.';
@@ -141,8 +150,12 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       }
     } catch (_) {
       if (current()) {
-        setState(() { _isError = true; _answer =
-            'Não foi possível conectar ao assistente. Tente novamente em instantes.'; });
+        setState(() {
+          _isError = true;
+          _answerForUserId = userId;
+          _answerForSpaceId = spaceId;
+          _answer = 'Não foi possível conectar ao assistente. Tente novamente em instantes.';
+        });
       }
     } finally {
       if (current()) {
@@ -170,6 +183,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       setState(() {
         _isError = true;
         _isLocalAnswer = false;
+        _answerForUserId = widget.service.repository.currentUserId;
+        _answerForSpaceId = widget.spaceId;
         _answer = 'Escreva uma pergunta de 3 a 500 caracteres.';
       });
       return;
@@ -214,6 +229,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       if (current()) {
         setState(() {
           _isError = true;
+          _answerForUserId = userId;
+          _answerForSpaceId = spaceId;
           _answer = 'Não foi possível carregar os totais neste momento. '
               'Confira sua conexão e tente novamente.';
         });
@@ -260,9 +277,11 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     final accent = AppColors.primaryPurple(brightness);
     final border = AppColors.border(brightness);
     final muted = AppColors.secondaryText(brightness);
-    final visibleAnswer = _answerForUserId == null ||
-        (_answerForUserId == widget.service.repository.currentUserId &&
-         _answerForSpaceId == widget.spaceId) ? _answer : null;
+    // Both successful responses AND validation/provider errors are scoped to
+    // the same signed-in user and financial space.
+    final visibleAnswer = _answerForUserId != null &&
+        _answerForUserId == widget.service.repository.currentUserId &&
+        _answerForSpaceId == widget.spaceId ? _answer : null;
     final visibleSummary = _summaryForUserId != null &&
         _summaryForUserId == widget.service.repository.currentUserId &&
         _summaryForSpaceId == widget.spaceId ? _localSummary : null;
