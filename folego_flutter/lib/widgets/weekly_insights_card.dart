@@ -431,7 +431,6 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
                         ],
                       ),
                     ),
-                    ),
                   if (radar.firstNegativeMonth != null)
                     Text(en
                         ? 'Attention: the projection shows a negative balance in ${monthFormat.format(radar.firstNegativeMonth!)}.'
