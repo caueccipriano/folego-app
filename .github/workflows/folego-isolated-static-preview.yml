@@ -1,0 +1,50 @@
+name: Publish isolated Folego PWA preview
+on:
+  push:
+    branches:
+      - fix/ai-cors-home-polish-20260929
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/folego-isolated-static-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-static-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Build current PWA
+        working-directory: folego_flutter
+        run: |
+          flutter pub get
+          flutter analyze --no-pub
+          flutter build web --release --base-href "/"
+      - name: Publish only built static files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          source_sha="${GITHUB_SHA}"
+          mkdir -p /tmp/folego-static-preview
+          cp -a folego_flutter/build/web/. /tmp/folego-static-preview/
+          cat > /tmp/folego-static-preview/vercel.json <<'JSON'
+          {"version":2,"framework":null,"buildCommand":null,"outputDirectory":".","rewrites":[{"source":"/((?!assets/|canvaskit/|icons/|legal/|.*\\.).*)","destination":"/index.html"}]}
+          JSON
+          printf '%s\n' "${source_sha}" > /tmp/folego-static-preview/source-sha.txt
+          cd /tmp/folego-static-preview
+          git init -q
+          git config user.name "folego-preview-bot"
+          git config user.email "folego-preview-bot@users.noreply.github.com"
+          git add .
+          git commit -qm "preview: built PWA from ${source_sha}"
+          git branch -M preview/folego-ai-polish-20260929
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin HEAD:refs/heads/preview/folego-ai-polish-20260929
