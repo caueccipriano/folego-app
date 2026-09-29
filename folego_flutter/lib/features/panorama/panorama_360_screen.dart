@@ -338,7 +338,7 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
           for (final point in trend.months) ...[
             Padding(
               key: ValueKey(
-                'panorama-trend-\${point.periodMonth.year}-\${point.periodMonth.month}',
+                'panorama-trend-${point.periodMonth.year}-${point.periodMonth.month}',
               ),
               padding: const EdgeInsets.symmetric(vertical: 9),
               child: _trendMonth(point, maximum, positive, expense, muted),
@@ -349,7 +349,7 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
             const SizedBox(height: 7),
             Text(
               'despesas em relação ao mês anterior: '
-              '\${Formatters.money(trend.expenseChange)}',
+              '${Formatters.money(trend.expenseChange)}',
               key: const ValueKey('panorama-expense-month-change'),
               style: AppTypography.body(context, fontSize: 12),
             ),
@@ -386,7 +386,7 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
       ]);
     }
     double ratio(double value) =>
-        maximum <= 0 ? 0 : (value / maximum).clamp(0.0, 1.0);
+        maximum <= 0 ? 0.0 : (value / maximum).clamp(0.0, 1.0).toDouble();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -397,7 +397,7 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                 style: AppTypography.section(context, fontSize: 12)),
           ),
           Text(
-            'resultado: \${Formatters.money(summary.economicResult)}',
+            'resultado: ${Formatters.money(summary.economicResult)}',
             style: AppTypography.money(context, fontSize: 11),
           ),
         ]),
