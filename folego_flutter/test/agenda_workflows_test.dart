@@ -127,11 +127,14 @@ void main() {
     // tomorrow by scrolling instead of expecting it above the fold.
     final agendaScroll = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(
-      find.text('amanhã').first,
+      find.byKey(const ValueKey('agenda-section-tomorrow')),
       200,
       scrollable: agendaScroll,
     );
-    expect(find.text('amanhã'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('agenda-section-tomorrow')),
+      findsOneWidget,
+    );
     // Scroll back to the filter chips at the beginning of the agenda.
     await tester.scrollUntilVisible(
       find.text('dívidas'),
