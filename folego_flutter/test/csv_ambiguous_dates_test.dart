@@ -95,6 +95,13 @@ void main() {
       final guessed = document.suggestedMapping.copyWith(
         decimalFormat: CsvDecimalFormat.brazilian,
       );
+      expect(document.hasAmbiguousDateValues(guessed), isTrue);
+      expect(
+        document.hasAmbiguousDateValues(
+          guessed.copyWith(dateFormat: CsvDateFormat.dmy),
+        ),
+        isFalse,
+      );
       expect(
         () => document.buildCandidates(
           mapping: guessed,
