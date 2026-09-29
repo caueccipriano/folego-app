@@ -17,22 +17,59 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
   bool _busy = false;
   String? _answer;
   bool _isError = false;
+  int _requestEpoch = 0;
+
+  // A widget may be reused when the selected household or repository changes.
+  // Never display A's pending financial answer (or start an A request) inside B.
   @override
-  void dispose() { _question.dispose(); super.dispose(); }
+  void didUpdateWidget(covariant FinancialAiCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spaceId != widget.spaceId ||
+        !identical(oldWidget.service.repository, widget.service.repository)) {
+      _requestEpoch++;
+      _question.clear();
+      _answer = null;
+      _isError = false;
+      _busy = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _requestEpoch++;
+    _question.dispose();
+    super.dispose();
+  }
 
   Future<void> _ask() async {
     final question = _question.text.trim();
     if (question.length < 3 || question.length > 500) {
-      setState(() => _answer = 'Escreva uma pergunta de 3 a 500 caracteres.');
+      setState(() {
+        _isError = true;
+        _answer = 'Escreva uma pergunta de 3 a 500 caracteres.';
+      });
       return;
     }
+    final epoch = ++_requestEpoch;
+    final spaceId = widget.spaceId;
+    final repository = widget.service.repository;
+    final userId = repository.currentUserId;
+    bool current() =>
+        mounted &&
+        _requestEpoch == epoch &&
+        widget.spaceId == spaceId &&
+        identical(widget.service.repository, repository) &&
+        repository.currentUserId == userId;
+
     setState(() { _busy = true; _answer = null; _isError = false; });
     try {
       final month = DateTime.now();
       // Only current totals are needed; an unavailable previous month cannot block the question.
-      final summary = await widget.service.repository.getMonthlyMoneySummary(
-        spaceId: widget.spaceId, periodMonth: DateTime(month.year, month.month),
+      final summary = await repository.getMonthlyMoneySummary(
+        spaceId: spaceId, periodMonth: DateTime(month.year, month.month),
       );
+      // A may have signed out or switched spaces while the summary was loading.
+      if (!current()) return;
       final result = await Supabase.instance.client.functions.invoke(
         'financial-ai',
         body: {
@@ -46,7 +83,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         },
       );
       final data = result.data;
-      if (!mounted) return;
+      if (!current()) return;
       if (result.status != 200 || data is! Map || data['answer'] is! String) {
         setState(() { _isError = true; _answer = data is Map && data['error'] is String
             ? data['error'] as String
@@ -56,7 +93,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
       setState(() => _answer = data['answer'] as String);
     } on FunctionException catch (error) {
       final details = error.details;
-      if (mounted) {
+      if (current()) {
         setState(() {
           _isError = true;
           _answer = details is Map && details['error'] is String
@@ -65,12 +102,23 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
         });
       }
     } catch (_) {
-      if (mounted) {
+      if (current()) {
         setState(() { _isError = true; _answer =
             'Não foi possível conectar ao assistente. Tente novamente em instantes.'; });
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (current()) {
+        setState(() => _busy = false);
+      } else if (mounted && _requestEpoch == epoch) {
+        // Same widget, but Auth identity changed: drop every old-user trace.
+        _requestEpoch++;
+        setState(() {
+          _busy = false;
+          _answer = null;
+          _isError = false;
+          _question.clear();
+        });
+      }
     }
   }
 
