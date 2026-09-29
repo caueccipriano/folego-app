@@ -59,6 +59,7 @@ jobs:
             test/csv_card_sign_ui_test.dart \
             test/csv_ambiguous_date_test.dart \
             test/csv_ambiguous_date_ui_test.dart \
+            test/csv_space_switch_privacy_test.dart \
             test/statement_import_contract_test.dart \
             test/statement_import_parser_test.dart \
             test/statement_import_qa_synthetic_test.dart \
