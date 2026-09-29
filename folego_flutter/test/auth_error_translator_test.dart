@@ -23,7 +23,7 @@ void main() {
       final result = ErrorTranslator.forDisplay(
         AuthException('password should be at least 6 characters'),
       );
-      expect(result, contains('pelo menos 6 caracteres'));
+      expect(result, contains('pelo menos 10 caracteres'));
     });
 
     test('traduz falha de rede', () {
