@@ -18,6 +18,12 @@ test('the consolidated Panorama contains every independently developed feature',
   assert.ok(history.includes('expectedLater'));
   assert.ok(watch.includes('item.isParent'));
   assert.ok(watch.includes('FinancialPrivacy.hidden'));
+  const home = source('folego_flutter/lib/features/home/home_screen_base.dart');
+  assert.ok(home.includes("'FOLEGO_EXPERIMENTAL_AI_REVIEWED'"));
+  assert.ok(home.includes('defaultValue: false'));
+  // Experiments are either reviewed for every eligible person or disabled
+  // for all; no privileged hardcoded person's identity in customer UI.
+  assert.doesNotMatch(home, /currentUserId\s*==/);
 });
 
 test('CSV card purchase signs require explicit acknowledgement, not a guessed default', () => {
