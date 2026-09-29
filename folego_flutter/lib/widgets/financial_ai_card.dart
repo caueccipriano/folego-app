@@ -161,8 +161,8 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
               color: accent, fontWeight: FontWeight.w700))),
         ]),
         const SizedBox(height: 6),
-        Text('Até 30 perguntas por mês. Somente os totais do mês são '
-             'enviados, nunca seus lançamentos.',
+        Text('Até 30 perguntas por mês. A IA recebe apenas os totais '
+             'do mês, nunca seus lançamentos individuais.',
           style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         const SizedBox(height: 14),
         // One accessible horizontal row rather than two oversized chip rows
@@ -225,7 +225,7 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
                     color: accent, size: 17),
                   const SizedBox(width: 8),
                   Expanded(child: Text(
-                    _isError ? 'IA indisponível' : 'Resposta do Fôlego',
+                    _isError ? 'Não foi possível responder' : 'Resposta do Fôlego',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700),
                   )),
