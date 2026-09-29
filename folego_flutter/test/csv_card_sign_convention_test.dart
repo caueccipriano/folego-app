@@ -25,7 +25,6 @@ List<StatementImportCandidate> _rows(
 }
 
 void main() {
-  const negativeConvention = CsvCardSignConvention.purchasesNegative;
   const positiveConvention = CsvCardSignConvention.purchasesPositive;
 
   test('signed negative card purchase remains expense, not a refund', () {
