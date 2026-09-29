@@ -46,6 +46,8 @@ jobs:
             test/panorama_360_data_test.dart \
             test/panorama_360_screen_test.dart \
             test/panorama_budget_watch_test.dart \
+            test/panorama_category_changes_test.dart \
+            test/panorama_category_change_card_test.dart \
             test/panorama_month_comparison_test.dart \
             test/panorama_month_trend_test.dart \
             test/panorama_upcoming_navigation_test.dart \
