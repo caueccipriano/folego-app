@@ -107,6 +107,9 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   bool _loading = false;
   bool _bootstrapping = true;
   String? _error;
+  // Invalidates every pending file read/bootstrap/staging operation whenever
+  // the authorized financial-space context changes on this same route.
+  int _spaceEpoch = 0;
 
   StatementImportPickedFile? _file;
   StatementImportFileType? _fileType;
@@ -140,16 +143,56 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant StatementImportScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spaceId == widget.spaceId &&
+        identical(oldWidget.repository, widget.repository)) {
+      return;
+    }
+    ++_spaceEpoch;
+    // Flutter may reuse the same keyed route when switching spaces. Never
+    // show A's queued rows, source account IDs, mapping or pending results in
+    // B's route, even while B's bootstrap is still loading.
+    _step = _ImportStep.file;
+    _loading = false;
+    _bootstrapping = true;
+    _error = null;
+    _file = null;
+    _fileType = null;
+    _csv = null;
+    _mapping = null;
+    _cardSignChoice = null;
+    _sourceKind = StatementImportSourceKind.account;
+    _sourceId = null;
+    _sourceInstitution = null;
+    _batchId = null;
+    _rows = const <StatementImportRow>[];
+    _result = null;
+    _paymentAccounts = const <AccountItem>[];
+    _benefitAccounts = const <AccountItem>[];
+    _cards = const <CreditCardItem>[];
+    _expenseCategories = const <CategoryItem>[];
+    _incomeCategories = const <CategoryItem>[];
+    _invoices = const <StatementImportInvoiceOption>[];
+    _reviewFilter = _ReviewFilter.all;
+    _bulkCategoryId = null;
+    _search.clear();
+    _loadBootstrap();
+  }
+
+  @override
   void dispose() {
+    ++_spaceEpoch;
     _search.dispose();
     super.dispose();
   }
 
   Future<void> _loadBootstrap() async {
+    final epoch = _spaceEpoch;
     try {
       final override = widget.bootstrapOverride;
       final data = override != null ? await override() : await _defaultBootstrap();
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() {
         _paymentAccounts = data.paymentAccounts;
         _benefitAccounts = data.benefitAccounts;
@@ -160,7 +203,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         _bootstrapping = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() {
         _bootstrapping = false;
         _error = 'não consegui carregar contas, cartões e categorias';
@@ -188,7 +231,8 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   }
 
   Future<void> _pickFile() async {
-    if (_loading) return;
+    if (_loading || _bootstrapping) return;
+    final epoch = _spaceEpoch;
     setState(() { _loading = true; _error = null; });
     try {
       final override = widget.pickOverride;
@@ -211,7 +255,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
           picked = StatementImportPickedFile(name: platformFile.name, bytes: bytes);
         }
       }
-      if (picked == null) return;
+      if (picked == null || !mounted || epoch != _spaceEpoch) return;
       if (picked.bytes.length > statementImportMaxBytes) {
         throw const StatementImportParseException('o arquivo é grande demais; use até 4 MB e 2.000 lançamentos por lote');
       }
@@ -222,7 +266,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       final type = extension == 'ofx' ? StatementImportFileType.ofx : StatementImportFileType.csv;
       CsvImportDocument? csv;
       if (type == StatementImportFileType.csv) csv = parseCsvImport(picked.bytes);
-      if (!mounted) return;
+      if (!mounted || epoch != _spaceEpoch) return;
       setState(() {
         _file = picked;
         _fileType = type;
@@ -234,9 +278,13 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         _step = _ImportStep.destination;
       });
     } catch (error) {
-      if (mounted) setState(() => _error = _friendly(error));
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _error = _friendly(error));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && epoch == _spaceEpoch) {
+        setState(() => _loading = false);
+      }
     }
   }
 
