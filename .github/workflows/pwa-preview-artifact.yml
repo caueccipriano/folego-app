@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   preview:
@@ -48,24 +48,3 @@ jobs:
           path: folego_flutter/build/web
           retention-days: 14
           if-no-files-found: error
-      - name: Publish isolated static preview branch
-        if: github.event_name == 'pull_request' && github.head_ref == 'fix/ai-cors-home-polish-20260929'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          static_dir="$(mktemp -d)"
-          cp -a build/web/. "$static_dir/"
-          cat > "$static_dir/vercel.json" <<'JSON'
-          {"version":2,"framework":null,"buildCommand":null,"outputDirectory":".","rewrites":[{"source":"/((?!.*\\.).*)","destination":"/index.html"}]}
-          JSON
-          printf '%s\n' "$GITHUB_SHA" > "$static_dir/source-sha.txt"
-          cd "$static_dir"
-          git init -q
-          git config user.name "folego-preview-bot"
-          git config user.email "folego-preview-bot@users.noreply.github.com"
-          git add .
-          git commit -qm "preview: built PWA from $GITHUB_SHA"
-          git branch -M preview/folego-ai-polish-20260929
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push --force origin HEAD:refs/heads/preview/folego-ai-polish-20260929
