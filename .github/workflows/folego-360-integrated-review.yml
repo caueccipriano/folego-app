@@ -109,14 +109,44 @@ jobs:
             -f supabase/tests/verified_push_session_before_fix.sql \
             -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
             -f supabase/tests/verified_push_session_acceptance.sql
-      - name: Test owner recovery on a SECOND pristine synthetic database
+
+  disposable-owner-recovery-database:
+    name: Owner-scoped device recovery on an independent fresh PostgreSQL cluster
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_owner_ci_only
+          POSTGRES_DB: folego_owner_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: disposable_owner_ci_only
+      PGDATABASE: folego_owner_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm a NEW synthetic-only local PostgreSQL cluster
         run: |
-          # The revocation acceptance test deliberately expires and deletes
-          # all fake sessions. Owner recovery must start with LIVE fictitious
-          # sessions; executing both acceptances on one state falsely fails.
-          psql -X -d postgres -v ON_ERROR_STOP=1 \
-            -c 'CREATE DATABASE folego_integrated_recovery_ci'
-          PGDATABASE=folego_integrated_recovery_ci psql -X -v ON_ERROR_STOP=1 \
+          test "$PGHOST" = '127.0.0.1'
+          test "$PGDATABASE" = 'folego_owner_ci'
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Verify same-owner rebind and rejection of another owner
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/verified_push_session_fixture.sql \
             -f supabase/tests/verified_push_session_before_fix.sql \
             -f supabase/migrations/20260929100000_bind_web_push_to_verified_auth_session.sql \
