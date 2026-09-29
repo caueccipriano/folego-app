@@ -5,6 +5,7 @@ import '../../data/models/monthly_money_summary.dart';
 import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_goals.dart';
+import 'panorama_360_trends.dart';
 
 /// Every nullable field means "not verified / could not load", NOT a
 /// financial zero. An empty list means the scoped query succeeded but had
@@ -16,6 +17,8 @@ class Panorama360Data {
     this.budgets,
     this.goals,
     this.upcoming,
+    this.previousMonthly,
+    this.trendReferenceMonth,
   });
 
   final FolegoSnapshot? snapshot;
@@ -24,12 +27,25 @@ class Panorama360Data {
   final List<FinancialGoal>? goals;
   final List<UpcomingEvent>? upcoming;
 
+  /// Previous month first, then two months back. Null entry is unverified,
+  /// not a real zero or an indication that the user had no activity.
+  final List<MonthlyMoneySummary?>? previousMonthly;
+  final DateTime? trendReferenceMonth;
+
+  Panorama360Trend get monthlyTrend => Panorama360Trend(
+        currentMonth:
+            trendReferenceMonth ?? monthlyMoney?.periodMonth ?? DateTime.now(),
+        current: monthlyMoney,
+        previous: previousMonthly,
+      );
+
   bool get hasAnyData =>
       snapshot != null ||
       monthlyMoney != null ||
       budgets != null ||
       goals != null ||
-      upcoming != null;
+      upcoming != null ||
+      (previousMonthly?.any((month) => month != null) ?? false);
 
   /// Sum parent categories only. Children are already included within
   /// their parent aggregation: adding them again would double consumption.
@@ -98,6 +114,14 @@ class Panorama360DataLoader {
           )),
       _optional(() => repository.listGoals(spaceId)),
       _optional(() => repository.getUpcomingEvents(spaceId, days: 30)),
+      _optional(() => repository.getMonthlyMoneySummary(
+            spaceId: spaceId,
+            periodMonth: DateTime(month.year, month.month - 1),
+          )),
+      _optional(() => repository.getMonthlyMoneySummary(
+            spaceId: spaceId,
+            periodMonth: DateTime(month.year, month.month - 2),
+          )),
     ]);
     final rawGoals = data[3] as List<FinancialGoal>?;
     // Belt-and-braces client-side scope check; actual authorization is RLS.
@@ -111,6 +135,11 @@ class Panorama360DataLoader {
       budgets: data[2] as List<BudgetOverviewItem>?,
       goals: scopedGoals,
       upcoming: data[4] as List<UpcomingEvent>?,
+      trendReferenceMonth: DateTime(month.year, month.month),
+      previousMonthly: <MonthlyMoneySummary?>[
+        data[5] as MonthlyMoneySummary?,
+        data[6] as MonthlyMoneySummary?,
+      ],
     );
   }
 }

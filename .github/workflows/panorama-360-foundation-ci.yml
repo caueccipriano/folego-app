@@ -33,9 +33,12 @@ jobs:
           dart analyze \
             lib/features/panorama/panorama_360_data.dart \
             lib/features/panorama/panorama_360_screen.dart \
+            lib/features/panorama/panorama_360_trends.dart \
             lib/features/home/home_screen_base.dart \
             test/panorama_360_data_test.dart \
-            test/panorama_360_screen_test.dart
+            test/panorama_360_screen_test.dart \
+            test/panorama_360_trends_test.dart \
+            test/panorama_360_trends_test.dart
           flutter analyze --no-pub
       - name: Test first Folego 360 integration plus economic/goal/budget regressions
         working-directory: folego_flutter

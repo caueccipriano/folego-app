@@ -74,6 +74,18 @@ void main() {
     expect(find.byKey(const ValueKey('panorama-content')), findsOneWidget);
     expect(find.byKey(const ValueKey('panorama-spendable')), findsOneWidget);
     expect(find.text('resultado econômico do mês'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('evolução dos últimos 3 meses'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const ValueKey('panorama-three-month-trend')),
+        findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('limites do mês'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('limites do mês'), findsOneWidget);
     expect(
       find.text('nenhum limite por categoria configurado'),
@@ -91,6 +103,51 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('próximos compromissos'), findsOneWidget);
+  });
+
+  testWidgets('three-month trend compares canonical months and labels missing data',
+      (tester) async {
+    MonthlyMoneySummary month(
+      String date, {
+      required num income,
+      required num expenses,
+    }) => MonthlyMoneySummary.fromJson(<String, dynamic>{
+          'period_month': date,
+          'income_amount': income,
+          'competence_net': expenses,
+          'cash_outflow': 9500,
+          'movement_card_payments': 2000,
+        });
+
+    await _show(tester, (_) async => Panorama360Data(
+      snapshot: _fakeSnapshot(120),
+      trendReferenceMonth: DateTime(2026, 9),
+      monthlyMoney: month('2026-09-01', income: 1500, expenses: 400),
+      previousMonthly: <MonthlyMoneySummary?>[
+        month('2026-08-01', income: 1300, expenses: 500),
+        null,
+      ],
+    ));
+    await tester.scrollUntilVisible(
+      find.text('evolução dos últimos 3 meses'),
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const ValueKey('panorama-three-month-trend')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('panorama-trend-2026-7')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('panorama-trend-2026-8')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('panorama-trend-2026-9')),
+        findsOneWidget);
+    expect(find.text('dados não confirmados'), findsOneWidget);
+    expect(find.byKey(const ValueKey('panorama-expense-month-change')),
+        findsOneWidget);
+    expect(
+      find.textContaining('Pagamentos de fatura'),
+      findsNothing,
+    );
   });
 
   testWidgets('partial source failure shows unavailable, not synthetic zero',

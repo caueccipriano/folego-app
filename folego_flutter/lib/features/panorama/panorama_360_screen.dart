@@ -14,6 +14,7 @@ import '../goals/goals_screen.dart';
 import '../plan/flexible_budget_screen.dart';
 import '../transactions/transactions_screen.dart';
 import 'panorama_360_data.dart';
+import 'panorama_360_trends.dart';
 
 /// Combines existing canonical sources; opening this screen writes nothing.
 class Panorama360Screen extends StatefulWidget {
@@ -164,6 +165,8 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                           const SizedBox(height: 12),
                           _economics(data.monthlyMoney),
                           const SizedBox(height: 12),
+                          _trendCard(data),
+                          const SizedBox(height: 12),
                           _budgetCard(data),
                           const SizedBox(height: 12),
                           _goalCard(data),
@@ -307,6 +310,140 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                 ],
               ),
       );
+
+  /// All three months use the same backend economic semantics. A missing
+  /// month remains unverified and never appears as R$0 in the comparison.
+  Widget _trendCard(Panorama360Data data) {
+    final trend = data.monthlyTrend;
+    final brightness = Theme.of(context).brightness;
+    final muted = AppColors.secondaryText(brightness);
+    final positive = AppColors.positiveText(brightness);
+    final expense = AppColors.expenseText(brightness);
+    final maximum = trend.months
+        .where((point) => point.available)
+        .fold<double>(0, (largest, point) {
+      final income = point.income ?? 0;
+      final spending = point.expenses ?? 0;
+      final candidate = income > spending ? income : spending;
+      return candidate > largest ? candidate : largest;
+    });
+
+    return _card(
+      title: 'evolução dos últimos 3 meses',
+      icon: AppIcons.plan,
+      content: Column(
+        key: const ValueKey('panorama-three-month-trend'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final point in trend.months) ...[
+            Padding(
+              key: ValueKey(
+                'panorama-trend-${point.periodMonth.year}-${point.periodMonth.month}',
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: _trendMonth(point, maximum, positive, expense, muted),
+            ),
+            if (point != trend.months.last) const Divider(height: 12),
+          ],
+          if (trend.expenseChange != null) ...[
+            const SizedBox(height: 7),
+            Text(
+              'despesas em relação ao mês anterior: '
+              '${Formatters.money(trend.expenseChange)}',
+              key: const ValueKey('panorama-expense-month-change'),
+              style: AppTypography.body(context, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            'Receitas e despesas por competência, sem duplicar pagamentos '
+            'de fatura e transferências. O mês atual ainda pode mudar.',
+            style: AppTypography.body(context, fontSize: 11, color: muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _trendMonth(
+    PanoramaMonthPoint point,
+    double maximum,
+    Color positive,
+    Color expense,
+    Color muted,
+  ) {
+    final summary = point.summary;
+    if (summary == null) {
+      return Row(children: [
+        Expanded(
+          child: Text(point.monthLabel,
+              style: AppTypography.section(context, fontSize: 12)),
+        ),
+        Text(
+          'dados não confirmados',
+          style: AppTypography.body(context, fontSize: 11, color: muted),
+        ),
+      ]);
+    }
+    double ratio(double value) =>
+        maximum <= 0 ? 0.0 : (value / maximum).clamp(0.0, 1.0).toDouble();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(children: [
+          Expanded(
+            child: Text(point.monthLabel,
+                style: AppTypography.section(context, fontSize: 12)),
+          ),
+          Text(
+            'resultado: ${Formatters.money(summary.economicResult)}',
+            style: AppTypography.money(context, fontSize: 11),
+          ),
+        ]),
+        const SizedBox(height: 7),
+        Row(children: [
+          const SizedBox(width: 66, child: Text('receitas')),
+          Expanded(
+            child: LinearProgressIndicator(
+              minHeight: 6,
+              value: ratio(summary.realIncome),
+              color: positive,
+            ),
+          ),
+          const SizedBox(width: 7),
+          SizedBox(
+            width: 83,
+            child: Text(
+              Formatters.money(summary.realIncome),
+              textAlign: TextAlign.right,
+              style: AppTypography.body(context, fontSize: 10),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        Row(children: [
+          const SizedBox(width: 66, child: Text('despesas')),
+          Expanded(
+            child: LinearProgressIndicator(
+              minHeight: 6,
+              value: ratio(summary.competenceExpenses),
+              color: expense,
+            ),
+          ),
+          const SizedBox(width: 7),
+          SizedBox(
+            width: 83,
+            child: Text(
+              Formatters.money(summary.competenceExpenses),
+              textAlign: TextAlign.right,
+              style: AppTypography.body(context, fontSize: 10),
+            ),
+          ),
+        ]),
+      ],
+    );
+  }
 
   Widget _budgetCard(Panorama360Data data) {
     final overview = data.budgetSummary;
