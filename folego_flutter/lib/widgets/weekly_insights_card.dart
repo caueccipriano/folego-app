@@ -28,7 +28,9 @@ class _WeeklyInsightsCardState extends State<WeeklyInsightsCard> {
   void didUpdateWidget(covariant WeeklyInsightsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId ||
-        !identical(oldWidget.service.repository, widget.service.repository)) _load();
+        !identical(oldWidget.service.repository, widget.service.repository)) {
+      _load();
+    }
   }
   void _load() {
     final now = DateTime.now();
