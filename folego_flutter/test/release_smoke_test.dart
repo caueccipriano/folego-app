@@ -125,7 +125,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('seu Fôlego ainda não tem de onde partir'), findsOneWidget);
+    expect(find.text('1. adicione uma conta'), findsOneWidget);
     expect(find.byKey(const ValueKey('first-use-add-account')), findsOneWidget);
     expect(find.text('R\$ 0,00'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -142,8 +142,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('falta saber quando entra dinheiro'), findsOneWidget);
-    expect(find.textContaining('receita recorrente'), findsOneWidget);
+    expect(find.text('2. cadastre sua renda recorrente'), findsOneWidget);
+    expect(find.textContaining('receita recorrente'), findsWidgets);
     expect(find.text('R\$ 0,00'), findsNothing);
     expect(tester.takeException(), isNull);
   });
