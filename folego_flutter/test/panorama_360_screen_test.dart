@@ -75,12 +75,22 @@ void main() {
     expect(find.byKey(const ValueKey('panorama-spendable')), findsOneWidget);
     expect(find.text('resultado econômico do mês'), findsOneWidget);
     expect(find.text('limites do mês'), findsOneWidget);
-    expect(find.text('suas metas'), findsOneWidget);
-    expect(find.text('próximos compromissos'), findsOneWidget);
     expect(
       find.text('nenhum limite por categoria configurado'),
       findsOneWidget,
     );
+    await tester.scrollUntilVisible(
+      find.text('suas metas'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('suas metas'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('próximos compromissos'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('próximos compromissos'), findsOneWidget);
   });
 
   testWidgets('partial source failure shows unavailable, not synthetic zero',
@@ -90,11 +100,23 @@ void main() {
     ));
 
     expect(find.byKey(const ValueKey('panorama-spendable')), findsOneWidget);
+    // ListView builds only visible sections. Missing data stays unknown
+    // for every section, including sections scrolled into view later.
     expect(
       find.text('não foi possível confirmar esta informação'),
-      findsNWidgets(4),
+      findsWidgets,
     );
     expect(find.text('nenhum limite por categoria configurado'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('próximos compromissos'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('próximos compromissos'), findsOneWidget);
+    expect(
+      find.text('não foi possível confirmar esta informação'),
+      findsWidgets,
+    );
   });
 
   testWidgets('completely failed fetch has honest retry, not an empty dashboard',
