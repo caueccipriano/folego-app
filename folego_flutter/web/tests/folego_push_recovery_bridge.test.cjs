@@ -80,6 +80,7 @@ function syntheticBridge({
     },
   };
   context.window.PushManager = context.PushManager;
+  context.window.Notification = context.Notification;
   vm.runInNewContext(bridgeScript, context, {
     filename: 'folego_push_bridge.js',
   });
