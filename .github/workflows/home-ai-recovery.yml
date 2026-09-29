@@ -9,7 +9,7 @@ on:
       - 'folego_flutter/test/monthly_insights_home_polish_test.dart'
       - 'folego_flutter/test/local_monthly_summary_test.dart'
       - 'folego_flutter/test/financial_report_builder_test.dart'
-      - 'supabase/functions/financial-ai/index.ts'
+      - 'supabase/functions/financial-ai/**'
       - '.github/workflows/home-ai-recovery.yml'
   workflow_dispatch:
 
@@ -43,4 +43,6 @@ jobs:
         with:
           deno-version: v2.x
       - name: Validate Edge Function TypeScript
-        run: deno check supabase/functions/financial-ai/index.ts
+        run: |
+          deno check supabase/functions/financial-ai/index.ts
+          deno test supabase/functions/financial-ai/provider_error_test.ts
