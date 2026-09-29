@@ -337,10 +337,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('seus lembretes podem ser configurados agora'),
+        find.text('notificações não disponíveis neste navegador'),
         findsOneWidget,
       );
-      expect(find.text('notificações no celular: em breve'), findsOneWidget);
+      expect(find.textContaining('instalado na Tela de Início'), findsOneWidget);
       for (final forbidden in ['adapter', 'backend', 'build', 'no-op']) {
         expect(find.textContaining(forbidden), findsNothing);
       }
