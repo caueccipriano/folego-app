@@ -362,9 +362,8 @@ class _Panorama360ScreenState extends State<Panorama360Screen> {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            Formatters.money(goal.currentAmount) +
-                                ' registrados de ' +
-                                Formatters.money(goal.target),
+                            '${Formatters.money(goal.currentAmount)} registrados de '
+                            '${Formatters.money(goal.target)}',
                             style: AppTypography.body(context, fontSize: 11),
                           ),
                         ],
