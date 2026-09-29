@@ -169,18 +169,30 @@ class _NotificationSettingsScreenState
       if (!mounted) return;
       if (permission != NotificationPermissionStatus.granted ||
           verified != ExistingPushRecoveryStatus.alreadyActive) {
+        final browserPermission = await _service.getPermissionStatus();
+        if (!mounted) return;
         setState(() {
+          _permission = browserPermission;
           _pushRecovery = verified;
-          _error = 'não consegui ativar os alertas deste dispositivo. '
-              'tente novamente quando estiver conectado.';
+          _error = verified == ExistingPushRecoveryStatus.needsEnrollment &&
+                  browserPermission == NotificationPermissionStatus.granted
+              ? null
+              : 'não consegui ativar os alertas deste dispositivo. '
+                  'tente novamente quando estiver conectado.';
         });
+        if (verified == ExistingPushRecoveryStatus.needsEnrollment &&
+            browserPermission == NotificationPermissionStatus.granted) {
+          _message('dispositivo preparado. toque em ativar para concluir.');
+        }
         return;
       }
       setState(() {
         _permission = permission;
         _pushRecovery = verified;
       });
-      _message('pronto — notificações ativadas neste dispositivo');
+      _message(_preferences?.financialRemindersEnabled == true
+          ? 'pronto — notificações ativadas neste dispositivo'
+          : 'dispositivo inscrito. ative lembretes para receber alertas.');
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -200,13 +212,20 @@ class _NotificationSettingsScreenState
       final permission = await _service.requestPermission();
       if (!mounted) return;
       final recovery = await _service.inspectExistingPush();
+      final browserPermission = await _service.getPermissionStatus();
       if (!mounted) return;
       setState(() {
-        _permission = permission;
+        _permission = browserPermission;
         _pushRecovery = recovery;
       });
       if (permission != NotificationPermissionStatus.granted) {
-        _message(_permissionMessage(permission));
+        if (browserPermission == NotificationPermissionStatus.granted &&
+            recovery == ExistingPushRecoveryStatus.needsEnrollment) {
+          _message('permissão concedida ou aparelho preparado. '
+              'toque em ativar neste dispositivo para concluir.');
+        } else {
+          _message(_permissionMessage(browserPermission));
+        }
         return;
       }
     }
@@ -771,8 +790,11 @@ class _NotificationSettingsScreenState
     final enroll = _pushRecovery == ExistingPushRecoveryStatus.needsEnrollment;
     final lookupFailed =
         _pushRecovery == ExistingPushRecoveryStatus.lookupFailed;
-    final showRecovery = (_preferences?.financialRemindersEnabled ?? false) &&
-        (rebind || enroll);
+    // The iPhone first grants permission, then a second deliberate tap
+    // starts PushManager.subscribe; keep the action visible while master
+    // reminders are still off after the first consent step.
+    final showRecovery = (rebind || enroll) &&
+        (granted || (_preferences?.financialRemindersEnabled ?? false));
 
     final String title;
     final String body;
@@ -789,8 +811,9 @@ class _NotificationSettingsScreenState
       body = 'o navegador tem permissão, mas este dispositivo ainda '
           'não está vinculado à sua conta Fôlego.';
     } else if (unsupported) {
-      title = 'seus lembretes podem ser configurados agora';
-      body = 'notificações no celular: em breve';
+      title = 'notificações não disponíveis neste navegador';
+      body = 'no iPhone, abra o Fôlego instalado na Tela de Início. '
+          'em outros dispositivos, confira a compatibilidade do navegador.';
     } else if (denied) {
       title = 'notificações no celular estão bloqueadas';
       body =
@@ -838,6 +861,13 @@ class _NotificationSettingsScreenState
                       color: AppColors.secondaryText(brightness),
                     ),
                   ),
+                  if (lookupFailed) ...[
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: _saving ? null : _load,
+                      child: const Text('tentar novamente'),
+                    ),
+                  ],
                   if (showRecovery) ...[
                     const SizedBox(height: 10),
                     OutlinedButton.icon(

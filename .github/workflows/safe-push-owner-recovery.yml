@@ -11,6 +11,7 @@ on:
       - 'folego_flutter/web/tests/folego_push_recovery_bridge.test.cjs'
       - 'folego_flutter/test/safe_push_recovery_test.dart'
       - 'folego_flutter/test/push_recovery_screen_test.dart'
+      - 'folego_flutter/test/ios_push_gesture_contract_test.dart'
       - '.github/workflows/safe-push-owner-recovery.yml'
   workflow_dispatch:
 
@@ -97,7 +98,8 @@ jobs:
             lib/core/notifications/notification_service.dart \
             lib/features/profile/notification_settings_screen.dart \
             test/safe_push_recovery_test.dart \
-            test/push_recovery_screen_test.dart
+            test/push_recovery_screen_test.dart \
+            test/ios_push_gesture_contract_test.dart
           flutter analyze --no-pub
       - name: Run recovery, notification lifecycle and profile tests
         working-directory: folego_flutter
@@ -105,6 +107,7 @@ jobs:
           flutter test \
             test/safe_push_recovery_test.dart \
             test/push_recovery_screen_test.dart \
+            test/ios_push_gesture_contract_test.dart \
             test/notification_service_test.dart \
             test/notification_runtime_test.dart \
             test/notification_preferences_hardening_test.dart \

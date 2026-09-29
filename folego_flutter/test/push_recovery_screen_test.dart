@@ -24,16 +24,22 @@ class _SettingsSource implements NotificationSettingsDataSource {
 
 class _FakePushRecovery extends Fake
     implements NotificationSchedulerAdapter, PushDeviceRecovery {
-  _FakePushRecovery(this.status);
+  _FakePushRecovery(
+    this.status, {
+    bool initiallyGranted = true,
+  }) : browserPermission = initiallyGranted
+            ? NotificationPermissionStatus.granted
+            : NotificationPermissionStatus.notDetermined;
 
   ExistingPushRecoveryStatus status;
+  NotificationPermissionStatus browserPermission;
   int inspectCalls = 0;
   int explicitEnrollCalls = 0;
   int explicitRebindCalls = 0;
 
   @override
   Future<NotificationPermissionStatus> getPermissionStatus() async =>
-      NotificationPermissionStatus.granted;
+      browserPermission;
 
   @override
   Future<ExistingPushRecoveryStatus> inspectExistingPush() async {
@@ -54,6 +60,15 @@ class _FakePushRecovery extends Fake
   @override
   Future<NotificationPermissionStatus> requestPermission() async {
     explicitEnrollCalls++;
+    if (status == ExistingPushRecoveryStatus.unavailable &&
+        browserPermission == NotificationPermissionStatus.notDetermined) {
+      browserPermission = NotificationPermissionStatus.granted;
+      status = ExistingPushRecoveryStatus.needsEnrollment;
+      return NotificationPermissionStatus.notDetermined;
+    }
+    if (status == ExistingPushRecoveryStatus.alreadyActive) {
+      return NotificationPermissionStatus.granted;
+    }
     if (status != ExistingPushRecoveryStatus.needsEnrollment) {
       return NotificationPermissionStatus.notDetermined;
     }
@@ -119,6 +134,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(adapter.explicitEnrollCalls, 1);
     expect(adapter.explicitRebindCalls, 0);
+  });
+
+  testWidgets('iPhone first tap grants permission, second tap enrolls device',
+      (tester) async {
+    final adapter = _FakePushRecovery(
+      ExistingPushRecoveryStatus.unavailable,
+      initiallyGranted: false,
+    );
+    await _showScreen(tester, adapter);
+
+    final master = find.byKey(const ValueKey('notifications-master-toggle'));
+    // Turn off synthetic pref before testing a genuinely fresh permission
+    // journey. A first activation must never claim device enrollment.
+    await tester.tap(master);
+    await tester.pumpAndSettle();
+
+    await tester.tap(master);
+    await tester.pumpAndSettle();
+    expect(adapter.explicitEnrollCalls, 1);
+    expect(adapter.status, ExistingPushRecoveryStatus.needsEnrollment);
+    expect(find.text('ativar neste dispositivo'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('push-safe-recovery-button')));
+    await tester.pumpAndSettle();
+    expect(adapter.explicitEnrollCalls, 2);
+    expect(adapter.status, ExistingPushRecoveryStatus.alreadyActive);
+    expect(find.text('notificações no celular prontas'), findsOneWidget);
   });
 
   testWidgets('a server outage never offers unsafe rebind or false success',
