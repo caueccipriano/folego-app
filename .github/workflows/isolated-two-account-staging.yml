@@ -69,7 +69,7 @@ jobs:
           '
       - name: Install Playwright test dependencies
         working-directory: qa
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
       - name: Install isolated staging test browsers
         working-directory: qa
         run: npx playwright install --with-deps chromium webkit
