@@ -1,0 +1,56 @@
+name: Signed card CSV import safety
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/transactions/statement_import_parser.dart'
+      - 'folego_flutter/lib/features/transactions/statement_import_screen.dart'
+      - 'folego_flutter/test/csv_card_sign_*'
+      - '.github/workflows/csv-card-sign-convention.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  explicit-card-polarity:
+    name: Explicit card purchase polarity and cross-account safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze new logic, phone UI and full app
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/transactions/statement_import_parser.dart \
+            lib/features/transactions/statement_import_screen.dart \
+            test/csv_card_sign_convention_test.dart \
+            test/csv_card_sign_ui_test.dart
+          flutter analyze --no-pub
+      - name: Assert signed-card opt-in and existing account/import regressions
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/csv_card_sign_convention_test.dart \
+            test/csv_card_sign_ui_test.dart \
+            test/portable_csv_header_mapping_test.dart \
+            test/statement_import_parser_test.dart \
+            test/statement_import_qa_synthetic_test.dart \
+            test/statement_import_ui_test.dart \
+            test/statement_import_contract_test.dart
+      - name: Note coverage boundaries
+        run: |
+          {
+            echo 'Only synthetic data and Flutter widget/parser tests.'
+            echo 'No third-party customer file or actual provider API was used.'
+            echo 'No bank account, live payment or existing Supabase Dev record'
+            echo 'has been accessed or modified; no app deployment occurred.'
+          } >> "$GITHUB_STEP_SUMMARY"
