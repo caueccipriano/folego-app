@@ -693,7 +693,12 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       Row(children: [
         Expanded(child: DropdownButtonFormField<CsvDecimalFormat>(initialValue: mapping.decimalFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato decimal'), items: const [DropdownMenuItem(value: CsvDecimalFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.brazilian, child: Text('1.234,56', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.american, child: Text('1,234.56', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(decimalFormat: value)))),
         const SizedBox(width: 10),
-        Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateFormat: value)))),
+        Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() {
+          _mapping = mapping.copyWith(dateFormat: value);
+          if (_error?.contains('datas ambíguas') ?? false) {
+            _error = null;
+          }
+        }))),
       ]),
       const SizedBox(height: 8),
       const Text(
