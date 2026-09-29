@@ -96,6 +96,9 @@ void main() {
     );
     expect(adapter, contains('_folegoPushUnsubscribe()'));
     expect(adapter, contains(".from('web_push_subscriptions')"));
-    expect(adapter, contains(".eq('user_id', user.id)"));
+    // Logout runs under the FORMER signed-in identity, before Auth
+    // invalidation. The current user getter may already be switching.
+    expect(adapter, contains(".eq('user_id', formerUserId)"));
+    expect(adapter, contains(".eq('endpoint', endpoint)"));
   });
 }
