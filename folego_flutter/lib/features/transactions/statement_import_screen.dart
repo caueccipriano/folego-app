@@ -319,6 +319,11 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     final confirmedMapping = signedCardCsv
         ? mapping.copyWith(cardSignConvention: _cardSignChoice)
         : mapping;
+    if (csv.hasAmbiguousDateValues(confirmedMapping)) {
+      setState(() => _error =
+          'o arquivo contém datas ambíguas: escolha DD/MM/AAAA ou MM/DD/AAAA');
+      return;
+    }
     try {
       final candidates = csv.buildCandidates(
         mapping: confirmedMapping,
@@ -631,6 +636,15 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
           error: false,
         ),
       ],
+      if (csv.hasAmbiguousDateValues(mapping)) ...[
+        const SizedBox(height: 10),
+        const _MessageBox(
+          text: 'Encontramos datas que podem representar dois meses '
+              'diferentes. Escolha DD/MM/AAAA ou MM/DD/AAAA no campo '
+              'formato de data antes de importar.',
+          error: false,
+        ),
+      ],
       const SizedBox(height: 14),
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
       _ColumnMappingField(label: 'descrição *', value: mapping.descriptionColumn, headers: csv.headers, examples: csv.examplesFor(mapping.descriptionColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(descriptionColumn: value))),
@@ -679,7 +693,12 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       Row(children: [
         Expanded(child: DropdownButtonFormField<CsvDecimalFormat>(initialValue: mapping.decimalFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato decimal'), items: const [DropdownMenuItem(value: CsvDecimalFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.brazilian, child: Text('1.234,56', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDecimalFormat.american, child: Text('1,234.56', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(decimalFormat: value)))),
         const SizedBox(width: 10),
-        Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateFormat: value)))),
+        Expanded(child: DropdownButtonFormField<CsvDateFormat>(initialValue: mapping.dateFormat, isExpanded: true, decoration: const InputDecoration(labelText: 'formato de data'), items: const [DropdownMenuItem(value: CsvDateFormat.auto, child: Text('detectar', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.dmy, child: Text('DD/MM/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.mdy, child: Text('MM/DD/AAAA', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: CsvDateFormat.iso, child: Text('AAAA-MM-DD', overflow: TextOverflow.ellipsis))], onChanged: (value) => setState(() {
+          _mapping = mapping.copyWith(dateFormat: value);
+          if (_error?.contains('datas ambíguas') ?? false) {
+            _error = null;
+          }
+        }))),
       ]),
       const SizedBox(height: 8),
       const Text(

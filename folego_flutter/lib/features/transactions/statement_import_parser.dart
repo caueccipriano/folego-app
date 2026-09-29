@@ -152,6 +152,33 @@ class CsvImportDocument {
         .toList(growable: false);
   }
 
+  /// Preflight the entire selected date column, not just sample rows, so the
+  /// UI can request date order BEFORE any remote staging request.
+  bool hasAmbiguousDateValues(CsvImportMapping mapping) {
+    final column = mapping.dateColumn;
+    if (column == null || mapping.dateFormat != CsvDateFormat.auto) {
+      return false;
+    }
+    final numericDate = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-]\d{2,4}(?:$|\s)');
+    for (final row in rows) {
+      if (column >= row.length) continue;
+      final match = numericDate.firstMatch(row[column].trim());
+      if (match == null) continue;
+      final first = int.tryParse(match.group(1) ?? '');
+      final second = int.tryParse(match.group(2) ?? '');
+      if (first != null &&
+          second != null &&
+          first >= 1 &&
+          second >= 1 &&
+          first <= 12 &&
+          second <= 12 &&
+          first != second) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   List<StatementImportCandidate> buildCandidates({
     required CsvImportMapping mapping,
     required StatementImportSourceKind sourceKind,
@@ -611,22 +638,55 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
   return negative ? -minor : minor;
 }
 
+/// Safely accepts ISO or the explicitly selected day/month ordering.
+/// Auto-detect only when the date is logically unambiguous; a date like
+/// 09/10/2026 can mean two different months and MUST be user-confirmed.
 ParsedStatementDate parseCsvDate(String raw, CsvDateFormat format) {
   final value = raw.trim();
   if (value.isEmpty) throw const FormatException('date');
-  if (format == CsvDateFormat.iso || (format == CsvDateFormat.auto && RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
-    final match = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
+  if (format == CsvDateFormat.iso ||
+      (format == CsvDateFormat.auto &&
+          RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}').hasMatch(value))) {
+    final match =
+        RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})').firstMatch(value);
     if (match == null) throw const FormatException('date');
-    return _dateOnly(int.parse(match.group(1)!), int.parse(match.group(2)!), int.parse(match.group(3)!));
+    return _dateOnly(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+    );
   }
-  final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
+  final match =
+      RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})').firstMatch(value);
   if (match == null) throw const FormatException('date');
   final first = int.parse(match.group(1)!);
   final second = int.parse(match.group(2)!);
   var year = int.parse(match.group(3)!);
   if (year < 100) year += year >= 70 ? 1900 : 2000;
-  final useMdy = format == CsvDateFormat.mdy || (format == CsvDateFormat.auto && first <= 12 && second > 12);
-  return _dateOnly(year, useMdy ? first : second, useMdy ? second : first);
+
+  if (format == CsvDateFormat.auto) {
+    // dd/mm and mm/dd produce the SAME date when both fields are equal.
+    // Otherwise, if both fields could be months, fail closed.
+    if (first <= 12 && second <= 12 && first != second) {
+      throw const StatementImportParseException(
+        'data ambígua: escolha manualmente DD/MM/AAAA ou MM/DD/AAAA',
+      );
+    }
+    // A month >12 is invalid; the OTHER field must be the month.
+    final useMdy = first <= 12 && second > 12;
+    return _dateOnly(
+      year,
+      useMdy ? first : second,
+      useMdy ? second : first,
+    );
+  }
+
+  final useMdy = format == CsvDateFormat.mdy;
+  return _dateOnly(
+    year,
+    useMdy ? first : second,
+    useMdy ? second : first,
+  );
 }
 
 ParsedStatementDate parseOfxDate(String raw) {
