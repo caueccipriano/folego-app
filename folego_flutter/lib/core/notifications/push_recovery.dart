@@ -42,16 +42,41 @@ ExistingPushRecoveryStatus classifyExistingPush({
 /// rebind and account signout cleanup. UI never restores on login implicitly.
 abstract final class PushBrowserOperationQueue {
   static Future<void> _previous = Future<void>.value();
+  static int _pending = 0;
 
   static Future<T> run<T>(Future<T> Function() action) async {
+    _pending++;
     final prior = _previous;
     final released = Completer<void>();
     _previous = released.future;
-    await prior;
     try {
+      await prior;
       return await action();
     } finally {
+      _pending--;
       released.complete();
     }
+  }
+
+  /// Safari/iPhone requires a Push API call from the ORIGINAL tap stack.
+  /// Never put it behind an await, nor race it with logout/browser cleanup.
+  /// Return null instead of delaying the gesture until it is no longer valid.
+  static Future<T?> tryRunGesture<T>(Future<T> Function() action) {
+    if (_pending != 0) return Future<T?>.value(null);
+    _pending++;
+    final released = Completer<void>();
+    _previous = released.future;
+    Future<T> started;
+    try {
+      started = action(); // intentionally synchronous, before the first await
+    } catch (error, stack) {
+      _pending--;
+      released.complete();
+      return Future<T?>.error(error, stack);
+    }
+    return started.whenComplete(() {
+      _pending--;
+      released.complete();
+    });
   }
 }
