@@ -14,7 +14,7 @@ enum CsvDateFormat { auto, dmy, mdy, iso }
 /// CSVs differ: a credit-card PURCHASE can be exported as a signed
 /// negative amount or as a positive charge. The user must explicitly
 /// choose this convention in the wizard for signed card CSVs.
-enum CsvCardSignConvention { purchasesNegative, purchasesPositive }
+enum CsvCardSignConvention { unselected, purchasesNegative, purchasesPositive }
 
 class StatementImportParseException implements Exception {
   const StatementImportParseException(this.message);
@@ -39,7 +39,7 @@ class CsvImportMapping {
     this.noteColumn,
     this.decimalFormat = CsvDecimalFormat.auto,
     this.dateFormat = CsvDateFormat.auto,
-    this.cardSignConvention = CsvCardSignConvention.purchasesNegative,
+    this.cardSignConvention = CsvCardSignConvention.unselected,
   });
 
   final int? dateColumn;
@@ -221,6 +221,16 @@ class CsvImportDocument {
   }) {
     if (!mapping.isComplete) {
       throw const StatementImportParseException('mapeie data, descrição e valor antes de continuar');
+    }
+    // The Flutter wizard also enforces this. Direct parser callers MUST
+    // fail closed instead of turning a positive card purchase into a refund.
+    // Bank/benefit imports and split debit-credit columns are unaffected.
+    if (sourceKind == StatementImportSourceKind.card &&
+        mapping.amountColumn != null &&
+        mapping.cardSignConvention == CsvCardSignConvention.unselected) {
+      throw const StatementImportParseException(
+        'escolha se compras do cartão aparecem positivas ou negativas',
+      );
     }
     // Check the entire selected date column BEFORE any staging candidate
     // is produced. An explicit locale always takes precedence.
