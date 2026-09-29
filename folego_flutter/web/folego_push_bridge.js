@@ -76,6 +76,24 @@
     return status();
   };
 
+  // Read-only probe for previously granted Push permission and a locally
+  // existing subscription. Never prompts, subscribes, or reuses an endpoint
+  // for a newly signed-in person based on browser permission alone.
+  window.folegoPushPeekExistingSubscription = async function () {
+    if (!supported() || Notification.permission !== 'granted') {
+      return JSON.stringify({ status: status(), subscription: null });
+    }
+    const registration = await navigator.serviceWorker.getRegistration('./');
+    const subscription = registration
+      ? await registration.pushManager.getSubscription()
+      : null;
+    return JSON.stringify({
+      status: 'granted',
+      subscription: subscription ? subscription.toJSON() : null,
+      userAgent: navigator.userAgent,
+    });
+  };
+
   window.folegoPushRequestAndSubscribe = async function () {
     if (!supported()) {
       return JSON.stringify({ status: 'unsupported' });
