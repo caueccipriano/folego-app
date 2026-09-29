@@ -1,0 +1,58 @@
+name: Panorama 360 foundation CI
+
+on:
+  pull_request:
+    paths:
+      - 'folego_flutter/lib/features/panorama/**'
+      - 'folego_flutter/lib/features/home/home_screen_base.dart'
+      - 'folego_flutter/test/panorama_360_*'
+      - 'docs/FOLEGO_360_PRODUCT_BLUEPRINT.md'
+      - '.github/workflows/panorama-360-foundation-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  panoramic-money-integrity:
+    name: Read-only money semantics, all-user UI and space isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        working-directory: folego_flutter
+        run: flutter pub get
+      - name: Analyze changed Dart and all app code
+        working-directory: folego_flutter
+        run: |
+          dart analyze \
+            lib/features/panorama/panorama_360_data.dart \
+            lib/features/panorama/panorama_360_screen.dart \
+            lib/features/home/home_screen_base.dart \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart
+          flutter analyze --no-pub
+      - name: Test first Folego 360 integration plus economic/goal/budget regressions
+        working-directory: folego_flutter
+        run: |
+          flutter test \
+            test/panorama_360_data_test.dart \
+            test/panorama_360_screen_test.dart \
+            test/monthly_money_summary_test.dart \
+            test/flexible_budget_model_test.dart \
+            test/financial_goal_test.dart \
+            test/home_financial_copy_test.dart \
+            test/wallet_benefit_separation_test.dart
+      - name: Report what is NOT verified by synthetic UI
+        run: |
+          {
+            echo 'Panorama 360 reuses canonical existing RPCs and contains NO SQL writes.'
+            echo 'These are synthetic Flutter tests, NOT authenticated HTTPS staging'
+            echo 'or proof of Open Finance provider, actual user data or bank connections.'
+            echo 'Never deploy or merge this stacked PR before launch privacy gates.'
+          } >> "$GITHUB_STEP_SUMMARY"
