@@ -1,0 +1,99 @@
+name: Isolated two-account staging safety gate
+
+on:
+  pull_request:
+    paths:
+      - 'qa/staging/**'
+      - '.github/workflows/isolated-two-account-staging.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type I_CONFIRM_ISOLATED_FAKE_PROJECT to authorize staging-only E2E'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  staging-target-guard-tests:
+    name: Prove all real-user and production targets fail closed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated staging guard's synthetic regression tests
+        run: |
+          node --check qa/staging/staging-guard.mjs
+          node --test qa/staging/staging-guard.test.mjs
+
+  authenticated-staging-a-b:
+    name: Independent HTTPS preview and fictional A/B RLS acceptance
+    if: github.event_name == 'workflow_dispatch'
+    needs: staging-target-guard-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: folego-qa-staging
+    env:
+      QA_SYNTHETIC_ONLY_ACK: ISOLATED_FAKE_USERS_ONLY
+      QA_STAGING_SITE_URL: ${{ secrets.QA_STAGING_SITE_URL }}
+      QA_SUPABASE_URL: ${{ secrets.QA_SUPABASE_URL }}
+      QA_EXPECTED_STAGING_PROJECT_REF: ${{ secrets.QA_EXPECTED_STAGING_PROJECT_REF }}
+      QA_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.QA_SUPABASE_PUBLISHABLE_KEY }}
+      QA_FAKE_A_EMAIL: ${{ secrets.QA_FAKE_A_EMAIL }}
+      QA_FAKE_A_PASSWORD: ${{ secrets.QA_FAKE_A_PASSWORD }}
+      QA_FAKE_B_EMAIL: ${{ secrets.QA_FAKE_B_EMAIL }}
+      QA_FAKE_B_PASSWORD: ${{ secrets.QA_FAKE_B_PASSWORD }}
+      QA_FAKE_A_PUSH_ENDPOINT: ${{ secrets.QA_FAKE_A_PUSH_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require manual affirmation and isolated fake-user credentials
+        env:
+          MANUAL_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$MANUAL_CONFIRMATION" != 'I_CONFIRM_ISOLATED_FAKE_PROJECT' ]; then
+            echo 'BLOCKED: manual fake-project affirmation required.'
+            exit 1
+          fi
+          node --input-type=module -e '
+            import { assertIsolatedStaging } from "./qa/staging/staging-guard.mjs";
+            assertIsolatedStaging(process.env);
+            console.log("PASS: isolated preview and fictional-account target verified.");
+          '
+      - name: Install Playwright test dependencies
+        working-directory: qa
+        run: npm install --no-audit --no-fund
+      - name: Install isolated staging test browsers
+        working-directory: qa
+        run: npx playwright install --with-deps chromium webkit
+      - name: Verify preview backend identity and independent A/B RLS
+        working-directory: qa
+        run: npx playwright test --config=staging/playwright.config.ts
+      - name: Report honest coverage boundaries without printing credentials
+        if: always()
+        run: |
+          {
+            echo '## Isolated staging A/B QA'
+            echo 'Only independent fictional users and a dedicated Supabase'
+            echo 'staging project were authorized by the preflight.'
+            echo ''
+            echo 'This covers direct REST RLS isolation and server-bound Push'
+            echo 'ownership, NOT actual native iOS/Android notification dialogs,'
+            echo 'APNs, owner-transfer approval or closed-PWA Auth revocation.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload anonymized test verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-staging-test-verdict
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            qa/staging-report/
