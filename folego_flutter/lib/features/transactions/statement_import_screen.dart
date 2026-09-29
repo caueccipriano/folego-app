@@ -634,7 +634,14 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       const SizedBox(height: 14),
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
       _ColumnMappingField(label: 'descrição *', value: mapping.descriptionColumn, headers: csv.headers, examples: csv.examplesFor(mapping.descriptionColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(descriptionColumn: value))),
-      _ColumnMappingField(label: 'valor', value: mapping.amountColumn, headers: csv.headers, examples: csv.examplesFor(mapping.amountColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearAmount: true) : mapping.copyWith(amountColumn: value))),
+      _ColumnMappingField(label: 'valor', value: mapping.amountColumn, headers: csv.headers, examples: csv.examplesFor(mapping.amountColumn), optional: true, onChanged: (value) => setState(() {
+        // A previous sign confirmation applies only to its chosen source
+        // column. Changing the signed-value column requires fresh consent.
+        if (value != mapping.amountColumn) _cardSignChoice = null;
+        _mapping = value == null
+            ? mapping.copyWith(clearAmount: true)
+            : mapping.copyWith(amountColumn: value);
+      })),
       Row(children: [
         Expanded(child: _ColumnMappingField(label: 'débito', value: mapping.debitColumn, headers: csv.headers, examples: csv.examplesFor(mapping.debitColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearDebit: true) : mapping.copyWith(debitColumn: value)))),
         const SizedBox(width: 10),
