@@ -636,6 +636,38 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         'Nada será lançado sem sua revisão.',
         key: ValueKey('statement-import-ambiguous-currency-guidance'),
       ),
+      if (_sourceKind == StatementImportSourceKind.card &&
+          mapping.amountColumn != null) ...[
+        const SizedBox(height: 12),
+        DropdownButtonFormField<CsvCardSignConvention>(
+          key: const ValueKey('statement-import-card-sign-convention'),
+          initialValue: mapping.cardSignConvention,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'como as compras aparecem no extrato do cartão?',
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: CsvCardSignConvention.purchasesNegative,
+              child: Text('Compras negativas (-)', overflow: TextOverflow.ellipsis),
+            ),
+            DropdownMenuItem(
+              value: CsvCardSignConvention.purchasesPositive,
+              child: Text('Compras positivas (+)', overflow: TextOverflow.ellipsis),
+            ),
+          ],
+          onChanged: (value) => setState(
+            () => _mapping = mapping.copyWith(cardSignConvention: value),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const _MessageBox(
+          text: 'Confira uma compra conhecida na prévia antes de confirmar. '
+              'Esta escolha muda apenas o sentido dos valores de cartão '
+              'com sinal; não altera extratos de conta ou débito/crédito separados.',
+          error: false,
+        ),
+      ],
       const SizedBox(height: 12),
       ExpansionTile(title: const Text('campos opcionais'), children: [
         _ColumnMappingField(label: 'estabelecimento', value: mapping.merchantColumn, headers: csv.headers, examples: csv.examplesFor(mapping.merchantColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearMerchant: true) : mapping.copyWith(merchantColumn: value))),
