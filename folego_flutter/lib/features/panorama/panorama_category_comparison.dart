@@ -103,8 +103,8 @@ class PanoramaCategoryComparison extends StatelessWidget {
                       Flexible(
                         child: Text(
                           item.delta > 0
-                              ? '\${Formatters.money(item.delta.abs())} a mais'
-                              : '\${Formatters.money(item.delta.abs())} a menos',
+                              ? '${Formatters.money(item.delta.abs())} a mais'
+                              : '${Formatters.money(item.delta.abs())} a menos',
                           maxLines: 1,
                           textAlign: TextAlign.right,
                           overflow: TextOverflow.ellipsis,
