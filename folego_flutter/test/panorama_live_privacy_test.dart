@@ -122,13 +122,15 @@ void main() {
       220,
       scrollable: scrollable,
     );
-    expect(find.text(Formatters.money(1500)), findsWidgets);
+    final originallyVisibleIncome = Formatters.money(1500);
+    final originallyVisibleExpense = Formatters.money(400);
+    expect(find.text(originallyVisibleIncome), findsWidgets);
+    expect(find.text(originallyVisibleExpense), findsWidgets);
     FinancialPrivacy.hidden.value = true;
     await tester.pumpAndSettle();
-    expect(find.text(Formatters.money(1500)), findsWidgets,
-        reason: 'Formatters.money must return masked text now');
-    expect(find.textContaining('1.500,00'), findsNothing);
-    expect(find.textContaining('400,00'), findsNothing);
+    expect(find.text(originallyVisibleIncome), findsNothing);
+    expect(find.text(originallyVisibleExpense), findsNothing);
+    expect(find.text(FinancialPrivacy.maskMoney()), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }
