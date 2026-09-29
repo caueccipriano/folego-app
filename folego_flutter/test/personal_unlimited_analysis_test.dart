@@ -97,4 +97,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('an existing validation error is hidden after Auth switches users',
+      (tester) async {
+    final repo = _FictionalRepository('fictional-A');
+    await tester.pumpWidget(_screen(repo, 'space-A'));
+    await tester.enterText(find.byType(TextField), 'a');
+    await tester.tap(find.text('Analisar sem limite'));
+    await tester.pump();
+    expect(find.textContaining('Escreva uma pergunta'), findsOneWidget);
+
+    repo.identity = 'fictional-B';
+    await tester.pumpWidget(_screen(repo, 'space-A'));
+    await tester.pump();
+    expect(find.textContaining('Escreva uma pergunta'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a local load failure remains private to its original account',
+      (tester) async {
+    final repo = _FictionalRepository('fictional-A');
+    await tester.pumpWidget(_screen(repo, 'space-A'));
+    await tester.enterText(find.byType(TextField), 'Como está meu mês?');
+    await tester.tap(find.text('Analisar sem limite'));
+    repo.summary.completeError(Exception('synthetic data error'));
+    await tester.pump();
+    expect(find.textContaining('Não foi possível carregar'), findsOneWidget);
+
+    repo.identity = 'fictional-B';
+    await tester.pumpWidget(_screen(repo, 'space-A'));
+    await tester.pump();
+    expect(find.textContaining('Não foi possível carregar'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }
