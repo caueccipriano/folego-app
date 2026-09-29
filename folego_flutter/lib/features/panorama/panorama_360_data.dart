@@ -7,6 +7,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_goals.dart';
 import 'panorama_month_trend.dart';
 import 'panorama_budget_watch.dart';
+import 'panorama_category_trend.dart';
 
 /// Every nullable field means "not verified / could not load", NOT a
 /// financial zero. An empty list means the scoped query succeeded but had
@@ -20,6 +21,8 @@ class Panorama360Data {
     this.upcoming,
     this.closedEarlier,
     this.closedLater,
+    this.closedEarlierCategories,
+    this.closedLaterCategories,
     this.referenceDate,
   });
 
@@ -33,7 +36,20 @@ class Panorama360Data {
   /// If either request fails, the comparison is unknown (never zero).
   final MonthlyMoneySummary? closedEarlier;
   final MonthlyMoneySummary? closedLater;
+
+  /// Two independent successful historical budget queries; null means
+  /// unavailable. Never infer that an absent category had zero spending.
+  final PanoramaCategoryMonth? closedEarlierCategories;
+  final PanoramaCategoryMonth? closedLaterCategories;
   final DateTime? referenceDate;
+
+  PanoramaCategoryTrend? get categoryTrend => referenceDate == null
+      ? null
+      : PanoramaCategoryTrend.tryFrom(
+          earlier: closedEarlierCategories,
+          later: closedLaterCategories,
+          referenceDate: referenceDate!,
+        );
 
   PanoramaClosedMonthTrend? get closedMonthTrend => referenceDate == null
       ? null
@@ -49,7 +65,8 @@ class Panorama360Data {
       budgets != null ||
       goals != null ||
       upcoming != null ||
-      closedMonthTrend != null;
+      closedMonthTrend != null ||
+      categoryTrend != null;
 
   /// Sum parent categories only. Children are already included within
   /// their parent aggregation: adding them again would double consumption.
@@ -132,6 +149,14 @@ class Panorama360DataLoader {
             spaceId: spaceId,
             periodMonth: laterClosedMonth,
           )),
+      _optional(() => repository.getBudgetOverview(
+            spaceId: spaceId,
+            periodMonth: earlierClosedMonth,
+          )),
+      _optional(() => repository.getBudgetOverview(
+            spaceId: spaceId,
+            periodMonth: laterClosedMonth,
+          )),
     ]);
     final rawGoals = data[3] as List<FinancialGoal>?;
     // Belt-and-braces client-side scope check; actual authorization is RLS.
@@ -147,6 +172,18 @@ class Panorama360DataLoader {
       upcoming: data[4] as List<UpcomingEvent>?,
       closedEarlier: data[5] as MonthlyMoneySummary?,
       closedLater: data[6] as MonthlyMoneySummary?,
+      closedEarlierCategories: data[7] == null
+          ? null
+          : PanoramaCategoryMonth(
+              periodMonth: earlierClosedMonth,
+              categories: data[7] as List<BudgetOverviewItem>,
+            ),
+      closedLaterCategories: data[8] == null
+          ? null
+          : PanoramaCategoryMonth(
+              periodMonth: laterClosedMonth,
+              categories: data[8] as List<BudgetOverviewItem>,
+            ),
       referenceDate: month,
     );
   }
