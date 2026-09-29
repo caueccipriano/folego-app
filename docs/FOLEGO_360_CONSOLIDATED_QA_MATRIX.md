@@ -18,8 +18,8 @@ The latest stacked draft integration starts with:
 - PR #34 mandatory signed credit-card CSV purchase polarity consent;
 - PR #44 no guessed DD/MM vs MM/DD monthly competence;
 - PR #45 approved R$9.90/month **marketing label only**, with no billing.
-- This PR: run previously independent money, import, price and Push browser
-  synthetic contracts **on the SAME integrated commit**.
+- This integration patch: add PR #39's separately green **closed-month matched parent-category differences** to the R$9.90 consolidated QA candidate, with an extra privacy guard hiding **category names and direction** while values are masked. The new tests are part of the SAME integrated Flutter CI gate.
+- Existing combined QA: run previously independent money, import, price and Push browser synthetic contracts **on the SAME integrated commit**.
 
 The work remains in draft GitHub branches. Neither isolated Supabase
 migrations nor a real public deployment have been made through this
@@ -35,6 +35,10 @@ integration.
 | Device Push | JS browser two-tap/owner-recovery and Flutter UI contracts | Genuine installed physical iPhone Home Screen PWA, APNs/Android delivery, expired/revoked sessions while app closed |
 | Responsiveness | GitHub cross-device synthetic Playwright workflow | Actual older small iPhone/Android and accessible large-font/dark-mode review |
 | Account deletion | Prior isolated role/server regressions in draft branches | End-to-end owned/shared fictional space deletion and recovery decisions, approved support runbook |
+
+## Existing divergent safety branch NOT YET included
+
+The separate [draft #40](https://github.com/caueccipriano/folego-app/pull/40) has independent synthetic **financial-space-switch stale import protection** and tests, and [draft #38](https://github.com/caueccipriano/folego-app/pull/38) makes signed card polarity fail closed at the parser layer. The current integrated candidate does **not** yet contain those two changes. [Draft #47](https://github.com/caueccipriano/folego-app/pull/47) independently reimplements category change comparison, but is redundant with PR #39 after this reconciliation and must not be merged as a second separate module. Port #40/#38's audited safeguards without discarding PR #44's date warning and rerun all combined tests before staging.
 
 ## Blockers outside this PR
 
