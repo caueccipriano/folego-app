@@ -123,7 +123,21 @@ void main() {
     expect(find.text('agenda'), findsOneWidget);
     expect(find.text('atrasados'), findsOneWidget);
     expect(find.text('hoje'), findsWidgets);
+    // Real iPhone ListViews mount later agenda sections lazily. Reach
+    // tomorrow by scrolling instead of expecting it above the fold.
+    final agendaScroll = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('amanhã'),
+      200,
+      scrollable: agendaScroll,
+    );
     expect(find.text('amanhã'), findsWidgets);
+    // Scroll back to the filter chips at the beginning of the agenda.
+    await tester.scrollUntilVisible(
+      find.text('dívidas'),
+      -200,
+      scrollable: agendaScroll,
+    );
     expect(find.text('todos'), findsOneWidget);
     expect(find.text('dívidas'), findsOneWidget);
 
@@ -264,7 +278,9 @@ void main() {
     await _flush(tester);
     await tester.tap(find.text('Dívida teste'));
     await _flush(tester);
-    expect(find.text('detalhes da dívida'), findsOneWidget);
+    // Once loaded, the header replaces its generic loading subtitle with
+    // actual creditor/type details; verify the canonical debt actually opens.
+    expect(find.textContaining('Banco'), findsWidgets);
     expect(find.text('Dívida teste'), findsWidgets);
   });
 
