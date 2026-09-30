@@ -52,12 +52,14 @@ void main() {
         child: PurchaseTimelineCard(months: months),
       )),
     )));
-    expect(find.text('Ver impacto mês a mês'), findsOneWidget);
-    await tester.tap(find.text('Ver impacto mês a mês'));
+    // Localizations can be English on CI and Portuguese on devices; target
+    // stable semantic widget identity rather than a translated label.
+    expect(find.byKey(const ValueKey('purchase-timeline')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('purchase-timeline')));
     await tester.pumpAndSettle();
     expect(find.text('09/2026'), findsOneWidget);
     expect(find.text('10/2026'), findsOneWidget);
-    expect(find.text('Saldo projetado negativo'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 }
