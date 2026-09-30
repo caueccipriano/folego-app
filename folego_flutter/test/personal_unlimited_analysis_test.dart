@@ -50,6 +50,8 @@ void main() {
     final repo = _FictionalRepository('fictional-personal-account');
     await tester.pumpWidget(_screen(repo, 'fictional-space'));
     expect(find.text('Analisar sem limite'), findsOneWidget);
+    expect(find.textContaining('limite atual de até 30 perguntas'), findsOneWidget);
+    expect(find.textContaining('análise local continua ilimitada'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Como está meu mês?');
     await tester.tap(find.text('Analisar sem limite'));
     await tester.pump();

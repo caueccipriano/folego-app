@@ -330,9 +330,10 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
           icon: const Icon(Icons.auto_awesome_outlined, size: 18),
           label: const Text('Perguntar à IA'),
         )),
-        Text('A IA online usa uma API cobrada separadamente do ChatGPT Pro '
-             'e pode estar indisponível. Ela recebe apenas os totais do mês, '
-             'nunca lançamentos individuais.',
+        Text('A IA online tem limite atual de até 30 perguntas por mês '
+             'para Premium, com custo de API separado do seu ChatGPT. '
+             'A análise local continua ilimitada e sem IA. '
+             'A IA recebe apenas os totais do mês, sem lançamentos individuais.',
           style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         if (visibleAnswer != null) ...[
           const SizedBox(height: 14),
