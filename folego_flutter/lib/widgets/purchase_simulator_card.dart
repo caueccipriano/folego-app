@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/intelligence/purchase_scenario_service.dart';
+import '../core/intelligence/purchase_timeline.dart';
+import 'purchase_timeline_card.dart';
 
 class PurchaseSimulatorCard extends StatefulWidget {
   const PurchaseSimulatorCard({super.key, required this.service, required this.spaceId, this.embedded = false});
@@ -14,6 +16,12 @@ class PurchaseSimulatorCard extends StatefulWidget {
 class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
   final _amount = TextEditingController();
   int _installments = 1;
+  int _horizonMonths = 12;
+  int _requestEpoch = 0;
+  String? _boundIdentity;
+  String? _resultOwnerUserId;
+  String? _resultSpaceId;
+  List<PurchaseTimelineMonth> _timeline = const [];
   bool _busy = false;
   String? _error;
   double? _payment;
@@ -28,7 +36,44 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
   ).format(amount);
 
   @override
-  void dispose() { _amount.dispose(); super.dispose(); }
+  void initState() {
+    super.initState();
+    _boundIdentity = widget.service.repository.currentUserId;
+  }
+
+  void _clearResult() {
+    _hasResult = false;
+    _error = null;
+    _payment = null;
+    _before = null;
+    _after = null;
+    _firstNegativeMonth = null;
+    _timeline = const [];
+    _resultOwnerUserId = null;
+    _resultSpaceId = null;
+  }
+
+  @override
+  void didUpdateWidget(covariant PurchaseSimulatorCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextIdentity = widget.service.repository.currentUserId;
+    if (oldWidget.spaceId != widget.spaceId ||
+        !identical(oldWidget.service.repository, widget.service.repository) ||
+        _boundIdentity != nextIdentity) {
+      _requestEpoch++;
+      _boundIdentity = nextIdentity;
+      _busy = false;
+      _amount.clear();
+      _clearResult();
+    }
+  }
+
+  @override
+  void dispose() {
+    _requestEpoch++;
+    _amount.dispose();
+    super.dispose();
+  }
 
   Future<void> _simulate() async {
     final raw = _amount.text.trim().replaceAll(RegExp(r'[^0-9,.]'), '');
@@ -42,14 +87,32 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
           : 'Digite um valor válido. Exemplo: 350,00'; _hasResult = false; });
       return;
     }
+    final epoch = ++_requestEpoch;
+    final repository = widget.service.repository;
+    final space = widget.spaceId;
+    final userId = repository.currentUserId;
+    if (userId == null) {
+      setState(() => _error = _english
+          ? 'Sign in before simulating.' : 'Entre na sua conta para simular.');
+      return;
+    }
+    bool current() => mounted &&
+        epoch == _requestEpoch &&
+        identical(repository, widget.service.repository) &&
+        widget.spaceId == space &&
+        repository.currentUserId == userId;
     FocusScope.of(context).unfocus();
-    setState(() { _busy = true; _error = null; _hasResult = false; });
+    setState(() { _busy = true; _clearResult(); });
     try {
       final scenario = await widget.service.simulate(
-        spaceId: widget.spaceId, purchaseAmount: value, installments: _installments,
+        spaceId: space, purchaseAmount: value, installments: _installments,
+        horizonMonths: _horizonMonths,
       );
-      if (!mounted) return;
+      if (!current()) return;
       setState(() {
+        _resultOwnerUserId = userId;
+        _resultSpaceId = space;
+        _timeline = purchaseTimeline(scenario.baseline, scenario.withPurchase);
         _payment = scenario.monthlyPayment;
         _before = scenario.baseline.summary.endingBalance;
         _after = scenario.withPurchase.summary.endingBalance;
@@ -57,20 +120,24 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
         _hasResult = true;
       });
     } on StateError catch (error) {
-      if (mounted) { setState(() => _error = error.message); }
+      if (current()) { setState(() => _error = error.message); }
     } catch (_) {
-      if (mounted) { setState(() => _error = _english
+      if (current()) { setState(() => _error = _english
           ? 'Unable to simulate. Check your budget setup and try again.'
           : 'Não foi possível simular. Confira seu planejamento e tente novamente.'); }
     } finally {
-      if (mounted) { setState(() => _busy = false); }
+      if (current()) { setState(() => _busy = false); }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final english = _english;
-    final risk = _hasResult && _firstNegativeMonth != null;
+    final resultVisible = _hasResult &&
+        _resultOwnerUserId != null &&
+        _resultOwnerUserId == widget.service.repository.currentUserId &&
+        _resultSpaceId == widget.spaceId;
+    final risk = resultVisible && _firstNegativeMonth != null;
     final content = Padding(
       padding: EdgeInsets.fromLTRB(widget.embedded ? 20 : 16, 16, widget.embedded ? 20 : 16, 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -89,17 +156,53 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _simulate(),
+          onChanged: (_) { if (_hasResult) setState(_clearResult); },
           decoration: InputDecoration(
             labelText: english ? 'Purchase amount' : 'Valor da compra (reais)',
           ),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<int>(
+          key: ValueKey('purchase-installments-$_installments'),
           initialValue: _installments,
           decoration: InputDecoration(labelText: english ? 'Installments' : 'Parcelas'),
           items: [1, 2, 3, 4, 5, 6, 10, 12]
               .map((n) => DropdownMenuItem(value: n, child: Text('${n}x'))).toList(),
-          onChanged: _busy ? null : (n) => setState(() => _installments = n ?? 1),
+          onChanged: _busy ? null : (n) => setState(() {
+            _installments = n ?? 1;
+            _clearResult();
+          }),
+        ),
+        const SizedBox(height: 10),
+        Text(english ? 'Quick options' : 'Opções rápidas',
+            style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: 4),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          for (final option in [1, 3, 6, 12])
+            ChoiceChip(
+              key: ValueKey('purchase-option-$option'),
+              label: Text(option == 1
+                  ? (english ? 'Pay now' : 'À vista') : '${option}x'),
+              selected: _installments == option,
+              onSelected: _busy ? null : (_) => setState(() {
+                _installments = option;
+                _clearResult();
+              }),
+            ),
+        ]),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<int>(
+          initialValue: _horizonMonths,
+          decoration: InputDecoration(
+              labelText: english ? 'Projection period' : 'Período da projeção'),
+          items: [6, 12, 18, 24]
+              .map((n) => DropdownMenuItem(
+                value: n, child: Text(english ? '$n months' : '$n meses'),
+              )).toList(),
+          onChanged: _busy ? null : (n) => setState(() {
+            _horizonMonths = n ?? 12;
+            _clearResult();
+          }),
         ),
         const SizedBox(height: 12),
         FilledButton(
@@ -112,7 +215,7 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
           const SizedBox(height: 12),
           Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
         ],
-        if (_hasResult && _payment != null && _before != null && _after != null) ...[
+        if (resultVisible && _payment != null && _before != null && _after != null) ...[
           const SizedBox(height: 18),
           const Divider(),
           Text(english ? 'Your estimated result' : 'Resultado estimado',
@@ -156,6 +259,8 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
               ]),
             ),
           ),
+          const SizedBox(height: 8),
+          PurchaseTimelineCard(months: _timeline),
           const SizedBox(height: 8),
           Text(
             english ? 'Estimate only, not a guarantee.' : 'Esta simulação é uma estimativa, não uma garantia.',

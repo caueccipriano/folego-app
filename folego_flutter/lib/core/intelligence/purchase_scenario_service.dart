@@ -33,6 +33,13 @@ class PurchaseScenarioService {
         horizonMonths < 1 || horizonMonths > 24) {
       throw ArgumentError('Confira o valor, as parcelas e o período.');
     }
+    final identity = repository.currentUserId;
+    if (identity == null) throw StateError('Entre na sua conta antes de simular.');
+    void requireSameIdentity() {
+      if (repository.currentUserId != identity) {
+        throw StateError('Sua sessão mudou. Inicie uma nova simulação.');
+      }
+    }
     final date = purchaseDate ?? DateTime.now();
     final adjustment = ProjectionAdjustment(
       id: 'purchase-scenario',
@@ -46,16 +53,28 @@ class PurchaseScenarioService {
     );
     final baseline = await repository.getProjection(
       spaceId: spaceId, horizonMonths: horizonMonths);
+    requireSameIdentity();
     final withPurchase = await repository.getProjection(
       spaceId: spaceId, horizonMonths: horizonMonths,
       adjustments: [adjustment]);
+    requireSameIdentity();
     if (!baseline.hasProjectionInputs || !withPurchase.hasProjectionInputs ||
         baseline.months.isEmpty || withPurchase.months.isEmpty) {
       throw StateError('Configure suas projeções antes de simular compras.');
     }
     // Backend is authoritative. Until paid receipts are verified server-side,
     // never bypass the quota based on a client-side premium flag.
-    final quota = await Supabase.instance.client.rpc('consume_free_simulation');
+    // The quota must never be consumed using another person's active Auth.
+    final client = Supabase.instance.client;
+    requireSameIdentity();
+    if (client.auth.currentUser?.id != identity) {
+      throw StateError('Sua sessão mudou. Inicie uma nova simulação.');
+    }
+    final quota = await client.rpc('consume_free_simulation');
+    requireSameIdentity();
+    if (client.auth.currentUser?.id != identity) {
+      throw StateError('Sua sessão mudou. Inicie uma nova simulação.');
+    }
     final row = quota is List && quota.isNotEmpty ? quota.first : null;
     if (row is! Map || row['allowed'] != true) {
       throw StateError('Limite mensal de simulações atingido.');
