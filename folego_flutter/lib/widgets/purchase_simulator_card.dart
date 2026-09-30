@@ -173,6 +173,37 @@ class _PurchaseSimulatorCardState extends State<PurchaseSimulatorCard> {
             _clearResult();
           }),
         ),
+        const SizedBox(height: 10),
+        Text(english ? 'Quick options' : 'Opções rápidas',
+            style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: 4),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          for (final option in [1, 3, 6, 12])
+            ChoiceChip(
+              key: ValueKey('purchase-option-$option'),
+              label: Text(option == 1
+                  ? (english ? 'Pay now' : 'À vista') : '${option}x'),
+              selected: _installments == option,
+              onSelected: _busy ? null : (_) => setState(() {
+                _installments = option;
+                _clearResult();
+              }),
+            ),
+        ]),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<int>(
+          initialValue: _horizonMonths,
+          decoration: InputDecoration(
+              labelText: english ? 'Projection period' : 'Período da projeção'),
+          items: [6, 12, 18, 24]
+              .map((n) => DropdownMenuItem(
+                value: n, child: Text(english ? '$n months' : '$n meses'),
+              )).toList(),
+          onChanged: _busy ? null : (n) => setState(() {
+            _horizonMonths = n ?? 12;
+            _clearResult();
+          }),
+        ),
         const SizedBox(height: 12),
         FilledButton(
           onPressed: _busy ? null : _simulate,
