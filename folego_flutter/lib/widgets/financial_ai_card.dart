@@ -7,6 +7,7 @@ import '../data/models/monthly_money_summary.dart';
 import 'folego_home_section_card.dart';
 import 'local_monthly_summary.dart';
 import 'local_monthly_answers.dart';
+import 'local_question_suggestions.dart';
 
 /// Only monthly aggregate totals are shared with the AI provider.
 class FinancialAiCard extends StatefulWidget {
@@ -236,6 +237,24 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
     }
   }
 
+  // Selecting a prompt is purely local; it neither invokes the AI provider
+  // nor fetches financial data until the user presses the analysis button.
+  void _selectSuggestion(String question) {
+    if (_busy) return;
+    setState(() {
+      _question.text = question;
+      _answer = null;
+      _isError = false;
+      _isLocalAnswer = false;
+      _answerForUserId = null;
+      _answerForSpaceId = null;
+      _localSummary = null;
+      _summaryForUserId = null;
+      _summaryForSpaceId = null;
+      _showLocalSummary = false;
+    });
+  }
+
   Future<void> _copyForChatGpt() async {
     final summary = _localSummary;
     if (summary == null || _busy ||
@@ -285,22 +304,19 @@ class _FinancialAiCardState extends State<FinancialAiCard> {
              'de IA ou créditos. Para perguntas abertas, use seu ChatGPT.',
           style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         const SizedBox(height: 14),
-        // One accessible horizontal row rather than two oversized chip rows
-        // on a 375px iPhone screen.
+        // Inspired by contextual chat prompt chips: no network request on tap.
+        // The user explicitly chooses a local analysis or metered online AI.
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(children: [
-            ActionChip(
-              label: const Text('Como está meu mês?'),
-              onPressed: _busy ? null : () => setState(() =>
-                _question.text = 'Como está minha situação financeira neste mês?'),
-            ),
-            const SizedBox(width: 8),
-            ActionChip(
-              label: const Text('Onde posso melhorar?'),
-              onPressed: _busy ? null : () => setState(() =>
-                _question.text = 'O que posso melhorar no orçamento com os totais disponíveis?'),
-            ),
+            for (final suggestion in localMonthlySuggestions) ...[
+              ActionChip(
+                key: ValueKey('local-question-${suggestion.id}'),
+                label: Text(suggestion.label),
+                onPressed: _busy ? null : () => _selectSuggestion(suggestion.question),
+              ),
+              const SizedBox(width: 8),
+            ],
           ]),
         ),
         const SizedBox(height: 12),
