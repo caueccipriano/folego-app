@@ -1,5 +1,7 @@
 # Fôlego — Flutter v0.1
 
+> **Status do produto:** a interface standalone do FÔLEGO foi aposentada em favor do módulo **Dinheiro** dentro do **EU Central**. Este repositório continua como referência histórica do cliente Flutter e do motor financeiro. O backend Supabase, as RPCs e os dados financeiros permanecem ativos e são a fonte de verdade do módulo Dinheiro.
+
 Primeira base mobile do **Fôlego**, conectada ao backend Supabase já construído para o produto.
 
 > **Promessa:** saiba quanto você realmente pode gastar hoje sem apertar amanhã.
