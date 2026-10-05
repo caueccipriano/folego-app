@@ -46,58 +46,6 @@ jobs:
           grep -F '<base href="/folego-app/">' public-site/index.html
           grep -F '"theme_color": "#3157D5"' public-site/manifest.json
 
-      - name: Replace public shell with EU migration landing
-        run: |
-          cat > build/web/index.html <<'HTML'
-          <!doctype html>
-          <html lang="pt-BR">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-            <meta name="theme-color" content="#3157D5">
-            <meta name="robots" content="noindex">
-            <title>Fôlego agora está no EU</title>
-            <style>
-              :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;color:#14182a;background:#f6f7fb}
-              *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 10% 0%,rgba(49,87,213,.13),transparent 28rem),#f6f7fb}
-              main{width:min(520px,100%);padding:30px;border:1px solid #e3e6ef;border-radius:30px;background:#fff;box-shadow:0 24px 70px rgba(20,24,42,.12)}
-              .mark{width:62px;height:62px;display:grid;place-items:center;border-radius:20px;background:linear-gradient(145deg,#3157d5,#4265d6);color:#fff;font-weight:900;font-size:23px;box-shadow:0 12px 28px rgba(49,87,213,.22)}
-              small{display:block;margin-top:22px;color:#3157d5;font-size:10px;font-weight:900;letter-spacing:.09em}
-              h1{margin:8px 0 12px;font-size:42px;line-height:.96;letter-spacing:-.05em}p{margin:0;color:#687086;line-height:1.55;font-size:14px}
-              a{display:flex;align-items:center;justify-content:center;min-height:54px;margin-top:24px;border-radius:17px;background:#3157d5;color:white;text-decoration:none;font-weight:900}
-              .note{margin-top:16px;padding-top:16px;border-top:1px solid #e3e6ef;font-size:12px;color:#687086}
-            </style>
-            <meta http-equiv="refresh" content="4;url=https://caueccipriano.github.io/mylife-caue-app/#/dinheiro">
-          </head>
-          <body>
-            <main>
-              <div class="mark">EU</div>
-              <small>FÔLEGO → EU CENTRAL</small>
-              <h1>Seu dinheiro mudou de casa.</h1>
-              <p>O FÔLEGO agora é o módulo <strong>Dinheiro</strong> dentro do EU. Seus dados, histórico e cálculos continuam no mesmo backend — só a experiência foi centralizada.</p>
-              <a id="go" href="https://caueccipriano.github.io/mylife-caue-app/#/dinheiro">Abrir Dinheiro no EU</a>
-              <p class="note">Estamos limpando o cache do app antigo para evitar que uma versão velha continue abrindo no seu iPhone.</p>
-            </main>
-            <script>
-              const target='https://caueccipriano.github.io/mylife-caue-app/#/dinheiro';
-              (async()=>{try{
-                if('serviceWorker' in navigator){
-                  const regs=await navigator.serviceWorker.getRegistrations();
-                  await Promise.all(regs.map(r=>r.unregister()));
-                }
-                if('caches' in window){
-                  const keys=await caches.keys();
-                  await Promise.all(keys.map(k=>caches.delete(k)));
-                }
-              }catch(e){}
-              setTimeout(()=>location.replace(target),1400);
-              })();
-            </script>
-          </body>
-          </html>
-          HTML
-          cp build/web/index.html build/web/404.html
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
