@@ -6,12 +6,20 @@
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="O Fôlego agora vive dentro do EU, sua central pessoal.">
+  <meta property="og:title" content="Fôlego agora vive no EU">
+  <meta property="og:description" content="Seu dinheiro agora faz parte do EU Central.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://caueccipriano.github.io/folego-app/">
+  <meta property="og:image" content="https://caueccipriano.github.io/folego-app/icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__">
   <meta name="theme-color" content="#3157D5">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Fôlego → EU">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-180.png?v=__FOLEGO_BUILD_VERSION__">
+  <link rel="icon" type="image/png" href="favicon.png?v=__FOLEGO_BUILD_VERSION__">
+  <meta name="folego-build" content="__FOLEGO_BUILD_VERSION__">
   <title>Fôlego agora vive no EU</title>
   <style>
     :root{
@@ -43,10 +51,12 @@
     .note i{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:#E6F4E9;color:var(--green);font-style:normal;font-size:13px}
     .note p{margin:0;color:var(--muted);font-size:9px;line-height:1.5}.note strong{color:var(--text)}
     footer{margin-top:14px;text-align:center;color:#8E96AA;font-size:8px;line-height:1.4}
+    flutter-view{display:none!important}
     @media(max-width:390px){.card{padding:24px}.modules{grid-template-columns:1fr 1fr}h1{font-size:40px}}
   </style>
 </head>
 <body>
+  <flutter-view aria-hidden="true"></flutter-view>
   <main>
     <section class="card">
       <div class="top">
