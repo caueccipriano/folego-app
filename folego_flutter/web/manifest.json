@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Fôlego",
-  "short_name": "Fôlego",
+  "name": "Fôlego → EU",
+  "short_name": "Fôlego → EU",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./",
@@ -11,9 +11,9 @@
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#F5F1E8",
-  "theme_color": "#F5F1E8",
-  "description": "Entenda quanto do seu dinheiro está realmente livre hoje, sem apertar amanhã.",
+  "background_color": "#F6F7FB",
+  "theme_color": "#3157D5",
+  "description": "O Fôlego agora vive dentro do EU, sua central pessoal.",
   "categories": [
     "finance",
     "productivity"
