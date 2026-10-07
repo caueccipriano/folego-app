@@ -1,11 +1,11 @@
-name: Deploy retired Folego gateway
+name: Deploy Flutter Web
 
 on:
   push:
     branches:
       - feat/transactions-recurring
     paths:
-      - 'folego_flutter/web/**'
+      - 'folego_flutter/**'
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
 
@@ -21,6 +21,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: folego_flutter
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,28 +32,123 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Stage retired gateway
-        run: |
-          rm -rf public-site
-          mkdir -p public-site
-          cp -R folego_flutter/web/. public-site/
-          sed -i "s/__FOLEGO_BUILD_VERSION__/\${GITHUB_SHA}/g" public-site/index.html
-          cp public-site/index.html public-site/404.html
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
 
-      - name: Verify retired gateway
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate brand icons from canonical SVG
         run: |
-          test -f public-site/index.html
-          test -f public-site/manifest.json
-          test -f public-site/flutter_service_worker.js
-          grep -F 'FÔLEGO → EU CENTRAL' public-site/index.html
-          grep -F 'https://caueccipriano.github.io/mylife-caue-app/#/dinheiro' public-site/index.html
-          grep -F '<base href="/folego-app/">' public-site/index.html
-          grep -F '"theme_color": "#3157D5"' public-site/manifest.json
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          rsvg-convert -w 512 -h 512 web/icons/folego-logo.svg -o web/icons/Icon-512.png
+          rsvg-convert -w 512 -h 512 web/icons/folego-logo-maskable.svg -o web/icons/Icon-maskable-512.png
+          rsvg-convert -w 192 -h 192 web/icons/folego-logo.svg -o web/icons/Icon-192.png
+          rsvg-convert -w 192 -h 192 web/icons/folego-logo-maskable.svg -o web/icons/Icon-maskable-192.png
+          rsvg-convert -w 180 -h 180 web/icons/folego-logo.svg -o web/icons/Icon-180.png
+          rsvg-convert -w 64 -h 64 web/icons/folego-logo.svg -o web/favicon.png
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Stable responsive preflight
+        run: |
+          flutter test \
+            test/app_breakpoints_test.dart \
+            test/auth_widgets_test.dart \
+            test/auth_responsive_smoke_test.dart
+
+      - name: Flutter public auth integration smoke
+        run: |
+          chromedriver --port=4444 >/tmp/chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid"' EXIT
+
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/auth_public_flow_test.dart \
+            -d web-server \
+            --browser-name=chrome
+
+      - name: Build web app
+        run: flutter build web --release --base-href "/folego-app/"
+
+      - name: Version PWA cache and app shell
+        run: |
+          sed -i "s/__FOLEGO_CACHE_VERSION__/${GITHUB_SHA}/g" build/web/folego_push_sw.js
+          sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/index.html
+          sed -i "s#main.dart.js#main.dart.js?v=${GITHUB_SHA}#g" build/web/flutter_bootstrap.js
+
+      - name: Verify PWA artifact
+        run: |
+          test -f build/web/index.html
+          test -f build/web/manifest.json
+          test -f build/web/folego_push_sw.js
+          test -f build/web/folego_push_bridge.js
+          grep -F "${GITHUB_SHA}" build/web/folego_push_sw.js
+          grep -F "${GITHUB_SHA}" build/web/index.html
+          grep -F "main.dart.js?v=${GITHUB_SHA}" build/web/flutter_bootstrap.js
+          ! grep -F "__FOLEGO_CACHE_VERSION__" build/web/folego_push_sw.js
+          ! grep -F "__FOLEGO_BUILD_VERSION__" build/web/index.html
+          grep -F 'href="/folego-app/"' build/web/index.html
+          grep -F 'property="og:image"' build/web/index.html
+          grep -F "${GITHUB_SHA}" build/web/index.html
+          test -f build/web/icons/Icon-512.png
+          test -f build/web/icons/Icon-192.png
+          test -f build/web/icons/Icon-180.png
+          grep -F '"display": "standalone"' build/web/manifest.json
+
+      - name: Add SPA fallback
+        run: cp build/web/index.html build/web/404.html
+
+      - name: Stage build for cross-device QA
+        run: |
+          rm -rf ../qa-site
+          mkdir -p ../qa-site/folego-app
+          cp -R build/web/. ../qa-site/folego-app/
+
+      - name: Set up Node for browser QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright QA dependencies
+        working-directory: qa
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        working-directory: qa
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run pre-deploy cross-device QA
+        working-directory: qa
+        env:
+          QA_BASE_URL: http://127.0.0.1:4173/folego-app/
+        run: |
+          python3 -m http.server 4173 --directory ../qa-site >/tmp/folego-qa-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          npx playwright test tests/public-shell.spec.ts
+
+      - name: Upload browser QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-predeploy-browser-qa-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            qa/playwright-report/
+            qa/test-results/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: public-site
+          path: folego_flutter/build/web
 
   deploy:
     needs: build
@@ -57,6 +156,7 @@ jobs:
     environment:
       name: github-pages-preview
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
