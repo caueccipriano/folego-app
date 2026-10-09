@@ -23,6 +23,7 @@ class DailyReviewCard extends StatefulWidget {
 class _DailyReviewCardState extends State<DailyReviewCard> {
   Map<String, dynamic>? _state;
   bool _busy = false;
+  bool _expanded = false;
   bool _movements = false;
   bool _commitments = false;
   bool _noMovements = false;
@@ -161,16 +162,14 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _complete
-                  ? 'Revisão de hoje concluída ✓'
-                  : 'Sua revisão de 2 minutos',
+              _complete ? 'Revisão de hoje concluída ✓' : 'Sua revisão diária',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             Text(
               '${days.length}/7 dias revisados · seu progresso continua mesmo se perder um dia',
             ),
-            if (today != null)
+            if (today != null && (_expanded || _complete))
               Wrap(
                 spacing: 4,
                 children: List.generate(7, (index) {
@@ -190,7 +189,14 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               TextButton(onPressed: _load, child: Text(_error!)),
             if (_state == null && _error == null)
               const LinearProgressIndicator(),
-            if (_state != null && !_complete) ...[
+            if (_state != null && !_complete && !_expanded) ...[
+              Text('$_pending pendências para classificar'),
+              FilledButton(
+                onPressed: () => setState(() => _expanded = true),
+                child: const Text('Começar revisão'),
+              ),
+            ],
+            if (_state != null && !_complete && _expanded) ...[
               const SizedBox(height: 8),
               Text(
                 _pending > 0
