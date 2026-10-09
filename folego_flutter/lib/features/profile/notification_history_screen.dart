@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/layout/app_content_container.dart';
 import '../../core/layout/app_scroll_gutter.dart';
@@ -20,10 +21,14 @@ class NotificationHistoryScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.cache,
+    this.authenticatedUserId,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  final NotificationHistoryCache? cache;
+  final String? Function()? authenticatedUserId;
 
   @override
   State<NotificationHistoryScreen> createState() =>
@@ -31,7 +36,8 @@ class NotificationHistoryScreen extends StatefulWidget {
 }
 
 class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
-  final NotificationHistoryCache _cache = NotificationHistoryCache();
+  late final NotificationHistoryCache _cache;
+  int _loadGeneration = 0;
 
   List<NotificationHistoryItem> _items = const [];
   bool _loading = true;
@@ -41,34 +47,87 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    _cache = widget.cache ?? NotificationHistoryCache();
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant NotificationHistoryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spaceId != widget.spaceId ||
+        !identical(oldWidget.repository, widget.repository) ||
+        oldWidget.authenticatedUserId != widget.authenticatedUserId) {
+      _load();
+    }
+  }
+
+  String? _currentUserId() {
+    final injected = widget.authenticatedUserId;
+    return injected == null
+        ? Supabase.instance.client.auth.currentUser?.id
+        : injected();
+  }
+
+  bool _isCurrentLoad(
+    int generation,
+    String spaceId,
+    String userId,
+    FolegoRepository repository,
+  ) {
+    return mounted &&
+        _loadGeneration == generation &&
+        widget.spaceId == spaceId &&
+        identical(widget.repository, repository) &&
+        _currentUserId() == userId;
+  }
+
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
+    final spaceId = widget.spaceId;
+    final repository = widget.repository;
+    final userId = _currentUserId();
+
+    // Clear the previous user's data before waiting on any asynchronous work.
     setState(() {
+      _items = const [];
       _loading = true;
       _usingOfflineCache = false;
       _error = null;
     });
 
+    if (userId == null || userId.trim().isEmpty) {
+      setState(() {
+        _loading = false;
+        _error = 'entre na sua conta para consultar o histórico';
+      });
+      return;
+    }
+
     try {
-      final items =
-          await widget.repository.getNotificationHistory(widget.spaceId);
+      final items = await repository.getNotificationHistory(spaceId);
+      if (!_isCurrentLoad(generation, spaceId, userId, repository)) return;
 
       try {
-        await _cache.save(widget.spaceId, items);
+        await _cache.save(spaceId, items, userId: userId);
       } catch (_) {
         // Cache is best-effort and must never block the online experience.
       }
+      if (!_isCurrentLoad(generation, spaceId, userId, repository)) return;
 
-      if (!mounted) return;
       setState(() {
         _items = items;
         _loading = false;
       });
     } catch (_) {
-      final cached = await _cache.load(widget.spaceId);
-      if (!mounted) return;
+      if (!_isCurrentLoad(generation, spaceId, userId, repository)) return;
+
+      List<NotificationHistoryItem> cached = const [];
+      try {
+        cached = await _cache.load(spaceId, userId: userId);
+      } catch (_) {
+        // Local storage may be unavailable; never fall back to another user.
+      }
+      if (!_isCurrentLoad(generation, spaceId, userId, repository)) return;
 
       if (cached.isNotEmpty) {
         setState(() {
