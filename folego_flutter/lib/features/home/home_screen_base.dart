@@ -345,6 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 header,
                 const SizedBox(height: 12),
                 DailyReviewCard(
+                  refreshToken: _snapshot,
                   space: widget.space,
                   repository: widget.repository,
                 ),

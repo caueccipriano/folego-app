@@ -100,10 +100,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                 )
                 .then<ProjectionResult?>((value) => value);
 
-      final values = await Future.wait<dynamic>([
-        baseFuture,
-        simulatedFuture,
-      ]);
+      final values = await Future.wait<dynamic>([baseFuture, simulatedFuture]);
 
       if (!mounted) return;
       final base = values[0] as ProjectionResult;
@@ -255,10 +252,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       useSafeArea: true,
       showDragHandle: false,
       builder: (_) => RecurringFormSheet(
-        space: FinancialSpace(
-          id: widget.spaceId,
-          name: 'Minhas Finanças',
-        ),
+        space: FinancialSpace(id: widget.spaceId, name: 'Minhas Finanças'),
         repository: widget.repository,
       ),
     );
@@ -274,7 +268,11 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('não consegui abrir a simulação: ${_friendlyError(error)}')),
+        SnackBar(
+          content: Text(
+            'não consegui abrir a simulação: ${_friendlyError(error)}',
+          ),
+        ),
       );
       return;
     }
@@ -321,14 +319,20 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('mudança adicionada ao planejamento — nenhum lançamento histórico foi criado'),
+          content: Text(
+            'mudança adicionada ao planejamento — nenhum lançamento histórico foi criado',
+          ),
         ),
       );
       await _load();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('não consegui adicionar ao planejamento: ${_friendlyError(error)}')),
+        SnackBar(
+          content: Text(
+            'não consegui adicionar ao planejamento: ${_friendlyError(error)}',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _savingPlan = false);
@@ -347,10 +351,8 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _ProjectionMonthDetail(
-        month: month,
-        isCurrentMonth: index == 0,
-      ),
+      builder: (_) =>
+          _ProjectionMonthDetail(month: month, isCurrentMonth: index == 0),
     );
   }
 
@@ -365,12 +367,12 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           child: _loading
               ? const AppLoadingState(label: 'calculando sua projeção')
               : _error != null
-                  ? AppErrorState(
-                      title: 'não consegui carregar sua projeção',
-                      description: _error,
-                      onRetry: () => _load(),
-                    )
-                  : _buildContent(brightness),
+              ? AppErrorState(
+                  title: 'não consegui carregar sua projeção',
+                  description: _error,
+                  onRetry: () => _load(),
+                )
+              : _buildContent(brightness),
         ),
       ),
     );
@@ -412,10 +414,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                 ],
               )
             else
-              _HorizonSelector(
-                value: _horizon,
-                onChanged: _setHorizon,
-              ),
+              _HorizonSelector(value: _horizon, onChanged: _setHorizon),
             const SizedBox(height: 12),
             if (!projection.hasProjectionInputs && _adjustments.isEmpty)
               _ProjectionEmptyState(
@@ -458,10 +457,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                     : 'antes x depois da mudança simulada',
               ),
               const SizedBox(height: 12),
-              _ProjectionChartCard(
-                base: _base!,
-                simulated: _simulated,
-              ),
+              _ProjectionChartCard(base: _base!, simulated: _simulated),
               const SizedBox(height: 12),
               _MonthCarousel(
                 months: projection.months,
@@ -525,10 +521,7 @@ class _ProjectionSimulateButton extends StatelessWidget {
             ? AppColors.darkPrimaryText
             : Colors.white,
         minimumSize: const Size(0, 44),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         shape: const StadiumBorder(),
       ),
       icon: const Icon(AppIcons.adjustments, size: 18),
@@ -538,10 +531,7 @@ class _ProjectionSimulateButton extends StatelessWidget {
 }
 
 class _ProjectionHeader extends StatelessWidget {
-  const _ProjectionHeader({
-    required this.onBack,
-    required this.onScenario,
-  });
+  const _ProjectionHeader({required this.onBack, required this.onScenario});
 
   final VoidCallback onBack;
   final VoidCallback onScenario;
@@ -598,10 +588,7 @@ class _ProjectionHeader extends StatelessWidget {
 }
 
 class _HorizonSelector extends StatelessWidget {
-  const _HorizonSelector({
-    required this.value,
-    required this.onChanged,
-  });
+  const _HorizonSelector({required this.value, required this.onChanged});
 
   final int value;
   final ValueChanged<int> onChanged;
@@ -615,26 +602,28 @@ class _HorizonSelector extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: [3, 6, 12, 24].map((months) {
-          final selected = value == months;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              selected: selected,
-              label: Text('$months meses'),
-              onSelected: (_) => onChanged(months),
-              selectedColor: accent.withValues(alpha: .14),
-              side: BorderSide(
-                color: selected ? accent.withValues(alpha: .45) : border,
-              ),
-              labelStyle: AppTypography.label(
-                context,
-                color: selected ? accent : secondary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          );
-        }).toList(growable: false),
+        children: [3, 6, 12, 24]
+            .map((months) {
+              final selected = value == months;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  selected: selected,
+                  label: Text('$months meses'),
+                  onSelected: (_) => onChanged(months),
+                  selectedColor: accent.withValues(alpha: .14),
+                  side: BorderSide(
+                    color: selected ? accent.withValues(alpha: .45) : border,
+                  ),
+                  labelStyle: AppTypography.label(
+                    context,
+                    color: selected ? accent : secondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -680,22 +669,14 @@ class _ProjectionHero extends StatelessWidget {
         children: [
           Text(
             'seu futuro financeiro',
-            style: AppTypography.section(
-              context,
-              fontSize: 18,
-              color: primary,
-            ),
+            style: AppTypography.section(context, fontSize: 18, color: primary),
           ),
           const SizedBox(height: 6),
           Text(
             simulated
                 ? 'saldo projetado depois da mudança'
                 : 'saldo projetado no fim do período',
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 11, color: secondary),
           ),
           const SizedBox(height: 10),
           FittedBox(
@@ -817,11 +798,7 @@ class _HeroStat extends StatelessWidget {
         Text(
           label,
           maxLines: 2,
-          style: AppTypography.label(
-            context,
-            fontSize: 9,
-            color: secondary,
-          ),
+          style: AppTypography.label(context, fontSize: 9, color: secondary),
         ),
         const SizedBox(height: 5),
         FittedBox(
@@ -843,10 +820,7 @@ class _HeroStat extends StatelessWidget {
 }
 
 class _ProjectionChartCard extends StatelessWidget {
-  const _ProjectionChartCard({
-    required this.base,
-    this.simulated,
-  });
+  const _ProjectionChartCard({required this.base, this.simulated});
 
   final ProjectionResult base;
   final ProjectionResult? simulated;
@@ -924,11 +898,7 @@ class _ProjectionLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (baseValues.isEmpty) return;
-    final all = <double>[
-      ...baseValues,
-      ...?simulatedValues,
-      0,
-    ];
+    final all = <double>[...baseValues, ...?simulatedValues, 0];
     var minValue = all.reduce(math.min);
     var maxValue = all.reduce(math.max);
     if ((maxValue - minValue).abs() < 1) {
@@ -974,13 +944,7 @@ class _ProjectionLinePainter extends CustomPainter {
       );
     }
 
-    _drawSeries(
-      canvas,
-      baseValues,
-      point,
-      baseColor,
-      dashed: false,
-    );
+    _drawSeries(canvas, baseValues, point, baseColor, dashed: false);
     if (simulatedValues != null && simulatedValues!.isNotEmpty) {
       _drawSeries(
         canvas,
@@ -1018,26 +982,16 @@ class _ProjectionLinePainter extends CustomPainter {
     for (var i = 0; i < values.length; i++) {
       final p = point(values, i);
       final pointColor = values[i] < 0 ? alertColor : color;
-      canvas.drawCircle(
-        p,
-        4.2,
-        Paint()..color = pointColor,
-      );
+      canvas.drawCircle(p, 4.2, Paint()..color = pointColor);
       canvas.drawCircle(
         p,
         2,
-        Paint()
-          ..color = Colors.white.withValues(alpha: .85),
+        Paint()..color = Colors.white.withValues(alpha: .85),
       );
     }
   }
 
-  void _drawDashedLine(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    Paint paint,
-  ) {
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint) {
     const dash = 7.0;
     const gap = 5.0;
     final vector = end - start;
@@ -1295,11 +1249,7 @@ class _ProjectionInsights extends StatelessWidget {
           const SizedBox(height: 9),
           Text(
             text,
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 12, color: secondary),
           ),
           if (installmentEnd != null) ...[
             const SizedBox(height: 8),
@@ -1344,10 +1294,8 @@ class _ProjectionCategories extends StatelessWidget {
   Widget build(BuildContext context) {
     if (projection.months.isEmpty) return const SizedBox.shrink();
     if (!desktopMatrix) {
-      final month = projection.months[selectedIndex.clamp(
-        0,
-        projection.months.length - 1,
-      )];
+      final month = projection
+          .months[selectedIndex.clamp(0, projection.months.length - 1)];
       return _CategoryMonthList(month: month);
     }
     return _CategoryMatrix(projection: projection);
@@ -1381,11 +1329,7 @@ class _CategoryMonthList extends StatelessWidget {
               ),
         child: Text(
           'nenhuma categoria prevista em ${_monthYear(month.month)}',
-          style: AppTypography.body(
-            context,
-            fontSize: 12,
-            color: secondary,
-          ),
+          style: AppTypography.body(context, fontSize: 12, color: secondary),
         ),
       );
     }
@@ -1408,9 +1352,7 @@ class _CategoryMonthList extends StatelessWidget {
             decoration: compact
                 ? BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(
-                        color: border.withValues(alpha: .72),
-                      ),
+                      bottom: BorderSide(color: border.withValues(alpha: .72)),
                     ),
                   )
                 : BoxDecoration(
@@ -1486,20 +1428,20 @@ class _CategoryMatrix extends StatelessWidget {
             ),
           ),
         ],
-        rows: rows.map((name) {
-          return DataRow(
-            cells: [
-              DataCell(Text(name)),
-              ...projection.months.map(
-                (month) => DataCell(
-                  Text(
-                    Formatters.money(values[name]?[month.month] ?? 0),
+        rows: rows
+            .map((name) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(name)),
+                  ...projection.months.map(
+                    (month) => DataCell(
+                      Text(Formatters.money(values[name]?[month.month] ?? 0)),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          );
-        }).toList(growable: false),
+                ],
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -1532,11 +1474,7 @@ class _ProjectionMonthDetail extends StatelessWidget {
             isCurrentMonth
                 ? 'o que já aconteceu + o que ainda está previsto'
                 : 'saldo projetado e compromissos previstos',
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 11, color: secondary),
           ),
           const SizedBox(height: 18),
           if (isCurrentMonth) ...[
@@ -1556,10 +1494,7 @@ class _ProjectionMonthDetail extends StatelessWidget {
               emphasize: true,
             ),
           ] else ...[
-            _DetailLine(
-              label: 'saldo inicial',
-              value: month.openingBalance,
-            ),
+            _DetailLine(label: 'saldo inicial', value: month.openingBalance),
             _DetailLine(
               label: 'receitas previstas',
               value: month.income,
@@ -1615,29 +1550,31 @@ class _ProjectionMonthDetail extends StatelessWidget {
               style: AppTypography.section(context, fontSize: 17),
             ),
             const SizedBox(height: 10),
-            ...month.categories.take(8).map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 9),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: AppTypography.body(context, fontSize: 12),
-                      ),
+            ...month.categories
+                .take(8)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: AppTypography.body(context, fontSize: 12),
+                          ),
+                        ),
+                        Text(
+                          Formatters.money(item.amount),
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      Formatters.money(item.amount),
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ],
         ],
       ),
@@ -1846,8 +1783,7 @@ class _ProjectionEmptyState extends StatelessWidget {
     return AppEmptyState(
       icon: AppIcons.chartLine,
       title: 'a projeção precisa conhecer seus compromissos',
-      description:
-          'cadastre receitas e despesas recorrentes, parcelas ou dívidas. aí o Fôlego consegue mostrar como os próximos meses provavelmente fecham',
+      description: 'cadastre receitas e despesas recorrentes, parcelas ou dívidas. aí o Fôlego consegue mostrar como os próximos meses provavelmente fecham',
       action: Wrap(
         alignment: WrapAlignment.center,
         spacing: 8,
@@ -1870,9 +1806,9 @@ class _ProjectionEmptyState extends StatelessWidget {
   }
 }
 
-
 enum _SimulationTemplate {
   free,
+  purchase,
   car,
   salary,
   cancelSubscription,
@@ -1900,6 +1836,7 @@ class _ProjectionSimulationSheetState
 
   final _name = TextEditingController();
   final _amount = TextEditingController();
+  final _purchasePayments = TextEditingController(text: '1');
   final _entry = TextEditingController(text: '10000');
   final _installment = TextEditingController(text: '1200');
   final _months = TextEditingController(text: '36');
@@ -1930,6 +1867,7 @@ class _ProjectionSimulationSheetState
   void dispose() {
     _name.dispose();
     _amount.dispose();
+    _purchasePayments.dispose();
     _entry.dispose();
     _installment.dispose();
     _months.dispose();
@@ -1983,6 +1921,26 @@ class _ProjectionSimulationSheetState
     List<ProjectionAdjustment> result;
 
     switch (_template) {
+      case _SimulationTemplate.purchase:
+        final total = (_money(_amount.text) * 100).round();
+        final payments = int.tryParse(_purchasePayments.text.trim()) ?? 0;
+        if (_name.text.trim().isEmpty ||
+            total <= 0 ||
+            payments < 1 ||
+            payments > 120 ||
+            total < payments) {
+          _invalid('informe a compra, o valor total e de 1 a 120 parcelas');
+          return;
+        }
+        result = buildPurchaseSimulation(
+          id: idBase,
+          name: _name.text,
+          totalCents: total,
+          payments: payments,
+          firstPayment: _startsOn,
+          categoryId: _category?.id,
+          categoryName: _category?.name,
+        );
       case _SimulationTemplate.car:
         final entry = _money(_entry.text);
         final installment = _money(_installment.text);
@@ -2064,7 +2022,9 @@ class _ProjectionSimulationSheetState
         result = [
           ProjectionAdjustment(
             id: '$idBase-salary',
-            name: source == null ? 'nova renda mensal' : 'alterar ${source.name}',
+            name: source == null
+                ? 'nova renda mensal'
+                : 'alterar ${source.name}',
             component: 'income',
             amountDelta: delta,
             frequency: 'monthly',
@@ -2133,9 +2093,8 @@ class _ProjectionSimulationSheetState
   }
 
   void _invalid(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -2159,9 +2118,7 @@ class _ProjectionSimulationSheetState
           ),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(28),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -2196,6 +2153,7 @@ class _ProjectionSimulationSheetState
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      _templateChip('compra', _SimulationTemplate.purchase),
                       _templateChip('livre', _SimulationTemplate.free),
                       _templateChip('novo carro', _SimulationTemplate.car),
                       _templateChip('novo salário', _SimulationTemplate.salary),
@@ -2247,6 +2205,28 @@ class _ProjectionSimulationSheetState
 
   List<Widget> _fieldsForTemplate() {
     switch (_template) {
+      case _SimulationTemplate.purchase:
+        return [
+          TextField(
+            controller: _name,
+            decoration: const InputDecoration(labelText: 'o que quero comprar'),
+          ),
+          const SizedBox(height: 10),
+          _moneyField(_amount, 'valor total, incluindo juros e taxas'),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _purchasePayments,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'parcelas (1 para à vista)',
+            ),
+          ),
+          const SizedBox(height: 10),
+          _categoryDropdown(optional: true),
+          const Text(
+            'Escolha abaixo a data do primeiro pagamento. A simulação distribui o valor informado; não cria compra nem calcula juros adicionais. Parcelas além do horizonte não aparecem no gráfico.',
+          ),
+        ];
       case _SimulationTemplate.car:
         return [
           _moneyField(_entry, 'entrada'),
@@ -2274,8 +2254,9 @@ class _ProjectionSimulationSheetState
         return [
           if (candidates.isNotEmpty) ...[
             DropdownButtonFormField<RecurringItem>(
-              initialValue:
-                  candidates.contains(_salarySource) ? _salarySource : null,
+              initialValue: candidates.contains(_salarySource)
+                  ? _salarySource
+                  : null,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'renda mensal atual',
@@ -2315,9 +2296,7 @@ class _ProjectionSimulationSheetState
               style: AppTypography.label(
                 context,
                 fontSize: 9,
-                color: AppColors.secondaryText(
-                  Theme.of(context).brightness,
-                ),
+                color: AppColors.secondaryText(Theme.of(context).brightness),
               ),
             ),
           ],
@@ -2365,7 +2344,10 @@ class _ProjectionSimulationSheetState
                 value: 'direct_expense',
                 child: Text('nova despesa'),
               ),
-              DropdownMenuItem(value: 'reserve', child: Text('aporte em reserva')),
+              DropdownMenuItem(
+                value: 'reserve',
+                child: Text('aporte em reserva'),
+              ),
               DropdownMenuItem(
                 value: 'investment',
                 child: Text('investimento planejado'),
@@ -2471,6 +2453,8 @@ String _monthYear(DateTime value) {
 String _friendlyError(Object error) {
   final text = error.toString().replaceFirst('Exception: ', '');
   if (text.contains('read_access_denied')) return 'sem acesso a esta projeção';
-  if (text.contains('write_access_denied')) return 'sem permissão para alterar este planejamento';
+  if (text.contains('write_access_denied')) {
+    return 'sem permissão para alterar este planejamento';
+  }
   return text;
 }

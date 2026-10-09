@@ -24,11 +24,13 @@ class TransactionClassificationInbox extends StatefulWidget {
     required this.repository,
     required this.spaceId,
     required this.initialItems,
+    this.batchSize,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final List<TransactionItem> initialItems;
+  final int? batchSize;
 
   @override
   State<TransactionClassificationInbox> createState() =>
@@ -44,16 +46,25 @@ class _TransactionClassificationInboxState
   bool _loading = true;
   bool _refreshing = false;
   bool _changed = false;
+  int _batchDone = 0;
+  int _batchTarget = 0;
+  bool get _batchFinished =>
+      widget.batchSize != null && _batchDone >= _batchTarget;
   String? _error;
 
-  bool get _automationEnabled => FeatureEntitlementsScope.of(context)
-      .entitlements
-      .allows(AppCapability.automationRules);
+  bool get _automationEnabled =>
+      FeatureEntitlementsScope.of(context).entitlements
+          .allows(AppCapability.automationRules);
 
   @override
   void initState() {
     super.initState();
     _items = List<TransactionItem>.from(widget.initialItems);
+    _batchTarget = widget.batchSize == null
+        ? _items.length
+        : (_items.length < widget.batchSize!
+              ? _items.length
+              : widget.batchSize!);
     _loadCatalogs();
   }
 
@@ -94,9 +105,8 @@ class _TransactionClassificationInboxState
     if (_refreshing) return;
     setState(() => _refreshing = true);
     try {
-      final items = await widget.repository.listPendingTransactionClassifications(
-        widget.spaceId,
-      );
+      final items = await widget.repository
+          .listPendingTransactionClassifications(widget.spaceId);
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -121,7 +131,9 @@ class _TransactionClassificationInboxState
         ? _incomeCategories
         : _expenseCategories;
     if (categories.isEmpty) {
-      setState(() => _error = 'nenhuma categoria disponível para este lançamento');
+      setState(
+        () => _error = 'nenhuma categoria disponível para este lançamento',
+      );
       return;
     }
 
@@ -148,6 +160,7 @@ class _TransactionClassificationInboxState
         _items.removeWhere((candidate) => candidate.id == item.id);
         _savingEventId = null;
         _changed = true;
+        _batchDone++;
       });
 
       final ruleCreated = await _offerAlwaysCategorize(item, selected);
@@ -229,7 +242,11 @@ class _TransactionClassificationInboxState
     } catch (error) {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('a categoria foi salva, mas a regra não: ${_friendly(error)}')),
+        SnackBar(
+          content: Text(
+            'a categoria foi salva, mas a regra não: ${_friendly(error)}',
+          ),
+        ),
       );
       return false;
     }
@@ -316,6 +333,8 @@ class _TransactionClassificationInboxState
                         Text(
                           _items.isEmpty
                               ? 'tudo em dia por aqui'
+                              : widget.batchSize != null
+                              ? '$_batchDone/$_batchTarget neste lote • ${_items.length} pendentes no total'
                               : '${_items.length} pendente${_items.length == 1 ? '' : 's'} • escolha categoria e subcategoria',
                           style: AppTypography.body(
                             context,
@@ -376,11 +395,39 @@ class _TransactionClassificationInboxState
                       secondaryText: secondaryText,
                       purple: purple,
                     )
+                  : _batchFinished
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Lote concluído ✓'),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: () => setState(() {
+                              _batchDone = 0;
+                              _batchTarget = _items.length < widget.batchSize!
+                                  ? _items.length
+                                  : widget.batchSize!;
+                            }),
+                            child: const Text('Resolver mais 5'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pop(_changed),
+                            child: const Text('Continuar depois'),
+                          ),
+                        ],
+                      ),
+                    )
                   : RefreshIndicator(
                       onRefresh: _refresh,
                       child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(14, 14, 14, 110),
-                        itemCount: _items.length,
+                        itemCount: widget.batchSize == null
+                            ? _items.length
+                            : (_items.length < _batchTarget - _batchDone
+                                  ? _items.length
+                                  : _batchTarget - _batchDone),
                         separatorBuilder: (_, _) => const SizedBox(height: 9),
                         itemBuilder: (context, index) {
                           final item = _items[index];
@@ -431,9 +478,7 @@ class _TransactionClassificationInboxState
     if (text.contains('category_not_selectable')) {
       return 'escolha uma categoria ativa e selecionável';
     }
-    return text
-        .replaceFirst('Exception: ', '')
-        .replaceFirst('Bad state: ', '');
+    return text.replaceFirst('Exception: ', '').replaceFirst('Bad state: ', '');
   }
 }
 

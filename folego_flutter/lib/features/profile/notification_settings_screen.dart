@@ -51,6 +51,7 @@ class _NotificationSettingsScreenState
   bool _loading = true;
   String? _savingKey;
   String? _error;
+  int _reminderStylePickerReset = 0;
 
   late final NotificationService _service;
   late final NotificationSettingsDataSource _dataSource;
@@ -566,6 +567,7 @@ class _NotificationSettingsScreenState
               ),
             ),
             DropdownButtonFormField<String>(
+              key: ValueKey('reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset'),
               initialValue: prefs.reminderStyle,
               decoration: const InputDecoration(labelText: 'tom dos avisos'),
               items: const [
@@ -601,7 +603,10 @@ class _NotificationSettingsScreenState
                             ],
                           ),
                         );
-                        if (accepted != true) return;
+                        if (accepted != true) {
+                          if (mounted) setState(() => _reminderStylePickerReset++);
+                          return;
+                        }
                       }
                       await _save(
                         prefs.copyWith(reminderStyle: value),
