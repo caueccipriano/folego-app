@@ -5,6 +5,7 @@ import 'folego_repository.dart';
 
 extension FolegoRepositoryNotifications on FolegoRepository {
   static const _preferenceColumns = '''
+    reminder_style,commitment_enabled,weekly_review_enabled,
     space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
     recurrences_enabled,subscriptions_enabled,expected_income_enabled,
     overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,

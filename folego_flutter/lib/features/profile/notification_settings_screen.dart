@@ -61,7 +61,8 @@ class _NotificationSettingsScreenState
   @override
   void initState() {
     super.initState();
-    _dataSource = widget.dataSource ??
+    _dataSource =
+        widget.dataSource ??
         RepositoryNotificationSettingsDataSource(widget.repository);
     _service =
         widget.service ??
@@ -179,7 +180,10 @@ class _NotificationSettingsScreenState
   Future<void> _pickReminderTime() async {
     final current = _preferences;
     if (current == null || _saving) return;
-    final value = await _chooseTime(current.preferredHour, current.preferredMinute);
+    final value = await _chooseTime(
+      current.preferredHour,
+      current.preferredMinute,
+    );
     if (value == null || !mounted) return;
     await _save(
       current.copyWith(
@@ -236,10 +240,7 @@ class _NotificationSettingsScreenState
     );
     if (value == null || !mounted) return;
     await _save(
-      current.copyWith(
-        quietEndHour: value.hour,
-        quietEndMinute: value.minute,
-      ),
+      current.copyWith(quietEndHour: value.hour, quietEndMinute: value.minute),
       key: 'quiet-end',
       label: 'o fim do não perturbe',
     );
@@ -315,7 +316,8 @@ class _NotificationSettingsScreenState
 
   void _message(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _clock(int hour, int minute) =>
@@ -348,42 +350,44 @@ class _NotificationSettingsScreenState
               ),
               Expanded(
                 child: _loading
-                    ? const AppLoadingState(label: 'organizando suas notificações')
+                    ? const AppLoadingState(
+                        label: 'organizando suas notificações',
+                      )
                     : prefs == null
-                        ? AppErrorState(
-                            title: 'não consegui abrir suas notificações',
-                            description: _error,
-                            onRetry: _load,
-                          )
-                        : ListView(
-                            key: const ValueKey('notification-settings-list'),
-                            padding: AppScrollGutter.padding(
-                              context,
-                              top: 8,
-                              bottom: 56,
-                            ),
-                            children: [
-                              _statusCard(brightness),
-                              if (_error != null) ...[
-                                const SizedBox(height: 12),
-                                _InlineSaveError(message: _error!),
-                              ],
-                              const SizedBox(height: 16),
-                              _masterSection(prefs),
-                              const SizedBox(height: 16),
-                              _typesSection(prefs),
-                              const SizedBox(height: 16),
-                              _realtimeSection(prefs),
-                              const SizedBox(height: 16),
-                              _timingSection(prefs),
-                              const SizedBox(height: 16),
-                              _dailySummarySection(prefs),
-                              const SizedBox(height: 16),
-                              _quietHoursSection(prefs),
-                              const SizedBox(height: 16),
-                              _historySection(),
-                            ],
-                          ),
+                    ? AppErrorState(
+                        title: 'não consegui abrir suas notificações',
+                        description: _error,
+                        onRetry: _load,
+                      )
+                    : ListView(
+                        key: const ValueKey('notification-settings-list'),
+                        padding: AppScrollGutter.padding(
+                          context,
+                          top: 8,
+                          bottom: 56,
+                        ),
+                        children: [
+                          _statusCard(brightness),
+                          if (_error != null) ...[
+                            const SizedBox(height: 12),
+                            _InlineSaveError(message: _error!),
+                          ],
+                          const SizedBox(height: 16),
+                          _masterSection(prefs),
+                          const SizedBox(height: 16),
+                          _typesSection(prefs),
+                          const SizedBox(height: 16),
+                          _realtimeSection(prefs),
+                          const SizedBox(height: 16),
+                          _timingSection(prefs),
+                          const SizedBox(height: 16),
+                          _dailySummarySection(prefs),
+                          const SizedBox(height: 16),
+                          _quietHoursSection(prefs),
+                          const SizedBox(height: 16),
+                          _historySection(),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -393,171 +397,242 @@ class _NotificationSettingsScreenState
   }
 
   Widget _masterSection(NotificationPreferences prefs) => _SettingsSection(
-        title: 'lembretes',
-        subtitle: prefs.financialRemindersEnabled
-            ? 'seus alertas estão ativos'
-            : 'pausados — suas escolhas continuam salvas',
-        child: SwitchListTile.adaptive(
-          key: const ValueKey('notifications-master-toggle'),
-          contentPadding: EdgeInsets.zero,
-          secondary: const Icon(AppIcons.notifications),
-          title: const Text('lembretes financeiros'),
-          subtitle: const Text('controle geral de todas as notificações'),
-          value: prefs.financialRemindersEnabled,
-          onChanged: _savingThis('master') ? null : _toggleMaster,
-        ),
-      );
+    title: 'lembretes',
+    subtitle: prefs.financialRemindersEnabled
+        ? 'seus alertas estão ativos'
+        : 'pausados — suas escolhas continuam salvas',
+    child: SwitchListTile.adaptive(
+      key: const ValueKey('notifications-master-toggle'),
+      contentPadding: EdgeInsets.zero,
+      secondary: const Icon(AppIcons.notifications),
+      title: const Text('lembretes financeiros'),
+      subtitle: const Text('controle geral de todas as notificações'),
+      value: prefs.financialRemindersEnabled,
+      onChanged: _savingThis('master') ? null : _toggleMaster,
+    ),
+  );
 
   Widget _typesSection(NotificationPreferences prefs) => _SettingsSection(
-        title: 'tipos de lembrete',
-        subtitle: 'vencimentos, recorrências e entradas previstas',
-        child: Column(
-          children: [
-            _toggle(
-              keyName: 'invoices',
-              icon: AppIcons.creditCard,
-              title: 'faturas',
-              value: prefs.invoicesEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(invoicesEnabled: value),
-                key: 'invoices',
-                label: 'a preferência de faturas',
-              ),
-            ),
-            _toggle(
-              keyName: 'debts',
-              icon: AppIcons.debt,
-              title: 'dívidas e parcelas',
-              value: prefs.debtsEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(debtsEnabled: value),
-                key: 'debts',
-                label: 'a preferência de dívidas e parcelas',
-              ),
-            ),
-            _toggle(
-              keyName: 'recurrences',
-              icon: AppIcons.recurring,
-              title: 'recorrências',
-              value: prefs.recurrencesEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(recurrencesEnabled: value),
-                key: 'recurrences',
-                label: 'a preferência de recorrências',
-              ),
-            ),
-            _toggle(
-              keyName: 'subscriptions',
-              icon: AppIcons.categorySubscriptions,
-              title: 'assinaturas',
-              value: prefs.subscriptionsEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(subscriptionsEnabled: value),
-                key: 'subscriptions',
-                label: 'a preferência de assinaturas',
-              ),
-            ),
-            _toggle(
-              keyName: 'income',
-              icon: AppIcons.income,
-              title: 'entradas previstas',
-              value: prefs.expectedIncomeEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(expectedIncomeEnabled: value),
-                key: 'income',
-                label: 'a preferência de entradas previstas',
-              ),
-            ),
-            _toggle(
-              keyName: 'overdue',
-              icon: AppIcons.warning,
-              title: 'itens atrasados',
-              value: prefs.overdueEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(overdueEnabled: value),
-                key: 'overdue',
-                label: 'a preferência de itens atrasados',
-              ),
-              showDivider: false,
-            ),
-          ],
+    title: 'tipos de lembrete',
+    subtitle: 'vencimentos, recorrências e entradas previstas',
+    child: Column(
+      children: [
+        _toggle(
+          keyName: 'invoices',
+          icon: AppIcons.creditCard,
+          title: 'faturas',
+          value: prefs.invoicesEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(invoicesEnabled: value),
+            key: 'invoices',
+            label: 'a preferência de faturas',
+          ),
         ),
-      );
+        _toggle(
+          keyName: 'debts',
+          icon: AppIcons.debt,
+          title: 'dívidas e parcelas',
+          value: prefs.debtsEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(debtsEnabled: value),
+            key: 'debts',
+            label: 'a preferência de dívidas e parcelas',
+          ),
+        ),
+        _toggle(
+          keyName: 'recurrences',
+          icon: AppIcons.recurring,
+          title: 'recorrências',
+          value: prefs.recurrencesEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(recurrencesEnabled: value),
+            key: 'recurrences',
+            label: 'a preferência de recorrências',
+          ),
+        ),
+        _toggle(
+          keyName: 'subscriptions',
+          icon: AppIcons.categorySubscriptions,
+          title: 'assinaturas',
+          value: prefs.subscriptionsEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(subscriptionsEnabled: value),
+            key: 'subscriptions',
+            label: 'a preferência de assinaturas',
+          ),
+        ),
+        _toggle(
+          keyName: 'income',
+          icon: AppIcons.income,
+          title: 'entradas previstas',
+          value: prefs.expectedIncomeEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(expectedIncomeEnabled: value),
+            key: 'income',
+            label: 'a preferência de entradas previstas',
+          ),
+        ),
+        _toggle(
+          keyName: 'overdue',
+          icon: AppIcons.warning,
+          title: 'itens atrasados',
+          value: prefs.overdueEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(overdueEnabled: value),
+            key: 'overdue',
+            label: 'a preferência de itens atrasados',
+          ),
+          showDivider: false,
+        ),
+      ],
+    ),
+  );
 
   Widget _realtimeSection(NotificationPreferences prefs) => _SettingsSection(
-        title: 'alertas em tempo real',
-        subtitle: 'o Fôlego avisa quando algo muda de faixa ou merece atenção',
-        child: Column(
-          children: [
-            _toggle(
-              keyName: 'plan-thresholds',
-              icon: AppIcons.warning,
-              title: 'limites do plano',
-              subtitle: '70%, 90% e 100% por categoria',
-              value: prefs.planThresholdsEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(planThresholdsEnabled: value),
-                key: 'plan-thresholds',
-                label: 'os alertas de limite do plano',
-              ),
-            ),
-            _toggle(
-              keyName: 'card-thresholds',
-              icon: AppIcons.creditCard,
-              title: 'limites dos cartões',
-              subtitle: '70%, 90% e 100% do limite definido',
-              value: prefs.cardLimitThresholdsEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(cardLimitThresholdsEnabled: value),
-                key: 'card-thresholds',
-                label: 'os alertas de limite dos cartões',
-              ),
-            ),
-            _toggle(
-              keyName: 'large-expenses',
-              icon: AppIcons.warning,
-              title: 'gastos relevantes',
-              subtitle: 'avisar quando um gasto passar do valor escolhido',
-              value: prefs.largeExpensesEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(largeExpensesEnabled: value),
-                key: 'large-expenses',
-                label: 'os alertas de gastos relevantes',
-              ),
-              showDivider: !prefs.largeExpensesEnabled,
-            ),
-            if (prefs.largeExpensesEnabled)
-              ListTile(
-                key: const ValueKey('large-expense-threshold'),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('valor considerado relevante'),
-                subtitle: Text(
-                  'R\$ ${prefs.largeExpenseThreshold.toStringAsFixed(2).replaceAll('.', ',')}',
-                ),
-                trailing: const Icon(AppIcons.chevronRight),
-                onTap: _savingThis('large-threshold')
-                    ? null
-                    : _editLargeExpenseThreshold,
-              ),
-          ],
+    title: 'alertas em tempo real',
+    subtitle: 'o Fôlego avisa quando algo muda de faixa ou merece atenção',
+    child: Column(
+      children: [
+        _toggle(
+          keyName: 'plan-thresholds',
+          icon: AppIcons.warning,
+          title: 'limites do plano',
+          subtitle: '70%, 90% e 100% por categoria',
+          value: prefs.planThresholdsEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(planThresholdsEnabled: value),
+            key: 'plan-thresholds',
+            label: 'os alertas de limite do plano',
+          ),
         ),
-      );
+        _toggle(
+          keyName: 'card-thresholds',
+          icon: AppIcons.creditCard,
+          title: 'limites dos cartões',
+          subtitle: '70%, 90% e 100% do limite definido',
+          value: prefs.cardLimitThresholdsEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(cardLimitThresholdsEnabled: value),
+            key: 'card-thresholds',
+            label: 'os alertas de limite dos cartões',
+          ),
+        ),
+        _toggle(
+          keyName: 'large-expenses',
+          icon: AppIcons.warning,
+          title: 'gastos relevantes',
+          subtitle: 'avisar quando um gasto passar do valor escolhido',
+          value: prefs.largeExpensesEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(largeExpensesEnabled: value),
+            key: 'large-expenses',
+            label: 'os alertas de gastos relevantes',
+          ),
+          showDivider: !prefs.largeExpensesEnabled,
+        ),
+        if (prefs.largeExpensesEnabled)
+          ListTile(
+            key: const ValueKey('large-expense-threshold'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('valor considerado relevante'),
+            subtitle: Text(
+              'R\$ ${prefs.largeExpenseThreshold.toStringAsFixed(2).replaceAll('.', ',')}',
+            ),
+            trailing: const Icon(AppIcons.chevronRight),
+            onTap: _savingThis('large-threshold')
+                ? null
+                : _editLargeExpenseThreshold,
+          ),
+      ],
+    ),
+  );
 
-  Widget _dailySummarySection(NotificationPreferences prefs) => _SettingsSection(
-        title: 'resumo diário',
-        subtitle: 'um overview consolidado do seu dinheiro uma vez por dia',
+  Widget _dailySummarySection(NotificationPreferences prefs) =>
+      _SettingsSection(
+        title: 'revisão e hábito',
+        subtitle: 'uma revisão curta para manter suas finanças em dia',
         child: Column(
           children: [
             _toggle(
               keyName: 'daily-summary',
               icon: AppIcons.calendar,
               title: 'Seu Fôlego de hoje',
-              subtitle: 'saldo livre, R\$/dia, limites e próximos movimentos',
+              subtitle: 'pendências, gastos do dia e próximas contas',
               value: prefs.dailySummaryEnabled,
               onChanged: (value) => _save(
                 prefs.copyWith(dailySummaryEnabled: value),
                 key: 'daily-summary',
                 label: 'o resumo diário',
+              ),
+            ),
+            DropdownButtonFormField<String>(
+              initialValue: prefs.reminderStyle,
+              decoration: const InputDecoration(labelText: 'tom dos avisos'),
+              items: const [
+                DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
+                DropdownMenuItem(value: 'normal', child: Text('Normal')),
+                DropdownMenuItem(value: 'firm', child: Text('Firme')),
+                DropdownMenuItem(
+                  value: 'aggressive',
+                  child: Text('Agressivo · com palavrões'),
+                ),
+              ],
+              onChanged: _saving
+                  ? null
+                  : (value) async {
+                      if (value == null) return;
+                      if (value == 'aggressive') {
+                        final accepted = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Ativar tom agressivo?'),
+                            content: const Text(
+                              'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Ativar'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (accepted != true) return;
+                      }
+                      await _save(
+                        prefs.copyWith(reminderStyle: value),
+                        key: 'reminder-style',
+                        label: 'o tom dos avisos',
+                      );
+                    },
+            ),
+            _toggle(
+              keyName: 'commitment',
+              icon: AppIcons.notifications,
+              title: 'Modo compromisso',
+              subtitle: 'Segunda chamada após 90 minutos, só se a revisão não foi concluída',
+              value: prefs.commitmentEnabled,
+              onChanged: (value) => _save(
+                prefs.copyWith(commitmentEnabled: value),
+                key: 'commitment',
+                label: 'o modo compromisso',
+              ),
+            ),
+            _toggle(
+              keyName: 'weekly-review',
+              icon: AppIcons.calendar,
+              title: 'Revisão de domingo',
+              subtitle:
+                  'A revisão diária lembra também das contas da próxima semana',
+              value: prefs.weeklyReviewEnabled,
+              onChanged: (value) => _save(
+                prefs.copyWith(weeklyReviewEnabled: value),
+                key: 'weekly-review',
+                label: 'a revisão semanal',
               ),
             ),
             ListTile(
@@ -579,107 +654,102 @@ class _NotificationSettingsScreenState
       );
 
   Widget _timingSection(NotificationPreferences prefs) => _SettingsSection(
-        title: 'quando avisar',
-        subtitle: 'escolha a antecedência dos vencimentos e entradas',
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: SegmentedButton<int>(
-                key: const ValueKey('notification-offset'),
-                segments: const [
-                  ButtonSegment(value: 0, label: Text('no dia')),
-                  ButtonSegment(value: 1, label: Text('1 dia antes')),
-                  ButtonSegment(value: 3, label: Text('3 dias antes')),
-                ],
-                selected: <int>{prefs.reminderOffsetDays},
-                onSelectionChanged: _savingThis('offset')
-                    ? null
-                    : (value) => _save(
-                          prefs.copyWith(reminderOffsetDays: value.first),
-                          key: 'offset',
-                          label: 'a antecedência dos lembretes',
-                        ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Divider(height: 18),
-            ListTile(
-              key: const ValueKey('notification-time'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(AppIcons.calendar),
-              title: const Text('horário preferido'),
-              subtitle: Text(
-                _clock(prefs.preferredHour, prefs.preferredMinute),
-              ),
-              trailing: const Icon(AppIcons.chevronRight),
-              onTap: _savingThis('time') ? null : _pickReminderTime,
-            ),
-          ],
+    title: 'quando avisar',
+    subtitle: 'escolha a antecedência dos vencimentos e entradas',
+    child: Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: SegmentedButton<int>(
+            key: const ValueKey('notification-offset'),
+            segments: const [
+              ButtonSegment(value: 0, label: Text('no dia')),
+              ButtonSegment(value: 1, label: Text('1 dia antes')),
+              ButtonSegment(value: 3, label: Text('3 dias antes')),
+            ],
+            selected: <int>{prefs.reminderOffsetDays},
+            onSelectionChanged: _savingThis('offset')
+                ? null
+                : (value) => _save(
+                    prefs.copyWith(reminderOffsetDays: value.first),
+                    key: 'offset',
+                    label: 'a antecedência dos lembretes',
+                  ),
+          ),
         ),
-      );
+        const SizedBox(height: 24),
+        const Divider(height: 18),
+        ListTile(
+          key: const ValueKey('notification-time'),
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(AppIcons.calendar),
+          title: const Text('horário preferido'),
+          subtitle: Text(_clock(prefs.preferredHour, prefs.preferredMinute)),
+          trailing: const Icon(AppIcons.chevronRight),
+          onTap: _savingThis('time') ? null : _pickReminderTime,
+        ),
+      ],
+    ),
+  );
 
   Widget _quietHoursSection(NotificationPreferences prefs) => _SettingsSection(
-        title: 'não perturbe',
-        subtitle:
-            'silencia alertas não críticos; atingir 100% de um limite ainda pode avisar',
-        child: Column(
-          children: [
-            _toggle(
-              keyName: 'quiet-hours',
-              icon: AppIcons.notifications,
-              title: 'não perturbe',
-              subtitle: prefs.quietHoursEnabled
-                  ? '${_clock(prefs.quietStartHour, prefs.quietStartMinute)} até ${_clock(prefs.quietEndHour, prefs.quietEndMinute)}'
-                  : 'desativado',
-              value: prefs.quietHoursEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(quietHoursEnabled: value),
-                key: 'quiet-hours',
-                label: 'o não perturbe',
-              ),
-              showDivider: !prefs.quietHoursEnabled,
-            ),
-            if (prefs.quietHoursEnabled) ...[
-              ListTile(
-                key: const ValueKey('quiet-hours-start'),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('começa'),
-                subtitle: Text(
-                  _clock(prefs.quietStartHour, prefs.quietStartMinute),
-                ),
-                trailing: const Icon(AppIcons.chevronRight),
-                onTap: _savingThis('quiet-start') ? null : _pickQuietStart,
-              ),
-              const Divider(height: 1),
-              ListTile(
-                key: const ValueKey('quiet-hours-end'),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('termina'),
-                subtitle: Text(
-                  _clock(prefs.quietEndHour, prefs.quietEndMinute),
-                ),
-                trailing: const Icon(AppIcons.chevronRight),
-                onTap: _savingThis('quiet-end') ? null : _pickQuietEnd,
-              ),
-            ],
-          ],
+    title: 'não perturbe',
+    subtitle: 'silencia alertas não críticos; atingir 100% de um limite ainda pode avisar',
+    child: Column(
+      children: [
+        _toggle(
+          keyName: 'quiet-hours',
+          icon: AppIcons.notifications,
+          title: 'não perturbe',
+          subtitle: prefs.quietHoursEnabled
+              ? '${_clock(prefs.quietStartHour, prefs.quietStartMinute)} até ${_clock(prefs.quietEndHour, prefs.quietEndMinute)}'
+              : 'desativado',
+          value: prefs.quietHoursEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(quietHoursEnabled: value),
+            key: 'quiet-hours',
+            label: 'o não perturbe',
+          ),
+          showDivider: !prefs.quietHoursEnabled,
         ),
-      );
+        if (prefs.quietHoursEnabled) ...[
+          ListTile(
+            key: const ValueKey('quiet-hours-start'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('começa'),
+            subtitle: Text(
+              _clock(prefs.quietStartHour, prefs.quietStartMinute),
+            ),
+            trailing: const Icon(AppIcons.chevronRight),
+            onTap: _savingThis('quiet-start') ? null : _pickQuietStart,
+          ),
+          const Divider(height: 1),
+          ListTile(
+            key: const ValueKey('quiet-hours-end'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('termina'),
+            subtitle: Text(_clock(prefs.quietEndHour, prefs.quietEndMinute)),
+            trailing: const Icon(AppIcons.chevronRight),
+            onTap: _savingThis('quiet-end') ? null : _pickQuietEnd,
+          ),
+        ],
+      ],
+    ),
+  );
 
   Widget _historySection() => _SettingsSection(
-        title: 'histórico',
-        subtitle:
-            'veja os alertas que o Fôlego realmente entregou nos últimos 90 dias',
-        child: ListTile(
-          key: const ValueKey('notification-history'),
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(AppIcons.notifications),
-          title: const Text('histórico de alertas'),
-          trailing: const Icon(AppIcons.chevronRight),
-          onTap: _openHistory,
-        ),
-      );
+    title: 'histórico',
+    subtitle:
+        'veja os alertas que o Fôlego realmente entregou nos últimos 90 dias',
+    child: ListTile(
+      key: const ValueKey('notification-history'),
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(AppIcons.notifications),
+      title: const Text('histórico de alertas'),
+      trailing: const Icon(AppIcons.chevronRight),
+      onTap: _openHistory,
+    ),
+  );
 
   Widget _toggle({
     required String keyName,
@@ -689,25 +759,24 @@ class _NotificationSettingsScreenState
     required bool value,
     required ValueChanged<bool> onChanged,
     bool showDivider = true,
-  }) =>
-      Column(
-        children: [
-          Semantics(
-            label: 'lembrete de $title',
-            toggled: value,
-            child: SwitchListTile.adaptive(
-              key: ValueKey('notification-toggle-$keyName'),
-              contentPadding: EdgeInsets.zero,
-              secondary: Icon(icon, size: 20),
-              title: Text(title),
-              subtitle: subtitle == null ? null : Text(subtitle),
-              value: value,
-              onChanged: _savingThis(keyName) ? null : onChanged,
-            ),
-          ),
-          if (showDivider) const Divider(height: 1),
-        ],
-      );
+  }) => Column(
+    children: [
+      Semantics(
+        label: 'lembrete de $title',
+        toggled: value,
+        child: SwitchListTile.adaptive(
+          key: ValueKey('notification-toggle-$keyName'),
+          contentPadding: EdgeInsets.zero,
+          secondary: Icon(icon, size: 20),
+          title: Text(title),
+          subtitle: subtitle == null ? null : Text(subtitle),
+          value: value,
+          onChanged: _savingThis(keyName) ? null : onChanged,
+        ),
+      ),
+      if (showDivider) const Divider(height: 1),
+    ],
+  );
 
   Widget _statusCard(Brightness brightness) {
     final unsupported = _permission == NotificationPermissionStatus.unsupported;
@@ -721,16 +790,13 @@ class _NotificationSettingsScreenState
       body = 'notificações no celular: em breve';
     } else if (denied) {
       title = 'notificações no celular estão bloqueadas';
-      body =
-          'suas escolhas continuam salvas. permita notificações nas configurações do dispositivo.';
+      body = 'suas escolhas continuam salvas. permita notificações nas configurações do dispositivo.';
     } else if (granted) {
       title = 'notificações no celular prontas';
-      body =
-          'alertas, resumo diário e não perturbe são processados mesmo com o Fôlego fechado.';
+      body = 'alertas, resumo diário e não perturbe são processados mesmo com o Fôlego fechado.';
     } else {
       title = 'escolha seus lembretes';
-      body =
-          'quando você ativar a entrega, o dispositivo pedirá a permissão necessária.';
+      body = 'quando você ativar a entrega, o dispositivo pedirá a permissão necessária.';
     }
 
     return Material(
@@ -774,8 +840,6 @@ class _NotificationSettingsScreenState
       ),
     );
   }
-
-
 }
 
 class _SettingsSection extends StatelessWidget {
@@ -804,10 +868,7 @@ class _SettingsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: AppTypography.section(context, fontSize: 16),
-            ),
+            Text(title, style: AppTypography.section(context, fontSize: 16)),
             const SizedBox(height: 4),
             Text(
               subtitle,
@@ -865,7 +926,8 @@ class _InlineSaveError extends StatelessWidget {
   }
 }
 
-String _permissionMessage(NotificationPermissionStatus status) => switch (status) {
+String _permissionMessage(NotificationPermissionStatus status) =>
+    switch (status) {
       NotificationPermissionStatus.unsupported =>
         'abra o Fôlego instalado na Tela de Início para receber notificações',
       NotificationPermissionStatus.denied =>

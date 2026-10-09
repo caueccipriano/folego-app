@@ -1,4 +1,9 @@
-enum NotificationPermissionStatus { unsupported, notDetermined, granted, denied }
+enum NotificationPermissionStatus {
+  unsupported,
+  notDetermined,
+  granted,
+  denied,
+}
 
 enum FinancialNotificationKind {
   commitment,
@@ -21,6 +26,9 @@ enum FinancialNotificationKind {
 class NotificationPreferences {
   const NotificationPreferences({
     required this.spaceId,
+    this.reminderStyle = 'normal',
+    this.commitmentEnabled = false,
+    this.weeklyReviewEnabled = true,
     this.financialRemindersEnabled = false,
     this.invoicesEnabled = true,
     this.debtsEnabled = true,
@@ -46,6 +54,9 @@ class NotificationPreferences {
   });
 
   final String spaceId;
+  final String reminderStyle;
+  final bool commitmentEnabled;
+  final bool weeklyReviewEnabled;
   final bool financialRemindersEnabled;
   final bool invoicesEnabled;
   final bool debtsEnabled;
@@ -70,11 +81,15 @@ class NotificationPreferences {
   final int preferredMinute;
 
   String get preferredTimeDb => _dbTime(preferredHour, preferredMinute);
-  String get dailySummaryTimeDb => _dbTime(dailySummaryHour, dailySummaryMinute);
+  String get dailySummaryTimeDb =>
+      _dbTime(dailySummaryHour, dailySummaryMinute);
   String get quietStartTimeDb => _dbTime(quietStartHour, quietStartMinute);
   String get quietEndTimeDb => _dbTime(quietEndHour, quietEndMinute);
 
   NotificationPreferences copyWith({
+    String? reminderStyle,
+    bool? commitmentEnabled,
+    bool? weeklyReviewEnabled,
     bool? financialRemindersEnabled,
     bool? invoicesEnabled,
     bool? debtsEnabled,
@@ -97,38 +112,36 @@ class NotificationPreferences {
     int? reminderOffsetDays,
     int? preferredHour,
     int? preferredMinute,
-  }) =>
-      NotificationPreferences(
-        spaceId: spaceId,
-        financialRemindersEnabled:
-            financialRemindersEnabled ?? this.financialRemindersEnabled,
-        invoicesEnabled: invoicesEnabled ?? this.invoicesEnabled,
-        debtsEnabled: debtsEnabled ?? this.debtsEnabled,
-        recurrencesEnabled: recurrencesEnabled ?? this.recurrencesEnabled,
-        subscriptionsEnabled: subscriptionsEnabled ?? this.subscriptionsEnabled,
-        expectedIncomeEnabled:
-            expectedIncomeEnabled ?? this.expectedIncomeEnabled,
-        overdueEnabled: overdueEnabled ?? this.overdueEnabled,
-        planThresholdsEnabled:
-            planThresholdsEnabled ?? this.planThresholdsEnabled,
-        cardLimitThresholdsEnabled:
-            cardLimitThresholdsEnabled ?? this.cardLimitThresholdsEnabled,
-        largeExpensesEnabled:
-            largeExpensesEnabled ?? this.largeExpensesEnabled,
-        largeExpenseThreshold:
-            largeExpenseThreshold ?? this.largeExpenseThreshold,
-        dailySummaryEnabled: dailySummaryEnabled ?? this.dailySummaryEnabled,
-        dailySummaryHour: dailySummaryHour ?? this.dailySummaryHour,
-        dailySummaryMinute: dailySummaryMinute ?? this.dailySummaryMinute,
-        quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
-        quietStartHour: quietStartHour ?? this.quietStartHour,
-        quietStartMinute: quietStartMinute ?? this.quietStartMinute,
-        quietEndHour: quietEndHour ?? this.quietEndHour,
-        quietEndMinute: quietEndMinute ?? this.quietEndMinute,
-        reminderOffsetDays: reminderOffsetDays ?? this.reminderOffsetDays,
-        preferredHour: preferredHour ?? this.preferredHour,
-        preferredMinute: preferredMinute ?? this.preferredMinute,
-      );
+  }) => NotificationPreferences(
+    spaceId: spaceId,
+    reminderStyle: reminderStyle ?? this.reminderStyle,
+    commitmentEnabled: commitmentEnabled ?? this.commitmentEnabled,
+    weeklyReviewEnabled: weeklyReviewEnabled ?? this.weeklyReviewEnabled,
+    financialRemindersEnabled:
+        financialRemindersEnabled ?? this.financialRemindersEnabled,
+    invoicesEnabled: invoicesEnabled ?? this.invoicesEnabled,
+    debtsEnabled: debtsEnabled ?? this.debtsEnabled,
+    recurrencesEnabled: recurrencesEnabled ?? this.recurrencesEnabled,
+    subscriptionsEnabled: subscriptionsEnabled ?? this.subscriptionsEnabled,
+    expectedIncomeEnabled: expectedIncomeEnabled ?? this.expectedIncomeEnabled,
+    overdueEnabled: overdueEnabled ?? this.overdueEnabled,
+    planThresholdsEnabled: planThresholdsEnabled ?? this.planThresholdsEnabled,
+    cardLimitThresholdsEnabled:
+        cardLimitThresholdsEnabled ?? this.cardLimitThresholdsEnabled,
+    largeExpensesEnabled: largeExpensesEnabled ?? this.largeExpensesEnabled,
+    largeExpenseThreshold: largeExpenseThreshold ?? this.largeExpenseThreshold,
+    dailySummaryEnabled: dailySummaryEnabled ?? this.dailySummaryEnabled,
+    dailySummaryHour: dailySummaryHour ?? this.dailySummaryHour,
+    dailySummaryMinute: dailySummaryMinute ?? this.dailySummaryMinute,
+    quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
+    quietStartHour: quietStartHour ?? this.quietStartHour,
+    quietStartMinute: quietStartMinute ?? this.quietStartMinute,
+    quietEndHour: quietEndHour ?? this.quietEndHour,
+    quietEndMinute: quietEndMinute ?? this.quietEndMinute,
+    reminderOffsetDays: reminderOffsetDays ?? this.reminderOffsetDays,
+    preferredHour: preferredHour ?? this.preferredHour,
+    preferredMinute: preferredMinute ?? this.preferredMinute,
+  );
 
   factory NotificationPreferences.fromJson(
     Map<String, dynamic> json, {
@@ -150,6 +163,9 @@ class NotificationPreferences {
     final offset = (json['reminder_offset_days'] as num?)?.toInt() ?? 1;
     return NotificationPreferences(
       spaceId: json['space_id'] as String? ?? fallbackSpaceId,
+      reminderStyle: json['reminder_style'] as String? ?? 'normal',
+      commitmentEnabled: json['commitment_enabled'] as bool? ?? false,
+      weeklyReviewEnabled: json['weekly_review_enabled'] as bool? ?? true,
       financialRemindersEnabled:
           json['financial_reminders_enabled'] as bool? ?? false,
       invoicesEnabled: json['invoices_enabled'] as bool? ?? true,
@@ -179,27 +195,30 @@ class NotificationPreferences {
   }
 
   Map<String, dynamic> toUpsertJson(String userId) => <String, dynamic>{
-        'user_id': userId,
-        'space_id': spaceId,
-        'financial_reminders_enabled': financialRemindersEnabled,
-        'invoices_enabled': invoicesEnabled,
-        'debts_enabled': debtsEnabled,
-        'recurrences_enabled': recurrencesEnabled,
-        'subscriptions_enabled': subscriptionsEnabled,
-        'expected_income_enabled': expectedIncomeEnabled,
-        'overdue_enabled': overdueEnabled,
-        'plan_thresholds_enabled': planThresholdsEnabled,
-        'card_limit_thresholds_enabled': cardLimitThresholdsEnabled,
-        'large_expenses_enabled': largeExpensesEnabled,
-        'large_expense_threshold': largeExpenseThreshold,
-        'daily_summary_enabled': dailySummaryEnabled,
-        'daily_summary_time': dailySummaryTimeDb,
-        'quiet_hours_enabled': quietHoursEnabled,
-        'quiet_hours_start': quietStartTimeDb,
-        'quiet_hours_end': quietEndTimeDb,
-        'reminder_offset_days': reminderOffsetDays,
-        'preferred_time': preferredTimeDb,
-      };
+    'user_id': userId,
+    'space_id': spaceId,
+    'reminder_style': reminderStyle,
+    'commitment_enabled': commitmentEnabled,
+    'weekly_review_enabled': weeklyReviewEnabled,
+    'financial_reminders_enabled': financialRemindersEnabled,
+    'invoices_enabled': invoicesEnabled,
+    'debts_enabled': debtsEnabled,
+    'recurrences_enabled': recurrencesEnabled,
+    'subscriptions_enabled': subscriptionsEnabled,
+    'expected_income_enabled': expectedIncomeEnabled,
+    'overdue_enabled': overdueEnabled,
+    'plan_thresholds_enabled': planThresholdsEnabled,
+    'card_limit_thresholds_enabled': cardLimitThresholdsEnabled,
+    'large_expenses_enabled': largeExpensesEnabled,
+    'large_expense_threshold': largeExpenseThreshold,
+    'daily_summary_enabled': dailySummaryEnabled,
+    'daily_summary_time': dailySummaryTimeDb,
+    'quiet_hours_enabled': quietHoursEnabled,
+    'quiet_hours_start': quietStartTimeDb,
+    'quiet_hours_end': quietEndTimeDb,
+    'reminder_offset_days': reminderOffsetDays,
+    'preferred_time': preferredTimeDb,
+  };
 }
 
 class NotificationHistoryItem {
@@ -294,8 +313,7 @@ class NotificationUpcomingEvent {
         dayOffset: (json['day_offset'] as num?)?.toInt() ?? 0,
         recurrenceKind: json['recurrence_kind'] as String?,
         scheduledAt: DateTime.parse(json['scheduled_at'] as String),
-        spaceTimezone:
-            json['space_timezone'] as String? ?? 'America/Sao_Paulo',
+        spaceTimezone: json['space_timezone'] as String? ?? 'America/Sao_Paulo',
       );
 }
 
@@ -354,12 +372,12 @@ class FinancialNotificationIntent {
     final entityType = event.isInvoice
         ? 'invoice'
         : event.isDebt
-            ? 'debt_installment'
-            : event.isSubscription
-                ? 'subscription'
-                : event.isRecurring
-                    ? 'recurring'
-                    : event.source;
+        ? 'debt_installment'
+        : event.isSubscription
+        ? 'subscription'
+        : event.isRecurring
+        ? 'recurring'
+        : event.source;
     return FinancialNotificationIntent(
       stableKey: financialNotificationStableKey(
         entityType: entityType,
@@ -389,13 +407,16 @@ String financialNotificationStableKey({
   required DateTime dueDate,
   required int reminderOffsetDays,
   required FinancialNotificationKind kind,
-}) => '$entityType:$entityId:${_dateOnly(dueDate)}:$reminderOffsetDays:${kind.name}';
+}) =>
+    '$entityType:$entityId:${_dateOnly(dueDate)}:$reminderOffsetDays:${kind.name}';
 
 String notificationBody(
   NotificationUpcomingEvent event, {
   int reminderOffsetDays = 0,
 }) {
-  if (event.overdue || event.dayOffset < 0) return '${event.title} está atrasado';
+  if (event.overdue || event.dayOffset < 0) {
+    return '${event.title} está atrasado';
+  }
   final leadDays = event.dayOffset < reminderOffsetDays
       ? event.dayOffset
       : reminderOffsetDays;
@@ -418,8 +439,12 @@ String notificationRoute(NotificationUpcomingEvent event) {
   if (event.isInvoice && event.cardId != null && event.invoiceId != null) {
     return '/wallet/card/${event.cardId}/invoice/${event.invoiceId}';
   }
-  if (event.isDebt && event.debtId != null) return '/wallet/debt/${event.debtId}';
-  if (event.isSubscription) return '/transactions/subscriptions/${event.sourceId}';
+  if (event.isDebt && event.debtId != null) {
+    return '/wallet/debt/${event.debtId}';
+  }
+  if (event.isSubscription) {
+    return '/transactions/subscriptions/${event.sourceId}';
+  }
   if (event.isRecurring) return '/transactions/recurring/${event.sourceId}';
   return '/agenda';
 }
