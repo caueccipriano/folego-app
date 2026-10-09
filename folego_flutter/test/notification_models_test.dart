@@ -212,6 +212,21 @@ void main() {
     );
   });
 
+  test('daily review defaults to evening without rewriting existing preferences', () {
+    const defaults = NotificationPreferences(spaceId: 'new-space');
+    final missing = NotificationPreferences.fromJson(
+      const <String, dynamic>{},
+      fallbackSpaceId: 'new-space',
+    );
+    final preserved = NotificationPreferences.fromJson(
+      const <String, dynamic>{'daily_summary_time': '09:15:00'},
+      fallbackSpaceId: 'old-space',
+    );
+    expect(defaults.dailySummaryTimeDb, '19:00:00');
+    expect(missing.dailySummaryTimeDb, '19:00:00');
+    expect(preserved.dailySummaryTimeDb, '09:15:00');
+  });
+
   test('preferred time parser falls back safely and serializes local time', () {
     final parsed = NotificationPreferences.fromJson(
       const <String, dynamic>{
