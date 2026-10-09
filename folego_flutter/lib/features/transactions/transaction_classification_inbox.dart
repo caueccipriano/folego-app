@@ -60,10 +60,16 @@ CategoryItem? reviewedCategorySuggestion({
       return false;
     }
     final debit = kind != 'income';
-    if (rule.direction == AutomationDirection.credit && debit) return false;
-    if (rule.direction == AutomationDirection.debit && !debit) return false;
+    if (rule.direction == AutomationDirection.credit && debit) {
+      return false;
+    }
+    if (rule.direction == AutomationDirection.debit && !debit) {
+      return false;
+    }
     if (rule.sourceScope == AutomationSourceScope.card ||
-        rule.sourceScope == AutomationSourceScope.benefit) return false;
+        rule.sourceScope == AutomationSourceScope.benefit) {
+      return false;
+    }
     if (rule.sourceScope == AutomationSourceScope.account &&
         (item.accountId == null || rule.sourceAccountId != item.accountId)) {
       return false;
