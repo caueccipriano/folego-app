@@ -22,6 +22,7 @@ import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../profile/category_management_screen.dart';
 import 'statement_import_parser.dart';
+import 'statement_import_reconciliation.dart';
 
 class StatementImportPickedFile {
   const StatementImportPickedFile({required this.name, required this.bytes});
@@ -389,21 +390,14 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     }
   }
 
-  String? _validationError(StatementImportRow row) {
-    if (!row.selected) return null;
-    if (row.finalType == null) return 'escolha o tipo financeiro';
-    if (row.finalType == StatementImportFinalType.transfer && row.counterpartAccountId == null) {
-      return 'transferência exige a outra conta';
-    }
-    if (row.finalType == StatementImportFinalType.cardPayment && row.invoiceId == null) {
-      return 'pagamento de cartão exige uma fatura';
-    }
-    if (row.finalType == StatementImportFinalType.cardPayment &&
-        _sourceKind == StatementImportSourceKind.card && row.counterpartAccountId == null) {
-      return 'selecione a conta que pagou a fatura';
-    }
-    return null;
-  }
+  String? _validationError(StatementImportRow row) =>
+      validateStatementImportReconciliation(
+        row: row,
+        sourceKind: _sourceKind,
+        sourceId: _sourceId,
+        paymentAccounts: _paymentAccounts,
+        invoices: _invoices,
+      );
 
   Future<void> _confirmImport() async {
     if (_loading || _batchId == null) return;
@@ -668,7 +662,25 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
         ButtonSegment(value: _ReviewFilter.errors, label: Text('com erro')),
       ], selected: <_ReviewFilter>{_reviewFilter}, onSelectionChanged: (value) => setState(() => _reviewFilter = value.first))),
       const SizedBox(height: 10),
-      _BulkBar(categories: _expenseCategories, selectedCategoryId: _bulkCategoryId, onChanged: (value) => setState(() => _bulkCategoryId = value), onApply: _applyBulkCategory, onIncludeAll: () => setState(() => _rows = _rows.map((row) => row.copyWith(decision: row.duplicateState == StatementImportDuplicateState.exactDuplicate || row.duplicateState == StatementImportDuplicateState.alreadyImported ? StatementImportDecision.ignore : StatementImportDecision.include)).toList(growable: false)), onIgnoreSelected: () => setState(() => _rows = _rows.map((row) => row.selected ? row.copyWith(decision: StatementImportDecision.ignore) : row).toList(growable: false))),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          'Possíveis duplicatas continuam para revisão individual. '
+          'Transferências exigem a outra conta; pagamentos exigem a fatura.',
+          style: AppTypography.body(
+            context,
+            fontSize: 11,
+            color: AppColors.secondaryText(Theme.of(context).brightness),
+          ),
+        ),
+      ),
+      _BulkBar(categories: _expenseCategories, selectedCategoryId: _bulkCategoryId, onChanged: (value) => setState(() => _bulkCategoryId = value), onApply: _applyBulkCategory, onIncludeAll: () => setState(() => _rows = includeOnlySafeStatementRows(
+        rows: _rows,
+        sourceKind: _sourceKind,
+        sourceId: _sourceId,
+        paymentAccounts: _paymentAccounts,
+        invoices: _invoices,
+      )), onIgnoreSelected: () => setState(() => _rows = _rows.map((row) => row.selected ? row.copyWith(decision: StatementImportDecision.ignore) : row).toList(growable: false))),
     ]);
     Widget buildRow(StatementImportRow row) => _ReviewRowCard(row: row, desktop: desktop, sourceKind: _sourceKind, sourceId: _sourceId, paymentAccounts: _paymentAccounts, invoices: _invoices, expenseCategories: _expenseCategories, incomeCategories: _incomeCategories, validationError: _validationError(row), onChanged: _replaceRow, onCategoryManagement: _openCategoryManagement);
     final actions = Row(children: [
