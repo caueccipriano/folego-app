@@ -80,7 +80,7 @@ Future<void> _pumpImport(
     ],
     updateOverride: (_, rows) async => expect(rows, isNotEmpty),
     confirmOverride: (_) async {
-      confirmationCount?.value = (confirmationCount.value + 1);
+      if (confirmationCount != null) confirmationCount.value++;
       confirmed = true;
       return const StatementImportResult(batchId: 'batch-1', status: 'completed', imported: 1, ignored: 0, duplicates: 0, errors: 0, pending: 0);
     },
