@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 
-/// Título oficial de seções internas do Fôlego.
-///
-/// Use abaixo do cabeçalho de página para manter a mesma hierarquia entre
-/// Home, Plano, Carteira e Perfil.
+/// Consistent hierarchy for secondary sections across the Fôlego app.
+/// The section action moves below the descriptive copy on narrow screens.
 class AppSectionHeader extends StatelessWidget {
   const AppSectionHeader({
     super.key,
@@ -24,43 +22,38 @@ class AppSectionHeader extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
-
-    Widget titleText() => Text(
-          title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.section(
-            context,
-            fontSize: 18,
-            color: primary,
-          ),
-        );
-
-    Widget subtitleText() => Text(
-          subtitle!,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.body(
-            context,
-            fontSize: 11,
-            color: secondary,
-          ),
-        );
+    final largerText = MediaQuery.textScalerOf(context).scale(16) > 19.2;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stackTrailing = trailing != null && constraints.maxWidth < 340;
+        final stackAction = trailing != null &&
+            (constraints.maxWidth < 400 ||
+                (largerText && constraints.maxWidth < 600));
+
+        final heading = Semantics(
+          header: true,
+          child: Text(
+            title,
+            maxLines: largerText ? 3 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.section(
+              context,
+              fontSize: 18,
+              color: primary,
+            ),
+          ),
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (stackTrailing)
-              titleText()
+            if (stackAction)
+              heading
             else
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(child: titleText()),
+                  Expanded(child: heading),
                   if (trailing != null) ...[
                     const SizedBox(width: 10),
                     trailing!,
@@ -68,12 +61,24 @@ class AppSectionHeader extends StatelessWidget {
                 ],
               ),
             if (subtitle?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 3),
-              subtitleText(),
+              const SizedBox(height: 5),
+              Text(
+                subtitle!,
+                maxLines: largerText ? 5 : 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 13,
+                  color: secondary,
+                ),
+              ),
             ],
-            if (stackTrailing) ...[
-              const SizedBox(height: 6),
-              trailing!,
+            if (stackAction) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: trailing!,
+              ),
             ],
           ],
         );
