@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/core/theme/app_icons.dart';
 import 'package:folego/core/ui/app_snackbars.dart';
 import 'package:folego/data/models/category_item.dart';
@@ -146,6 +147,37 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('tentar novamente'), findsOneWidget);
+  });
+
+  testWidgets('Home privacy eye immediately masks and restores mounted values',
+      (tester) async {
+    FinancialPrivacy.hidden.value = false;
+    addTearDown(() => FinancialPrivacy.hidden.value = false);
+    _setViewport(tester, const Size(390, 844));
+    await tester.pumpWidget(_app(Scaffold(
+      body: home.HomeScreen(
+        space: const FinancialSpace(id: 'space', name: 'Casa'),
+        repository: _HomeRepository(),
+      ),
+    )));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('1.600'), findsWidgets);
+    expect(find.byTooltip('ocultar valores'), findsOneWidget);
+
+    FinancialPrivacy.hidden.value = true;
+    await tester.pump();
+    expect(find.byTooltip('mostrar valores'), findsOneWidget);
+    expect(find.textContaining('R\$ ••••'), findsWidgets);
+    expect(find.textContaining('1.600'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    FinancialPrivacy.hidden.value = false;
+    await tester.pump();
+    expect(find.byTooltip('ocultar valores'), findsOneWidget);
+    expect(find.textContaining('1.600'), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Home desktop uses dashboard columns instead of a mobile stack', (tester) async {
