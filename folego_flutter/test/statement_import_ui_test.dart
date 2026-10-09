@@ -141,6 +141,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('include safe never selects a possible duplicate on mobile', (tester) async {
+    await _pumpImport(
+      tester,
+      size: const Size(390, 844),
+      duplicate: StatementImportDuplicateState.possibleDuplicate,
+    );
+    await _driveCsvToReview(tester);
+    await tester.tap(find.text('incluir seguros'));
+    await tester.pumpAndSettle();
+    final checkbox = tester.widget<Checkbox>(
+      find.byKey(const ValueKey('statement-import-include-row-1')),
+    );
+    expect(checkbox.value, isFalse);
+    expect(find.textContaining('Possíveis duplicatas continuam'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('responsive scaffold renders requested widths without exception', (tester) async {
     for (final width in <double>[375, 390, 430, 768, 1024, 1366, 1440, 1920]) {
       await _pumpImport(tester, size: Size(width, 900));
