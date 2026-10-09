@@ -74,6 +74,29 @@ String homeFolegoContextLabel(FolegoSnapshot snapshot) {
 }
 
 
+/// Facts from the server snapshot, not a second calculation of available cash.
+/// Displayed only when the spending allowance has reached zero.
+List<String> homeZeroBalanceFacts(FolegoSnapshot snapshot) {
+  if (snapshot.spendablePool > 0) return const [];
+  final facts = <String>[
+    'em contas: ${Formatters.money(snapshot.liquidBalance)}',
+  ];
+  if (snapshot.protectedBalance > 0) {
+    facts.add('protegido: ${Formatters.money(snapshot.protectedBalance)}');
+  }
+  if (homeIsBudgetLimited(snapshot)) {
+    final exceeded = homeFlexibleBudgetExceeded(snapshot);
+    facts.add(exceeded > 0
+        ? 'limite flexível excedido: ${Formatters.money(exceeded)}'
+        : 'limite flexível livre: ${Formatters.money(snapshot.economicHeadroom)}');
+  } else if (snapshot.mandatoryOutflowsUntilIncome > 0) {
+    facts.add(
+      'contas até receber: ${Formatters.money(snapshot.mandatoryOutflowsUntilIncome)}',
+    );
+  }
+  return facts;
+}
+
 String homeFolegoVoiceLabel(FolegoSnapshot snapshot) {
   if (snapshot.spendablePool <= 0 || snapshot.shortfall > 0) {
     return 'seu espaço está apertado agora';
@@ -111,16 +134,16 @@ class HomeFinancialHero extends StatelessWidget {
     final timing = homeIncomeTimingLabel(snapshot);
     final spendable = snapshot.spendablePool;
     final contextCopy = homeFolegoContextLabel(snapshot);
+    final zeroFacts = homeZeroBalanceFacts(snapshot);
     final budgetNavigation = FlexibleBudgetNavigationScope.maybeOf(context);
     final showBudgetAction =
         spendable <= 0 && homeIsBudgetLimited(snapshot) && budgetNavigation != null;
     final normalizedStatus = snapshot.status.trim().toLowerCase();
-    final showVoice = !compact ||
-        spendable <= 0 ||
+    final showVoice = spendable > 0 && (!compact ||
         snapshot.shortfall > 0 ||
         normalizedStatus == 'atencao' ||
         normalizedStatus == 'atenção' ||
-        normalizedStatus == 'sem_folga';
+        normalizedStatus == 'sem_folga');
 
     return Semantics(
       container: true,
@@ -188,6 +211,45 @@ class HomeFinancialHero extends StatelessWidget {
                 color: onPurple.withValues(alpha: .94),
               ),
             ),
+            if (zeroFacts.isNotEmpty) ...[
+              const SizedBox(height: 11),
+              Container(
+                key: const ValueKey('home-folego-zero-breakdown'),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.darkBackground.withValues(alpha: .13),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'por que zerou?',
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.lime,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    for (final fact in zeroFacts)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          fact,
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: onPurple,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             if (showVoice) ...[
               SizedBox(height: compact ? 9 : 10),
               Container(
@@ -240,7 +302,7 @@ class HomeFinancialHero extends StatelessWidget {
                   ),
                   onPressed: () => _showExplanation(context),
                   icon: const Icon(AppIcons.info, size: 16),
-                  label: const Text('entenda o cálculo'),
+                  label: Text(spendable <= 0 ? 'ver cálculo completo' : 'entenda o cálculo'),
                 ),
               )
             else
