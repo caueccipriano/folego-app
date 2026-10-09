@@ -10,12 +10,18 @@ class NotificationHistoryCache {
 
   final SharedPreferencesAsync _preferences;
 
-  String _key(String spaceId) => 'folego.notification_history.$spaceId';
+  // Never share cached financial notification text across different sign-ins.
+  // Old space-only cache entries are intentionally not read or migrated.
+  String _key(String userId, String spaceId) =>
+      'folego.notification_history.user.$userId.space.$spaceId';
 
   Future<void> save(
     String spaceId,
-    List<NotificationHistoryItem> items,
-  ) async {
+    List<NotificationHistoryItem> items, {
+    required String userId,
+  }) async {
+    if (userId.trim().isEmpty || spaceId.trim().isEmpty) return;
+
     final payload = items
         .map(
           (item) => <String, dynamic>{
@@ -29,11 +35,16 @@ class NotificationHistoryCache {
         )
         .toList(growable: false);
 
-    await _preferences.setString(_key(spaceId), jsonEncode(payload));
+    await _preferences.setString(_key(userId, spaceId), jsonEncode(payload));
   }
 
-  Future<List<NotificationHistoryItem>> load(String spaceId) async {
-    final raw = await _preferences.getString(_key(spaceId));
+  Future<List<NotificationHistoryItem>> load(
+    String spaceId, {
+    required String userId,
+  }) async {
+    if (userId.trim().isEmpty || spaceId.trim().isEmpty) return const [];
+
+    final raw = await _preferences.getString(_key(userId, spaceId));
     if (raw == null || raw.isEmpty) return const [];
 
     try {
