@@ -8,6 +8,7 @@ void main() {
     required int pending,
     required VoidCallback onTap,
     Brightness brightness = Brightness.light,
+    int? days,
   }) {
     return MaterialApp(
       theme: ThemeData(brightness: brightness),
@@ -18,7 +19,7 @@ void main() {
             child: DailyReviewPrompt(
               complete: completed,
               pending: pending,
-              days: completed ? 3 : 0,
+              days: days ?? (completed ? 3 : 0),
               loading: false,
               pace: const {'status': 'review_needed'},
               onTap: onTap,
@@ -37,7 +38,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('seu check-in'), findsOneWidget);
-    expect(find.textContaining('34 lançamentos'), findsOneWidget);
+    expect(find.textContaining('duas conferências rápidas'), findsOneWidget);
     expect(find.byType(Card), findsNothing);
     expect(tester.getSize(find.byKey(const ValueKey('home-daily-review-prompt'))).height, lessThan(100));
     expect(tester.takeException(), isNull);
@@ -56,6 +57,14 @@ void main() {
     expect(find.text('ver'), findsOneWidget);
     expect(find.byType(FilledButton), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('encourages habit using real weekly review days', (tester) async {
+    await tester.pumpWidget(homePrompt(
+      completed: false, pending: 34, days: 4, onTap: () {},
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('4 dos últimos 7 dias revisados'), findsOneWidget);
   });
 
   test('spending pace copy does not claim risk when classification is pending', () {

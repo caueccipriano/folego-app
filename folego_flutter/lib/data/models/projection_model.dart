@@ -297,6 +297,28 @@ String _projectionDate(DateTime value) {
 
 /// A finite monthly series plus a one-time cent remainder keeps large purchases
 /// within the backend's 40-adjustment limit without losing the total.
+/// Models only the one-time cash cost of an extra debt payment. It does not
+/// guess interest reductions, a new instalment value or the loan maturity.
+ProjectionAdjustment buildExtraDebtPaymentSimulation({
+  required String id,
+  required String debtName,
+  required double amount,
+  required DateTime paymentDate,
+}) {
+  if (debtName.trim().isEmpty || !amount.isFinite || amount <= 0) {
+    throw ArgumentError('invalid_extra_debt_payment');
+  }
+  return ProjectionAdjustment(
+    id: id,
+    name: 'amortizar ${debtName.trim()}',
+    component: 'other_outflow',
+    amountDelta: amount,
+    frequency: 'once',
+    startsOn: paymentDate,
+    categoryName: 'dívidas',
+  );
+}
+
 List<ProjectionAdjustment> buildPurchaseSimulation({
   required String id,
   required String name,

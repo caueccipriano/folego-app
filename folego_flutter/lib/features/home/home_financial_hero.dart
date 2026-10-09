@@ -97,6 +97,31 @@ List<String> homeZeroBalanceFacts(FolegoSnapshot snapshot) {
   return facts;
 }
 
+/// One actionable next step from existing backend facts, not a new alert/card.
+String? homeNextStep(FolegoSnapshot snapshot) {
+  if (snapshot.needsIncomeSetup ||
+      (snapshot.nextIncomeDate == null && snapshot.daysUntilIncome == null)) {
+    return 'próximo passo: cadastre quando vai receber no Plano.';
+  }
+  if (snapshot.shortfall > 0) {
+    return 'próximo passo: confira os vencimentos antes de assumir novos gastos.';
+  }
+  if (snapshot.spendablePool <= 0 && homeIsBudgetLimited(snapshot)) {
+    return 'próximo passo: revise o limite flexível antes de gastar.';
+  }
+  if (snapshot.spendablePool <= 0) {
+    return 'próximo passo: confira as contas até o próximo recebimento.';
+  }
+  if (snapshot.dailyFolego != null &&
+      snapshot.dailyFolego! > 0 &&
+      snapshot.daysUntilIncome != null &&
+      snapshot.daysUntilIncome! >= 2 &&
+      snapshot.daysUntilIncome! <= 14) {
+    return 'para manter o plano, acompanhe seus gastos diários até receber.';
+  }
+  return null;
+}
+
 String homeFolegoVoiceLabel(FolegoSnapshot snapshot) {
   if (snapshot.spendablePool <= 0 || snapshot.shortfall > 0) {
     return 'seu espaço está apertado agora';
@@ -135,6 +160,7 @@ class HomeFinancialHero extends StatelessWidget {
     final spendable = snapshot.spendablePool;
     final contextCopy = homeFolegoContextLabel(snapshot);
     final zeroFacts = homeZeroBalanceFacts(snapshot);
+    final nextStep = homeNextStep(snapshot);
     final budgetNavigation = FlexibleBudgetNavigationScope.maybeOf(context);
     final showBudgetAction =
         spendable <= 0 && homeIsBudgetLimited(snapshot) && budgetNavigation != null;
@@ -247,6 +273,21 @@ class HomeFinancialHero extends StatelessWidget {
                         ),
                       ),
                   ],
+                ),
+              ),
+            ],
+            if (nextStep != null) ...[
+              const SizedBox(height: 9),
+              Semantics(
+                key: const ValueKey('home-actionable-insight'),
+                liveRegion: false,
+                child: Text(
+                  nextStep,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: compact ? 11 : 12,
+                    color: onPurple.withValues(alpha: .90),
+                  ),
                 ),
               ),
             ],
