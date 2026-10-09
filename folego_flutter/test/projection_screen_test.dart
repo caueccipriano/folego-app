@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/theme/app_theme.dart';
+import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/projection_model.dart';
 import 'package:folego/data/models/recurring_item.dart';
@@ -47,6 +50,57 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('late projection from previous space never replaces new space', (tester) async {
+    final repository = _DelayedProjectionRepository();
+    Widget screen(String id) => MaterialApp(
+      theme: AppTheme.light(),
+      home: ProjectionScreen(
+        repository: repository,
+        spaceId: id,
+        onBack: () {},
+      ),
+    );
+
+    await tester.pumpWidget(screen('space-A'));
+    await tester.pump();
+    expect(repository.requests, ['space-A']);
+
+    await tester.pumpWidget(screen('space-B'));
+    await tester.pump();
+    expect(repository.requests, ['space-A', 'space-B']);
+
+    // Complete the NEW space first, then an outdated earlier network call.
+    repository.resolve('space-B', _projection(12, 8000));
+    await tester.pumpAndSettle();
+    final hero = find.byKey(const ValueKey('projection-hero'));
+    expect(hero, findsOneWidget);
+    expect(
+      find.descendant(
+        of: hero,
+        matching: find.text(Formatters.money(9900)),
+      ),
+      findsOneWidget,
+    );
+
+    repository.resolve('space-A', _projection(12, 0));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: hero,
+        matching: find.text(Formatters.money(9900)),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: hero,
+        matching: find.text(Formatters.money(1900)),
+      ),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('desktop category view exposes month matrix', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 900));
@@ -121,6 +175,29 @@ void main() {
     expect(find.text('cancelar assinatura'), findsOneWidget);
     expect(find.text('reduzir categoria'), findsOneWidget);
   });
+}
+
+class _DelayedProjectionRepository implements FolegoRepository {
+  final requests = <String>[];
+  final responses = <String, Completer<ProjectionResult>>{};
+
+  @override
+  Future<ProjectionResult> getProjection({
+    required String spaceId,
+    int horizonMonths = 12,
+    List<ProjectionAdjustment> adjustments = const [],
+    Set<String> disabledVariableIncomeKeys = const {},
+  }) {
+    requests.add(spaceId);
+    return (responses[spaceId] ??= Completer<ProjectionResult>()).future;
+  }
+
+  void resolve(String spaceId, ProjectionResult value) {
+    responses[spaceId]!.complete(value);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _ProjectionRepository implements FolegoRepository {
