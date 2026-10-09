@@ -2135,7 +2135,9 @@ class _ProjectionSimulationSheetState
           ),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadii.sheet),
+            ),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -2166,27 +2168,32 @@ class _ProjectionSimulationSheetState
                   ),
                 ),
                 const SizedBox(height: 14),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 2,
+                  children: [
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _templateChip('compra', _SimulationTemplate.purchase),
-                      _templateChip('livre', _SimulationTemplate.free),
-                      _templateChip('novo carro', _SimulationTemplate.car),
-                      _templateChip('novo salário', _SimulationTemplate.salary),
-                      _templateChip(
-                        'cancelar assinatura',
-                        _SimulationTemplate.cancelSubscription,
-                      ),
-                       _templateChip(
-                         'amortizar dívida', _SimulationTemplate.extraDebtPayment,
-                       ),
-                      _templateChip(
-                        'reduzir categoria',
-                        _SimulationTemplate.reduceCategory,
-                      ),
+                  _templateChip('compra', _SimulationTemplate.purchase),
+                  _templateChip('livre', _SimulationTemplate.free),
+                  _templateChip('novo carro', _SimulationTemplate.car),
+                  _templateChip('novo salário', _SimulationTemplate.salary),
+                  _templateChip(
+                    'cancelar assinatura',
+                    _SimulationTemplate.cancelSubscription,
+                  ),
+                   _templateChip(
+                     'amortizar dívida', _SimulationTemplate.extraDebtPayment,
+                   ),
+                  _templateChip(
+                    'reduzir categoria',
+                    _SimulationTemplate.reduceCategory,
+                  ),
                     ],
                   ),
+                ),                  ],
                 ),
                 const SizedBox(height: 18),
                 ..._fieldsForTemplate(),
@@ -2200,6 +2207,15 @@ class _ProjectionSimulationSheetState
                 ),
                 const SizedBox(height: 16),
                 FilledButton.icon(
+                  key: const ValueKey('simulation-submit-impact'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primaryPurple(brightness),
+                    foregroundColor: AppColors.iconOnPurpleLight,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadii.control),
+                    ),
+                  ),
                   onPressed: _submit,
                   icon: const Icon(AppIcons.chartLine, size: 18),
                   label: const Text('ver impacto'),
