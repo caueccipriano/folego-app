@@ -289,6 +289,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
+    final dailyReview = DailyReviewCard(
+      refreshToken: _snapshot,
+      space: widget.space,
+      repository: widget.repository,
+    );
     final pulse = _buildPulseCard(
       snapshot: snapshot,
       surface: surface,
@@ -344,12 +349,6 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 header,
                 const SizedBox(height: 12),
-                DailyReviewCard(
-                  refreshToken: _snapshot,
-                  space: widget.space,
-                  repository: widget.repository,
-                ),
-                const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
                   if (pulse is! SizedBox) ...[
@@ -358,7 +357,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                   const SizedBox(height: 12),
                   quickActions,
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
+                  dailyReview,
+                  const SizedBox(height: 13),
                   monthlyMoney,
                   const SizedBox(height: 10),
                   upcoming,
@@ -381,6 +382,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(flex: 4, child: upcoming),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  dailyReview,
                   const SizedBox(height: 22),
                   monthlyMoney,
                   const SizedBox(height: 14),
@@ -408,7 +411,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(flex: 5, child: quickActions),
                     ],
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 8),
+                  dailyReview,
+                  const SizedBox(height: 24),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
