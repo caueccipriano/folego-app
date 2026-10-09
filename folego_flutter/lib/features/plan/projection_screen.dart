@@ -1813,6 +1813,7 @@ enum _SimulationTemplate {
   salary,
   cancelSubscription,
   reduceCategory,
+  extraDebtPayment,
 }
 
 class _ProjectionSimulationSheet extends StatefulWidget {
@@ -1844,6 +1845,8 @@ class _ProjectionSimulationSheetState
   final _ipva = TextEditingController();
   final _salary = TextEditingController(text: '1000');
   final _reduction = TextEditingController(text: '200');
+  final _debtName = TextEditingController();
+  final _debtPayment = TextEditingController();
 
   bool _freeRecurring = true;
   String _freeComponent = 'direct_expense';
@@ -1875,6 +1878,8 @@ class _ProjectionSimulationSheetState
     _ipva.dispose();
     _salary.dispose();
     _reduction.dispose();
+    _debtName.dispose();
+    _debtPayment.dispose();
     super.dispose();
   }
 
@@ -2050,6 +2055,18 @@ class _ProjectionSimulationSheetState
             categoryId: item.categoryId,
           ),
         ];
+      case _SimulationTemplate.extraDebtPayment:
+        final amount = _money(_debtPayment.text);
+        if (_debtName.text.trim().isEmpty || amount <= 0) {
+          _invalid('informe qual dívida e o valor extra do pagamento');
+          return;
+        }
+        result = [buildExtraDebtPaymentSimulation(
+          id: '$idBase-debt-extra',
+          debtName: _debtName.text,
+          amount: amount,
+          paymentDate: _startsOn,
+        )];
       case _SimulationTemplate.reduceCategory:
         final category = _category;
         final amount = _money(_reduction.text);
@@ -2161,6 +2178,9 @@ class _ProjectionSimulationSheetState
                         'cancelar assinatura',
                         _SimulationTemplate.cancelSubscription,
                       ),
+                       _templateChip(
+                         'amortizar dívida', _SimulationTemplate.extraDebtPayment,
+                       ),
                       _templateChip(
                         'reduzir categoria',
                         _SimulationTemplate.reduceCategory,
@@ -2321,11 +2341,38 @@ class _ProjectionSimulationSheetState
             onChanged: (value) => setState(() => _subscription = value),
           ),
         ];
+      case _SimulationTemplate.extraDebtPayment:
+        return [
+          TextField(
+            controller: _debtName,
+            decoration: const InputDecoration(labelText: 'qual dívida?'),
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 10),
+          _moneyField(_debtPayment, 'valor adicional para amortizar'),
+          const SizedBox(height: 10),
+          const Text(
+            'Esta simulação mostra somente o dinheiro que sai na data escolhida. '
+            'Não estima juros economizados, saldo devedor, novo valor de parcela '
+            'ou prazo: isso depende do contrato e deve ser confirmado com o banco.',
+          ),
+        ];
       case _SimulationTemplate.reduceCategory:
         return [
           _categoryDropdown(),
           const SizedBox(height: 10),
           _moneyField(_reduction, 'redução mensal'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final amount in [50, 100, 200, 300])
+                ActionChip(
+                  label: Text('R\$ $amount/mês'),
+                  onPressed: () => setState(() => _reduction.text = '$amount'),
+                ),
+            ],
+          ),
         ];
       case _SimulationTemplate.free:
         return [
