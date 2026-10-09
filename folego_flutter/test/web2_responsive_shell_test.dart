@@ -154,9 +154,11 @@ void main() {
     FinancialPrivacy.hidden.value = false;
     addTearDown(() => FinancialPrivacy.hidden.value = false);
     _setViewport(tester, const Size(390, 844));
-    await tester.pumpWidget(_app(home.HomeScreen(
-      space: const FinancialSpace(id: 'space', name: 'Casa'),
-      repository: _HomeRepository(),
+    await tester.pumpWidget(_app(Scaffold(
+      body: home.HomeScreen(
+        space: const FinancialSpace(id: 'space', name: 'Casa'),
+        repository: _HomeRepository(),
+      ),
     )));
     await tester.pump();
     await tester.pump();
