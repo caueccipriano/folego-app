@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 
-/// Cabeçalho oficial das telas principais do Fôlego.
-///
-/// Mantém título, subtítulo e ação lateral com a mesma hierarquia visual
-/// entre Plano, Carteira, Lançamentos e Perfil.
+/// Shared page heading for Plano, Carteira, Lançamentos and Perfil.
+/// Keeps the main title legible when actions and larger accessibility text
+/// compete for the limited width of a small iPhone.
 class AppPageHeader extends StatelessWidget {
   const AppPageHeader({
     super.key,
@@ -26,72 +25,68 @@ class AppPageHeader extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
-    final compact = MediaQuery.sizeOf(context).width < 600;
-    final titleSize = compact ? 26.0 : 28.0;
-    final subtitleSize = compact ? 12.0 : 13.0;
-    final leadingIndent = compact ? 52.0 : 56.0;
-
-    Widget titleRow({required bool includeTrailing}) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.display(
-                context,
-                fontSize: titleSize,
-                color: primary,
-              ),
-            ),
-          ),
-          if (includeTrailing && trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
-        ],
-      );
-    }
-
-    Widget subtitleText() => Padding(
-          padding: EdgeInsets.only(left: leading == null ? 0 : leadingIndent),
-          child: Text(
-            subtitle!,
-            style: AppTypography.body(
-              context,
-              fontSize: subtitleSize,
-              color: secondary,
-            ),
-          ),
-        );
+    final largerText = MediaQuery.textScalerOf(context).scale(16) > 19.2;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stackTrailing =
-            trailing != null && leading != null && constraints.maxWidth < 430;
+        // Use the *actual component width*, not the device width: headers
+        // also render inside narrower content columns and bottom sheets.
+        final compact = constraints.maxWidth < 600;
+        final stackAction = trailing != null &&
+            (constraints.maxWidth < 440 ||
+                (largerText && constraints.maxWidth < 680));
+        final leadingIndent = leading == null ? 0.0 : (compact ? 52.0 : 56.0);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            titleRow(includeTrailing: !stackTrailing),
-            if (subtitle?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 4),
-              subtitleText(),
-            ],
-            if (stackTrailing) ...[
-              const SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsets.only(left: leading == null ? 0 : leadingIndent),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: trailing!,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (leading != null) ...[
+                  leading!,
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      title,
+                      maxLines: largerText ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.display(
+                        context,
+                        fontSize: compact ? 26 : 28,
+                        color: primary,
+                      ),
+                    ),
+                  ),
                 ),
+                if (!stackAction && trailing != null) ...[
+                  const SizedBox(width: 12),
+                  trailing!,
+                ],
+              ],
+            ),
+            if (subtitle?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 6),
+              Padding(
+                padding: EdgeInsets.only(left: leadingIndent),
+                child: Text(
+                  subtitle!,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: compact ? 13 : 14,
+                    color: secondary,
+                  ),
+                ),
+              ),
+            ],
+            if (stackAction) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: trailing!,
               ),
             ],
           ],
