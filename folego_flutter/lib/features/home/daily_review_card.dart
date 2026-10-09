@@ -275,7 +275,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    days.length.toString() + '/7 dias revisados',
+                    '${days.length}/7 dias revisados',
                     style: AppTypography.label(
                       context, color: purple, fontWeight: FontWeight.w700,
                     ),
@@ -285,9 +285,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     Row(
                       children: List.generate(7, (i) {
                         final date = today.subtract(Duration(days: 6 - i));
-                        final key = date.year.toString() + '-' +
-                            date.month.toString().padLeft(2, '0') + '-' +
-                            date.day.toString().padLeft(2, '0');
+                        final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
                         final done = days.contains(key);
                         return Expanded(
                           child: Column(
@@ -339,7 +337,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                           ),
                         ),
                         Text(
-                          ((_movements ? 1 : 0) + (_commitments ? 1 : 0)).toString() + ' de 2',
+                          '${(_movements ? 1 : 0) + (_commitments ? 1 : 0)} de 2',
                           style: AppTypography.label(context, color: secondary),
                         ),
                       ],
@@ -527,8 +525,8 @@ String dailyReviewPaceMessage(Map pace) {
     case 'at_risk':
       final average = (pace['average_per_day'] as num?)?.toDouble() ?? 0;
       final limit = (pace['daily_limit'] as num?)?.toDouble() ?? 0;
-      return 'média de ' + Formatters.money(average) + '/dia na última semana; '
-          'limite de ' + Formatters.money(limit) + '/dia. confira seu plano.';
+      return 'média de ${Formatters.money(average)}/dia na última semana; '
+          'limite de ${Formatters.money(limit)}/dia. confira seu plano.';
     case 'review_needed':
       return 'classificar alguns gastos ajuda a conhecer seu ritmo.';
     case 'income_needed':
