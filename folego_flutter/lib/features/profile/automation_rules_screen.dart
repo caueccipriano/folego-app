@@ -12,7 +12,6 @@ import '../../data/models/account_item.dart';
 import '../../data/models/automation_rule.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/credit_card_item.dart';
-import '../../data/models/statement_import.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_automation.dart';
 import '../../data/repositories/folego_repository_categories.dart';
@@ -45,6 +44,8 @@ class _AutomationRulesScreenState extends State<AutomationRulesScreen> {
   bool _loading = true;
   String? _error;
   final TextEditingController _preview = TextEditingController();
+  AutomationDirection _previewDirection = AutomationDirection.debit;
+  String _previewSourceKey = 'any';
   RealtimeRefreshBinding? _realtimeBinding;
 
   @override
@@ -166,25 +167,42 @@ class _AutomationRulesScreenState extends State<AutomationRulesScreen> {
     }
   }
 
-  List<AutomationRule> get _previewMatches {
-    final value = _preview.text.trim();
-    if (value.isEmpty) return const <AutomationRule>[];
-    final candidate = StatementImportCandidate(
-      rowNumber: 1,
-      occurredAt: DateTime.now(),
-      dateOnly: true,
-      amountMinor: 100,
-      description: value,
-      merchant: value,
-      direction: StatementImportDirection.debit,
-      candidateType: StatementImportCandidateType.expense,
-    );
-    final matches = _rules
-        .where((rule) => rule.matchesCandidate(candidate))
-        .toList(growable: false);
-    matches.sort(compareAutomationRulesForPreview);
-    return matches;
-  }
+  List<DropdownMenuItem<String>> get _previewSources => [
+        const DropdownMenuItem<String>(
+          value: 'any',
+          child: Text('Somente regras gerais'),
+        ),
+        ..._accounts.map(
+          (account) => DropdownMenuItem<String>(
+            value: 'account:${account.id}',
+            child: Text('Conta · ${account.name}', overflow: TextOverflow.ellipsis),
+          ),
+        ),
+        ..._cards.map(
+          (card) => DropdownMenuItem<String>(
+            value: 'card:${card.id}',
+            child: Text('Cartão · ${card.name}', overflow: TextOverflow.ellipsis),
+          ),
+        ),
+        ..._benefits.map(
+          (benefit) => DropdownMenuItem<String>(
+            value: 'benefit:${benefit.id}',
+            child: Text('Benefício · ${benefit.name}', overflow: TextOverflow.ellipsis),
+          ),
+        ),
+      ];
+
+  String get _effectivePreviewSource =>
+      _previewSources.any((item) => item.value == _previewSourceKey)
+          ? _previewSourceKey
+          : 'any';
+
+  List<AutomationRule> get _previewMatches => previewAutomationRules(
+        rules: _rules,
+        text: _preview.text,
+        direction: _previewDirection,
+        sourceKey: _effectivePreviewSource,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -250,12 +268,59 @@ class _AutomationRulesScreenState extends State<AutomationRulesScreen> {
                                   ),
                                 ),
                                 if (_preview.text.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  DropdownButtonFormField<AutomationDirection>(
+                                    key: const ValueKey('automation-preview-direction'),
+                                    initialValue: _previewDirection,
+                                    decoration: const InputDecoration(
+                                      labelText: 'movimentação da prévia',
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: AutomationDirection.debit,
+                                        child: Text('saída / gasto'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: AutomationDirection.credit,
+                                        child: Text('entrada / recebimento'),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() => _previewDirection = value);
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(height: 10),
+                                  DropdownButtonFormField<String>(
+                                    key: ValueKey('automation-preview-source-$_effectivePreviewSource'),
+                                    isExpanded: true,
+                                    initialValue: _effectivePreviewSource,
+                                    decoration: const InputDecoration(
+                                      labelText: 'origem da prévia',
+                                    ),
+                                    items: _previewSources,
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() => _previewSourceKey = value);
+                                      }
+                                    },
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
                                     _previewMatches.isEmpty
-                                        ? 'nenhuma regra ativa corresponderia'
-                                        : 'regra vencedora: ${_previewMatches.first.name}',
+                                        ? 'nenhuma regra ativa corresponde a esse texto, origem e direção'
+                                        : 'possível regra vencedora: ${_previewMatches.first.name}',
+                                    key: const ValueKey('automation-preview-result'),
                                     style: AppTypography.body(
+                                      context,
+                                      color: AppColors.secondaryText(brightness),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'simulação local, sem alterar lançamentos. A importação ainda exige revisão.',
+                                    style: AppTypography.label(
                                       context,
                                       color: AppColors.secondaryText(brightness),
                                     ),
