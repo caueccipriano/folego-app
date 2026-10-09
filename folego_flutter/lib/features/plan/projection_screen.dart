@@ -1932,19 +1932,14 @@ class _ProjectionSimulationSheetState
           _invalid('informe a compra, o valor total e de 1 a 120 parcelas');
           return;
         }
-        final cents = total ~/ payments;
-        result = List.generate(
-          payments,
-          (index) => ProjectionAdjustment(
-            id: '$idBase-purchase-$index',
-            name: '${_name.text.trim()} — ${index + 1}/$payments',
-            component: 'direct_expense',
-            amountDelta: (cents + (index == 0 ? total % payments : 0)) / 100,
-            frequency: 'once',
-            startsOn: projectionMonthlyEndDate(_startsOn, index + 1),
-            categoryName: _category?.name,
-            categoryId: _category?.id,
-          ),
+        result = buildPurchaseSimulation(
+          id: idBase,
+          name: _name.text,
+          totalCents: total,
+          payments: payments,
+          firstPayment: _startsOn,
+          categoryId: _category?.id,
+          categoryName: _category?.name,
         );
       case _SimulationTemplate.car:
         final entry = _money(_entry.text);
@@ -2458,7 +2453,8 @@ String _monthYear(DateTime value) {
 String _friendlyError(Object error) {
   final text = error.toString().replaceFirst('Exception: ', '');
   if (text.contains('read_access_denied')) return 'sem acesso a esta projeção';
-  if (text.contains('write_access_denied'))
+  if (text.contains('write_access_denied')) {
     return 'sem permissão para alterar este planejamento';
+  }
   return text;
 }

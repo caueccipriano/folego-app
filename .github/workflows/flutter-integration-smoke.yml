@@ -41,6 +41,9 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: Test purchase projection totals
+        run: flutter test test/purchase_simulation_test.dart test/projection_model_test.dart
+
       - name: Run public auth integration smoke
         run: |
           chromedriver --port=4444 >/tmp/chromedriver.log 2>&1 &

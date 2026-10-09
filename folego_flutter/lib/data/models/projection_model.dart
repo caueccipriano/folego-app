@@ -190,9 +190,8 @@ class ProjectionResult {
           ? rawMonths
                 .whereType<Map>()
                 .map(
-                  (item) => ProjectionMonth.fromJson(
-                    Map<String, dynamic>.from(item),
-                  ),
+                  (item) =>
+                      ProjectionMonth.fromJson(Map<String, dynamic>.from(item)),
                 )
                 .toList(growable: false)
           : const <ProjectionMonth>[],
@@ -294,4 +293,52 @@ String _projectionDate(DateTime value) {
   final month = value.month.toString().padLeft(2, '0');
   final day = value.day.toString().padLeft(2, '0');
   return '${value.year}-$month-$day';
+}
+
+/// A finite monthly series plus a one-time cent remainder keeps large purchases
+/// within the backend's 40-adjustment limit without losing the total.
+List<ProjectionAdjustment> buildPurchaseSimulation({
+  required String id,
+  required String name,
+  required int totalCents,
+  required int payments,
+  required DateTime firstPayment,
+  String? categoryId,
+  String? categoryName,
+}) {
+  if (name.trim().isEmpty ||
+      totalCents <= 0 ||
+      payments < 1 ||
+      payments > 120 ||
+      totalCents < payments) {
+    throw ArgumentError('invalid_purchase_simulation');
+  }
+  final cents = totalCents ~/ payments;
+  final remainder = totalCents % payments;
+  return [
+    ProjectionAdjustment(
+      id: '$id-purchase',
+      name: '${name.trim()} — $payments pagamento(s)',
+      component: 'direct_expense',
+      amountDelta: cents / 100,
+      frequency: payments == 1 ? 'once' : 'monthly',
+      startsOn: firstPayment,
+      endsOn: payments == 1
+          ? null
+          : projectionMonthlyEndDate(firstPayment, payments),
+      categoryId: categoryId,
+      categoryName: categoryName,
+    ),
+    if (remainder > 0)
+      ProjectionAdjustment(
+        id: '$id-purchase-rounding',
+        name: '${name.trim()} — ajuste da primeira parcela',
+        component: 'direct_expense',
+        amountDelta: remainder / 100,
+        frequency: 'once',
+        startsOn: firstPayment,
+        categoryId: categoryId,
+        categoryName: categoryName,
+      ),
+  ];
 }
