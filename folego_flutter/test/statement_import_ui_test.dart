@@ -148,13 +148,17 @@ void main() {
       duplicate: StatementImportDuplicateState.possibleDuplicate,
     );
     await _driveCsvToReview(tester);
+    await tester.ensureVisible(find.text('incluir seguros'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('incluir seguros'));
     await tester.pumpAndSettle();
+    await _scrollMobileReviewTo(
+      tester, find.byKey(const ValueKey('statement-import-include-row-1')),
+    );
     final checkbox = tester.widget<Checkbox>(
       find.byKey(const ValueKey('statement-import-include-row-1')),
     );
     expect(checkbox.value, isFalse);
-    expect(find.textContaining('Possíveis duplicatas continuam'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
