@@ -75,7 +75,7 @@ class HomeProjectionInsightCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'mantendo o ritmo atual, ${_monthName(current.month)} fecha em',
+                      'com os lançamentos e compromissos previstos, ${_monthName(current.month)} fecha em',
                       style: AppTypography.body(
                         context,
                         fontSize: 12,
@@ -114,11 +114,7 @@ class HomeProjectionInsightCard extends StatelessWidget {
               const SizedBox(width: 10),
               Padding(
                 padding: const EdgeInsets.only(top: 20),
-                child: Icon(
-                  AppIcons.chevronRight,
-                  size: 20,
-                  color: secondary,
-                ),
+                child: Icon(AppIcons.chevronRight, size: 20, color: secondary),
               ),
             ],
           ),

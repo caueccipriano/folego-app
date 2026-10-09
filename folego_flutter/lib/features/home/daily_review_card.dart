@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/financial_space.dart';
+import '../../core/utils/formatters.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
 import '../transactions/transaction_classification_inbox.dart';
@@ -106,6 +107,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
             repository: widget.repository,
             spaceId: widget.space.id,
             initialItems: items,
+            batchSize: 5,
           ),
         ),
       );
@@ -123,7 +125,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   }
 
   Future<void> _register() async {
-    await showModalBottomSheet<bool>(
+    final registered = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -133,6 +135,10 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         initialType: 'expense',
       ),
     );
+    if (registered == true && mounted) {
+      setState(() => _noMovements = false);
+      await _save();
+    }
     await _load();
   }
 
@@ -154,6 +160,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   @override
   Widget build(BuildContext context) {
     final days = (_state?['completed_days'] as List?) ?? [];
+    final pace = _state?['spending_pace'] as Map?;
     final today = DateTime.tryParse(_state?['today']?.toString() ?? '');
     return Card(
       child: Padding(
@@ -185,6 +192,18 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               const Text(
                 'Revisão de domingo: confira também os compromissos da próxima semana.',
               ),
+            if (pace != null) ...[
+              const SizedBox(height: 8),
+              Text(switch (pace['status']) {
+                'at_risk' =>
+                  'Ritmo em atenção: média de ${Formatters.money((pace['average_per_day'] as num).toDouble())}/dia nos 7 dias completos anteriores. Limite atual: ${Formatters.money((pace['daily_limit'] as num?)?.toDouble() ?? 0)}/dia. Mantendo a média, pode faltar ${Formatters.money((pace['projected_excess'] as num).toDouble())} até receber.',
+                'review_needed' => 'Classifique as despesas recentes para avaliar seu ritmo com segurança.',
+                'income_needed' =>
+                  'Configure o próximo recebimento para avaliar seu ritmo.',
+                'insufficient_history' => 'Ritmo: aguardando gastos registrados em pelo menos 3 dias dos últimos 7.',
+                _ => 'Ritmo dos últimos 7 dias dentro do limite atual até receber.',
+              }),
+            ],
             if (_error != null)
               TextButton(onPressed: _load, child: Text(_error!)),
             if (_state == null && _error == null)
@@ -206,7 +225,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               if (_pending > 0)
                 FilledButton(
                   onPressed: _busy ? null : _classify,
-                  child: const Text('Resolver pendências'),
+                  child: const Text('Resolver até 5 pendências'),
                 ),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
