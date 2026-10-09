@@ -16,7 +16,10 @@ class _Repository implements FolegoRepository {
 }
 
 StatementImportBootstrap _bootstrap() => const StatementImportBootstrap(
-      paymentAccounts: [AccountItem(id: 'account-1', name: 'Conta teste', type: 'checking')],
+      paymentAccounts: [
+        AccountItem(id: 'account-1', name: 'Conta teste', type: 'checking'),
+        AccountItem(id: 'account-2', name: 'Conta destino', type: 'checking'),
+      ],
       benefitAccounts: [AccountItem(id: 'benefit-1', name: 'Vale teste', type: 'benefit')],
       cards: [CreditCardItem(id: 'card-1', name: 'Cartão teste', active: true)],
       expenseCategories: [CategoryItem(id: 'cat-exp', name: 'Mercado', essential: true, kind: 'expense', iconKey: 'groceries')],
@@ -43,6 +46,8 @@ Future<void> _pumpImport(
   WidgetTester tester, {
   required Size size,
   StatementImportDuplicateState duplicate = StatementImportDuplicateState.unique,
+  StatementImportRow? stagedRow,
+  ValueNotifier<int>? confirmationCount,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -64,7 +69,7 @@ Future<void> _pumpImport(
       return 'batch-1';
     },
     rowsLoaderOverride: (_) async => [
-      if (!confirmed) _row(duplicate: duplicate) else StatementImportRow(
+      if (!confirmed) (stagedRow ?? _row(duplicate: duplicate)) else StatementImportRow(
         id: 'row-1', batchId: 'batch-1', rowNumber: 1,
         occurredAt: DateTime(2026, 9, 16, 12), description: 'MERCADO TESTE', amount: 35.90,
         direction: StatementImportDirection.debit, candidateType: StatementImportCandidateType.expense,
@@ -75,6 +80,7 @@ Future<void> _pumpImport(
     ],
     updateOverride: (_, rows) async => expect(rows, isNotEmpty),
     confirmOverride: (_) async {
+      if (confirmationCount != null) confirmationCount.value++;
       confirmed = true;
       return const StatementImportResult(batchId: 'batch-1', status: 'completed', imported: 1, ignored: 0, duplicates: 0, errors: 0, pending: 0);
     },
@@ -122,6 +128,48 @@ void main() {
     expect(find.byKey(const ValueKey('statement-import-result')), findsOneWidget);
     expect(find.text('importação concluída'), findsOneWidget);
     expect(find.text('ver lançamentos'), findsOneWidget);
+  });
+
+  testWidgets('transfer requires explicit final approval before writing', (tester) async {
+    final confirmations = ValueNotifier<int>(0);
+    addTearDown(confirmations.dispose);
+    await _pumpImport(
+      tester,
+      size: const Size(390, 844),
+      confirmationCount: confirmations,
+      stagedRow: _row().copyWith(
+        finalType: StatementImportFinalType.transfer,
+        counterpartAccountId: 'account-2',
+      ),
+    );
+    await _driveCsvToReview(tester);
+    final confirm = find.byKey(const ValueKey('statement-import-confirm'));
+    await _scrollMobileReviewTo(tester, confirm);
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+    expect(find.byKey(
+      const ValueKey('statement-import-sensitive-review-dialog'),
+    ), findsOneWidget);
+    expect(find.textContaining('duas vezes'), findsOneWidget);
+    expect(confirmations.value, 0);
+
+    await tester.tap(find.text('voltar à revisão'));
+    await tester.pumpAndSettle();
+    expect(confirmations.value, 0);
+    expect(find.byKey(const ValueKey('statement-import-review-mobile')),
+      findsOneWidget);
+
+    await _scrollMobileReviewTo(tester, confirm);
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(
+      const ValueKey('statement-import-sensitive-proceed'),
+    ));
+    await tester.pumpAndSettle();
+    expect(confirmations.value, 1);
+    expect(find.byKey(const ValueKey('statement-import-result')),
+      findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('desktop uses dense review layout', (tester) async {

@@ -154,4 +154,70 @@ void main() {
     expect(validate(salary), isNull);
     expect(safeBulk([expense]).single.selected, isFalse);
   });
+  test('sensitive financial rows always need an extra explicit approval', () {
+    final summary = summarizeSensitiveStatementImport([
+      row(
+        id: 'transfer',
+        finalType: StatementImportFinalType.transfer,
+        decision: StatementImportDecision.include,
+        counterpart: 'cash-b',
+      ),
+      row(
+        id: 'invoice',
+        finalType: StatementImportFinalType.cardPayment,
+        decision: StatementImportDecision.include,
+        invoice: 'invoice-a',
+      ),
+      row(
+        id: 'duplicate',
+        duplicate: StatementImportDuplicateState.possibleDuplicate,
+        decision: StatementImportDecision.include,
+      ),
+      row(
+        id: 'ignored',
+        finalType: StatementImportFinalType.transfer,
+        decision: StatementImportDecision.ignore,
+      ),
+      row(
+        id: 'already-imported',
+        finalType: StatementImportFinalType.transfer,
+        status: StatementImportRowStatus.imported,
+        decision: StatementImportDecision.include,
+      ),
+    ]);
+    expect(summary.requiresConfirmation, isTrue);
+    expect(summary.transfers, 1);
+    expect(summary.cardPayments, 1);
+    expect(summary.duplicateOverrides, 1);
+    expect(summary.possibleRefunds, 0);
+  });
+
+  test('possible refund is reviewed even if manually chosen as income', () {
+    final value = row(
+      id: 'refund',
+      finalType: StatementImportFinalType.income,
+      direction: StatementImportDirection.credit,
+      decision: StatementImportDecision.include,
+    );
+    final refund = StatementImportRow(
+      id: value.id, batchId: value.batchId, rowNumber: value.rowNumber,
+      occurredAt: value.occurredAt, description: 'ESTORNO COMPRA',
+      amount: value.amount, direction: value.direction,
+      candidateType: StatementImportCandidateType.refundCandidate,
+      finalType: value.finalType,
+      duplicateState: value.duplicateState,
+      decision: value.decision, status: value.status,
+    );
+    expect(validate(refund), isNull);
+    expect(summarizeSensitiveStatementImport([refund]).possibleRefunds, 1);
+    expect(summarizeSensitiveStatementImport([refund]).requiresConfirmation,
+      isTrue);
+    expect(summarizeSensitiveStatementImport([
+      refund.copyWith(decision: StatementImportDecision.ignore),
+    ]).requiresConfirmation, isFalse);
+    expect(summarizeSensitiveStatementImport([
+      row(decision: StatementImportDecision.include),
+    ]).requiresConfirmation, isFalse);
+  });
+
 }

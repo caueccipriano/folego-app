@@ -94,6 +94,59 @@ String? validateStatementImportReconciliation({
   return null;
 }
 
+/// Human approval required for decisions whose cash side effects can be
+/// recorded twice by a second statement (or already exist in the ledger).
+/// This does not prove two records are duplicates; it makes the risk explicit.
+class StatementImportRiskSummary {
+  const StatementImportRiskSummary({
+    required this.transfers,
+    required this.cardPayments,
+    required this.possibleRefunds,
+    required this.duplicateOverrides,
+  });
+
+  final int transfers;
+  final int cardPayments;
+  final int possibleRefunds;
+  final int duplicateOverrides;
+
+  bool get requiresConfirmation =>
+      transfers > 0 ||
+      cardPayments > 0 ||
+      possibleRefunds > 0 ||
+      duplicateOverrides > 0;
+}
+
+/// Only selected rows matter: ignored entries cannot create financial impacts.
+/// Distinct risks may overlap, e.g. one possible refund is also a duplicate.
+StatementImportRiskSummary summarizeSensitiveStatementImport(
+  List<StatementImportRow> rows,
+) {
+  final included = rows.where(
+    (row) => row.selected && row.status != StatementImportRowStatus.imported,
+  );
+  var transfers = 0;
+  var cardPayments = 0;
+  var possibleRefunds = 0;
+  var duplicateOverrides = 0;
+  for (final row in included) {
+    if (row.finalType == StatementImportFinalType.transfer) transfers++;
+    if (row.finalType == StatementImportFinalType.cardPayment) cardPayments++;
+    if (row.candidateType == StatementImportCandidateType.refundCandidate) {
+      possibleRefunds++;
+    }
+    if (row.duplicateState != StatementImportDuplicateState.unique) {
+      duplicateOverrides++;
+    }
+  }
+  return StatementImportRiskSummary(
+    transfers: transfers,
+    cardPayments: cardPayments,
+    possibleRefunds: possibleRefunds,
+    duplicateOverrides: duplicateOverrides,
+  );
+}
+
 /// Bulk actions never turn an unreviewed possible duplicate into a new
 /// expense, income or transfer. Explicit single-row approvals are preserved.
 List<StatementImportRow> includeOnlySafeStatementRows({
