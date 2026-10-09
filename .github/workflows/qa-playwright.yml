@@ -56,7 +56,8 @@ jobs:
             test/notification_models_test.dart \
             test/daily_review_design_test.dart \
             test/home_financial_copy_test.dart \
-            test/smart_home_classification_test.dart
+            test/smart_home_classification_test.dart \
+            test/closed_month_evolution_test.dart
 
       - name: Audit legacy responsive stress tests
         continue-on-error: true
