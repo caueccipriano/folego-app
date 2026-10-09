@@ -61,6 +61,7 @@ jobs:
             test/app_breakpoints_test.dart \
             test/auth_widgets_test.dart \
             test/auth_responsive_smoke_test.dart \
+            test/shared_header_responsive_test.dart \
             test/statement_import_parser_test.dart \
             test/statement_import_qa_synthetic_test.dart \
             test/statement_import_reconciliation_test.dart \
