@@ -26,6 +26,7 @@ import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'home_monthly_money_card.dart';
+import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
 import 'quick_register_sheet.dart';
@@ -310,6 +311,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
+      onOpenEvolution: () => showClosedMonthEvolution(
+        context,
+        repository: widget.repository,
+        spaceId: widget.space.id,
+      ),
     );
     final projectionInsight = HomeProjectionInsightCard(
       projection: _projection,
