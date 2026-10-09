@@ -14,9 +14,11 @@ class DailyReviewCard extends StatefulWidget {
     super.key,
     required this.space,
     required this.repository,
+    this.refreshToken,
   });
   final FinancialSpace space;
   final FolegoRepository repository;
+  final Object? refreshToken;
   @override
   State<DailyReviewCard> createState() => _DailyReviewCardState();
 }
@@ -38,13 +40,30 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant DailyReviewCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.space.id != widget.space.id) {
+      _state = null;
+      _expanded = false;
+      _error = null;
+      _movements = false;
+      _commitments = false;
+      _noMovements = false;
+      _load();
+    } else if (oldWidget.refreshToken != widget.refreshToken) {
+      _load();
+    }
+  }
+
   Future<void> _load() async {
+    final spaceId = widget.space.id;
     try {
       final response = await Supabase.instance.client.rpc(
         'get_daily_financial_review',
-        params: {'p_space_id': widget.space.id},
+        params: {'p_space_id': spaceId},
       );
-      if (!mounted) return;
+      if (!mounted || widget.space.id != spaceId) return;
       final state = Map<String, dynamic>.from(response as Map);
       final review = state['review'] as Map?;
       setState(() {
@@ -55,7 +74,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         _error = null;
       });
     } catch (_) {
-      if (mounted) {
+      if (mounted && widget.space.id == spaceId) {
         setState(
           () => _error = 'Não foi possível carregar sua revisão. Toque para tentar novamente.',
         );
