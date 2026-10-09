@@ -53,6 +53,7 @@ jobs:
             test/app_breakpoints_test.dart \
             test/auth_widgets_test.dart \
             test/auth_responsive_smoke_test.dart \
+            test/notification_history_account_isolation_test.dart \
             test/shared_header_responsive_test.dart \
             test/notification_models_test.dart \
             test/daily_review_design_test.dart \
