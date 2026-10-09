@@ -354,7 +354,24 @@ class _TransactionClassificationInboxState
   ) async {
     if (!_automationEnabled) return false;
     final description = item.description.trim();
-    if (description.length < 3) return false;
+    final simpleAccountEvent =
+        (item.eventType == 'expense' || item.eventType == 'income') &&
+        item.accountId != null;
+    if (description.length < 4 || !simpleAccountEvent) return false;
+    final direction = transactionClassificationKind(item.eventType) == 'income'
+        ? AutomationDirection.credit
+        : AutomationDirection.debit;
+    final existing = _reviewRules.any((rule) =>
+        rule.active &&
+        rule.matchField == AutomationMatchField.description &&
+        rule.matchType == AutomationMatchType.equals &&
+        rule.sourceScope == AutomationSourceScope.account &&
+        rule.sourceAccountId == item.accountId &&
+        rule.direction == direction &&
+        rule.categoryId == category.id &&
+        normalizeAutomationText(rule.matchValue) ==
+            normalizeAutomationText(description));
+    if (existing) return false;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -377,31 +394,25 @@ class _TransactionClassificationInboxState
     );
     if (confirmed != true || !mounted) return false;
 
-    final isSimpleAccountEvent =
-        (item.eventType == 'expense' || item.eventType == 'income') &&
-        item.accountId != null;
-    final direction = transactionClassificationKind(item.eventType) == 'income'
-        ? AutomationDirection.credit
-        : AutomationDirection.debit;
-
     try {
-      await widget.repository.createAutomationRule(
+      final created = await widget.repository.createAutomationRule(
         spaceId: widget.spaceId,
         draft: AutomationRuleDraft(
           name: 'sempre: ${_shortLabel(description)}',
           matchField: AutomationMatchField.description,
           matchType: AutomationMatchType.equals,
           matchValue: description,
-          sourceScope: isSimpleAccountEvent
-              ? AutomationSourceScope.account
-              : AutomationSourceScope.any,
-          sourceAccountId: isSimpleAccountEvent ? item.accountId : null,
+          sourceScope: AutomationSourceScope.account,
+          sourceAccountId: item.accountId,
           direction: direction,
           categoryId: category.id,
           actionType: AutomationActionType.reviewCategory,
           executionMode: AutomationExecutionMode.review,
         ),
       );
+      if (mounted) {
+        setState(() => _reviewRules = [..._reviewRules, created]);
+      }
       return true;
     } catch (error) {
       if (!mounted) return false;
