@@ -558,8 +558,9 @@ class DailyReviewPrompt extends StatelessWidget {
     if (loading) return 'organizando seu dia…';
     if (complete) return 'feito por hoje · $days/7 dias revisados';
     if (pace?['status'] == 'at_risk') return 'seu ritmo merece atenção';
-    if (pending > 0) return '$pending lançamentos para organizar, aos poucos';
-    return 'dois minutos para manter tudo em dia';
+    if (days >= 3) return '$days dos últimos 7 dias revisados · continue no seu ritmo';
+    if (pending > 0) return 'duas conferências rápidas · pendências ficam para depois';
+    return 'duas conferências rápidas para fechar o dia';
   }
 
   @override
@@ -575,7 +576,7 @@ class DailyReviewPrompt extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.control),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: border))),
           child: Row(
             children: [
