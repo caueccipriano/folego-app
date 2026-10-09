@@ -18,6 +18,27 @@ import '../../data/repositories/folego_repository_transaction_classification.dar
 import '../../shared/widgets/category_search_picker.dart';
 import '../../shared/widgets/app_loading_state.dart';
 
+/// Restrict bulk suggestions to the same account, event type and exact
+/// normalized description. Never infer an account from card/benefit entries
+/// whose financial impact does not expose a source account.
+List<TransactionItem> matchingClassificationCandidates(
+  TransactionItem original,
+  Iterable<TransactionItem> pending,
+) {
+  final name = normalizeAutomationText(original.description);
+  if (name.length < 4 || original.accountId == null) {
+    return const <TransactionItem>[];
+  }
+  return pending.where((candidate) =>
+      candidate.id != original.id &&
+      candidate.categoryId == null &&
+      candidate.eventType == original.eventType &&
+      candidate.source == original.source &&
+      candidate.accountId == original.accountId &&
+      normalizeAutomationText(candidate.description) == name
+  ).toList(growable: false);
+}
+
 class TransactionClassificationInbox extends StatefulWidget {
   const TransactionClassificationInbox({
     super.key,
@@ -163,14 +184,22 @@ class _TransactionClassificationInboxState
         _batchDone++;
       });
 
+      final remaining = _batchTarget - _batchDone;
+      final matches = matchingClassificationCandidates(item, _items)
+          .take(remaining > 4 ? 4 : (remaining < 0 ? 0 : remaining))
+          .toList(growable: false);
+      final grouped = matches.isEmpty
+          ? 0
+          : await _offerMatchBatch(matches, selected);
+      if (!mounted) return;
       final ruleCreated = await _offerAlwaysCategorize(item, selected);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             ruleCreated
-                ? 'Classificado em ${selected.breadcrumb} e regra preparada para próximas revisões.'
-                : 'classificado em ${selected.breadcrumb}',
+                ? 'categoria salva${grouped > 0 ? " em mais $grouped" : ""} e regra criada para as próximas revisões.'
+                : 'classificado em ${selected.breadcrumb}${grouped > 0 ? " + $grouped semelhante(s)" : ""}',
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -184,6 +213,67 @@ class _TransactionClassificationInboxState
     }
   }
 
+  Future<int> _offerMatchBatch(
+    List<TransactionItem> matches,
+    CategoryItem category,
+  ) async {
+    if (matches.isEmpty) return 0;
+    final count = matches.length;
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('aplicar a lançamentos iguais?'),
+        content: Text(
+          'Encontrei $count lançamento${count == 1 ? "" : "s"} da mesma conta, '
+          'tipo e descrição. Quer classificá-${count == 1 ? "lo" : "los"} '
+          'também como ${category.breadcrumb}? '
+          'Os valores e datas não serão alterados.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('deixar para depois'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text('aplicar a $count'),
+          ),
+        ],
+      ),
+    );
+    if (approved != true || !mounted) return 0;
+
+    var applied = 0;
+    for (final duplicate in matches) {
+      if (!mounted) break;
+      setState(() => _savingEventId = duplicate.id);
+      try {
+        await widget.repository.classifyFinancialEvent(
+          spaceId: widget.spaceId,
+          eventId: duplicate.id,
+          categoryId: category.id,
+        );
+        if (!mounted) break;
+        setState(() {
+          _items.removeWhere((row) => row.id == duplicate.id);
+          _changed = true;
+          _batchDone++;
+          applied++;
+        });
+      } catch (_) {
+        if (mounted) {
+          setState(() => _error =
+              '$applied lançamento(s) adicionais classificados; houve uma '
+              'falha no próximo. Os restantes foram preservados.');
+        }
+        break;
+      } finally {
+        if (mounted) setState(() => _savingEventId = null);
+      }
+    }
+    return applied;
+  }
+
   Future<bool> _offerAlwaysCategorize(
     TransactionItem item,
     CategoryItem category,
@@ -195,9 +285,9 @@ class _TransactionClassificationInboxState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('sempre fazer assim?'),
+        title: const Text('lembrar esta categoria?'),
         content: Text(
-          'Sempre categorizar “${_shortLabel(description)}” como ${category.breadcrumb}?\n\nA regra só prepara a categoria para revisão; ela não cria nem confirma lançamentos sozinha.',
+          'Quando aparecer uma descrição idêntica a “${_shortLabel(description)}”, sugerir ${category.breadcrumb}?\n\nVocê continua confirmando a classificação; valores e datas não são alterados.' ,
         ),
         actions: [
           TextButton(
@@ -226,7 +316,7 @@ class _TransactionClassificationInboxState
         draft: AutomationRuleDraft(
           name: 'sempre: ${_shortLabel(description)}',
           matchField: AutomationMatchField.description,
-          matchType: AutomationMatchType.contains,
+          matchType: AutomationMatchType.equals,
           matchValue: description,
           sourceScope: isSimpleAccountEvent
               ? AutomationSourceScope.account
