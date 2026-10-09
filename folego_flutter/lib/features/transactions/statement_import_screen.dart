@@ -441,7 +441,7 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
           key: const ValueKey('statement-import-sensitive-review-dialog'),
           title: const Text('confira os efeitos no saldo'),
           content: SingleChildScrollView(
-            child: Text(warnings.join('\\n\\n')),
+            child: Text(warnings.join('\n\n')),
           ),
           actions: [
             TextButton(
