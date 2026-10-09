@@ -68,7 +68,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    FinancialPrivacy.hidden.addListener(_onFinancialPrivacyChanged);
     _load();
+  }
+
+  // The eye control changes a global notifier, not Home's local state.
+  // Rebuild all money, chart labels and the button's tooltip together,
+  // without triggering a repository reload or changing financial data.
+  void _onFinancialPrivacyChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    FinancialPrivacy.hidden.removeListener(_onFinancialPrivacyChanged);
+    super.dispose();
   }
 
   Future<T?> _optional<T>(Future<T> future, String label) async {
