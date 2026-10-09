@@ -34,7 +34,7 @@ class AppEmptyState extends StatelessWidget {
       child: Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 520),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -44,8 +44,8 @@ class AppEmptyState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 48,
+            height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: .11),
@@ -53,25 +53,25 @@ class AppEmptyState extends StatelessWidget {
             ),
             child: Icon(icon, color: accent, size: 22),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             title,
             textAlign: TextAlign.center,
             style: AppTypography.body(
               context,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: primary,
             ),
           ),
           if (description?.trim().isNotEmpty == true) ...[
-            const SizedBox(height: 5),
+            const SizedBox(height: 7),
             Text(
               description!,
               textAlign: TextAlign.center,
               style: AppTypography.body(
                 context,
-                fontSize: 11,
+                fontSize: 13,
                 color: secondary,
               ),
             ),
