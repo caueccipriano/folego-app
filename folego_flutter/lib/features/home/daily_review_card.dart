@@ -13,16 +13,31 @@ import '../transactions/transaction_classification_inbox.dart';
 import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 
+/// Injectable to exercise delayed network responses without touching real funds.
+typedef DailyReviewLoader = Future<Map<String, dynamic>> Function(String spaceId);
+typedef DailyReviewSaver = Future<void> Function({
+  required String spaceId,
+  required bool movementsChecked,
+  required bool commitmentsChecked,
+  required bool noMovements,
+  required bool complete,
+  required bool snooze,
+});
+
 class DailyReviewCard extends StatefulWidget {
   const DailyReviewCard({
     super.key,
     required this.space,
     required this.repository,
     this.refreshToken,
+    this.reviewLoader,
+    this.reviewSaver,
   });
   final FinancialSpace space;
   final FolegoRepository repository;
   final Object? refreshToken;
+  final DailyReviewLoader? reviewLoader;
+  final DailyReviewSaver? reviewSaver;
   @override
   State<DailyReviewCard> createState() => _DailyReviewCardState();
 }
@@ -30,6 +45,9 @@ class DailyReviewCard extends StatefulWidget {
 class _DailyReviewCardState extends State<DailyReviewCard> {
   Map<String, dynamic>? _state;
   final ValueNotifier<int> _revision = ValueNotifier(0);
+  int _latestLoadRequest = 0;
+  BuildContext? _reviewSheetContext;
+  bool _reviewSheetOpening = false;
   bool _busy = false;
   bool _movements = false;
   bool _commitments = false;
@@ -73,12 +91,19 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
 
   Future<void> _load() async {
     final spaceId = widget.space.id;
+    final requestId = ++_latestLoadRequest;
     try {
-      final response = await Supabase.instance.client.rpc(
-        'get_daily_financial_review',
-        params: {'p_space_id': spaceId},
-      );
-      if (!mounted || widget.space.id != spaceId) return;
+      final response = widget.reviewLoader != null
+          ? await widget.reviewLoader!(spaceId)
+          : await Supabase.instance.client.rpc(
+              'get_daily_financial_review',
+              params: {'p_space_id': spaceId},
+            );
+      if (!mounted ||
+          widget.space.id != spaceId ||
+          requestId != _latestLoadRequest) {
+        return;
+      }
       final state = Map<String, dynamic>.from(response as Map);
       final review = state['review'] as Map?;
       _refreshUi(() {
@@ -89,7 +114,9 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         _error = null;
       });
     } catch (_) {
-      if (mounted && widget.space.id == spaceId) {
+      if (mounted &&
+          widget.space.id == spaceId &&
+          requestId == _latestLoadRequest) {
         _refreshUi(
           () => _error = 'Não foi possível carregar sua revisão. Toque para tentar novamente.',
         );
@@ -99,22 +126,45 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
 
   Future<void> _save({bool complete = false, bool snooze = false}) async {
     if (_busy) return;
+    final spaceId = widget.space.id;
+    // A response requested before this mutation must never overwrite its flags.
+    _latestLoadRequest++;
     _refreshUi(() => _busy = true);
     try {
-      await Supabase.instance.client.rpc(
-        'save_daily_financial_review',
-        params: {
-          'p_space_id': widget.space.id,
-          'p_movements_checked': _movements,
-          'p_commitments_checked': _commitments,
-          'p_no_movements': _noMovements,
-          'p_complete': complete,
-          'p_snooze': snooze,
-        },
-      );
+      if (widget.reviewSaver != null) {
+        await widget.reviewSaver!(
+          spaceId: spaceId,
+          movementsChecked: _movements,
+          commitmentsChecked: _commitments,
+          noMovements: _noMovements,
+          complete: complete,
+          snooze: snooze,
+        );
+      } else {
+        await Supabase.instance.client.rpc(
+          'save_daily_financial_review',
+          params: {
+            'p_space_id': spaceId,
+            'p_movements_checked': _movements,
+            'p_commitments_checked': _commitments,
+            'p_no_movements': _noMovements,
+            'p_complete': complete,
+            'p_snooze': snooze,
+          },
+        );
+      }
+      if (!mounted || widget.space.id != spaceId) return;
       await _load();
-      if (mounted && (complete || snooze)) {
-        Navigator.of(context).pop();
+      // The user may have dismissed the sheet while saving. Never pop Home
+      // (or another route) when the original sheet is no longer current.
+      final sheetContext = _reviewSheetContext;
+      if (mounted &&
+          (complete || snooze) &&
+          widget.space.id == spaceId &&
+          sheetContext != null &&
+          sheetContext.mounted &&
+          ModalRoute.of(sheetContext)?.isCurrent == true) {
+        Navigator.of(sheetContext).pop();
         if (snooze) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Revisão adiada por 30 minutos.')),
@@ -122,9 +172,9 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         }
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && widget.space.id == spaceId) {
         _refreshUi(
-          () => _error = 'Não foi possível salvar. Confira as pendências e tente novamente.',
+          () => _error = 'Não foi possível salvar. Verifique sua conexão e tente novamente.',
         );
       }
     } finally {
@@ -195,30 +245,41 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   }
 
   Future<void> _openReview() async {
+    if (_reviewSheetOpening) return;
+    _reviewSheetOpening = true;
     final brightness = Theme.of(context).brightness;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: AppColors.background(brightness),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
-      ),
-      builder: (_) => FractionallySizedBox(
-        heightFactor: .86,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: ValueListenableBuilder<int>(
-              valueListenable: _revision,
-              builder: (context, tick, child) => _buildReviewSheet(context),
-            ),
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: AppColors.background(brightness),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.sheet),
           ),
         ),
-      ),
-    );
-    if (!mounted) return;
-    await _load();
+        builder: (sheetContext) {
+          _reviewSheetContext = sheetContext;
+          return FractionallySizedBox(
+            heightFactor: .86,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _revision,
+                  builder: (context, tick, child) => _buildReviewSheet(context),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } finally {
+      _reviewSheetContext = null;
+      _reviewSheetOpening = false;
+    }
+    if (mounted) await _load();
   }
 
   Widget _buildReviewSheet(BuildContext context) {
