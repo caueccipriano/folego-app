@@ -294,13 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
       space: widget.space,
       repository: widget.repository,
     );
-    final pulse = _buildPulseCard(
-      snapshot: snapshot,
-      surface: surface,
-      border: border,
-      primaryText: primaryText,
-      primaryPurple: primaryPurple,
-    );
     final quickActions = _buildQuickActions(
       surface: surface,
       border: border,
@@ -351,28 +344,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
-                  if (pulse is! SizedBox) ...[
-                    const SizedBox(height: 10),
-                    pulse,
-                  ],
                   const SizedBox(height: 12),
                   quickActions,
                   const SizedBox(height: 6),
                   dailyReview,
                   const SizedBox(height: 13),
-                  monthlyMoney,
-                  const SizedBox(height: 10),
                   upcoming,
+                  const SizedBox(height: 10),
+                  monthlyMoney,
                   const SizedBox(height: 10),
                   projectionInsight,
                   const SizedBox(height: 14),
                   latestSection,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
-                  if (pulse is! SizedBox) ...[
-                    const SizedBox(height: 12),
-                    pulse,
-                  ],
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,10 +385,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             hero,
-                            if (pulse is! SizedBox) ...[
-                              const SizedBox(height: 12),
-                              pulse,
-                            ],
                           ],
                         ),
                       ),
@@ -521,93 +502,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPulseCard({
-    required FolegoSnapshot snapshot,
-    required Color surface,
-    required Color border,
-    required Color primaryText,
-    required Color primaryPurple,
-  }) {
-    final pending = _upcomingEvents.where((event) => event.isPending).toList()
-      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    final next = pending.isEmpty ? null : pending.first;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    String? copy;
-    if (next != null) {
-      final day = DateTime(
-        next.dueDate.year,
-        next.dueDate.month,
-        next.dueDate.day,
-      );
-      final days = day.difference(today).inDays;
-      if (days <= 2) {
-        final sign = next.isIncome ? '+' : '-';
-        copy =
-            '${_futureDate(next.dueDate)} · ${next.name} · $sign${Formatters.money(next.amount.abs())}';
-      }
-    }
-
-    if (copy == null && snapshot.spendablePool <= 0) {
-      copy = 'seu espaço está no limite · confira os próximos movimentos antes de gastar';
-    }
-
-    if (copy == null) return const SizedBox.shrink();
-
-    return Container(
-      key: const ValueKey('home-pulse'),
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: primaryPurple.withValues(alpha: .10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(AppIcons.chartLine, size: 16, color: primaryPurple),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'pulso',
-                  style: AppTypography.label(
-                    context,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: primaryPurple,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  copy,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body(
-                    context,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: primaryText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
