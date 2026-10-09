@@ -569,11 +569,20 @@ CsvImportMapping suggestCsvMapping(List<String> headers) {
 int parseMoneyMinor(String raw, CsvDecimalFormat format) {
   var value = raw.trim().replaceAll(RegExp(r'[^0-9,\.\-+()]'), '');
   if (value.isEmpty) throw const FormatException('money');
-  var negative = value.startsWith('-') || (value.startsWith('(') && value.endsWith(')'));
+  final negative = value.startsWith('-') ||
+      (value.startsWith('(') && value.endsWith(')'));
   value = value.replaceAll(RegExp(r'[+\-()]'), '');
   if (value.isEmpty) throw const FormatException('money');
 
-  String normalized;
+  // A single separator followed by three digits may indicate thousands.
+  // Never silently read R$ 1.234 as R$ 1,23 or vice versa.
+  if (format == CsvDecimalFormat.auto &&
+      RegExp(r'^\d{1,3}[.,]\d{3}$').hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: escolha formato decimal antes de importar',
+    );
+  }
+
   final comma = value.lastIndexOf(',');
   final dot = value.lastIndexOf('.');
   final effective = format == CsvDecimalFormat.auto
@@ -583,11 +592,20 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
               ? CsvDecimalFormat.brazilian
               : CsvDecimalFormat.american)
       : format;
-  if (effective == CsvDecimalFormat.brazilian) {
-    normalized = value.replaceAll('.', '').replaceAll(',', '.');
-  } else {
-    normalized = value.replaceAll(',', '');
+
+  final decimalSeparator =
+      effective == CsvDecimalFormat.brazilian ? ',' : '.';
+  if (value.contains(decimalSeparator)) {
+    final fractional = value.substring(value.lastIndexOf(decimalSeparator) + 1);
+    if (fractional.isEmpty || fractional.length > 2) {
+      throw const StatementImportParseException(
+        'valor com centavos inválidos: revise o formato decimal',
+      );
+    }
   }
+  final normalized = effective == CsvDecimalFormat.brazilian
+      ? value.replaceAll('.', '').replaceAll(',', '.')
+      : value.replaceAll(',', '');
   final parsed = num.parse(normalized);
   final minor = (parsed * 100).round();
   return negative ? -minor : minor;
