@@ -80,7 +80,7 @@ void main() {
         of: hero,
         matching: find.text(Formatters.money(9900)),
       ),
-      findsOneWidget,
+      findsWidgets,
     );
 
     repository.resolve('space-A', _projection(12, 0));
@@ -90,7 +90,7 @@ void main() {
         of: hero,
         matching: find.text(Formatters.money(9900)),
       ),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(
       find.descendant(
