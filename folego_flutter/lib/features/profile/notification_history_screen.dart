@@ -16,6 +16,10 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 
+typedef NotificationHistoryLoader = Future<List<NotificationHistoryItem>> Function(
+  String spaceId,
+);
+
 class NotificationHistoryScreen extends StatefulWidget {
   const NotificationHistoryScreen({
     super.key,
@@ -23,12 +27,14 @@ class NotificationHistoryScreen extends StatefulWidget {
     required this.spaceId,
     this.cache,
     this.authenticatedUserId,
+    this.historyLoader,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final NotificationHistoryCache? cache;
   final String? Function()? authenticatedUserId;
+  final NotificationHistoryLoader? historyLoader;
 
   @override
   State<NotificationHistoryScreen> createState() =>
@@ -56,7 +62,8 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId ||
         !identical(oldWidget.repository, widget.repository) ||
-        oldWidget.authenticatedUserId != widget.authenticatedUserId) {
+        oldWidget.authenticatedUserId != widget.authenticatedUserId ||
+        oldWidget.historyLoader != widget.historyLoader) {
       _load();
     }
   }
@@ -85,6 +92,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     final generation = ++_loadGeneration;
     final spaceId = widget.spaceId;
     final repository = widget.repository;
+    final historyLoader = widget.historyLoader;
     final userId = _currentUserId();
 
     // Clear the previous user's data before waiting on any asynchronous work.
@@ -104,7 +112,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     }
 
     try {
-      final items = await repository.getNotificationHistory(spaceId);
+      final items = await (historyLoader == null
+          ? repository.getNotificationHistory(spaceId)
+          : historyLoader(spaceId));
       if (!_isCurrentLoad(generation, spaceId, userId, repository)) return;
 
       try {
