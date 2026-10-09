@@ -20,10 +20,12 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     super.key,
     required this.summary,
     required this.unavailable,
+    this.onOpenEvolution,
   });
 
   final MonthlyMoneySummary? summary;
   final bool unavailable;
+  final VoidCallback? onOpenEvolution;
 
   @override
   Widget build(BuildContext context) {
@@ -154,19 +156,30 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              key: const ValueKey('monthly-money-composition'),
-              onPressed: () => showMonthlyMoneyComposition(
-                context,
-                summary: value,
+          Wrap(
+            spacing: 8,
+            runSpacing: 0,
+            children: [
+              TextButton.icon(
+                key: const ValueKey('monthly-money-composition'),
+                onPressed: () => showMonthlyMoneyComposition(
+                  context,
+                  summary: value,
+                ),
+                icon: const Icon(AppIcons.chevronRight, size: 17),
+                iconAlignment: IconAlignment.end,
+                label: const Text('entender os números'),
+                style: TextButton.styleFrom(foregroundColor: purple),
               ),
-              icon: const Icon(AppIcons.chevronRight, size: 17),
-              iconAlignment: IconAlignment.end,
-              label: const Text('entender os números'),
-              style: TextButton.styleFrom(foregroundColor: purple),
-            ),
+              if (onOpenEvolution != null)
+                TextButton.icon(
+                  key: const ValueKey('monthly-money-evolution'),
+                  onPressed: onOpenEvolution,
+                  icon: const Icon(AppIcons.chartLine, size: 17),
+                  label: const Text('ver evolução'),
+                  style: TextButton.styleFrom(foregroundColor: purple),
+                ),
+            ],
           ),
         ],
       ),
