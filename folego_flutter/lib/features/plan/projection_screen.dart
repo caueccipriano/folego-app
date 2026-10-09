@@ -2170,30 +2170,16 @@ class _ProjectionSimulationSheetState
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 4,
-                  runSpacing: 2,
+                  runSpacing: 6,
                   children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                  _templateChip('compra', _SimulationTemplate.purchase),
-                  _templateChip('livre', _SimulationTemplate.free),
-                  _templateChip('novo carro', _SimulationTemplate.car),
-                  _templateChip('novo salário', _SimulationTemplate.salary),
-                  _templateChip(
-                    'cancelar assinatura',
-                    _SimulationTemplate.cancelSubscription,
-                  ),
-                   _templateChip(
-                     'amortizar dívida', _SimulationTemplate.extraDebtPayment,
-                   ),
-                  _templateChip(
-                    'reduzir categoria',
-                    _SimulationTemplate.reduceCategory,
-                  ),
-                    ],
-                  ),
-                ),                  ],
+                    _templateChip('compra', _SimulationTemplate.purchase),
+                    _templateChip('livre', _SimulationTemplate.free),
+                    _templateChip('novo carro', _SimulationTemplate.car),
+                    _templateChip('novo salário', _SimulationTemplate.salary),
+                    _templateChip('cancelar assinatura', _SimulationTemplate.cancelSubscription),
+                    _templateChip('amortizar dívida', _SimulationTemplate.extraDebtPayment),
+                    _templateChip('reduzir categoria', _SimulationTemplate.reduceCategory),
+                  ],
                 ),
                 const SizedBox(height: 18),
                 ..._fieldsForTemplate(),
