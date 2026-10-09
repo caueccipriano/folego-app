@@ -285,9 +285,9 @@ class _TransactionClassificationInboxState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('sempre fazer assim?'),
+        title: const Text('lembrar esta categoria?'),
         content: Text(
-          'Sempre categorizar “${_shortLabel(description)}” como ${category.breadcrumb}?\n\nA regra só prepara a categoria para revisão; ela não cria nem confirma lançamentos sozinha.',
+          'Quando aparecer uma descrição idêntica a “${_shortLabel(description)}”, sugerir ${category.breadcrumb}?\n\nVocê continua confirmando a classificação; valores e datas não são alterados.' ,
         ),
         actions: [
           TextButton(
@@ -316,7 +316,7 @@ class _TransactionClassificationInboxState
         draft: AutomationRuleDraft(
           name: 'sempre: ${_shortLabel(description)}',
           matchField: AutomationMatchField.description,
-          matchType: AutomationMatchType.contains,
+          matchType: AutomationMatchType.equals,
           matchValue: description,
           sourceScope: isSimpleAccountEvent
               ? AutomationSourceScope.account
