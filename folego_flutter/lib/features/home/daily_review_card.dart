@@ -575,7 +575,7 @@ class DailyReviewPrompt extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.control),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: border))),
           child: Row(
             children: [
@@ -605,7 +605,7 @@ class DailyReviewPrompt extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+                      subtitle, maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: AppTypography.body(context, fontSize: 11, color: secondary),
                     ),
                   ],
