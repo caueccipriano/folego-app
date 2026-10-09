@@ -41,7 +41,7 @@ class NotificationPreferences {
     this.largeExpensesEnabled = false,
     this.largeExpenseThreshold = 200,
     this.dailySummaryEnabled = true,
-    this.dailySummaryHour = 9,
+    this.dailySummaryHour = 19,
     this.dailySummaryMinute = 0,
     this.quietHoursEnabled = true,
     this.quietStartHour = 22,
@@ -150,7 +150,7 @@ class NotificationPreferences {
     final preferred = _parseTime(json['preferred_time'] as String?);
     final daily = _parseTime(
       json['daily_summary_time'] as String?,
-      fallbackHour: 9,
+      fallbackHour: 19,
     );
     final quietStart = _parseTime(
       json['quiet_hours_start'] as String?,
