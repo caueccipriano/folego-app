@@ -569,11 +569,9 @@ class DailyReviewPrompt extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     final border = AppColors.border(brightness);
-    return Material(
+    return InkWell(
       key: const ValueKey('home-daily-review-prompt'),
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+      onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.control),
         child: Container(
           width: double.infinity,
@@ -622,7 +620,6 @@ class DailyReviewPrompt extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }
