@@ -594,6 +594,7 @@ class DailyReviewPrompt extends StatelessWidget {
               const SizedBox(width: 11),
               Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
