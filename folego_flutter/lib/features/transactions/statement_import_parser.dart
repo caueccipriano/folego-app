@@ -573,6 +573,43 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
   value = value.replaceAll(RegExp(r'[+\-()]'), '');
   if (value.isEmpty) throw const FormatException('money');
 
+  // Guard lone thousands separators: 1.234 must not become R$ 1,23.
+  if (format == CsvDecimalFormat.auto &&
+      RegExp(r'^\d{1,3}[.,]\d{3}
+  final comma = value.lastIndexOf(',');
+  final dot = value.lastIndexOf('.');
+  final effective = format == CsvDecimalFormat.auto
+      ? (comma >= 0 && dot >= 0
+          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
+          : comma >= 0
+              ? CsvDecimalFormat.brazilian
+              : CsvDecimalFormat.american)
+      : format;
+  final decimalSeparator =
+      effective == CsvDecimalFormat.brazilian ? ',' : '.';
+  if (value.contains(decimalSeparator)) {
+    final fractional = value.substring(value.lastIndexOf(decimalSeparator) + 1);
+    if (fractional.isEmpty || fractional.length > 2) {
+      throw const StatementImportParseException(
+        'valor com centavos inválidos: revise o formato decimal',
+      );
+    }
+  }
+  if (effective == CsvDecimalFormat.brazilian) {
+    normalized = value.replaceAll('.', '').replaceAll(',', '.');
+  } else {
+    normalized = value.replaceAll(',', '');
+  }
+  final parsed = num.parse(normalized);
+  final minor = (parsed * 100).round();
+  return negative ? -minor : minor;
+}
+
+).hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: escolha formato decimal antes de importar',
+    );
+  }
   String normalized;
   final comma = value.lastIndexOf(',');
   final dot = value.lastIndexOf('.');
