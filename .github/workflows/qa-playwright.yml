@@ -80,6 +80,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Verify isolated staging guard (synthetic only)
+        run: node --test qa/staging/staging-guard.test.mjs
+
       - name: Install QA dependencies
         working-directory: qa
         run: npm install --no-audit --no-fund
