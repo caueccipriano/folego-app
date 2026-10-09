@@ -53,10 +53,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         _error = null;
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error = 'Não foi possível carregar sua revisão. Toque para tentar novamente.',
         );
+      }
     }
   }
 
@@ -76,15 +77,17 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         },
       );
       await _load();
-      if (mounted && snooze)
+      if (mounted && snooze) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Revisão adiada por 30 minutos.')),
         );
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error = 'Não foi possível salvar. Confira as pendências e tente novamente.',
         );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -107,11 +110,12 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       );
       await _load();
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
           () =>
               _error = 'Não foi possível abrir as pendências. Tente novamente.',
         );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -149,6 +153,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   @override
   Widget build(BuildContext context) {
     final days = (_state?['completed_days'] as List?) ?? [];
+    final today = DateTime.tryParse(_state?['today']?.toString() ?? '');
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -165,6 +170,22 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
             Text(
               '${days.length}/7 dias revisados · seu progresso continua mesmo se perder um dia',
             ),
+            if (today != null)
+              Wrap(
+                spacing: 4,
+                children: List.generate(7, (index) {
+                  final date = today.subtract(Duration(days: 6 - index));
+                  final key =
+                      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                  return Chip(
+                    label: Text('${date.day}${days.contains(key) ? ' ✓' : ''}'),
+                  );
+                }),
+              ),
+            if (today?.weekday == DateTime.sunday && !_complete)
+              const Text(
+                'Revisão de domingo: confira também os compromissos da próxima semana.',
+              ),
             if (_error != null)
               TextButton(onPressed: _load, child: Text(_error!)),
             if (_state == null && _error == null)

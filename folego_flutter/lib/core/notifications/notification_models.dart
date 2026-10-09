@@ -414,8 +414,9 @@ String notificationBody(
   NotificationUpcomingEvent event, {
   int reminderOffsetDays = 0,
 }) {
-  if (event.overdue || event.dayOffset < 0)
+  if (event.overdue || event.dayOffset < 0) {
     return '${event.title} está atrasado';
+  }
   final leadDays = event.dayOffset < reminderOffsetDays
       ? event.dayOffset
       : reminderOffsetDays;
@@ -438,10 +439,12 @@ String notificationRoute(NotificationUpcomingEvent event) {
   if (event.isInvoice && event.cardId != null && event.invoiceId != null) {
     return '/wallet/card/${event.cardId}/invoice/${event.invoiceId}';
   }
-  if (event.isDebt && event.debtId != null)
+  if (event.isDebt && event.debtId != null) {
     return '/wallet/debt/${event.debtId}';
-  if (event.isSubscription)
+  }
+  if (event.isSubscription) {
     return '/transactions/subscriptions/${event.sourceId}';
+  }
   if (event.isRecurring) return '/transactions/recurring/${event.sourceId}';
   return '/agenda';
 }
