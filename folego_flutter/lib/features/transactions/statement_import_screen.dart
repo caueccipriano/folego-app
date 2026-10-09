@@ -411,6 +411,54 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
       setState(() => _error = 'selecione pelo menos um lançamento para importar');
       return;
     }
+
+    // This is the last purely local step before rows are submitted to the
+    // canonical financial RPCs. Never silently approve cross-account impacts.
+    final risk = summarizeSensitiveStatementImport(included);
+    if (risk.requiresConfirmation) {
+      final warnings = <String>[
+        if (risk.transfers > 0)
+          '${risk.transfers} transferência(s): confira se a outra ponta já foi '
+              'lançada ou importada. Importar a mesma transferência pelas '
+              'duas contas pode movimentar os saldos duas vezes.',
+        if (risk.cardPayments > 0)
+          '${risk.cardPayments} pagamento(s) de fatura: confira a fatura e '
+              'a conta pagadora. Pagamento não deve virar despesa novamente.',
+        if (risk.possibleRefunds > 0)
+          '${risk.possibleRefunds} possível(is) estorno(s)/reembolso(s): '
+              'confira a compra original. Registrar como receita pode '
+              'distorcer sua análise de renda e gastos.',
+        if (risk.duplicateOverrides > 0)
+          '${risk.duplicateOverrides} duplicata(s) assinalada(s) para '
+              'importação: a identificação automática não garante que '
+              'sejam lançamentos novos.',
+        'Esta confirmação não elimina duplicidades automaticamente. '
+            'Revise os vínculos antes de continuar.',
+      ];
+      final accepted = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          key: const ValueKey('statement-import-sensitive-review-dialog'),
+          title: const Text('confira os efeitos no saldo'),
+          content: SingleChildScrollView(
+            child: Text(warnings.join('\\n\\n')),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('voltar à revisão'),
+            ),
+            FilledButton(
+              key: const ValueKey('statement-import-sensitive-proceed'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('revisei, continuar'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || accepted != true) return;
+    }
+
     setState(() { _loading = true; _error = null; });
     try {
       final update = widget.updateOverride;
