@@ -24,6 +24,7 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
+import 'daily_review_card.dart';
 import 'home_monthly_money_card.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
@@ -78,11 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
-  Future<T?> _optionalCall<T>(
-    Future<T> Function() call,
-    String label,
-  ) async {
+  Future<T?> _optionalCall<T>(Future<T> Function() call, String label) async {
     try {
       return await call();
     } catch (error) {
@@ -206,15 +203,16 @@ class _HomeScreenState extends State<HomeScreen> {
       await _load();
       if (!mounted) return;
       final afterSpendable = _snapshot?.spendablePool.toDouble();
-      final changed = beforeSpendable != null &&
+      final changed =
+          beforeSpendable != null &&
           afterSpendable != null &&
           (beforeSpendable - afterSpendable).abs() >= .01;
       final message = changed
           ? '${type == 'expense' ? 'gasto' : 'receita'} salvo · disponível: '
-              '${Formatters.money(beforeSpendable)} → ${Formatters.money(afterSpendable)}'
+                '${Formatters.money(beforeSpendable)} → ${Formatters.money(afterSpendable)}'
           : type == 'expense'
-              ? 'gasto salvo · seu Fôlego foi atualizado'
-              : 'receita salva · seu Fôlego foi atualizado';
+          ? 'gasto salvo · seu Fôlego foi atualizado'
+          : 'receita salva · seu Fôlego foi atualizado';
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -346,6 +344,11 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 header,
                 const SizedBox(height: 12),
+                DailyReviewCard(
+                  space: widget.space,
+                  repository: widget.repository,
+                ),
+                const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
                   if (pulse is! SizedBox) ...[
@@ -450,16 +453,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
 
     Widget block(double height, {double? width, double radius = 18}) => Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            width: width ?? double.infinity,
-            height: height,
-            decoration: BoxDecoration(
-              color: muted,
-              borderRadius: BorderRadius.circular(radius),
-            ),
-          ),
-        );
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: width ?? double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: muted,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      ),
+    );
 
     return ColoredBox(
       color: background,
@@ -475,7 +478,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 height: 184,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryPurple(brightness).withValues(alpha: .18),
+                  color: AppColors.primaryPurple(brightness)
+                      .withValues(alpha: .18),
                   borderRadius: BorderRadius.circular(AppRadii.feature),
                   border: Border.all(color: border),
                 ),
@@ -522,9 +526,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Color primaryPurple,
   }) {
-    final pending = _upcomingEvents
-        .where((event) => event.isPending)
-        .toList()
+    final pending = _upcomingEvents.where((event) => event.isPending).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final next = pending.isEmpty ? null : pending.first;
     final now = DateTime.now();
@@ -532,7 +534,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     String? copy;
     if (next != null) {
-      final day = DateTime(next.dueDate.year, next.dueDate.month, next.dueDate.day);
+      final day = DateTime(
+        next.dueDate.year,
+        next.dueDate.month,
+        next.dueDate.day,
+      );
       final days = day.difference(today).inDays;
       if (days <= 2) {
         final sign = next.isIncome ? '+' : '-';
@@ -544,7 +550,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (copy == null && snapshot.spendablePool <= 0) {
       copy = 'seu espaço está no limite · confira os próximos movimentos antes de gastar';
     }
-
 
     if (copy == null) return const SizedBox.shrink();
 
@@ -633,8 +638,9 @@ class _HomeScreenState extends State<HomeScreen> {
             overflow: TextOverflow.ellipsis,
             style: AppTypography.display(
               context,
-              fontSize:
-                  AppBreakpoints.of(context) == AppLayoutSize.compact ? 24 : 28,
+              fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact
+                  ? 24
+                  : 28,
               color: primaryText,
             ),
           ),
@@ -720,7 +726,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget _buildUpcomingCard({
     required Color surface,
     required Color border,
@@ -728,9 +733,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color secondaryText,
     required Color primaryPurple,
   }) {
-    final sorted = _upcomingEvents
-        .where((event) => event.isPending)
-        .toList()
+    final sorted = _upcomingEvents.where((event) => event.isPending).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final visible = sorted.take(3).toList(growable: false);
 
@@ -812,7 +815,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (i != visible.length - 1)
                     Padding(
                       padding: const EdgeInsets.only(left: 15),
-                      child: Divider(height: 12, color: border.withValues(alpha: .7)),
+                      child: Divider(
+                        height: 12,
+                        color: border.withValues(alpha: .7),
+                      ),
                     ),
                 ],
             ],
@@ -875,11 +881,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 8),
         Text(
           '$sign${Formatters.money(event.amount.abs())}',
-          style: AppTypography.money(
-            context,
-            fontSize: 11,
-            color: amountColor,
-          ),
+          style: AppTypography.money(context, fontSize: 11, color: amountColor),
         ),
       ],
     );
@@ -911,7 +913,8 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         else if (latest == null)
           _buildCompactEmptyCard(
-            message: 'nada por aqui ainda — quando você movimentar, eu organizo.',
+            message:
+                'nada por aqui ainda — quando você movimentar, eu organizo.',
             surface: surface,
             border: border,
             primaryText: primaryText,
@@ -936,10 +939,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String title,
     required String subtitle,
   }) {
-    return AppSectionHeader(
-      title: title,
-      subtitle: subtitle,
-    );
+    return AppSectionHeader(title: title, subtitle: subtitle);
   }
 
   Widget _buildCompactEmptyCard({
@@ -976,10 +976,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(width: 8),
-            TextButton(
-              onPressed: onAction,
-              child: Text(actionLabel),
-            ),
+            TextButton(onPressed: onAction, child: Text(actionLabel)),
           ],
         ],
       ),
@@ -994,7 +991,8 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    final isNegative = latest.isExpense ||
+    final isNegative =
+        latest.isExpense ||
         latest.eventType == 'card_payment' ||
         latest.amount < 0;
     final isPositive = latest.isIncome && latest.amount >= 0;
