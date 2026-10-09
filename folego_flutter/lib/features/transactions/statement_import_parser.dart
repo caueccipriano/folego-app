@@ -569,13 +569,20 @@ CsvImportMapping suggestCsvMapping(List<String> headers) {
 int parseMoneyMinor(String raw, CsvDecimalFormat format) {
   var value = raw.trim().replaceAll(RegExp(r'[^0-9,\.\-+()]'), '');
   if (value.isEmpty) throw const FormatException('money');
-  var negative = value.startsWith('-') || (value.startsWith('(') && value.endsWith(')'));
+  final negative = value.startsWith('-') ||
+      (value.startsWith('(') && value.endsWith(')'));
   value = value.replaceAll(RegExp(r'[+\-()]'), '');
   if (value.isEmpty) throw const FormatException('money');
 
-  // Guard lone thousands separators: 1.234 must not become R$ 1,23.
+  // A single separator followed by three digits may indicate thousands.
+  // Never silently read R$ 1.234 as R$ 1,23 or vice versa.
   if (format == CsvDecimalFormat.auto &&
-      RegExp(r'^\d{1,3}[.,]\d{3}
+      RegExp(r'^\d{1,3}[.,]\d{3}$').hasMatch(value)) {
+    throw const StatementImportParseException(
+      'valor ambíguo: escolha formato decimal antes de importar',
+    );
+  }
+
   final comma = value.lastIndexOf(',');
   final dot = value.lastIndexOf('.');
   final effective = format == CsvDecimalFormat.auto
@@ -585,6 +592,7 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
               ? CsvDecimalFormat.brazilian
               : CsvDecimalFormat.american)
       : format;
+
   final decimalSeparator =
       effective == CsvDecimalFormat.brazilian ? ',' : '.';
   if (value.contains(decimalSeparator)) {
@@ -595,36 +603,9 @@ int parseMoneyMinor(String raw, CsvDecimalFormat format) {
       );
     }
   }
-  if (effective == CsvDecimalFormat.brazilian) {
-    normalized = value.replaceAll('.', '').replaceAll(',', '.');
-  } else {
-    normalized = value.replaceAll(',', '');
-  }
-  final parsed = num.parse(normalized);
-  final minor = (parsed * 100).round();
-  return negative ? -minor : minor;
-}
-
-).hasMatch(value)) {
-    throw const StatementImportParseException(
-      'valor ambíguo: escolha formato decimal antes de importar',
-    );
-  }
-  String normalized;
-  final comma = value.lastIndexOf(',');
-  final dot = value.lastIndexOf('.');
-  final effective = format == CsvDecimalFormat.auto
-      ? (comma >= 0 && dot >= 0
-          ? (comma > dot ? CsvDecimalFormat.brazilian : CsvDecimalFormat.american)
-          : comma >= 0
-              ? CsvDecimalFormat.brazilian
-              : CsvDecimalFormat.american)
-      : format;
-  if (effective == CsvDecimalFormat.brazilian) {
-    normalized = value.replaceAll('.', '').replaceAll(',', '.');
-  } else {
-    normalized = value.replaceAll(',', '');
-  }
+  final normalized = effective == CsvDecimalFormat.brazilian
+      ? value.replaceAll('.', '').replaceAll(',', '.')
+      : value.replaceAll(',', '');
   final parsed = num.parse(normalized);
   final minor = (parsed * 100).round();
   return negative ? -minor : minor;
