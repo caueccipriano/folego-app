@@ -39,6 +39,46 @@ List<TransactionItem> matchingClassificationCandidates(
   ).toList(growable: false);
 }
 
+/// Suggest only reviewed exact-description rules. Never classify silently.
+CategoryItem? reviewedCategorySuggestion({
+  required TransactionItem item,
+  required List<AutomationRule> rules,
+  required List<CategoryItem> categories,
+}) {
+  final description = normalizeAutomationText(item.description);
+  if (description.length < 4) return null;
+  final kind = transactionClassificationKind(item.eventType);
+  if (kind == null) return null;
+  final matches = rules.where((rule) {
+    if (!rule.active ||
+        rule.categoryId == null ||
+        rule.matchField != AutomationMatchField.description ||
+        rule.matchType != AutomationMatchType.equals ||
+        rule.actionType == AutomationActionType.markRecognized ||
+        rule.executionMode == AutomationExecutionMode.automatic ||
+        normalizeAutomationText(rule.matchValue) != description) {
+      return false;
+    }
+    final debit = kind != 'income';
+    if (rule.direction == AutomationDirection.credit && debit) return false;
+    if (rule.direction == AutomationDirection.debit && !debit) return false;
+    if (rule.sourceScope == AutomationSourceScope.card ||
+        rule.sourceScope == AutomationSourceScope.benefit) return false;
+    if (rule.sourceScope == AutomationSourceScope.account &&
+        (item.accountId == null || rule.sourceAccountId != item.accountId)) {
+      return false;
+    }
+    return true;
+  }).toList(growable: false)
+    ..sort(compareAutomationRulesForPreview);
+  if (matches.isEmpty) return null;
+  final chosen = matches.first;
+  for (final category in categories) {
+    if (category.id == chosen.categoryId) return category;
+  }
+  return null;
+}
+
 class TransactionClassificationInbox extends StatefulWidget {
   const TransactionClassificationInbox({
     super.key,
@@ -63,6 +103,7 @@ class _TransactionClassificationInboxState
   late List<TransactionItem> _items;
   List<CategoryItem> _expenseCategories = const [];
   List<CategoryItem> _incomeCategories = const [];
+  List<AutomationRule> _reviewRules = const [];
   String? _savingEventId;
   bool _loading = true;
   bool _refreshing = false;
@@ -94,11 +135,14 @@ class _TransactionClassificationInboxState
       final values = await Future.wait<dynamic>([
         widget.repository.listExpenseCategoryCatalog(widget.spaceId),
         widget.repository.listIncomeCategoryCatalog(widget.spaceId),
+        widget.repository.listAutomationRules(widget.spaceId)
+            .catchError((_) => <AutomationRule>[]),
       ]);
       if (!mounted) return;
       setState(() {
         _expenseCategories = _selectable(values[0] as List<CategoryItem>);
         _incomeCategories = _selectable(values[1] as List<CategoryItem>);
+        _reviewRules = values[2] as List<AutomationRule>;
         _loading = false;
         _error = null;
       });
@@ -158,9 +202,39 @@ class _TransactionClassificationInboxState
       return;
     }
 
-    final selected = await _showCategoryPicker(
+    final suggestion = _automationEnabled
+        ? reviewedCategorySuggestion(
+            item: item, rules: _reviewRules, categories: categories,
+          )
+        : null;
+    CategoryItem? selected;
+    if (suggestion != null) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('categoria sugerida'),
+          content: Text(
+            'Uma regra revisada sugere ${suggestion.breadcrumb}. '
+            'Aplicar a este lançamento? Você pode escolher outra categoria.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('escolher outra'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('confirmar categoria'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (confirmed == true) selected = suggestion;
+    }
+    selected ??= await _showCategoryPicker(
       categories: categories,
-      selectedId: item.categoryId,
+      selectedId: suggestion?.id ?? item.categoryId,
       eventType: kind,
     );
     if (selected == null || !mounted) return;
