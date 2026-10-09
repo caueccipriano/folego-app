@@ -28,7 +28,7 @@ void main() {
     'https://example.supabase.co',
     'test-placeholder-anon-key',
   );
-  addTearDown(client.dispose);
+  tearDownAll(client.dispose);
 
   Widget app({
     required DailyReviewLoader loader,
