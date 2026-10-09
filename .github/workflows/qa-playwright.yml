@@ -62,6 +62,8 @@ jobs:
             test/financial_next_step_and_debt_test.dart \
             test/statement_import_parser_test.dart \
             test/statement_import_qa_synthetic_test.dart \
+            test/statement_import_reconciliation_test.dart \
+            test/statement_import_ui_test.dart \
             test/projection_screen_test.dart
 
       - name: Audit legacy responsive stress tests
