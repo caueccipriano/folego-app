@@ -8,6 +8,8 @@ import 'package:folego/core/notifications/notification_models.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/profile/notification_history_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 NotificationHistoryItem _item(String title, int id) => NotificationHistoryItem(
       id: id,
@@ -23,6 +25,8 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
   });
 
   test('cache never exposes one signed-in user to another in the same space',
