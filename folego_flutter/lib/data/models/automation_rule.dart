@@ -256,6 +256,52 @@ AutomationRuleDraft? automationRuleDraftFromReviewedImportRow({
   );
 }
 
+/// Local read-only preview. A scoped rule only wins when the exact source
+/// instrument is selected; otherwise the preview would promise a match that
+/// the actual import flow will not apply.
+List<AutomationRule> previewAutomationRules({
+  required Iterable<AutomationRule> rules,
+  required String text,
+  required AutomationDirection direction,
+  required String sourceKey,
+}) {
+  final value = text.trim();
+  if (value.isEmpty || sourceKey.trim().isEmpty) return const [];
+
+  final credit = direction == AutomationDirection.credit;
+  final candidate = StatementImportCandidate(
+    rowNumber: 1,
+    occurredAt: DateTime(2000),
+    dateOnly: true,
+    amountMinor: 100,
+    description: value,
+    merchant: value,
+    direction: credit
+        ? StatementImportDirection.credit
+        : StatementImportDirection.debit,
+    candidateType: credit
+        ? StatementImportCandidateType.income
+        : StatementImportCandidateType.expense,
+  );
+
+  final matches = rules.where((rule) {
+    if (!rule.matchesCandidate(candidate)) return false;
+    if (rule.sourceScope == AutomationSourceScope.any) return true;
+
+    final sourceId = switch (rule.sourceScope) {
+      AutomationSourceScope.account => rule.sourceAccountId,
+      AutomationSourceScope.card => rule.sourceCardId,
+      AutomationSourceScope.benefit => rule.sourceBenefitId,
+      AutomationSourceScope.any => null,
+    };
+    if (sourceId == null || sourceId.isEmpty) return false;
+    return sourceKey == '${rule.sourceScope.dbKey}:$sourceId';
+  }).toList(growable: false);
+
+  matches.sort(compareAutomationRulesForPreview);
+  return matches;
+}
+
 int compareAutomationRulesForPreview(AutomationRule a, AutomationRule b) {
   final source = _boolRank(b.sourceScope != AutomationSourceScope.any)
       .compareTo(_boolRank(a.sourceScope != AutomationSourceScope.any));
