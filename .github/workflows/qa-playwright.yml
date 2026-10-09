@@ -54,7 +54,8 @@ jobs:
             test/auth_widgets_test.dart \
             test/auth_responsive_smoke_test.dart \
             test/notification_models_test.dart \
-            test/daily_review_design_test.dart
+            test/daily_review_design_test.dart \
+            test/closed_month_evolution_test.dart
 
       - name: Audit legacy responsive stress tests
         continue-on-error: true
