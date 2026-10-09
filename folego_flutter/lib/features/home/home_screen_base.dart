@@ -284,6 +284,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final layout = AppBreakpoints.of(context);
 
     final latest = _latestTransaction();
+    final showUpcoming = !_upcomingUnavailable &&
+        _upcomingEvents.any((event) => event.isPending);
+    final showLatest = latest != null || _recentUnavailable;
 
     final bottomListPadding = MediaQuery.paddingOf(context).bottom + 88;
 
@@ -348,14 +351,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   quickActions,
                   const SizedBox(height: 6),
                   dailyReview,
-                  const SizedBox(height: 13),
-                  upcoming,
+                  if (showUpcoming) ...[
+                    const SizedBox(height: 13),
+                    upcoming,
+                  ],
                   const SizedBox(height: 10),
                   monthlyMoney,
                   const SizedBox(height: 10),
                   projectionInsight,
-                  const SizedBox(height: 14),
-                  latestSection,
+                  if (showLatest) ...[
+                    const SizedBox(height: 14),
+                    latestSection,
+                  ],
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
                   const SizedBox(height: 20),
@@ -363,8 +370,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(flex: 5, child: quickActions),
-                      const SizedBox(width: 20),
-                      Expanded(flex: 4, child: upcoming),
+                      if (showUpcoming) ...[
+                        const SizedBox(width: 20),
+                        Expanded(flex: 4, child: upcoming),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -373,8 +382,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   monthlyMoney,
                   const SizedBox(height: 14),
                   projectionInsight,
-                  const SizedBox(height: 24),
-                  latestSection,
+                  if (showLatest) ...[
+                    const SizedBox(height: 24),
+                    latestSection,
+                  ],
                 ] else ...[
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,9 +426,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            upcoming,
-                            const SizedBox(height: 28),
-                            latestSection,
+                            if (showUpcoming) upcoming,
+                            if (showUpcoming && showLatest)
+                              const SizedBox(height: 28),
+                            if (showLatest) latestSection,
                           ],
                         ),
                       ),
