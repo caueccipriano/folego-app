@@ -44,6 +44,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   bool _showCategories = false;
   bool _loading = true;
   bool _savingPlan = false;
+  int _loadGeneration = 0;
   String? _error;
 
   ProjectionResult? _base;
@@ -63,7 +64,11 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   @override
   void didUpdateWidget(covariant ProjectionScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.spaceId != widget.spaceId) {
+    if (oldWidget.spaceId != widget.spaceId ||
+        oldWidget.repository != widget.repository) {
+      // Never display the former financial space while the new one loads.
+      _base = null;
+      _simulated = null;
       _selectedMonth = 0;
       _adjustments = const [];
       _disabledVariableIncomeKeys.clear();
@@ -76,6 +81,12 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   ProjectionResult? get _display => _simulated ?? _base;
 
   Future<void> _load({bool quiet = false}) async {
+    final requestId = ++_loadGeneration;
+    final spaceId = widget.spaceId;
+    final repository = widget.repository;
+    final horizon = _horizon;
+    final disabledKeys = Set<String>.of(_disabledVariableIncomeKeys);
+    final adjustments = List<ProjectionAdjustment>.of(_adjustments);
     if (!quiet && mounted) {
       setState(() {
         _loading = true;
@@ -84,25 +95,28 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     }
 
     try {
-      final baseFuture = widget.repository.getProjection(
-        spaceId: widget.spaceId,
-        horizonMonths: _horizon,
-        disabledVariableIncomeKeys: _disabledVariableIncomeKeys,
+      final baseFuture = repository.getProjection(
+        spaceId: spaceId,
+        horizonMonths: horizon,
+        disabledVariableIncomeKeys: disabledKeys,
       );
-      final simulatedFuture = _adjustments.isEmpty
+      final simulatedFuture = adjustments.isEmpty
           ? Future<ProjectionResult?>.value(null)
-          : widget.repository
+          : repository
                 .getProjection(
-                  spaceId: widget.spaceId,
-                  horizonMonths: _horizon,
-                  adjustments: _adjustments,
-                  disabledVariableIncomeKeys: _disabledVariableIncomeKeys,
+                  spaceId: spaceId,
+                  horizonMonths: horizon,
+                  adjustments: adjustments,
+                  disabledVariableIncomeKeys: disabledKeys,
                 )
                 .then<ProjectionResult?>((value) => value);
 
       final values = await Future.wait<dynamic>([baseFuture, simulatedFuture]);
 
-      if (!mounted) return;
+      if (!mounted || requestId != _loadGeneration ||
+          widget.spaceId != spaceId || widget.repository != repository) {
+        return;
+      }
       final base = values[0] as ProjectionResult;
       final simulated = values[1] as ProjectionResult?;
       final maxIndex = math.max(0, (simulated ?? base).months.length - 1);
@@ -115,7 +129,10 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         _error = null;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || requestId != _loadGeneration ||
+          widget.spaceId != spaceId || widget.repository != repository) {
+        return;
+      }
       setState(() {
         _loading = false;
         _error = _friendlyError(error);

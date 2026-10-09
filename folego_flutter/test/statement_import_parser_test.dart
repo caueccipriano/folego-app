@@ -59,6 +59,70 @@ void main() {
       expect(() => parseCsvRows('data,"descrição\n16/09/2026,teste', ','), throwsA(isA<StatementImportParseException>()));
     });
 
+    test('não adivinha data 03/04 sem evidência', () {
+      final doc = parseCsvImport(Uint8List.fromList(utf8.encode(
+        'data;descricao;valor\n03/04/2026;MERCADO;-30,00\n',
+      )));
+      final mapping = doc.suggestedMapping.copyWith(
+        decimalFormat: CsvDecimalFormat.brazilian,
+      );
+      expect(doc.autoDateWarning(mapping), contains('ambíguas'));
+      expect(
+        () => doc.buildCandidates(
+          mapping: mapping, sourceKind: StatementImportSourceKind.account,
+        ),
+        throwsA(isA<StatementImportParseException>()),
+      );
+      final reviewed = doc.buildCandidates(
+        mapping: mapping.copyWith(dateFormat: CsvDateFormat.dmy),
+        sourceKind: StatementImportSourceKind.account,
+      );
+      expect(reviewed.single.localDate, '2026-04-03');
+    });
+
+    test('data ambígua usa evidência da coluna inteira sem mudar valores', () {
+      final doc = parseCsvImport(Uint8List.fromList(utf8.encode(
+        'data;descricao;valor\n03/04/2026;CAFE;-12,50\n04/21/2026;UBER;-35,90\n',
+      )));
+      final mapping = doc.suggestedMapping.copyWith(
+        decimalFormat: CsvDecimalFormat.brazilian,
+      );
+      expect(doc.autoDateWarning(mapping), isNull);
+      final rows = doc.buildCandidates(
+        mapping: mapping, sourceKind: StatementImportSourceKind.account,
+      );
+      expect(rows.first.localDate, '2026-03-04');
+      expect(rows.last.localDate, '2026-04-21');
+      expect(rows.map((r) => r.amountMinor), [1250, 3590]);
+    });
+
+    test('formato misto do mesmo arquivo não gera preview', () {
+      final doc = parseCsvImport(Uint8List.fromList(utf8.encode(
+        'data;descricao;valor\n23/04/2026;A;-10,00\n04/23/2026;B;-20,00\n',
+      )));
+      final mapping = doc.suggestedMapping.copyWith(
+        decimalFormat: CsvDecimalFormat.brazilian,
+      );
+      expect(doc.autoDateWarning(mapping), contains('mistura'));
+      expect(() => doc.buildCandidates(
+        mapping: mapping, sourceKind: StatementImportSourceKind.account,
+      ), throwsA(isA<StatementImportParseException>()));
+    });
+
+    test('datas ISO seguem funcionando no modo detectar', () {
+      final doc = parseCsvImport(Uint8List.fromList(utf8.encode(
+        'data;descricao;valor\n2026-10-09;ESTORNO;25,00\n',
+      )));
+      final mapping = doc.suggestedMapping.copyWith(
+        decimalFormat: CsvDecimalFormat.brazilian,
+      );
+      final rows = doc.buildCandidates(
+        mapping: mapping, sourceKind: StatementImportSourceKind.card,
+      );
+      expect(rows.single.localDate, '2026-10-09');
+      expect(rows.single.finalType, isNull);
+    });
+
     test('saldo inicial nunca é classificado como receita', () {
       final classification = classifyStatementRow(
         sourceKind: StatementImportSourceKind.account,
