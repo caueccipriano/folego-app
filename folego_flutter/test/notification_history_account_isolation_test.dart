@@ -77,7 +77,9 @@ void main() {
       'space-a': Completer<List<NotificationHistoryItem>>(),
       'space-b': Completer<List<NotificationHistoryItem>>(),
     };
-    final repository = _DelayedHistoryRepository(requests);
+    final repository = _StubHistoryRepository();
+    Future<List<NotificationHistoryItem>> load(String spaceId) =>
+        requests[spaceId]!.future;
     String? currentUser() => 'same-user';
 
     Widget screen(String spaceId) => MaterialApp(
@@ -85,6 +87,7 @@ void main() {
             repository: repository,
             spaceId: spaceId,
             authenticatedUserId: currentUser,
+            historyLoader: load,
             cache: NotificationHistoryCache(),
           ),
         );
@@ -123,9 +126,10 @@ void main() {
     };
     await tester.pumpWidget(MaterialApp(
       home: NotificationHistoryScreen(
-        repository: _DelayedHistoryRepository(requests),
+        repository: _StubHistoryRepository(),
         spaceId: 'space',
         authenticatedUserId: () => null,
+        historyLoader: (spaceId) => requests[spaceId]!.future,
         cache: cache,
       ),
     ));
@@ -138,17 +142,7 @@ void main() {
   });
 }
 
-class _DelayedHistoryRepository implements FolegoRepository {
-  _DelayedHistoryRepository(this.requests);
-
-  final Map<String, Completer<List<NotificationHistoryItem>>> requests;
-
-  @override
-  Future<List<NotificationHistoryItem>> getNotificationHistory(
-    String spaceId, {
-    int limit = 100,
-  }) => requests[spaceId]!.future;
-
+class _StubHistoryRepository implements FolegoRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
