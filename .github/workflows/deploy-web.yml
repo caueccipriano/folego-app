@@ -67,6 +67,10 @@ jobs:
             test/statement_import_ui_test.dart \
             test/projection_screen_test.dart
 
+      - name: Verify live Home privacy masking
+        working-directory: folego_flutter
+        run: flutter test test/web2_responsive_shell_test.dart --plain-name "Home privacy eye immediately masks and restores mounted values"
+
       - name: Flutter public auth integration smoke
         run: |
           chromedriver --port=4444 >/tmp/chromedriver.log 2>&1 &
