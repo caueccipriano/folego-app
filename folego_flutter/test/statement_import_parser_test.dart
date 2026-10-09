@@ -54,6 +54,33 @@ void main() {
       expect(doc.examplesFor(doc.suggestedMapping.descriptionColumn), contains('Café'));
     });
 
+    test('valor de milhar ambíguo jamais vira centavos silenciosamente', () {
+      expect(
+        () => parseMoneyMinor('1.234', CsvDecimalFormat.auto),
+        throwsA(isA<StatementImportParseException>()),
+      );
+      expect(
+        () => parseMoneyMinor('1,234', CsvDecimalFormat.auto),
+        throwsA(isA<StatementImportParseException>()),
+      );
+      expect(parseMoneyMinor('1.234', CsvDecimalFormat.brazilian), 123400);
+      expect(parseMoneyMinor('1,234', CsvDecimalFormat.american), 123400);
+    });
+
+    test('não arredonda frações além de dois centavos sem consentimento', () {
+      expect(
+        () => parseMoneyMinor('100,123', CsvDecimalFormat.brazilian),
+        throwsA(isA<StatementImportParseException>()),
+      );
+      expect(
+        () => parseMoneyMinor('100.123', CsvDecimalFormat.american),
+        throwsA(isA<StatementImportParseException>()),
+      );
+      expect(parseMoneyMinor('1.234,56', CsvDecimalFormat.auto), 123456);
+      expect(parseMoneyMinor('-1,234.56', CsvDecimalFormat.auto), -123456);
+      expect(parseMoneyMinor('0,01', CsvDecimalFormat.auto), 1);
+    });
+
     test('arquivo vazio e CSV malformed falham amigavelmente', () {
       expect(() => parseCsvImport(Uint8List(0)), throwsA(isA<StatementImportParseException>()));
       expect(() => parseCsvRows('data,"descrição\n16/09/2026,teste', ','), throwsA(isA<StatementImportParseException>()));
