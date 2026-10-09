@@ -144,9 +144,10 @@ void main() {
   });
 
   test('credits and expenses cannot be silently flipped to wrong direction', () {
-    final expense = row(direction: StatementImportDirection.credit,
-      decision: StatementImportDecision.include);
-    expect(validate(expense), contains('sentido'));
+    final expense = row(direction: StatementImportDirection.credit);
+    expect(validate(expense.copyWith(
+      decision: StatementImportDecision.include,
+    )), contains('sentido'));
     final salary = row(finalType: StatementImportFinalType.income,
       direction: StatementImportDirection.credit,
       decision: StatementImportDecision.include);
