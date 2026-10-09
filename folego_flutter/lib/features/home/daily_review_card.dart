@@ -31,7 +31,6 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   Map<String, dynamic>? _state;
   final ValueNotifier<int> _revision = ValueNotifier(0);
   bool _busy = false;
-  bool _expanded = false;
   bool _movements = false;
   bool _commitments = false;
   bool _noMovements = false;
@@ -62,7 +61,6 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.space.id != widget.space.id) {
       _state = null;
-      _expanded = false;
       _error = null;
       _movements = false;
       _commitments = false;
@@ -115,10 +113,13 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         },
       );
       await _load();
-      if (mounted && snooze) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Revisão adiada por 30 minutos.')),
-        );
+      if (mounted && (complete || snooze)) {
+        Navigator.of(context).pop();
+        if (snooze) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Revisão adiada por 30 minutos.')),
+          );
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -194,7 +195,6 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   }
 
   Future<void> _openReview() async {
-    _refreshUi(() => _expanded = true);
     final brightness = Theme.of(context).brightness;
     await showModalBottomSheet<void>(
       context: context,
@@ -218,7 +218,6 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       ),
     );
     if (!mounted) return;
-    _refreshUi(() => _expanded = false);
     await _load();
   }
 
