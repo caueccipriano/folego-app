@@ -603,9 +603,25 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   Widget _mappingStep() {
     final csv = _csv!;
     final mapping = _mapping ?? csv.suggestedMapping;
+    final dateWarning = csv.autoDateWarning(mapping);
     return ListView(key: const ValueKey('statement-import-csv-mapping'), padding: const EdgeInsets.fromLTRB(0, 6, 0, 32), children: [
       const _IntroCard(icon: AppIcons.settings, title: 'como esse CSV está organizado?', text: 'confira o mapeamento. abaixo de cada campo mostramos valores reais do arquivo antes de criar o staging.'),
       const SizedBox(height: 14),
+      if (dateWarning != null) ...[
+        const SizedBox(height: 8),
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            dateWarning,
+            key: const ValueKey('statement-import-ambiguous-date-warning'),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
       _ColumnMappingField(label: 'data *', value: mapping.dateColumn, headers: csv.headers, examples: csv.examplesFor(mapping.dateColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(dateColumn: value))),
       _ColumnMappingField(label: 'descrição *', value: mapping.descriptionColumn, headers: csv.headers, examples: csv.examplesFor(mapping.descriptionColumn), onChanged: (value) => setState(() => _mapping = mapping.copyWith(descriptionColumn: value))),
       _ColumnMappingField(label: 'valor', value: mapping.amountColumn, headers: csv.headers, examples: csv.examplesFor(mapping.amountColumn), optional: true, onChanged: (value) => setState(() => _mapping = value == null ? mapping.copyWith(clearAmount: true) : mapping.copyWith(amountColumn: value))),
