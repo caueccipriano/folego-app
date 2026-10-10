@@ -83,6 +83,13 @@ jobs:
             test/wallet_qa_mobile_stress_test.dart \
             test/statement_import_qa_mobile_stress_test.dart
 
+      - name: Generate iPhone and PWA icons
+        working-directory: folego_flutter
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          bash scripts/generate_brand_icons.sh
+
       - name: Build QA web app
         working-directory: folego_flutter
         run: flutter build web --release --base-href "/"

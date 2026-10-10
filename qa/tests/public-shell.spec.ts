@@ -62,6 +62,56 @@ test.describe('Fôlego public PWA shell', () => {
 
     const appleIcon = page.locator('link[rel="apple-touch-icon"]');
     await expect(appleIcon).toHaveCount(1);
+    const appleIconHref = await appleIcon.getAttribute('href');
+    expect(appleIconHref).toBe('apple-touch-icon.png');
+
+    // iOS doesn't reliably use the manifest. A missing, blank, or invalid PNG
+    // can silently create a generic home-screen bookmark despite valid tags.
+    const appleIconUrl = new URL(appleIconHref!, baseURL!).toString();
+    const iconResponse = await request.get(appleIconUrl);
+    expect(iconResponse.ok()).toBeTruthy();
+    expect(iconResponse.headers()['content-type']).toContain('image/png');
+    const iconPng = await iconResponse.body();
+    expect(iconPng.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(iconPng.readUInt32BE(16)).toBe(180);
+    expect(iconPng.readUInt32BE(20)).toBe(180);
+
+    // Ensure WebKit/Chromium can actually decode the image and that the icon
+    // contains the purple piggy graphic, not just a blank beige square.
+    const iconPixels = await page.evaluate(async (href) => {
+      const image = new Image();
+      image.src = new URL(href, document.baseURI).href;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = 180;
+      canvas.height = 180;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas 2D unavailable');
+      context.drawImage(image, 0, 0);
+      const data = context.getImageData(0, 0, 180, 180).data;
+      const colors = new Set<string>();
+      let opaque = 0;
+      for (let y = 10; y < 180; y += 20) {
+        for (let x = 10; x < 180; x += 20) {
+          const offset = (y * 180 + x) * 4;
+          colors.add(
+            [data[offset], data[offset + 1], data[offset + 2]].join(','),
+          );
+          if (data[offset + 3] === 255) opaque += 1;
+        }
+      }
+      return { width: image.naturalWidth, height: image.naturalHeight,
+        colors: colors.size, opaque };
+    }, appleIconHref!);
+    expect(iconPixels.width).toBe(180);
+    expect(iconPixels.height).toBe(180);
+    expect(iconPixels.colors).toBeGreaterThan(6);
+    expect(iconPixels.opaque).toBeGreaterThan(40);
+
+    const manifestAppleIcon = manifest.icons.find(
+      (icon: { src: string }) => icon.src === 'apple-touch-icon.png',
+    );
+    expect(manifestAppleIcon?.sizes).toBe('180x180');
   });
 
   test('keeps Flutter surface inside the viewport after resize', async ({
