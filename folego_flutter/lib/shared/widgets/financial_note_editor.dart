@@ -122,7 +122,9 @@ class _InvoiceFinancialNotesState extends State<InvoiceFinancialNotes> {
   void didUpdateWidget(covariant InvoiceFinancialNotes oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId || oldWidget.cardId != widget.cardId ||
-        oldWidget.repository != widget.repository) _reset();
+        oldWidget.repository != widget.repository) {
+      _reset();
+    }
   }
   @override
   Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>>(
