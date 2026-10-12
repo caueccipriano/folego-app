@@ -42,7 +42,7 @@ jobs:
         run: flutter analyze
 
       - name: Test purchase projection totals
-        run: flutter test test/purchase_simulation_test.dart test/projection_model_test.dart
+        run: flutter test test/purchase_simulation_test.dart test/projection_model_test.dart test/financial_note_editor_test.dart
 
       - name: Run public auth integration smoke
         run: |

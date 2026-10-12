@@ -14,6 +14,7 @@ import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../data/repositories/folego_repository_wallet_management.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/financial_note_editor.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
@@ -463,6 +464,11 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
             const _EmptyCard(text: 'nenhuma compra nesta fatura')
           else
             ..._purchases.map((item) => _CardPurchaseTile(item: item)),
+          const SizedBox(height: 24),
+          const _SectionTitle('comentários das faturas', 'anotações compartilhadas com a planilha'),
+          const SizedBox(height: 12),
+          InvoiceFinancialNotes(key: ValueKey('invoice-notes:${widget.spaceId}:${_card.id}'),
+            repository: widget.repository, spaceId: widget.spaceId, cardId: _card.id),
           const SizedBox(height: 24),
           const _SectionTitle('parcelas futuras', 'compromissos deste cartão depois da fatura atual'),
           const SizedBox(height: 12),

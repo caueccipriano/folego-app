@@ -982,4 +982,53 @@ class FolegoRepository {
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
   }
+  String? get commentsUserId => _client.auth.currentUser?.id;
+  Stream<String?> get commentsSessionChanges =>
+      _client.auth.onAuthStateChange.map((_) => commentsUserId).distinct();
+
+  Future<Map<String, dynamic>?> getFinancialNote({required String spaceId,
+      required String targetType, required String targetId}) async {
+    if (commentsUserId == null) throw StateError('Sessão encerrada.');
+    return await _client.from('financial_notes').select('id,content,revision')
+      .eq('space_id', spaceId).eq('target_type', targetType)
+      .eq('target_id', targetId).maybeSingle();
+  }
+
+  Future<Map<String, dynamic>> saveFinancialNote({required String spaceId,
+      required String targetType, required String targetId, required String content,
+      required int revision, required String userId}) async {
+    if (commentsUserId != userId) throw StateError('Sessão alterada. Reabra o comentário.');
+    final text = content.trim();
+    if (text.isEmpty || text.length > 4000) {
+      throw StateError('Escreva entre 1 e 4000 caracteres.');
+    }
+    try {
+      if (revision == 0) {
+        return await _client.from('financial_notes').insert({
+          'space_id': spaceId, 'target_type': targetType, 'target_id': targetId,
+          'content': text, 'last_source': 'app',
+        }).select('id,content,revision').single();
+      }
+      final result = await _client.from('financial_notes').update({
+        'content': text, 'last_source': 'app',
+      }).eq('space_id', spaceId).eq('target_type', targetType)
+        .eq('target_id', targetId).eq('revision', revision)
+        .select('id,content,revision').maybeSingle();
+      if (result == null) throw StateError('O comentário mudou. Recarregue a versão atual antes de salvar. Seu texto foi preservado.');
+      return result;
+    } on PostgrestException catch (error) {
+      if (error.code == '23505') throw StateError('O comentário foi criado em outro lugar. Recarregue antes de salvar.');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listInvoiceNoteTargets({required String spaceId,
+      required String cardId}) async {
+    if (commentsUserId == null) throw StateError('Sessão encerrada.');
+    return List<Map<String, dynamic>>.from(await _client
+      .from('card_invoice_reconciliations').select('id,reference_month')
+      .eq('space_id', spaceId).eq('card_id', cardId)
+      .order('reference_month', ascending: false));
+  }
+
 }
