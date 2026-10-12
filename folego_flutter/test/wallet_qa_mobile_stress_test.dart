@@ -102,7 +102,10 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'accounts at $width');
 
       for (final section in <String>['cartões', 'benefícios', 'dívidas']) {
-        await tester.tap(find.text(section).first);
+        final chip = find.text(section).first;
+        await tester.ensureVisible(chip);
+        await tester.pumpAndSettle();
+        await tester.tap(chip);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '$section at $width');
       }
@@ -137,6 +140,45 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('135%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('wallet explains available cash and eye updates without reload', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WalletScreen(
+          repository: _WalletQaRepository(),
+          spaceId: 'space-qa',
+          onAddRequested: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('disponível agora').first);
+    await tester.pumpAndSettle();
+    expect(find.text('de onde vem seu disponível'), findsOneWidget);
+    expect(find.text('como cada conta entra no cálculo'), findsOneWidget);
+    expect(find.text('diferença entre total e disponível'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
+    await tester.pumpAndSettle();
+    expect(FinancialPrivacy.hidden.value, isTrue);
+    expect(find.byTooltip('mostrar valores'), findsOneWidget);
+    expect(find.text('R\$ ••••'), findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
+    await tester.pumpAndSettle();
+    expect(FinancialPrivacy.hidden.value, isFalse);
+    expect(find.byTooltip('ocultar valores'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
