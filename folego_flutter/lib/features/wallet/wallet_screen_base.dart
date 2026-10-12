@@ -472,6 +472,9 @@ class _WalletScreenState extends State<WalletScreen> {
         value: summary.availableCash,
         icon: AppIcons.account,
         subtitle: '${Formatters.money(summary.totalCash)} no total das contas',
+        helperText: summary.availableCash < 0
+            ? 'disponível negativo · confira as contas antes de gastar'
+            : null,
         onTap: _showCashBreakdown,
       ),
       _PositionMetric(
@@ -502,16 +505,34 @@ class _WalletScreenState extends State<WalletScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PositionMetricCard(metric: metrics.first, emphasized: true),
+              _PositionMetricCard(
+                key: const ValueKey('wallet-summary-available'),
+                metric: metrics.first,
+                emphasized: true,
+              ),
               const SizedBox(height: spacing),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (var i = 1; i < metrics.length; i++) ...[
-                    Expanded(child: _PositionMetricCard(metric: metrics[i])),
-                    if (i != metrics.length - 1)
-                      const SizedBox(width: 8),
-                  ],
+                  Expanded(
+                    child: _PositionMetricCard(
+                      key: const ValueKey('wallet-summary-benefits'),
+                      metric: metrics[1],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _PositionMetricCard(
+                      key: const ValueKey('wallet-summary-invoices'),
+                      metric: metrics[2],
+                    ),
+                  ),
                 ],
+              ),
+              const SizedBox(height: spacing),
+              _PositionMetricCard(
+                key: const ValueKey('wallet-summary-debts'),
+                metric: metrics[3],
               ),
             ],
           );
@@ -755,17 +776,23 @@ class _PositionMetric {
     required this.value,
     required this.icon,
     this.subtitle,
+    this.helperText,
     this.onTap,
   });
   final String label;
   final double value;
   final IconData icon;
   final String? subtitle;
+  final String? helperText;
   final VoidCallback? onTap;
 }
 
 class _PositionMetricCard extends StatelessWidget {
-  const _PositionMetricCard({required this.metric, this.emphasized = false});
+  const _PositionMetricCard({
+    super.key,
+    required this.metric,
+    this.emphasized = false,
+  });
   final _PositionMetric metric;
   final bool emphasized;
 
@@ -803,11 +830,19 @@ class _PositionMetricCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(
                         context,
-                        fontSize: 9,
+                        fontSize: 11,
                         color: secondary,
                       ),
                     ),
                   ),
+                  if (metric.onTap != null) ...[
+                    const SizedBox(width: 2),
+                    Icon(
+                      AppIcons.chevronRight,
+                      size: 14,
+                      color: secondary,
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 6),
@@ -818,7 +853,7 @@ class _PositionMetricCard extends StatelessWidget {
                   Formatters.money(metric.value),
                   style: AppTypography.money(
                     context,
-                    fontSize: emphasized ? 24 : 15,
+                    fontSize: emphasized ? 24 : 17,
                     color: metric.value < 0
                         ? AppColors.expenseText(brightness)
                         : primary,
@@ -833,8 +868,23 @@ class _PositionMetricCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.label(
                     context,
-                    fontSize: 9,
+                    fontSize: 11,
                     color: secondary,
+                  ),
+                ),
+              ],
+              if (metric.helperText != null) ...[
+                const SizedBox(height: 7),
+                Text(
+                  metric.helperText!,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: metric.value < 0
+                        ? AppColors.expenseText(brightness)
+                        : secondary,
                   ),
                 ),
               ],
@@ -938,12 +988,29 @@ class _AccountCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
+                    [
+                      if (account.institution?.trim().isNotEmpty == true)
+                        account.institution!.trim(),
+                      _accountTypeLabel(account.type),
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 11,
+                      color: secondary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
                     account.availableForSpending
                         ? 'entra no disponível'
                         : 'saldo protegido',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTypography.label(
                       context,
-                      fontSize: 10,
+                      fontSize: 11,
                       color: secondary,
                     ),
                   ),
