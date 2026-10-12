@@ -265,34 +265,34 @@ class _WalletScreenState extends State<WalletScreen> {
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
       builder: (context, _, __) => ColoredBox(
-      color: AppColors.background(brightness),
-      child: SafeArea(
-        child: AppContentContainer.dashboard(
-          fillHeight: true,
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
-              children: [
-                _buildHeader(brightness),
-                const SizedBox(height: 12),
-                if (_loading)
-                  const AppLoadingState(label: 'organizando sua carteira')
-                else if (_error != null)
-                  _WalletError(message: _error!, onRetry: _load)
-                else if (_overview != null) ...[
-                  _buildPositionSummary(),
+        color: AppColors.background(brightness),
+        child: SafeArea(
+          child: AppContentContainer.dashboard(
+            fillHeight: true,
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
+                children: [
+                  _buildHeader(brightness),
                   const SizedBox(height: 12),
-                  _buildSelector(),
-                  const SizedBox(height: 10),
-                  _buildSelectedSection(),
+                  if (_loading)
+                    const AppLoadingState(label: 'organizando sua carteira')
+                  else if (_error != null)
+                    _WalletError(message: _error!, onRetry: _load)
+                  else if (_overview != null) ...[
+                    _buildPositionSummary(),
+                    const SizedBox(height: 12),
+                    _buildSelector(),
+                    const SizedBox(height: 10),
+                    _buildSelectedSection(),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -399,7 +399,7 @@ class _WalletScreenState extends State<WalletScreen> {
               children: [
                 Text(
                   'de onde vem seu disponível',
-                  style: AppTypography.heading(
+                  style: AppTypography.section(
                     sheetContext,
                     fontSize: 19,
                     color: AppColors.primaryText(brightness),
@@ -781,25 +781,55 @@ class _PositionMetricCard extends StatelessWidget {
         onTap: metric.onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
-      constraints: BoxConstraints(minHeight: emphasized ? 104 : 84),
-      padding: EdgeInsets.all(emphasized ? 14 : 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+          constraints: BoxConstraints(minHeight: emphasized ? 104 : 84),
+          padding: EdgeInsets.all(emphasized ? 14 : 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface(brightness),
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            border: Border.all(color: AppColors.border(brightness)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(metric.icon, size: 16, color: purple),
-              const SizedBox(width: 6),
-              Expanded(
+              Row(
+                children: [
+                  Icon(metric.icon, size: 16, color: purple),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      metric.label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 9,
+                        color: secondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
                 child: Text(
-                  metric.label,
-                  maxLines: 2,
+                  Formatters.money(metric.value),
+                  style: AppTypography.money(
+                    context,
+                    fontSize: emphasized ? 24 : 15,
+                    color: metric.value < 0
+                        ? AppColors.expenseText(brightness)
+                        : primary,
+                  ),
+                ),
+              ),
+              if (metric.subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  metric.subtitle!,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.label(
                     context,
@@ -807,39 +837,9 @@ class _PositionMetricCard extends StatelessWidget {
                     color: secondary,
                   ),
                 ),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 6),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              Formatters.money(metric.value),
-              style: AppTypography.money(
-                context,
-                fontSize: emphasized ? 24 : 15,
-                color: metric.value < 0
-                    ? AppColors.expenseText(brightness)
-                    : primary,
-              ),
-            ),
-          ),
-          if (metric.subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              metric.subtitle!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.label(
-                context,
-                fontSize: 9,
-                color: secondary,
-              ),
-            ),
-          ],
-        ],
-      ),
         ),
       ),
     );
@@ -962,14 +962,21 @@ class _AccountCard extends StatelessWidget {
                     color: secondary,
                   ),
                 ),
-                Text(
-                  Formatters.money(account.balance),
-                  style: AppTypography.money(
-                    context,
-                    fontSize: 15,
-                    color: account.balance < 0
-                        ? AppColors.expenseText(brightness)
-                        : primary,
+                SizedBox(
+                  width: 112,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      Formatters.money(account.balance),
+                      style: AppTypography.money(
+                        context,
+                        fontSize: 15,
+                        color: account.balance < 0
+                            ? AppColors.expenseText(brightness)
+                            : primary,
+                      ),
+                    ),
                   ),
                 ),
               ],
