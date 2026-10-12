@@ -16,7 +16,6 @@ import '../../data/models/wallet_detail.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
-import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
@@ -263,7 +262,9 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return ColoredBox(
+    return ValueListenableBuilder<bool>(
+      valueListenable: FinancialPrivacy.hidden,
+      builder: (context, _, __) => ColoredBox(
       color: AppColors.background(brightness),
       child: SafeArea(
         child: AppContentContainer.dashboard(
@@ -292,6 +293,7 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -299,48 +301,166 @@ class _WalletScreenState extends State<WalletScreen> {
     final secondary = AppColors.secondaryText(brightness);
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
-    return AppPageHeader(
-      title: 'carteira',
-      subtitle: 'contas, cartões, benefícios e dívidas num só lugar',
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            key: const ValueKey('wallet-privacy-toggle'),
-            tooltip: FinancialPrivacy.hidden.value
-                ? 'mostrar valores'
-                : 'ocultar valores',
-            onPressed: FinancialPrivacy.toggle,
-            style: IconButton.styleFrom(
-              minimumSize: const Size(44, 44),
-              backgroundColor: surface,
-              foregroundColor: secondary,
-              side: BorderSide(color: border),
+    // Keep the title and actions on one row on iPhone, freeing the space
+    // formerly used by the extra right-aligned actions row.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'carteira',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.display(
+                    context,
+                    fontSize: compact ? 26 : 28,
+                    color: AppColors.primaryText(brightness),
+                  ),
+                ),
+              ),
             ),
-            icon: Icon(
-              FinancialPrivacy.hidden.value ? AppIcons.eyeOff : AppIcons.eye,
-              size: 19,
-            ),
-          ),
-
-          if (widget.onAddRequested != null) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             IconButton(
-              key: const ValueKey('wallet-add-action'),
-              tooltip: 'adicionar',
-              onPressed: widget.onAddRequested,
+              key: const ValueKey('wallet-privacy-toggle'),
+              tooltip: FinancialPrivacy.hidden.value
+                  ? 'mostrar valores'
+                  : 'ocultar valores',
+              onPressed: FinancialPrivacy.toggle,
               style: IconButton.styleFrom(
                 minimumSize: const Size(44, 44),
                 backgroundColor: surface,
                 foregroundColor: secondary,
                 side: BorderSide(color: border),
               ),
-              icon: const Icon(AppIcons.add, size: 20),
+              icon: Icon(
+                FinancialPrivacy.hidden.value ? AppIcons.eyeOff : AppIcons.eye,
+                size: 19,
+              ),
             ),
+            if (widget.onAddRequested != null) ...[
+              const SizedBox(width: 6),
+              IconButton(
+                key: const ValueKey('wallet-add-action'),
+                tooltip: 'adicionar',
+                onPressed: widget.onAddRequested,
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(44, 44),
+                  backgroundColor: surface,
+                  foregroundColor: secondary,
+                  side: BorderSide(color: border),
+                ),
+                icon: const Icon(AppIcons.add, size: 20),
+              ),
+            ],
           ],
-        ],
-      ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'contas, cartões, benefícios e dívidas num só lugar',
+          style: AppTypography.body(
+            context,
+            fontSize: compact ? 13 : 14,
+            color: secondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCashBreakdown() {
+    final overview = _overview;
+    if (overview == null) return;
+    final summary = overview.summary;
+    final outsideAvailable = summary.totalCash - summary.availableCash;
+    final protectedBalance = overview.paymentAccounts
+        .where((account) => !account.availableForSpending)
+        .fold<double>(0, (sum, account) => sum + account.balance);
+    final reconciles = (outsideAvailable - protectedBalance).abs() < 0.01;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final brightness = Theme.of(sheetContext).brightness;
+        final secondary = AppColors.secondaryText(brightness);
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'de onde vem seu disponível',
+                  style: AppTypography.heading(
+                    sheetContext,
+                    fontSize: 19,
+                    color: AppColors.primaryText(brightness),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('total nas contas'),
+                  trailing: Text(Formatters.money(summary.totalCash)),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(reconciles
+                      ? 'contas fora do disponível'
+                      : 'diferença entre total e disponível'),
+                  trailing: Text(Formatters.money(outsideAvailable)),
+                ),
+                const Divider(),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('disponível agora'),
+                  trailing: Text(
+                    Formatters.money(summary.availableCash),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'como cada conta entra no cálculo',
+                  style: AppTypography.label(
+                    sheetContext,
+                    fontSize: 12,
+                    color: secondary,
+                  ),
+                ),
+                for (final account in overview.paymentAccounts)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(account.name),
+                    subtitle: Text(account.availableForSpending
+                        ? 'entra no disponível'
+                        : 'não entra no disponível'),
+                    trailing: Text(Formatters.money(account.balance)),
+                  ),
+                const SizedBox(height: 8),
+                Text(
+                  'Benefícios ficam separados. Faturas e dívidas são exibidas '
+                  'à parte e não são descontadas novamente deste saldo.',
+                  style: AppTypography.body(
+                    sheetContext,
+                    fontSize: 11,
+                    color: secondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -352,21 +472,25 @@ class _WalletScreenState extends State<WalletScreen> {
         value: summary.availableCash,
         icon: AppIcons.account,
         subtitle: '${Formatters.money(summary.totalCash)} no total das contas',
+        onTap: _showCashBreakdown,
       ),
       _PositionMetric(
         label: 'benefícios',
         value: summary.totalBenefit,
         icon: AppIcons.benefit,
+        onTap: () => _selectSection(2),
       ),
       _PositionMetric(
         label: 'faturas em aberto',
         value: summary.totalCardInvoice,
         icon: AppIcons.creditCard,
+        onTap: () => _selectSection(1),
       ),
       _PositionMetric(
         label: 'dívidas restantes',
         value: summary.totalDebtRemaining,
         icon: AppIcons.debt,
+        onTap: () => _selectSection(3),
       ),
     ];
 
@@ -436,13 +560,6 @@ class _WalletScreenState extends State<WalletScreen> {
             onTap: () => _selectSection(index),
           );
         });
-        if (constraints.maxWidth < AppBreakpoints.medium) {
-          return Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: chips,
-          );
-        }
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -638,11 +755,13 @@ class _PositionMetric {
     required this.value,
     required this.icon,
     this.subtitle,
+    this.onTap,
   });
   final String label;
   final double value;
   final IconData icon;
   final String? subtitle;
+  final VoidCallback? onTap;
 }
 
 class _PositionMetricCard extends StatelessWidget {
@@ -656,7 +775,12 @@ class _PositionMetricCard extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: metric.onTap,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: Container(
       constraints: BoxConstraints(minHeight: emphasized ? 104 : 84),
       padding: EdgeInsets.all(emphasized ? 14 : 10),
       decoration: BoxDecoration(
@@ -715,6 +839,8 @@ class _PositionMetricCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+        ),
       ),
     );
   }
@@ -788,6 +914,72 @@ class _AccountCard extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final positive = AppColors.positiveText(brightness);
+    if (AppBreakpoints.of(context) == AppLayoutSize.compact) {
+      return _InteractiveWalletCard(
+        onTap: onTap,
+        child: Row(
+          children: [
+            const _CardIcon(icon: AppIcons.account),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    account.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    account.availableForSpending
+                        ? 'entra no disponível'
+                        : 'saldo protegido',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 10,
+                      color: secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'saldo',
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 9,
+                    color: secondary,
+                  ),
+                ),
+                Text(
+                  Formatters.money(account.balance),
+                  style: AppTypography.money(
+                    context,
+                    fontSize: 15,
+                    color: account.balance < 0
+                        ? AppColors.expenseText(brightness)
+                        : primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 5),
+            const Icon(AppIcons.chevronRight, size: 17),
+          ],
+        ),
+      );
+    }
     return _InteractiveWalletCard(
       onTap: onTap,
       child: Column(
