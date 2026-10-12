@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_detail.dart';
 import '../../shared/widgets/app_error_state.dart';
+import '../../shared/widgets/financial_note_editor.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import 'recurring_form_sheet.dart';
 import 'transaction_action_sheets.dart';
@@ -462,6 +463,20 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
             ],
           ),
         ],
+        const SizedBox(height: 16),
+        _Section(title: 'comentário compartilhado', children: [
+          FinancialNoteEditor(
+            key: ValueKey('note:${widget.space.id}:${widget.eventId}'),
+            repository: widget.repository, spaceId: widget.space.id,
+            targetType: 'event', targetId: widget.eventId,
+          ),
+          if (detail.cardPurchaseId != null)
+            FinancialNoteEditor(
+              key: ValueKey('purchase-note:${widget.space.id}:${detail.cardPurchaseId}'),
+              repository: widget.repository, spaceId: widget.space.id,
+              targetType: 'card_purchase', targetId: detail.cardPurchaseId!,
+            ),
+        ]),
         if (readOnly != null) ...[
           const SizedBox(height: 16),
           _Notice(text: readOnly),
