@@ -474,7 +474,7 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
             FinancialNoteEditor(
               key: ValueKey('purchase-note:${widget.space.id}:${detail.cardPurchaseId}'),
               repository: widget.repository, spaceId: widget.space.id,
-              targetType: 'card_purchase', targetId: detail.cardPurchaseId!,
+              targetType: 'card_purchase', targetId: detail.cardPurchaseId!, existingOnly: true,
             ),
         ]),
         if (readOnly != null) ...[

@@ -5,9 +5,11 @@ import '../../data/repositories/folego_repository.dart';
 /// Uses the existing session and space policies. No ledger writes or offline cache.
 class FinancialNoteEditor extends StatefulWidget {
   const FinancialNoteEditor({super.key, required this.repository,
-    required this.spaceId, required this.targetType, required this.targetId});
+    required this.spaceId, required this.targetType, required this.targetId,
+    this.existingOnly = false});
   final FolegoRepository repository;
   final String spaceId, targetType, targetId;
+  final bool existingOnly;
   @override
   State<FinancialNoteEditor> createState() => _FinancialNoteEditorState();
 }
@@ -86,6 +88,7 @@ class _FinancialNoteEditorState extends State<FinancialNoteEditor> {
   @override
   Widget build(BuildContext context) {
     if (widget.repository.commentsUserId != _user || _user == null) return const SizedBox.shrink();
+    if (widget.existingOnly && _loaded && _revision == 0) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (_busy) const LinearProgressIndicator(),
       if (_editing)
