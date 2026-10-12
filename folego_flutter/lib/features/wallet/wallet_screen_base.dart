@@ -264,7 +264,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final brightness = Theme.of(context).brightness;
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
-      builder: (context, _, __) => ColoredBox(
+      builder: (context, _, _) => ColoredBox(
         color: AppColors.background(brightness),
         child: SafeArea(
           child: AppContentContainer.dashboard(
