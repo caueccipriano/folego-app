@@ -173,7 +173,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(FinancialPrivacy.hidden.value, isTrue);
     expect(find.byTooltip('mostrar valores'), findsOneWidget);
-    expect(find.text('R\\$ ••••'), findsWidgets);
+    expect(find.text('R\$ ••••'), findsWidgets);
 
     await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
     await tester.pumpAndSettle();
@@ -181,5 +181,4 @@ void main() {
     expect(find.byTooltip('ocultar valores'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-
 }
