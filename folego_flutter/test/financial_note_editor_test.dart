@@ -6,7 +6,8 @@ import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/shared/widgets/financial_note_editor.dart';
 
 class NoteRepository extends FolegoRepository {
-  NoteRepository() : super(SupabaseClient('https://example.supabase.co', 'test'));
+  NoteRepository() : super(SupabaseClient('https://example.supabase.co', 'test',
+    authOptions: const AuthClientOptions(autoRefreshToken: false)));
   String? user = 'user-a';
   Map<String, dynamic> note = {'content': 'original', 'revision': 1};
   bool conflict = false;
