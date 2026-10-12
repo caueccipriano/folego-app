@@ -181,4 +181,55 @@ void main() {
     expect(find.byTooltip('ocultar valores'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('wallet mobile hierarchy keeps debt readable and bank identified', (
+    tester,
+  ) async {
+    for (final width in <double>[320, 375, 390, 430]) {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WalletScreen(
+            repository: _WalletQaRepository(),
+            spaceId: 'space-qa',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final available = find.byKey(
+        const ValueKey('wallet-summary-available'),
+      );
+      final benefits = find.byKey(
+        const ValueKey('wallet-summary-benefits'),
+      );
+      final invoices = find.byKey(
+        const ValueKey('wallet-summary-invoices'),
+      );
+      final debts = find.byKey(const ValueKey('wallet-summary-debts'));
+      expect(available, findsOneWidget);
+      expect(benefits, findsOneWidget);
+      expect(invoices, findsOneWidget);
+      expect(debts, findsOneWidget);
+
+      expect(tester.getSize(debts).width,
+          greaterThan(tester.getSize(invoices).width + 40));
+      expect(tester.getSize(benefits).width,
+          closeTo(tester.getSize(invoices).width, 2));
+      expect(find.text(
+        'disponível negativo · confira as contas antes de gastar',
+      ), findsOneWidget);
+      expect(find.textContaining('Instituição Financeira Extremamente Longa'),
+          findsOneWidget);
+      expect(find.textContaining('conta corrente'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'width $width');
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
 }
