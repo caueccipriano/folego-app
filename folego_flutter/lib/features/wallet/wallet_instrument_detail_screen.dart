@@ -180,15 +180,15 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
                 label: benefit ? 'saldo de benefício' : 'saldo atual',
                 value: Formatters.money(_account.balance),
                 supporting: benefit
-                    ? 'dimensão benefit · fora de cash'
-                    : 'derivado do ledger · nunca editado diretamente',
+                    ? 'benefício separado do saldo bancário'
+                    : 'calculado pelas movimentações · sem edição direta',
                 emphasis: true,
               ),
               _DetailPanel(
                 label: 'tipo',
                 value: walletAccountTypeLabel(_account.type),
                 supporting: benefit
-                    ? 'não pode pagar fatura nem participar de transferências cash'
+                    ? 'benefício separado das contas bancárias'
                     : _account.availableForSpending
                         ? 'incluída no dinheiro disponível'
                         : 'saldo protegido do disponível',
@@ -198,7 +198,7 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
           const SizedBox(height: 24),
           _SectionTitle(
             benefit ? 'últimas movimentações do benefício' : 'últimas movimentações',
-            'o instrumento pode ser arquivado sem apagar este histórico',
+            'o histórico permanece mesmo se a conta for arquivada',
           ),
           const SizedBox(height: 12),
           if (_loading)
@@ -503,6 +503,25 @@ class _InstrumentDetailScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final accent = AppColors.primaryPurple(brightness);
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
+
+    final trailingActions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          key: const ValueKey('wallet-detail-edit'),
+          tooltip: 'editar',
+          onPressed: onEdit,
+          icon: const Icon(AppIcons.edit),
+        ),
+        IconButton(
+          key: const ValueKey('wallet-detail-archive'),
+          tooltip: 'arquivar',
+          onPressed: onArchive,
+          icon: const Icon(AppIcons.eyeOff),
+        ),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background(brightness),
@@ -510,46 +529,117 @@ class _InstrumentDetailScaffold extends StatelessWidget {
         child: AppContentContainer.dashboard(
           fillHeight: true,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(0, 20, 0, 48),
+            padding: EdgeInsets.fromLTRB(0, compact ? 10 : 20, 0, 48),
             children: [
-              AppPageHeader(
-                title: title,
-                subtitle: subtitle,
-                leading: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'voltar',
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(AppIcons.back),
-                    ),
-                    Icon(icon, color: accent, size: 22),
-                  ],
+              if (compact)
+                _CompactInstrumentDetailHeader(
+                  title: title,
+                  subtitle: subtitle,
+                  icon: icon,
+                  trailingActions: trailingActions,
+                )
+              else
+                AppPageHeader(
+                  title: title,
+                  subtitle: subtitle,
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'voltar',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(AppIcons.back),
+                      ),
+                      Icon(icon, color: accent, size: 22),
+                    ],
+                  ),
+                  trailing: trailingActions,
                 ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      key: const ValueKey('wallet-detail-edit'),
-                      tooltip: 'editar',
-                      onPressed: onEdit,
-                      icon: const Icon(AppIcons.edit),
-                    ),
-                    IconButton(
-                      key: const ValueKey('wallet-detail-archive'),
-                      tooltip: 'arquivar',
-                      onPressed: onArchive,
-                      icon: const Icon(AppIcons.eyeOff),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 22),
+              SizedBox(height: compact ? 16 : 22),
               child,
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CompactInstrumentDetailHeader extends StatelessWidget {
+  const _CompactInstrumentDetailHeader({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.trailingActions,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget trailingActions;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final secondary = AppColors.secondaryText(brightness);
+    final accent = AppColors.primaryPurple(brightness);
+    final largerText = MediaQuery.textScalerOf(context).scale(16) > 19.2;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              key: const ValueKey('wallet-detail-back'),
+              tooltip: 'voltar',
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(AppIcons.back),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: accent, size: 20),
+            ),
+            const Spacer(),
+            trailingActions,
+          ],
+        ),
+        const SizedBox(height: 10),
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            key: const ValueKey('wallet-detail-title'),
+            maxLines: largerText ? 4 : 3,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.display(
+              context,
+              fontSize: 24,
+              color: AppColors.primaryText(brightness),
+            ),
+          ),
+        ),
+        if (subtitle.trim().isNotEmpty) ...[
+          const SizedBox(height: 5),
+          Text(
+            subtitle,
+            maxLines: largerText ? 3 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.body(
+              context,
+              fontSize: 13,
+              color: secondary,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -594,9 +684,10 @@ class _DetailPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
     return Container(
-      constraints: const BoxConstraints(minHeight: 126),
-      padding: const EdgeInsets.all(15),
+      constraints: BoxConstraints(minHeight: compact ? 100 : 126),
+      padding: EdgeInsets.all(compact ? 13 : 15),
       decoration: BoxDecoration(
         color: AppColors.surface(brightness),
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
@@ -609,11 +700,40 @@ class _DetailPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTypography.label(context, fontSize: 9, color: AppColors.secondaryText(brightness))),
-          const SizedBox(height: 8),
-          Text(value, style: emphasis ? AppTypography.money(context, fontSize: 24) : AppTypography.section(context, fontSize: 17)),
+          Text(
+            label,
+            style: AppTypography.label(
+              context,
+              fontSize: 11,
+              color: AppColors.secondaryText(brightness),
+            ),
+          ),
           const SizedBox(height: 7),
-          Text(supporting.isEmpty ? '—' : supporting, style: AppTypography.body(context, fontSize: 10, color: AppColors.secondaryText(brightness))),
+          if (emphasis)
+            FittedBox(
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: AppTypography.money(context, fontSize: compact ? 23 : 24),
+              ),
+            )
+          else
+            Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.section(context, fontSize: compact ? 16 : 17),
+            ),
+          const SizedBox(height: 6),
+          Text(
+            supporting.isEmpty ? '—' : supporting,
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              color: AppColors.secondaryText(brightness),
+            ),
+          ),
           if (action != null) ...[const SizedBox(height: 8), action!],
         ],
       ),
@@ -720,14 +840,49 @@ class _RowSurface extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.body(context, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (subtitle.isNotEmpty)
-                  Text(subtitle, style: AppTypography.body(context, fontSize: 9, color: AppColors.secondaryText(brightness))),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 11,
+                      color: AppColors.secondaryText(brightness),
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Text(trailing, style: AppTypography.body(context, fontSize: 11, fontWeight: FontWeight.w700, color: trailingColor)),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width < 360 ? 106 : 132,
+            ),
+            child: FittedBox(
+              alignment: Alignment.centerRight,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                trailing,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: trailingColor,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
