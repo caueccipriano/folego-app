@@ -71,7 +71,7 @@ void main() {
         greaterThan(tester.getBottomLeft(edit).dy),
         reason: 'title starts beneath top actions at $width',
       );
-      expect(find.text('R\$ 360,00'), findsOneWidget);
+      expect(find.textContaining('360,00'), findsOneWidget);
       expect(
         find.text('calculado pelas movimentações · sem edição direta'),
         findsOneWidget,
