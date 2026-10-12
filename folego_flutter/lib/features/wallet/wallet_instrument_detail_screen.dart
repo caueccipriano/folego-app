@@ -180,15 +180,15 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
                 label: benefit ? 'saldo de benefício' : 'saldo atual',
                 value: Formatters.money(_account.balance),
                 supporting: benefit
-                    ? 'dimensão benefit · fora de cash'
-                    : 'derivado do ledger · nunca editado diretamente',
+                    ? 'benefício separado do saldo bancário'
+                    : 'calculado pelas movimentações · sem edição direta',
                 emphasis: true,
               ),
               _DetailPanel(
                 label: 'tipo',
                 value: walletAccountTypeLabel(_account.type),
                 supporting: benefit
-                    ? 'não pode pagar fatura nem participar de transferências cash'
+                    ? 'benefício separado das contas bancárias'
                     : _account.availableForSpending
                         ? 'incluída no dinheiro disponível'
                         : 'saldo protegido do disponível',
@@ -198,7 +198,7 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
           const SizedBox(height: 24),
           _SectionTitle(
             benefit ? 'últimas movimentações do benefício' : 'últimas movimentações',
-            'o instrumento pode ser arquivado sem apagar este histórico',
+            'o histórico permanece mesmo se a conta for arquivada',
           ),
           const SizedBox(height: 12),
           if (_loading)
@@ -840,14 +840,49 @@ class _RowSurface extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.body(context, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (subtitle.isNotEmpty)
-                  Text(subtitle, style: AppTypography.body(context, fontSize: 9, color: AppColors.secondaryText(brightness))),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 11,
+                      color: AppColors.secondaryText(brightness),
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Text(trailing, style: AppTypography.body(context, fontSize: 11, fontWeight: FontWeight.w700, color: trailingColor)),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width < 360 ? 106 : 132,
+            ),
+            child: FittedBox(
+              alignment: Alignment.centerRight,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                trailing,
+                style: AppTypography.body(
+                  context,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: trailingColor,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
