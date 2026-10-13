@@ -10,13 +10,14 @@ void main() {
 
       expect(index, contains('viewport-fit=cover'));
       expect(index, contains('apple-mobile-web-app-capable'));
+      expect(index, contains('apple-touch-icon.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(index, contains('apple-mobile-web-app-status-bar-style'));
       expect(
         index,
         contains('apple-mobile-web-app-status-bar-style" content="black"'),
       );
       expect(index, isNot(contains('black-translucent')));
-      expect(index, contains('rel="manifest" href="manifest.json"'));
+      expect(index, contains('rel="manifest" href="manifest.json?v=__FOLEGO_BUILD_VERSION__"'));
       expect(index, contains('(prefers-color-scheme: light)'));
       expect(index, contains('(prefers-color-scheme: dark)'));
       expect(index, isNot(contains('position: fixed !important')));
