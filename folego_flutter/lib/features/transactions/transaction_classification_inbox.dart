@@ -261,6 +261,20 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
   return proposals;
 }
 
+/// Context for a decision, never a guessed category. Bank push notifications
+/// may contain only a generic account label and no counterparty.
+String? classificationEvidenceHint(TransactionItem item) {
+  if (isGenericAutomationDescription(item.description)) {
+    return 'O aviso do banco não identifica quem enviou ou recebeu. '
+        'Confira a contraparte no extrato antes de escolher a categoria.';
+  }
+  if (item.eventType == 'card_purchase' && item.source == 'sheet-sync') {
+    return 'Confirme o estabelecimento ou o motivo da compra na fatura. '
+        'O nome apresentado pode não identificar o produto ou serviço.';
+  }
+  return null;
+}
+
 class TransactionClassificationInbox extends StatefulWidget {
   const TransactionClassificationInbox({
     super.key,
@@ -1139,6 +1153,7 @@ class _ClassificationCard extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
     final kind = transactionClassificationKind(item.eventType);
     final positive = kind == 'income';
+    final evidenceHint = classificationEvidenceHint(item);
     final amountColor = positive
         ? AppColors.positiveText(brightness)
         : AppColors.expenseText(brightness);
@@ -1210,12 +1225,24 @@ class _ClassificationCard extends StatelessWidget {
                       runSpacing: 5,
                       children: [
                         _MetaText(_eventLabel(item.eventType)),
-                        _MetaText(_date(item.occurredAt)),
+                        _MetaText(_dateTime(item.occurredAt)),
                         if (item.accountName != null &&
                             item.accountName!.trim().isNotEmpty)
                           _MetaText(item.accountName!),
                       ],
                     ),
+                    if (evidenceHint != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        evidenceHint,
+                        key: ValueKey('classification-evidence:${item.id}'),
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: secondaryText,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 9),
                     Row(
                       children: [
@@ -1274,11 +1301,13 @@ class _ClassificationCard extends StatelessWidget {
     }
   }
 
-  static String _date(DateTime value) {
+  static String _dateTime(DateTime value) {
     final local = value.toLocal();
     final day = local.day.toString().padLeft(2, '0');
     final month = local.month.toString().padLeft(2, '0');
-    return '$day/$month/${local.year}';
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month/${local.year} · $hour:$minute';
   }
 }
 
