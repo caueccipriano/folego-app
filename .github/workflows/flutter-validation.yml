@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/transactions-recurring
+  pull_request:
+    branches:
+      - feat/transactions-recurring
   workflow_dispatch:
 
 permissions:
@@ -32,6 +35,9 @@ jobs:
 
       - name: Flutter analyze
         run: flutter analyze
+
+      - name: Home data freshness safety regression
+        run: flutter test test/home_data_freshness_test.dart test/home_load_guard_test.dart
 
       - name: Flutter test
         run: |

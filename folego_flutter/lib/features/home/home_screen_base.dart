@@ -10,6 +10,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/error_translator.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -26,6 +27,8 @@ import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'home_pulse_card.dart';
+import 'home_data_freshness.dart';
+import 'home_load_guard.dart';
 import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
@@ -60,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _loading = true;
   String? _error;
+  DateTime? _lastSuccessfulSnapshotAt;
+  int _loadGeneration = 0;
   bool _monthlyMoneyUnavailable = false;
   bool _projectionUnavailable = false;
   bool _recentUnavailable = false;
@@ -74,6 +79,32 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     FinancialPrivacy.hidden.addListener(_onFinancialPrivacyChanged);
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.space.id == widget.space.id) return;
+
+    // Clear all data from the previous financial space before rendering the
+    // new one. Old in-flight requests must never repopulate this screen.
+    _loadGeneration += 1;
+    _snapshot = null;
+    _monthlyMoney = null;
+    _projection = null;
+    _recentTransactions = const [];
+    _categories = const [];
+    _upcomingEvents = const [];
+    _lastSuccessfulSnapshotAt = null;
+    _error = null;
+    _loading = true;
+
+    final activeSpaceId = widget.space.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.space.id == activeSpaceId) {
+        _load();
+      }
+    });
   }
 
   // The eye control changes a global notifier, not Home's local state.
@@ -92,8 +123,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<T?> _optional<T>(Future<T> future, String label) async {
     try {
       return await future;
-    } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+    } catch (_) {
+      debugPrint('Home optional section unavailable ($label)');
       return null;
     }
   }
@@ -101,13 +132,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<T?> _optionalCall<T>(Future<T> Function() call, String label) async {
     try {
       return await call();
-    } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+    } catch (_) {
+      debugPrint('Home optional section unavailable ($label)');
       return null;
     }
   }
 
   Future<void> _load() async {
+    final requestGeneration = ++_loadGeneration;
+    final requestedSpaceId = widget.space.id;
     if (mounted) {
       setState(() {
         _loading = true;
@@ -117,40 +150,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final values = await Future.wait<dynamic>([
-        _optional(widget.repository.getSnapshot(widget.space.id), 'snapshot'),
+        _optional(widget.repository.getSnapshot(requestedSpaceId), 'snapshot'),
         _optional(widget.repository.getProfileName(), 'profile'),
         _optional(
-          widget.repository.getMonthlyMoneySummary(spaceId: widget.space.id),
+          widget.repository.getMonthlyMoneySummary(spaceId: requestedSpaceId),
           'monthly money',
         ),
         _optional(
           widget.repository
-              .getTransactionsPage(widget.space.id, pageSize: 12)
+              .getTransactionsPage(requestedSpaceId, pageSize: 12)
               .then((page) => page.items),
           'recent transactions',
         ),
         _optional(
-          widget.repository.listExpenseCategories(widget.space.id),
+          widget.repository.listExpenseCategories(requestedSpaceId),
           'expense categories',
         ),
         _optional(
-          widget.repository.listIncomeCategories(widget.space.id),
+          widget.repository.listIncomeCategories(requestedSpaceId),
           'income categories',
         ),
         _optional(
-          widget.repository.getUpcomingEvents(widget.space.id, days: 30),
+          widget.repository.getUpcomingEvents(requestedSpaceId, days: 30),
           'upcoming events',
         ),
         _optionalCall(
           () => widget.repository.getProjection(
-            spaceId: widget.space.id,
+            spaceId: requestedSpaceId,
             horizonMonths: 3,
           ),
           'projection',
         ),
       ]);
 
-      if (!mounted) {
+      if (!mounted ||
+          !shouldApplyHomeResponse(
+            requestGeneration: requestGeneration,
+            currentGeneration: _loadGeneration,
+            requestedSpaceId: requestedSpaceId,
+            currentSpaceId: widget.space.id,
+          )) {
         return;
       }
 
@@ -167,7 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final snapshot = values[0] as FolegoSnapshot?;
 
       setState(() {
-        _snapshot = snapshot;
+        _snapshot = snapshot ?? _snapshot;
+        if (snapshot != null) {
+          _lastSuccessfulSnapshotAt = DateTime.now();
+        }
         _error = snapshot == null
             ? 'não consegui carregar seu resumo financeiro'
             : null;
@@ -193,13 +235,19 @@ class _HomeScreenState extends State<HomeScreen> {
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) {
+      if (!mounted ||
+          !shouldApplyHomeResponse(
+            requestGeneration: requestGeneration,
+            currentGeneration: _loadGeneration,
+            requestedSpaceId: requestedSpaceId,
+            currentSpaceId: widget.space.id,
+          )) {
         return;
       }
 
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = ErrorTranslator.forDisplay(error);
       });
     }
   }
@@ -400,6 +448,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               children: [
                 header,
+                const SizedBox(height: 7),
+                HomeDataFreshness(
+                  lastLoadedAt: _lastSuccessfulSnapshotAt,
+                  failed: _error != null,
+                  loading: _loading,
+                  onRefresh: _load,
+                ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,

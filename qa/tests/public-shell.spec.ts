@@ -39,7 +39,7 @@ test.describe('Fôlego public PWA shell', () => {
     const manifestHref = await page
       .locator('link[rel="manifest"]')
       .getAttribute('href');
-    expect(manifestHref).toBeTruthy();
+    expect(manifestHref).toMatch(/^manifest\.json\?v=[0-9a-f]{40}$/);
 
     const manifestUrl = new URL(manifestHref!, baseURL!).toString();
     const manifestResponse = await request.get(manifestUrl);
@@ -63,7 +63,7 @@ test.describe('Fôlego public PWA shell', () => {
     const appleIcon = page.locator('link[rel="apple-touch-icon"]');
     await expect(appleIcon).toHaveCount(1);
     const appleIconHref = await appleIcon.getAttribute('href');
-    expect(appleIconHref).toBe('apple-touch-icon.png');
+    expect(appleIconHref).toMatch(/^apple-touch-icon\.png\?v=[0-9a-f]{40}$/);
 
     // iOS doesn't reliably use the manifest. A missing, blank, or invalid PNG
     // can silently create a generic home-screen bookmark despite valid tags.
@@ -109,7 +109,7 @@ test.describe('Fôlego public PWA shell', () => {
     expect(iconPixels.opaque).toBeGreaterThan(40);
 
     const manifestAppleIcon = manifest.icons.find(
-      (icon: { src: string }) => icon.src === 'apple-touch-icon.png',
+      (icon: { src: string }) => icon.src === appleIconHref,
     );
     expect(manifestAppleIcon?.sizes).toBe('180x180');
   });
