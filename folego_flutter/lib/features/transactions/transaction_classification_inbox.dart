@@ -26,12 +26,12 @@ List<TransactionItem> matchingClassificationCandidates(
   Iterable<TransactionItem> pending,
 ) {
   final name = normalizeAutomationText(original.description);
-  if (name.length < 4 || original.accountId == null) {
+  if (!isSpecificAutomationDescription(name) || original.accountId == null) {
     return const <TransactionItem>[];
   }
   return pending.where((candidate) =>
       candidate.id != original.id &&
-      candidate.categoryId == null &&
+      candidate.needsClassification &&
       candidate.eventType == original.eventType &&
       candidate.source == original.source &&
       candidate.accountId == original.accountId &&
@@ -46,7 +46,7 @@ CategoryItem? reviewedCategorySuggestion({
   required List<CategoryItem> categories,
 }) {
   final description = normalizeAutomationText(item.description);
-  if (description.length < 4) return null;
+  if (!isSpecificAutomationDescription(description)) return null;
   final kind = transactionClassificationKind(item.eventType);
   if (kind == null) return null;
   final matches = rules.where((rule) {
@@ -85,6 +85,27 @@ CategoryItem? reviewedCategorySuggestion({
   return null;
 }
 
+bool isSpecificAutomationDescription(String normalized) {
+  final value = normalizeAutomationText(normalized);
+  if (value.length < 10) return false;
+  // Bank-app and CSV exports often use the same generic label for
+  // completely different people, purposes and categories.
+  const generic = {
+    'pix enviada - santander',
+    'pix enviado - santander',
+    'pix recebida - santander',
+    'pix recebido - santander',
+    'pix enviado',
+    'pix recebida',
+    'transferencia',
+    'compra cartao',
+    'compra no cartao',
+    'pagamento pix',
+  };
+  if (generic.contains(value)) return false;
+  return true;
+}
+
 /// Very conservative, read-only suggestions learned from *two or more*
 /// already categorized events with the same account, source, event type and
 /// exact normalized description. Conflicting historical categories reject
@@ -110,7 +131,7 @@ Map<String, String> historicalCategorySuggestions({
       return null;
     }
     final description = normalizeAutomationText(item.description);
-    if (description.length < 4) {
+    if (!isSpecificAutomationDescription(description)) {
       return null;
     }
     return '${item.accountId}|${item.eventType}|${item.source}|$description';
@@ -130,7 +151,8 @@ Map<String, String> historicalCategorySuggestions({
 
   final suggestions = <String, String>{};
   for (final item in pending) {
-    if (item.categoryId != null) {
+    if (!item.needsClassification ||
+        (item.categoryId != null && allowed.contains(item.categoryId))) {
       continue;
     }
     final k = key(item);
