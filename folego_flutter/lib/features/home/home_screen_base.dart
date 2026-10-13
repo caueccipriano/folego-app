@@ -25,6 +25,9 @@ import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
+import 'home_pulse_card.dart';
+import 'home_pulse_insight.dart';
+import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
@@ -307,10 +310,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
-    final dailyReview = DailyReviewCard(
-      refreshToken: _snapshot,
-      space: widget.space,
-      repository: widget.repository,
+    final pulse = HomePulseCard(
+      insight: selectHomePulse(
+        snapshot: snapshot,
+        upcoming: _upcomingEvents,
+        upcomingAvailable: !_upcomingUnavailable,
+      ),
+      onOpenUpcoming: _openUpcomingEvents,
+      onOpenBudget: FlexibleBudgetNavigationScope.maybeOf(context)?.open,
+    );
+    final optionalReview = ExpansionTile(
+      key: const ValueKey('home-optional-review'),
+      tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+      title: Text(
+        'revisar minhas finanças',
+        style: AppTypography.body(
+          context,
+          fontSize: 13,
+          color: primaryText,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      subtitle: Text(
+        'opcional · use quando quiser conferir seus registros',
+        style: AppTypography.body(context, fontSize: 11, color: secondaryText),
+      ),
+      children: [
+        DailyReviewCard(
+          refreshToken: _snapshot,
+          space: widget.space,
+          repository: widget.repository,
+        ),
+      ],
     );
     final quickActions = _buildQuickActions(
       surface: surface,
@@ -368,9 +399,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
                   const SizedBox(height: 12),
+                  pulse,
+                  const SizedBox(height: 12),
                   quickActions,
-                  const SizedBox(height: 6),
-                  dailyReview,
                   if (showUpcoming) ...[
                     const SizedBox(height: 13),
                     upcoming,
@@ -383,8 +414,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 14),
                     latestSection,
                   ],
+                  const SizedBox(height: 18),
+                  optionalReview,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   hero,
+                  const SizedBox(height: 16),
+                  pulse,
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,8 +431,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  dailyReview,
                   const SizedBox(height: 22),
                   monthlyMoney,
                   const SizedBox(height: 14),
@@ -406,6 +439,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     latestSection,
                   ],
+                  const SizedBox(height: 20),
+                  optionalReview,
                 ] else ...[
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,8 +458,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(flex: 5, child: quickActions),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  dailyReview,
+                  const SizedBox(height: 16),
+                  pulse,
                   const SizedBox(height: 24),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,6 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 22),
+                  optionalReview,
                 ],
               ],
             ),

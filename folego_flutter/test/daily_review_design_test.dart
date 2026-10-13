@@ -30,15 +30,15 @@ void main() {
     );
   }
 
-  testWidgets('check-in stays compact with many unclassified transactions', (tester) async {
+  testWidgets('optional review remains compact with many unclassified transactions', (tester) async {
     var tapped = false;
     await tester.pumpWidget(homePrompt(
       completed: false, pending: 34, onTap: () => tapped = true,
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('seu check-in'), findsOneWidget);
-    expect(find.textContaining('duas conferências rápidas'), findsOneWidget);
+    expect(find.text('revisão opcional'), findsOneWidget);
+    expect(find.textContaining('conferência opcional'), findsOneWidget);
     expect(find.byType(Card), findsNothing);
     expect(tester.getSize(find.byKey(const ValueKey('home-daily-review-prompt'))).height, lessThan(100));
     expect(tester.takeException(), isNull);
@@ -47,24 +47,25 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('completed check-in respects dark mode and short action copy', (tester) async {
+  testWidgets('completed optional review respects dark mode and short action copy', (tester) async {
     await tester.pumpWidget(homePrompt(
       completed: true, pending: 0, onTap: () {},
       brightness: Brightness.dark,
     ));
     await tester.pumpAndSettle();
-    expect(find.text('check-in concluído'), findsOneWidget);
+    expect(find.text('revisão concluída'), findsOneWidget);
     expect(find.text('ver'), findsOneWidget);
     expect(find.byType(FilledButton), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('encourages habit using real weekly review days', (tester) async {
+  testWidgets('does not use streak guilt even when review history includes four days', (tester) async {
     await tester.pumpWidget(homePrompt(
       completed: false, pending: 34, days: 4, onTap: () {},
     ));
     await tester.pumpAndSettle();
-    expect(find.textContaining('4 dos últimos 7 dias revisados'), findsOneWidget);
+    expect(find.text('revisão opcional'), findsOneWidget);
+    expect(find.textContaining('7 dias'), findsNothing);
   });
 
   test('spending pace copy does not claim risk when classification is pending', () {

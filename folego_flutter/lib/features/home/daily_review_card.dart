@@ -289,8 +289,6 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
-    final days = ((_state?['completed_days'] as List?) ?? const <dynamic>[])
-        .map((date) => date.toString()).toSet();
     final today = DateTime.tryParse(_state?['today']?.toString() ?? '');
     final pace = _state?['spending_pace'] as Map?;
     final canFinish = !_busy && _state != null && _movements && _commitments;
@@ -309,12 +307,12 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _complete ? 'check-in concluído' : 'seu check-in',
+                        _complete ? 'revisão concluída' : 'revisão opcional',
                         style: AppTypography.section(context, fontSize: 20, color: primary),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'pequenos passos para cuidar do seu dinheiro',
+                        'revise quando quiser, sem precisar marcar presença',
                         style: AppTypography.body(context, fontSize: 12, color: secondary),
                       ),
                     ],
@@ -336,44 +334,14 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${days.length}/7 dias revisados',
-                    style: AppTypography.label(
-                      context, color: purple, fontWeight: FontWeight.w700,
+                    'Sem obrigação diária. Confira só o que fizer sentido.',
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 12,
+                      color: secondary,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  if (today != null)
-                    Row(
-                      children: List.generate(7, (i) {
-                        final date = today.subtract(Duration(days: 6 - i));
-                        final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-                        final done = days.contains(key);
-                        return Expanded(
-                          child: Column(
-                            children: [
-                              Container(
-                                height: 6,
-                                margin: const EdgeInsets.symmetric(horizontal: 3),
-                                decoration: BoxDecoration(
-                                  color: done ? purple : border,
-                                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                date.day.toString(),
-                                style: AppTypography.label(
-                                  context,
-                                  color: done ? purple : secondary,
-                                  fontWeight: done ? FontWeight.w700 : FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   if (_state == null && _error == null)
                     const LinearProgressIndicator()
                   else if (_complete)
@@ -384,7 +352,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                         borderRadius: BorderRadius.circular(AppRadii.card),
                       ),
                       child: Text(
-                        'feito por hoje ✓ · volte amanhã para continuar seu hábito.',
+                        'Tudo conferido. Você pode voltar quando quiser.',
                         style: AppTypography.body(context, fontSize: 13, color: primary),
                       ),
                     )
@@ -494,7 +462,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                         ],
                       ),
                       Text(
-                        'vá aos poucos — isso não trava o seu check-in.',
+                        'resolva no seu ritmo; não precisa fazer tudo agora.',
                         style: AppTypography.body(context, fontSize: 11, color: secondary),
                       ),
                     ],
@@ -551,12 +519,12 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                           borderRadius: BorderRadius.circular(AppRadii.control),
                         ),
                       ),
-                      child: const Text('concluir check-in'),
+                      child: const Text('concluir revisão'),
                     ),
                   ),
                   TextButton(
-                    onPressed: _busy ? null : () => _save(snooze: true),
-                    child: const Text('lembrar daqui a 30 minutos'),
+                    onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                    child: const Text('deixar para depois'),
                   ),
                 ],
               ),
@@ -617,11 +585,10 @@ class DailyReviewPrompt extends StatelessWidget {
   String get subtitle {
     if (error != null) return 'toque para tentar novamente';
     if (loading) return 'organizando seu dia…';
-    if (complete) return 'feito por hoje · $days/7 dias revisados';
-    if (pace?['status'] == 'at_risk') return 'seu ritmo merece atenção';
-    if (days >= 3) return '$days dos últimos 7 dias revisados · continue no seu ritmo';
-    if (pending > 0) return 'duas conferências rápidas · pendências ficam para depois';
-    return 'duas conferências rápidas para fechar o dia';
+    if (complete) return 'concluída · volte quando quiser';
+    if (pace?['status'] == 'at_risk') return 'se quiser, confira seu ritmo';
+    if (pending > 0) return 'conferência opcional · pendências ficam para depois';
+    return 'uma revisão rápida, só quando fizer sentido';
   }
 
   @override
@@ -660,7 +627,7 @@ class DailyReviewPrompt extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      complete ? 'check-in concluído' : 'seu check-in',
+                      complete ? 'revisão concluída' : 'revisão opcional',
                       style: AppTypography.body(
                         context, fontSize: 13, fontWeight: FontWeight.w700, color: primary,
                       ),
@@ -675,7 +642,7 @@ class DailyReviewPrompt extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                complete ? 'ver' : 'revisar',
+                complete ? 'ver' : 'abrir',
                 style: AppTypography.button(context, fontSize: 12, color: purple),
               ),
               const SizedBox(width: 4),

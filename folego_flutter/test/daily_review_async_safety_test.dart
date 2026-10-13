@@ -63,16 +63,42 @@ void main() {
     await tester.pumpWidget(app(loader: loader, refreshToken: 2));
     recent.complete(_review(complete: true));
     await tester.pumpAndSettle();
-    expect(find.text('check-in concluído'), findsOneWidget);
+    expect(find.text('revisão concluída'), findsOneWidget);
 
     old.complete(_review(pending: 18));
     await tester.pumpAndSettle();
-    expect(find.text('check-in concluído'), findsOneWidget);
-    expect(find.text('seu check-in'), findsNothing);
+    expect(find.text('revisão concluída'), findsOneWidget);
+    expect(find.text('revisão opcional'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('late save never pops Home after check-in is dismissed', (tester) async {
+  testWidgets('leaving optional review never schedules another reminder', (tester) async {
+    var saves = 0;
+    await tester.pumpWidget(app(
+      loader: (_) async => _review(),
+      saver: ({
+        required spaceId,
+        required movementsChecked,
+        required commitmentsChecked,
+        required noMovements,
+        required complete,
+        required snooze,
+      }) async {
+        saves++;
+      },
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('home-daily-review-prompt')));
+    await tester.pumpAndSettle();
+    expect(find.text('deixar para depois'), findsOneWidget);
+    await tester.tap(find.text('deixar para depois'));
+    await tester.pumpAndSettle();
+    expect(saves, 0);
+    expect(find.byKey(const ValueKey('home-daily-review-prompt')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('late save never pops Home after optional review is dismissed', (tester) async {
     final save = Completer<void>();
     var saveCalled = false;
     await tester.pumpWidget(app(
@@ -92,9 +118,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('home-daily-review-prompt')));
     await tester.pumpAndSettle();
-    expect(find.text('lembrar daqui a 30 minutos'), findsOneWidget);
+    expect(find.text('deixar para depois'), findsOneWidget);
 
-    await tester.tap(find.text('lembrar daqui a 30 minutos'));
+    await tester.tap(find.text('conferir meus movimentos'));
     await tester.pump();
     expect(saveCalled, isTrue);
 
@@ -105,7 +131,7 @@ void main() {
     save.complete();
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('home-daily-review-prompt')), findsOneWidget);
-    expect(find.text('seu check-in'), findsOneWidget);
+    expect(find.text('revisão opcional'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
