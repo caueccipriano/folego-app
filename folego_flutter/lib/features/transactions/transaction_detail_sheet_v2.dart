@@ -464,19 +464,50 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
           ),
         ],
         const SizedBox(height: 16),
-        _Section(title: 'comentário compartilhado', children: [
-          FinancialNoteEditor(
-            key: ValueKey('note:${widget.space.id}:${widget.eventId}'),
-            repository: widget.repository, spaceId: widget.space.id,
-            targetType: 'event', targetId: widget.eventId,
-          ),
-          if (detail.cardPurchaseId != null)
-            FinancialNoteEditor(
-              key: ValueKey('purchase-note:${widget.space.id}:${detail.cardPurchaseId}'),
-              repository: widget.repository, spaceId: widget.space.id,
-              targetType: 'card_purchase', targetId: detail.cardPurchaseId!, existingOnly: true,
-            ),
-        ]),
+        _Section(
+          title: detail.cardPurchaseId == null
+              ? 'comentário do lançamento'
+              : 'comentário da compra',
+          children: [
+            if (detail.cardPurchaseId != null)
+              FinancialNoteEditor(
+                key: ValueKey(
+                  'purchase-note:${widget.space.id}:${detail.cardPurchaseId}',
+                ),
+                repository: widget.repository,
+                spaceId: widget.space.id,
+                targetType: 'card_purchase',
+                targetId: detail.cardPurchaseId!,
+              )
+            else
+              FinancialNoteEditor(
+                key: ValueKey('note:${widget.space.id}:${widget.eventId}'),
+                repository: widget.repository,
+                spaceId: widget.space.id,
+                targetType: 'event',
+                targetId: widget.eventId,
+              ),
+            if (detail.cardPurchaseId != null)
+              ExpansionTile(
+                key: const ValueKey('transaction-legacy-event-comment'),
+                tilePadding: EdgeInsets.zero,
+                title: const Text('anotação anterior do lançamento'),
+                subtitle: const Text('histórico separado, sem sobrescrever'),
+                children: [
+                  FinancialNoteEditor(
+                    key: ValueKey(
+                      'legacy-note:${widget.space.id}:${widget.eventId}',
+                    ),
+                    repository: widget.repository,
+                    spaceId: widget.space.id,
+                    targetType: 'event',
+                    targetId: widget.eventId,
+                    existingOnly: true,
+                  ),
+                ],
+              ),
+          ],
+        ),
         if (readOnly != null) ...[
           const SizedBox(height: 16),
           _Notice(text: readOnly),
