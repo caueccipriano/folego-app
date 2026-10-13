@@ -11,6 +11,8 @@ class NoteRepository extends FolegoRepository {
   String? user = 'user-a';
   Map<String, dynamic> note = {'content': 'original', 'revision': 1};
   bool conflict = false;
+  String? savedTargetType;
+  String? savedTargetId;
   final sessions = StreamController<String?>.broadcast();
   Completer<Map<String, dynamic>?>? pending;
   @override
@@ -28,12 +30,17 @@ class NoteRepository extends FolegoRepository {
     required String targetType, required String targetId, required String content,
     required int revision, required String userId}) async {
     if (conflict || revision != note['revision']) throw StateError('conflict');
+    savedTargetType = targetType;
+    savedTargetId = targetId;
     note = {'content': content, 'revision': revision + 1};
     return Map.of(note);
   }
 }
-Widget screen(NoteRepository repo, {String id = 'event-a'}) => MaterialApp(home: Scaffold(body:
-  FinancialNoteEditor(repository: repo, spaceId: 'space-a', targetType: 'event', targetId: id)));
+Widget screen(NoteRepository repo, {
+  String id = 'event-a',
+  String type = 'event',
+}) => MaterialApp(home: Scaffold(body:
+  FinancialNoteEditor(repository: repo, spaceId: 'space-a', targetType: type, targetId: id)));
 
 void main() {
   testWidgets('reads, edits, and saves a versioned note', (tester) async {
@@ -45,6 +52,24 @@ void main() {
     await tester.tap(find.text('salvar comentário')); await tester.pumpAndSettle();
     expect(repo.note['revision'], 2); expect(find.text('nova nota'), findsOneWidget);
   });
+  testWidgets('comments attach to the purchase ID, not the card or invoice',
+      (tester) async {
+    final repo = NoteRepository();
+    await tester.pumpWidget(screen(repo,
+      id: 'purchase-infinitypay-1', type: 'card_purchase'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('editar comentário'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField),
+      'Compra da mãe: novembro em aberto');
+    await tester.tap(find.text('salvar comentário'));
+    await tester.pumpAndSettle();
+    expect(repo.savedTargetType, 'card_purchase');
+    expect(repo.savedTargetId, 'purchase-infinitypay-1');
+    expect(repo.note['content'], 'Compra da mãe: novembro em aberto');
+    expect(repo.note['revision'], 2);
+  });
+
   testWidgets('conflict preserves draft and requires explicit review', (tester) async {
     final repo = NoteRepository();
     await tester.pumpWidget(screen(repo)); await tester.pumpAndSettle();
