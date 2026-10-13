@@ -218,9 +218,13 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
 
   final proposals = <AutopilotRuleProposal>[];
   for (final rows in groups.values) {
-    if (rows.length < 3) continue;
+    if (rows.length < 3) {
+      continue;
+    }
     final first = rows.first;
-    if (rows.any((row) => row.categoryId != first.categoryId)) continue;
+    if (rows.any((row) => row.categoryId != first.categoryId)) {
+      continue;
+    }
     final direction = first.eventType == 'income'
         ? AutomationDirection.credit
         : AutomationDirection.debit;
@@ -233,7 +237,9 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
         rule.sourceAccountId == first.accountId &&
         rule.direction == direction &&
         normalizeAutomationText(rule.matchValue) == normalized);
-    if (existing) continue;
+    if (existing) {
+      continue;
+    }
     proposals.add(AutopilotRuleProposal(
       accountId: first.accountId!,
       accountName: first.accountName,
@@ -465,7 +471,9 @@ class _TransactionClassificationInboxState
   }
 
   Future<void> _activateAutopilotRule(AutopilotRuleProposal proposal) async {
-    if (_creatingAutomaticRule || !_automationEnabled) return;
+    if (_creatingAutomaticRule || !_automationEnabled) {
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -492,7 +500,9 @@ class _TransactionClassificationInboxState
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() => _creatingAutomaticRule = true);
     try {
       // Recheck catalog + examples immediately before enabling a rule.
