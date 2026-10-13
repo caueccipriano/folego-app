@@ -10,6 +10,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/error_translator.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -122,8 +123,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<T?> _optional<T>(Future<T> future, String label) async {
     try {
       return await future;
-    } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+    } catch (_) {
+      debugPrint('Home optional section unavailable ($label)');
       return null;
     }
   }
@@ -131,8 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<T?> _optionalCall<T>(Future<T> Function() call, String label) async {
     try {
       return await call();
-    } catch (error) {
-      debugPrint('Home optional section failed ($label): $error');
+    } catch (_) {
+      debugPrint('Home optional section unavailable ($label)');
       return null;
     }
   }
@@ -246,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = ErrorTranslator.forDisplay(error);
       });
     }
   }
