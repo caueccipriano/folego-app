@@ -91,7 +91,7 @@ HomePulseInsight selectHomePulse({
   if (snapshot.spendablePool <= 0) {
     return const HomePulseInsight(
       eyebrow: 'vale olhar seu plano',
-      title: 'Seu valor planejado para gastar está zerado',
+      title: 'Não há folga prevista para novos gastos',
       description:
           'Confira seu orçamento e compromissos antes de assumir novas despesas. '
           'Isso não significa que sua conta bancária esteja negativa.',
