@@ -38,6 +38,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   bool _loadingPending = true;
   bool _openedPushClassification = false;
   RealtimeRefreshBinding? _realtimeBinding;
+  int _pendingLoadGeneration = 0;
+  int _spaceEpoch = 0;
 
   @override
   void initState() {
@@ -52,6 +54,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void didUpdateWidget(covariant TransactionsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.space?.id != widget.space?.id) {
+      // Immediately remove previous-space data and invalidate in-flight reads.
+      _spaceEpoch++;
+      _pendingLoadGeneration++;
+      _space = widget.space;
+      _pending = const [];
+      _loadingPending = true;
+      _openedPushClassification = false;
       unawaited(_loadPending());
     }
   }
@@ -72,21 +81,38 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Future<void> _loadPending() async {
+    final requestGeneration = ++_pendingLoadGeneration;
+    final requestedEpoch = _spaceEpoch;
+    final requestedSpaceId = widget.space?.id ?? _space?.id;
     try {
       final space =
           widget.space ?? _space ?? await widget.repository.getPrimarySpace();
       final pending = await widget.repository.listPendingTransactionClassifications(
         space.id,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestGeneration != _pendingLoadGeneration ||
+          requestedEpoch != _spaceEpoch ||
+          widget.space?.id != requestedSpaceId) {
+        return;
+      }
       setState(() {
         _space = space;
         _pending = pending;
         _loadingPending = false;
       });
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingPending = false);
+      if (!mounted ||
+          requestGeneration != _pendingLoadGeneration ||
+          requestedEpoch != _spaceEpoch ||
+          widget.space?.id != requestedSpaceId) {
+        return;
+      }
+      setState(() {
+        // Keep no stale counter when a fresh pending read fails.
+        _pending = const [];
+        _loadingPending = false;
+      });
     }
   }
 
@@ -105,9 +131,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Future<FinancialSpace?> _resolveSpace() async {
     final current = widget.space ?? _space;
     if (current != null) return current;
+    final requestedEpoch = _spaceEpoch;
     try {
       final space = await widget.repository.getPrimarySpace();
-      if (!mounted) return null;
+      if (!mounted || requestedEpoch != _spaceEpoch ||
+          (widget.space != null && widget.space!.id != space.id)) {
+        return null;
+      }
       setState(() => _space = space);
       return space;
     } catch (_) {
