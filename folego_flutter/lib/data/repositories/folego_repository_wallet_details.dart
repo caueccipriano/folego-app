@@ -52,6 +52,28 @@ extension FolegoRepositoryWalletDetails on FolegoRepository {
         .toList(growable: false);
   }
 
+  /// Lists purchase identities, not invoice lines, so historical and already
+  /// paid purchases remain available for one shared note per purchase.
+  Future<List<WalletCardPurchaseHistoryItem>> listCardPurchaseHistory({
+    required String spaceId,
+    required String cardId,
+    int limit = 120,
+  }) async {
+    final response = await Supabase.instance.client
+        .from('card_purchases')
+        .select('id,description,merchant,purchase_at,total_amount,installments_count')
+        .eq('space_id', spaceId)
+        .eq('card_id', cardId)
+        .neq('status', 'cancelled')
+        .neq('status', 'refunded')
+        .order('purchase_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(response)
+        .map(WalletCardPurchaseHistoryItem.fromJson)
+        .toList(growable: false);
+  }
+
   Future<List<WalletCardPurchaseLine>> listCardInvoicePurchases({
     required String spaceId,
     required String cardId,

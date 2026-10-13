@@ -56,6 +56,43 @@ class WalletCardPurchaseLine {
   }
 }
 
+/// Source purchase identity independent of the invoice/installment month.
+class WalletCardPurchaseHistoryItem {
+  const WalletCardPurchaseHistoryItem({
+    required this.id,
+    required this.description,
+    required this.totalAmount,
+    required this.purchaseAt,
+    required this.installmentsCount,
+    this.merchant,
+  });
+
+  final String id;
+  final String description;
+  final String? merchant;
+  final double totalAmount;
+  final DateTime purchaseAt;
+  final int installmentsCount;
+
+  String get displayName {
+    final value = merchant?.trim();
+    return value == null || value.isEmpty
+        ? financialDisplayDescription(description)
+        : value;
+  }
+
+  factory WalletCardPurchaseHistoryItem.fromJson(
+    Map<String, dynamic> json,
+  ) => WalletCardPurchaseHistoryItem(
+    id: json['id'] as String,
+    description: json['description'] as String,
+    merchant: json['merchant'] as String?,
+    totalAmount: _number(json['total_amount']),
+    purchaseAt: DateTime.parse(json['purchase_at'] as String),
+    installmentsCount: (json['installments_count'] as num).toInt(),
+  );
+}
+
 class WalletCardInstallmentLine {
   const WalletCardInstallmentLine({required this.id, required this.purchaseId, required this.description, required this.amount, required this.installmentNumber, required this.totalInstallments, required this.competenceDate, required this.status, this.merchant, this.categoryName, this.invoiceDueDate, this.invoiceStatus});
   final String id;
