@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/data/models/category_item.dart';
+import 'package:folego/data/models/automation_rule.dart';
 import 'package:folego/data/models/transaction_item.dart';
 import 'package:folego/data/models/wallet_overview.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
@@ -126,6 +127,138 @@ void main() {
       categories: [hidden],
     );
     expect(suggestions, isEmpty);
+  });
+
+  test('pending technical category is not mistaken for a final category', () {
+    final suggestions = historicalCategorySuggestions(
+      pending: [
+        transaction('pending', categoryId: 'technical_pending'),
+      ],
+      history: [
+        transaction('first', categoryId: 'food'),
+        transaction('second', categoryId: 'food'),
+      ],
+      categories: [category],
+    );
+    expect(suggestions, {'pending': 'food'});
+  });
+
+  test('generic bank PIX text must NEVER auto-suggest a category', () {
+    final suggestions = historicalCategorySuggestions(
+      pending: [
+        transaction('pending',
+          description: 'PIX enviada - Santander'),
+      ],
+      history: [
+        transaction('a', description: 'PIX enviada - Santander',
+            categoryId: 'food'),
+        transaction('b', description: 'PIX enviada - Santander',
+            categoryId: 'food'),
+        transaction('c', description: 'PIX enviada - Santander',
+            categoryId: 'food'),
+      ],
+      categories: [category],
+    );
+    expect(suggestions, isEmpty);
+    final grouped = matchingClassificationCandidates(
+      transaction('pending', description: 'PIX enviada - Santander'),
+      [transaction('second', description: 'PIX enviada - Santander')],
+    );
+    expect(grouped, isEmpty);
+  });
+
+  test('Autopilot offers only 3+ unanimous, exact, source-scoped cases', () {
+    const description = 'PIX enviado - Doacao Centro';
+    final history = [
+      transaction('a', description: description,
+          categoryId: 'food', source: 'sheet-sync'),
+      transaction('b', description: description,
+          categoryId: 'food', source: 'sheet-sync'),
+      transaction('c', description: description,
+          categoryId: 'food', source: 'sheet-sync'),
+    ];
+    final proposed = safeAutopilotRuleProposals(
+      history: history,
+      categories: [category],
+      existingRules: const [],
+    );
+    expect(proposed, hasLength(1));
+    expect(proposed.single.accountId, 'bank-one');
+    expect(proposed.single.sampleCount, 3);
+    expect(proposed.single.categoryId, 'food');
+
+    const other = CategoryItem(
+      id: 'other', name: 'outras', essential: false,
+      categoryRole: 'economic', kind: 'expense',
+    );
+    final mixed = safeAutopilotRuleProposals(
+      history: [
+        ...history,
+        transaction('different', description: description,
+            categoryId: 'other', source: 'sheet-sync'),
+      ],
+      categories: [category, other],
+      existingRules: const [],
+    );
+    expect(mixed, isEmpty);
+  });
+
+  test('existing exact account-scoped rule is not offered twice', () {
+    const description = 'PIX enviado - Centro Cultural';
+    final history = [
+      for (var i=0; i<3; i++)
+        transaction('id-$i', description: description,
+            categoryId: 'food', source: 'sheet-sync'),
+    ];
+    final existing = AutomationRule(
+      id: 'rule', spaceId: 'space', name: 'revisada',
+      active: true, matchField: AutomationMatchField.description,
+      matchType: AutomationMatchType.equals, matchValue: description,
+      sourceScope: AutomationSourceScope.account,
+      sourceAccountId: 'bank-one',
+      direction: AutomationDirection.debit,
+      actionType: AutomationActionType.reviewCategory,
+      executionMode: AutomationExecutionMode.review,
+      priority: 0, categoryId: 'food',
+    );
+    expect(safeAutopilotRuleProposals(
+      history: history, categories: [category], existingRules: [existing],
+    ), isEmpty);
+  });
+
+  testWidgets('approved rules execute before refreshing the read-only review',
+      (tester) async {
+    final order = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SmartCheckinCard(
+          spaceId: 'space-a',
+          repository: _NoNetworkRepository(),
+          applyApprovedRules: (_) async {
+            order.add('autopilot');
+            return {'applied': 2};
+          },
+          loadReview: (_) async {
+            order.add('review');
+            return {'pending_count': 1};
+          },
+          loadWallet: (_) async {
+            order.add('wallet');
+            return const WalletOverview(
+              summary: WalletSummary(
+                totalCash: 300, availableCash: 300,
+                totalCardInvoice: 0, totalDebtRemaining: 0,
+              ),
+              accounts: [], cards: [], debts: [], installments: [],
+            );
+          },
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(order.first, 'autopilot');
+    expect(find.textContaining('2 lançamentos'), findsOneWidget);
+    expect(find.textContaining('1 lançamento'), findsOneWidget);
   });
 
   testWidgets('automatic preflight labels the ledger without claiming bank sync', (
