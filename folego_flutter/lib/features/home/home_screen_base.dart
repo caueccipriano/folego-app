@@ -27,6 +27,7 @@ import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'home_pulse_card.dart';
 import 'home_data_freshness.dart';
+import 'home_load_guard.dart';
 import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
@@ -62,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
   String? _error;
   DateTime? _lastSuccessfulSnapshotAt;
+  int _loadGeneration = 0;
   bool _monthlyMoneyUnavailable = false;
   bool _projectionUnavailable = false;
   bool _recentUnavailable = false;
@@ -76,6 +78,32 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     FinancialPrivacy.hidden.addListener(_onFinancialPrivacyChanged);
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.space.id == widget.space.id) return;
+
+    // Clear all data from the previous financial space before rendering the
+    // new one. Old in-flight requests must never repopulate this screen.
+    _loadGeneration += 1;
+    _snapshot = null;
+    _monthlyMoney = null;
+    _projection = null;
+    _recentTransactions = const [];
+    _categories = const [];
+    _upcomingEvents = const [];
+    _lastSuccessfulSnapshotAt = null;
+    _error = null;
+    _loading = true;
+
+    final activeSpaceId = widget.space.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.space.id == activeSpaceId) {
+        _load();
+      }
+    });
   }
 
   // The eye control changes a global notifier, not Home's local state.
@@ -110,6 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
+    final requestGeneration = ++_loadGeneration;
+    final requestedSpaceId = widget.space.id;
     if (mounted) {
       setState(() {
         _loading = true;
@@ -119,40 +149,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final values = await Future.wait<dynamic>([
-        _optional(widget.repository.getSnapshot(widget.space.id), 'snapshot'),
+        _optional(widget.repository.getSnapshot(requestedSpaceId), 'snapshot'),
         _optional(widget.repository.getProfileName(), 'profile'),
         _optional(
-          widget.repository.getMonthlyMoneySummary(spaceId: widget.space.id),
+          widget.repository.getMonthlyMoneySummary(spaceId: requestedSpaceId),
           'monthly money',
         ),
         _optional(
           widget.repository
-              .getTransactionsPage(widget.space.id, pageSize: 12)
+              .getTransactionsPage(requestedSpaceId, pageSize: 12)
               .then((page) => page.items),
           'recent transactions',
         ),
         _optional(
-          widget.repository.listExpenseCategories(widget.space.id),
+          widget.repository.listExpenseCategories(requestedSpaceId),
           'expense categories',
         ),
         _optional(
-          widget.repository.listIncomeCategories(widget.space.id),
+          widget.repository.listIncomeCategories(requestedSpaceId),
           'income categories',
         ),
         _optional(
-          widget.repository.getUpcomingEvents(widget.space.id, days: 30),
+          widget.repository.getUpcomingEvents(requestedSpaceId, days: 30),
           'upcoming events',
         ),
         _optionalCall(
           () => widget.repository.getProjection(
-            spaceId: widget.space.id,
+            spaceId: requestedSpaceId,
             horizonMonths: 3,
           ),
           'projection',
         ),
       ]);
 
-      if (!mounted) {
+      if (!mounted ||
+          !shouldApplyHomeResponse(
+            requestGeneration: requestGeneration,
+            currentGeneration: _loadGeneration,
+            requestedSpaceId: requestedSpaceId,
+            currentSpaceId: widget.space.id,
+          )) {
         return;
       }
 
@@ -198,7 +234,13 @@ class _HomeScreenState extends State<HomeScreen> {
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) {
+      if (!mounted ||
+          !shouldApplyHomeResponse(
+            requestGeneration: requestGeneration,
+            currentGeneration: _loadGeneration,
+            requestedSpaceId: requestedSpaceId,
+            currentSpaceId: widget.space.id,
+          )) {
         return;
       }
 
