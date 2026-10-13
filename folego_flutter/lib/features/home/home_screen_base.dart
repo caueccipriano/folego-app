@@ -170,7 +170,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _snapshot = snapshot ?? _snapshot;
-        if (snapshot != null) _lastSuccessfulSnapshotAt = DateTime.now();
+        if (snapshot != null) {
+          _lastSuccessfulSnapshotAt = DateTime.now();
+        }
         _error = snapshot == null
             ? 'não consegui carregar seu resumo financeiro'
             : null;
