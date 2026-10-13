@@ -85,6 +85,54 @@ CategoryItem? reviewedCategorySuggestion({
   return null;
 }
 
+/// Very conservative, read-only suggestions learned from *two or more*
+/// already categorized events with the same account, source, event type and
+/// exact normalized description. Conflicting historical categories reject
+/// the suggestion. Does not mutate any transaction.
+Map<String, String> historicalCategorySuggestions({
+  required Iterable<TransactionItem> pending,
+  required Iterable<TransactionItem> history,
+  required Iterable<CategoryItem> categories,
+}) {
+  final allowed = categories
+      .where((category) =>
+          category.active &&
+          category.isSelectable &&
+          (category.categoryRole == null ||
+              category.categoryRole == 'economic'))
+      .map((category) => category.id)
+      .toSet();
+
+  final grouped = <String, List<String>>{};
+  String? key(TransactionItem item) {
+    if ((item.eventType != 'income' && item.eventType != 'expense') ||
+        item.accountId == null) return null;
+    final description = normalizeAutomationText(item.description);
+    if (description.length < 4) return null;
+    return '${item.accountId}|${item.eventType}|${item.source}|$description';
+  }
+
+  for (final item in history) {
+    if (item.status != 'confirmed' ||
+        item.categoryId == null ||
+        !allowed.contains(item.categoryId)) continue;
+    final k = key(item);
+    if (k != null) grouped.putIfAbsent(k, () => []).add(item.categoryId!);
+  }
+
+  final suggestions = <String, String>{};
+  for (final item in pending) {
+    if (item.categoryId != null) continue;
+    final k = key(item);
+    if (k == null) continue;
+    final categoriesSeen = grouped[k] ?? const <String>[];
+    if (categoriesSeen.length < 2 ||
+        categoriesSeen.any((id) => id != categoriesSeen.first)) continue;
+    suggestions[item.id] = categoriesSeen.first;
+  }
+  return suggestions;
+}
+
 class TransactionClassificationInbox extends StatefulWidget {
   const TransactionClassificationInbox({
     super.key,
@@ -110,6 +158,8 @@ class _TransactionClassificationInboxState
   List<CategoryItem> _expenseCategories = const [];
   List<CategoryItem> _incomeCategories = const [];
   List<AutomationRule> _reviewRules = const [];
+  List<TransactionItem> _knownHistory = const [];
+  bool _applyingSuggestions = false;
   String? _savingEventId;
   bool _loading = true;
   bool _refreshing = false;
@@ -143,12 +193,17 @@ class _TransactionClassificationInboxState
         widget.repository.listIncomeCategoryCatalog(widget.spaceId),
         widget.repository.listAutomationRules(widget.spaceId)
             .catchError((_) => <AutomationRule>[]),
+        widget.repository
+            .getTransactionsPage(widget.spaceId, pageSize: 400)
+            .then((page) => page.items)
+            .catchError((_) => <TransactionItem>[]),
       ]);
       if (!mounted) return;
       setState(() {
         _expenseCategories = _selectable(values[0] as List<CategoryItem>);
         _incomeCategories = _selectable(values[1] as List<CategoryItem>);
         _reviewRules = values[2] as List<AutomationRule>;
+        _knownHistory = values[3] as List<TransactionItem>;
         _loading = false;
         _error = null;
       });
@@ -158,6 +213,135 @@ class _TransactionClassificationInboxState
         _loading = false;
         _error = _friendly(error);
       });
+    }
+  }
+
+  Map<String, String> get _readySuggestions =>
+      historicalCategorySuggestions(
+        pending: _items,
+        history: _knownHistory,
+        categories: [..._expenseCategories, ..._incomeCategories],
+      );
+
+  Future<void> _applyReviewedSuggestions() async {
+    if (_savingEventId != null || _loading || _applyingSuggestions) return;
+    final proposed = _readySuggestions;
+    if (proposed.isEmpty) return;
+
+    final availableCategories = <String, CategoryItem>{
+      for (final item in [..._expenseCategories, ..._incomeCategories])
+        item.id: item,
+    };
+    final proposedLines = _items
+        .where((item) => proposed.containsKey(item.id))
+        .toList(growable: false);
+
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('conferir categorias sugeridas'),
+        content: SizedBox(
+          width: 450,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Estas sugestões são baseadas em pelo menos duas '
+                  'classificações anteriores idênticas na mesma conta. '
+                  'Revise antes de aplicar. Nenhum valor será alterado.',
+                ),
+                const SizedBox(height: 12),
+                for (final item in proposedLines.take(15))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      '${item.description} → '
+                      '${availableCategories[proposed[item.id]]?.breadcrumb ?? "?"}',
+                      maxLines: 3,
+                    ),
+                  ),
+                if (proposedLines.length > 15)
+                  Text('e mais ${proposedLines.length - 15} sugestões'),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('revisar manualmente'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text('confirmar ${proposedLines.length} categoria(s)'),
+          ),
+        ],
+      ),
+    );
+    if (approved != true || !mounted) return;
+    setState(() {
+      _applyingSuggestions = true;
+      _error = null;
+    });
+
+    var applied = 0;
+    var failed = false;
+    try {
+      // Re-read current pending state, avoiding assumptions after another
+      // session or a sheet-sync run has updated a row meanwhile.
+      final stillPending = await widget.repository
+          .listPendingTransactionClassifications(widget.spaceId);
+      if (!mounted) return;
+      final currentIds = stillPending
+          .where((item) => item.categoryId == null)
+          .map((item) => item.id)
+          .toSet();
+      for (final item in proposedLines) {
+        if (!mounted) break;
+        if (!currentIds.contains(item.id)) continue;
+        final categoryId = proposed[item.id];
+        if (categoryId == null) continue;
+        try {
+          await widget.repository.classifyFinancialEvent(
+            spaceId: widget.spaceId,
+            eventId: item.id,
+            categoryId: categoryId,
+          );
+          applied++;
+        } catch (_) {
+          failed = true;
+          break;
+        }
+      }
+      if (!mounted) return;
+      await _refresh();
+      if (!mounted) return;
+      setState(() {
+        _changed = _changed || applied > 0;
+        _batchDone += applied;
+        if (widget.batchSize != null) {
+          _batchTarget = _batchDone + (_items.length < widget.batchSize!
+              ? _items.length
+              : widget.batchSize!);
+        }
+        if (failed) {
+          _error = '$applied sugestões aplicadas. '
+              'Uma classificação falhou; as demais ficaram pendentes.';
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('$applied categorias confirmadas e aplicadas'),
+      ));
+    } catch (_) {
+      if (mounted) {
+        setState(() =>
+            _error = 'Não foi possível atualizar as pendências. '
+                'Nada foi aplicado automaticamente.');
+      }
+    } finally {
+      if (mounted) setState(() => _applyingSuggestions = false);
     }
   }
 
@@ -546,6 +730,21 @@ class _TransactionClassificationInboxState
               ),
             ),
             Divider(height: 1, color: border),
+            if (!_loading && !_applyingSuggestions &&
+                _readySuggestions.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: OutlinedButton.icon(
+                  key: const ValueKey('classification-reviewed-suggestions'),
+                  onPressed: _applyReviewedSuggestions,
+                  icon: const Icon(AppIcons.check, size: 18),
+                  label: Text(
+                    '${_readySuggestions.length} sugestões prontas para conferir',
+                  ),
+                ),
+              ),
+            if (_applyingSuggestions)
+              const LinearProgressIndicator(),
             if (_error != null)
               Container(
                 width: double.infinity,
