@@ -1,0 +1,18 @@
+--- a/FolegoSync.gs
++++ b/FolegoSync.gs
+@@
+     if (launches) _folegoSyncPrepareColumns_(launches);
++    if (props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true') _folegoCategoriesCycle_(spreadsheet);
+     _folegoSyncPush_(spreadsheet);
+@@
+-  const values = sheet.getRange(FOLEGO_SYNC_CONFIG.firstDataRow, 2, count, 22).getValues(); // B:W
++  const categoryEnabled = PropertiesService.getScriptProperties().getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
++  const values = sheet.getRange(FOLEGO_SYNC_CONFIG.firstDataRow, 2, count, categoryEnabled ? 35 : 22).getValues();
+@@
++    if (categoryEnabled && row[25] && (JSON.stringify([row[6],row[22],row[23],row[24],row[33]].map(x=>String(x||''))) !== JSON.stringify(row.slice(28,33).map(x=>String(x||''))) || /CONFLITO|PENDENTE/.test(String(row[34]||'')))) continue;
+     const origin = String(row[9] || '').trim(); // K
+@@
+ function _folegoSyncUpdateExistingLaunch_(sheet, targetRow, row) {
++  // Category protocol owns these cells, including local drafts and conflicts.
++  if (PropertiesService.getScriptProperties().getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true' && sheet.getMaxColumns()>=36 && sheet.getRange(targetRow,27).getValue()) return;
+   if (_folegoSyncIsClassifiable_(row)) {
