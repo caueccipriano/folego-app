@@ -48,7 +48,7 @@ BEGIN
   LOOP
     v_seen := v_seen + 1;
     v_account := NULL;
-    SELECT count(*),min(fi.account_id)
+    SELECT count(*),min(fi.account_id::text)::uuid
     INTO v_cash_count,v_account
     FROM public.financial_impacts fi
     JOIN public.accounts a ON a.id=fi.account_id
@@ -75,7 +75,7 @@ BEGIN
 
     -- Rule author explicitly opted in to 'automatic'. Rule must be exact,
     -- specific to the account and compatible with a current economic category.
-    SELECT count(DISTINCT ar.category_id),min(ar.category_id)
+    SELECT count(DISTINCT ar.category_id),min(ar.category_id::text)::uuid
     INTO v_rule_categories,v_category
     FROM public.automation_rules ar
     JOIN public.categories c ON c.id=ar.category_id
@@ -97,7 +97,7 @@ BEGIN
 
     -- Fresh, non-circular proof of >=3 user/previously categorized records
     -- with NO category disagreement. Same account, source, direction and text.
-    SELECT count(*),count(DISTINCT h.category_id),min(h.category_id)
+    SELECT count(*),count(DISTINCT h.category_id),min(h.category_id::text)::uuid
     INTO v_hist_count,v_hist_categories,v_hist_category
     FROM public.financial_events h
     JOIN public.categories hc ON hc.id=h.category_id
