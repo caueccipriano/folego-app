@@ -12,6 +12,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
 import 'statement_import_screen.dart';
 import 'transaction_classification_inbox.dart';
+import 'transaction_pending_guard.dart';
 import 'transactions_screen_base.dart' as impl;
 
 class TransactionsScreen extends StatefulWidget {
@@ -91,9 +92,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         space.id,
       );
       if (!mounted ||
-          requestGeneration != _pendingLoadGeneration ||
-          requestedEpoch != _spaceEpoch ||
-          widget.space?.id != requestedSpaceId) {
+          !shouldApplyTransactionPendingResponse(
+            requestGeneration: requestGeneration,
+            currentGeneration: _pendingLoadGeneration,
+            requestSpaceEpoch: requestedEpoch,
+            currentSpaceEpoch: _spaceEpoch,
+            requestedSpaceId: requestedSpaceId,
+            activeSpaceId: widget.space?.id,
+          )) {
         return;
       }
       setState(() {
@@ -103,9 +109,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       });
     } catch (_) {
       if (!mounted ||
-          requestGeneration != _pendingLoadGeneration ||
-          requestedEpoch != _spaceEpoch ||
-          widget.space?.id != requestedSpaceId) {
+          !shouldApplyTransactionPendingResponse(
+            requestGeneration: requestGeneration,
+            currentGeneration: _pendingLoadGeneration,
+            requestSpaceEpoch: requestedEpoch,
+            currentSpaceEpoch: _spaceEpoch,
+            requestedSpaceId: requestedSpaceId,
+            activeSpaceId: widget.space?.id,
+          )) {
         return;
       }
       setState(() {
