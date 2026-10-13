@@ -462,7 +462,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                         ],
                       ),
                       Text(
-                        'vá aos poucos — isso não trava o seu check-in.',
+                        'resolva no seu ritmo; não precisa fazer tudo agora.',
                         style: AppTypography.body(context, fontSize: 11, color: secondary),
                       ),
                     ],
