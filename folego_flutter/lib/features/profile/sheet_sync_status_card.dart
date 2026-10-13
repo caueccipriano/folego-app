@@ -102,7 +102,7 @@ class _SheetSyncStatusCardState extends State<SheetSyncStatusCard> {
                 Icon(Icons.sync_alt_rounded, size: 19, color: colors.primary),
                 const SizedBox(width: 9),
                 Expanded(
-                  child: Text('planilha conectada',
+                  child: Text('integração com planilha',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     )),
