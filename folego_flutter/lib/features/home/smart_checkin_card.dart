@@ -105,7 +105,7 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
       final pending = await widget.repository
           .listPendingTransactionClassifications(widget.spaceId);
       if (!mounted) return;
-      await Navigator.of(context).push<void>(MaterialPageRoute(
+      await Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
         builder: (_) => TransactionClassificationInbox(
           repository: widget.repository,
           spaceId: widget.spaceId,
