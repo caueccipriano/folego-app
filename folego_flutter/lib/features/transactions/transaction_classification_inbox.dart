@@ -31,7 +31,6 @@ List<TransactionItem> matchingClassificationCandidates(
   }
   return pending.where((candidate) =>
       candidate.id != original.id &&
-      candidate.needsClassification &&
       candidate.eventType == original.eventType &&
       candidate.source == original.source &&
       candidate.accountId == original.accountId &&
@@ -151,8 +150,7 @@ Map<String, String> historicalCategorySuggestions({
 
   final suggestions = <String, String>{};
   for (final item in pending) {
-    if (!item.needsClassification ||
-        (item.categoryId != null && allowed.contains(item.categoryId))) {
+    if (item.categoryId != null && allowed.contains(item.categoryId)) {
       continue;
     }
     final k = key(item);
