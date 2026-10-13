@@ -28,6 +28,7 @@ import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
+import 'sheet_sync_status_card.dart';
 
 part 'profile_widgets.dart';
 
@@ -691,6 +692,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: _showIphoneInstallHelp,
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            SheetSyncStatusCard(
+              key: ValueKey('sheet-sync-${widget.spaceId}'),
+              spaceId: widget.spaceId,
+              loadStatus: widget.repository.getSheetSyncStatus,
             ),
             const SizedBox(height: 10),
             _AboutCard(
