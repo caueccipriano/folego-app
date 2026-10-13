@@ -236,6 +236,7 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
   String? _paymentAccountName;
   List<WalletCardPurchaseLine> _purchases = const [];
   List<WalletCardInstallmentLine> _upcoming = const [];
+  Future<List<WalletCardPurchaseHistoryItem>>? _purchaseHistory;
   CardInvoiceSemantics? _invoiceSemantics;
   bool _loading = true;
   String? _error;
@@ -488,6 +489,75 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
               ),
             )),
           const SizedBox(height: 18),
+          ExpansionTile(
+            key: const ValueKey('wallet-purchase-history'),
+            tilePadding: EdgeInsets.zero,
+            title: const Text('outras compras e comentários'),
+            subtitle: const Text(
+              'compras anteriores, inclusive as já pagas',
+            ),
+            onExpansionChanged: (expanded) {
+              if (expanded && _purchaseHistory == null) {
+                setState(() {
+                  _purchaseHistory = widget.repository.listCardPurchaseHistory(
+                    spaceId: widget.spaceId,
+                    cardId: _card.id,
+                  );
+                });
+              }
+            },
+            children: [
+              if (_purchaseHistory != null)
+                FutureBuilder<List<WalletCardPurchaseHistoryItem>>(
+                  future: _purchaseHistory,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return TextButton(
+                        onPressed: () => setState(() {
+                          _purchaseHistory = widget.repository.listCardPurchaseHistory(
+                            spaceId: widget.spaceId,
+                            cardId: _card.id,
+                          );
+                        }),
+                        child: const Text('tentar carregar as compras'),
+                      );
+                    }
+                    if (!snapshot.hasData) {
+                      return const AppLoadingState(
+                        label: 'buscando compras anteriores',
+                      );
+                    }
+                    final visibleIds = <String>{
+                      ..._purchases.map((line) => line.purchaseId),
+                      ..._upcoming.map((line) => line.purchaseId),
+                    };
+                    final older = snapshot.data!
+                        .where((item) => !visibleIds.contains(item.id))
+                        .toList(growable: false);
+                    if (older.isEmpty) {
+                      return const Text('todas as compras já aparecem acima');
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final item in older)
+                          _PurchaseCommentCard(
+                            key: ValueKey('historical-note:${item.id}'),
+                            purchaseId: item.id,
+                            repository: widget.repository,
+                            spaceId: widget.spaceId,
+                            title: item.displayName,
+                            subtitle: 'compra parcelada em ${item.installmentsCount}x',
+                            amount: Formatters.money(item.totalAmount),
+                            icon: AppIcons.receipt,
+                          ),
+                      ],
+                    );
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
           ExpansionTile(
             key: const ValueKey('wallet-legacy-invoice-annotations'),
             tilePadding: EdgeInsets.zero,
@@ -876,6 +946,7 @@ class _UpcomingInstallmentTile extends StatelessWidget {
 /// target (card_purchase, purchaseId), not a card-level note.
 class _PurchaseCommentCard extends StatefulWidget {
   const _PurchaseCommentCard({
+    super.key,
     required this.purchaseId,
     required this.repository,
     required this.spaceId,
