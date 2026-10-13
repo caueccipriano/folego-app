@@ -88,7 +88,7 @@ void main() {
       upcoming: [],
       upcomingAvailable: true,
     );
-    expect(insight.title, contains('zerado'));
+    expect(insight.title, contains('Não há folga'));
     expect(insight.description, contains('não significa'));
     expect(insight.action, HomePulseAction.budget);
   });
