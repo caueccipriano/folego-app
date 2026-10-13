@@ -31,6 +31,7 @@ List<TransactionItem> matchingClassificationCandidates(
   }
   return pending.where((candidate) =>
       candidate.id != original.id &&
+      candidate.categoryId == original.categoryId &&
       candidate.eventType == original.eventType &&
       candidate.source == original.source &&
       candidate.accountId == original.accountId &&
@@ -45,7 +46,7 @@ CategoryItem? reviewedCategorySuggestion({
   required List<CategoryItem> categories,
 }) {
   final description = normalizeAutomationText(item.description);
-  if (!isSpecificAutomationDescription(description)) return null;
+  if (description.length < 4 || isGenericAutomationDescription(description)) return null;
   final kind = transactionClassificationKind(item.eventType);
   if (kind == null) return null;
   final matches = rules.where((rule) {
@@ -84,9 +85,8 @@ CategoryItem? reviewedCategorySuggestion({
   return null;
 }
 
-bool isSpecificAutomationDescription(String normalized) {
+bool isGenericAutomationDescription(String normalized) {
   final value = normalizeAutomationText(normalized);
-  if (value.length < 10) return false;
   // Bank-app and CSV exports often use the same generic label for
   // completely different people, purposes and categories.
   const generic = {
@@ -101,8 +101,12 @@ bool isSpecificAutomationDescription(String normalized) {
     'compra no cartao',
     'pagamento pix',
   };
-  if (generic.contains(value)) return false;
-  return true;
+  return generic.contains(value);
+}
+
+bool isSpecificAutomationDescription(String normalized) {
+  final value = normalizeAutomationText(normalized);
+  return value.length >= 10 && !isGenericAutomationDescription(value);
 }
 
 /// Very conservative, read-only suggestions learned from *two or more*
