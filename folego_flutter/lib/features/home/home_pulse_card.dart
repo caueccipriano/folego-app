@@ -63,13 +63,18 @@ class HomePulseCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    'uma coisa para saber',
-                    style: AppTypography.label(
-                      context,
-                      color: secondary,
-                      fontSize: 11,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'uma coisa para saber',
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(
+                        context,
+                        color: secondary,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ],
