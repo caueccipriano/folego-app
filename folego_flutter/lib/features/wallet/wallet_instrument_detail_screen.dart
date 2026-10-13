@@ -925,9 +925,10 @@ class _PurchaseCommentCardState extends State<_PurchaseCommentCard> {
           child: TextButton.icon(
             key: ValueKey('comment-purchase:${widget.purchaseId}'),
             onPressed: () => setState(() => _expanded = !_expanded),
-            icon: Icon(
-              _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
-              size: 16,
+            icon: AnimatedRotation(
+              turns: _expanded ? .5 : 0,
+              duration: const Duration(milliseconds: 160),
+              child: const Icon(AppIcons.chevronDown, size: 16),
             ),
             label: Text(
               _expanded ? 'fechar comentário' : 'comentário da compra',
