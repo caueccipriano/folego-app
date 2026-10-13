@@ -106,28 +106,42 @@ Map<String, String> historicalCategorySuggestions({
   final grouped = <String, List<String>>{};
   String? key(TransactionItem item) {
     if ((item.eventType != 'income' && item.eventType != 'expense') ||
-        item.accountId == null) return null;
+        item.accountId == null) {
+      return null;
+    }
     final description = normalizeAutomationText(item.description);
-    if (description.length < 4) return null;
+    if (description.length < 4) {
+      return null;
+    }
     return '${item.accountId}|${item.eventType}|${item.source}|$description';
   }
 
   for (final item in history) {
     if (item.status != 'confirmed' ||
         item.categoryId == null ||
-        !allowed.contains(item.categoryId)) continue;
+        !allowed.contains(item.categoryId)) {
+      continue;
+    }
     final k = key(item);
-    if (k != null) grouped.putIfAbsent(k, () => []).add(item.categoryId!);
+    if (k != null) {
+      grouped.putIfAbsent(k, () => []).add(item.categoryId!);
+    }
   }
 
   final suggestions = <String, String>{};
   for (final item in pending) {
-    if (item.categoryId != null) continue;
+    if (item.categoryId != null) {
+      continue;
+    }
     final k = key(item);
-    if (k == null) continue;
+    if (k == null) {
+      continue;
+    }
     final categoriesSeen = grouped[k] ?? const <String>[];
     if (categoriesSeen.length < 2 ||
-        categoriesSeen.any((id) => id != categoriesSeen.first)) continue;
+        categoriesSeen.any((id) => id != categoriesSeen.first)) {
+      continue;
+    }
     suggestions[item.id] = categoriesSeen.first;
   }
   return suggestions;
