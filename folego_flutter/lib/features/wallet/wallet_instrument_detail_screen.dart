@@ -463,19 +463,47 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
           else if (_purchases.isEmpty)
             const _EmptyCard(text: 'nenhuma compra nesta fatura')
           else
-            ..._purchases.map((item) => _CardPurchaseTile(item: item)),
+            ..._purchases.map((item) => _CardPurchaseTile(
+              key: ValueKey('card-purchase-note:${item.purchaseId}'),
+              item: item,
+              repository: widget.repository,
+              spaceId: widget.spaceId,
+            )),
           const SizedBox(height: 24),
-          const _SectionTitle('comentários das faturas', 'anotações compartilhadas com a planilha'),
-          const SizedBox(height: 12),
-          InvoiceFinancialNotes(key: ValueKey('invoice-notes:${widget.spaceId}:${_card.id}'),
-            repository: widget.repository, spaceId: widget.spaceId, cardId: _card.id),
-          const SizedBox(height: 24),
-          const _SectionTitle('parcelas futuras', 'compromissos deste cartão depois da fatura atual'),
+          const _SectionTitle(
+            'parcelas futuras',
+            'compromissos deste cartão depois da fatura atual',
+          ),
           const SizedBox(height: 12),
           if (!_loading && _upcoming.isEmpty)
             const _EmptyCard(text: 'nenhuma parcela futura neste cartão')
           else if (!_loading)
-            ..._upcoming.map((item) => _UpcomingInstallmentTile(item: item)),
+            ..._upcoming.map((item) => _UpcomingInstallmentTile(
+              key: ValueKey('upcoming-purchase-note:${item.purchaseId}'),
+              item: item,
+              repository: widget.repository,
+              spaceId: widget.spaceId,
+              showComment: !_purchases.any(
+                (current) => current.purchaseId == item.purchaseId,
+              ),
+            )),
+          const SizedBox(height: 18),
+          ExpansionTile(
+            key: const ValueKey('wallet-legacy-invoice-annotations'),
+            tilePadding: EdgeInsets.zero,
+            title: const Text('histórico de conciliação das faturas'),
+            subtitle: const Text(
+              'anotações anteriores preservadas; comentários novos ficam em cada compra',
+            ),
+            children: [
+              InvoiceFinancialNotes(
+                key: ValueKey('invoice-notes:${widget.spaceId}:${_card.id}'),
+                repository: widget.repository,
+                spaceId: widget.spaceId,
+                cardId: _card.id,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -771,37 +799,153 @@ class _MovementTile extends StatelessWidget {
 }
 
 class _CardPurchaseTile extends StatelessWidget {
-  const _CardPurchaseTile({required this.item});
+  const _CardPurchaseTile({
+    super.key,
+    required this.item,
+    required this.repository,
+    required this.spaceId,
+  });
+
   final WalletCardPurchaseLine item;
+  final FolegoRepository repository;
+  final String spaceId;
 
   @override
   Widget build(BuildContext context) {
-    return _RowSurface(
-      icon: AppIcons.expense,
+    return _PurchaseCommentCard(
+      purchaseId: item.purchaseId,
+      repository: repository,
+      spaceId: spaceId,
       title: item.displayName,
       subtitle: [
         if (item.categoryName != null) item.categoryName!,
-        if (item.totalInstallments > 1) '${item.installmentNumber}/${item.totalInstallments}',
+        if (item.totalInstallments > 1)
+          'parcela ${item.installmentNumber}/${item.totalInstallments}',
       ].join(' · '),
-      trailing: Formatters.money(item.amount),
+      amount: Formatters.money(item.amount),
+      icon: AppIcons.expense,
     );
   }
 }
 
 class _UpcomingInstallmentTile extends StatelessWidget {
-  const _UpcomingInstallmentTile({required this.item});
+  const _UpcomingInstallmentTile({
+    super.key,
+    required this.item,
+    required this.repository,
+    required this.spaceId,
+    this.showComment = true,
+  });
+
   final WalletCardInstallmentLine item;
+  final FolegoRepository repository;
+  final String spaceId;
+  final bool showComment;
 
   @override
   Widget build(BuildContext context) {
-    return _RowSurface(
-      icon: AppIcons.calendar,
+    if (!showComment) {
+      return _RowSurface(
+        icon: AppIcons.calendar,
+        title: item.displayName,
+        subtitle: [
+          '${item.installmentNumber}/${item.totalInstallments}',
+          if (item.invoiceDueDate != null)
+            Formatters.shortDate.format(item.invoiceDueDate!),
+        ].join(' · '),
+        trailing: Formatters.money(item.amount),
+      );
+    }
+    return _PurchaseCommentCard(
+      purchaseId: item.purchaseId,
+      repository: repository,
+      spaceId: spaceId,
       title: item.displayName,
       subtitle: [
-        '${item.installmentNumber}/${item.totalInstallments}',
-        if (item.invoiceDueDate != null) Formatters.shortDate.format(item.invoiceDueDate!),
+        'parcela ${item.installmentNumber}/${item.totalInstallments}',
+        if (item.invoiceDueDate != null)
+          'vence ${Formatters.shortDate.format(item.invoiceDueDate!)}',
       ].join(' · '),
-      trailing: Formatters.money(item.amount),
+      amount: Formatters.money(item.amount),
+      icon: AppIcons.calendar,
+    );
+  }
+}
+
+/// Every purchase, including its future installments, shares one note
+/// target (card_purchase, purchaseId), not a card-level note.
+class _PurchaseCommentCard extends StatefulWidget {
+  const _PurchaseCommentCard({
+    required this.purchaseId,
+    required this.repository,
+    required this.spaceId,
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.icon,
+  });
+
+  final String purchaseId;
+  final FolegoRepository repository;
+  final String spaceId;
+  final String title;
+  final String subtitle;
+  final String amount;
+  final IconData icon;
+
+  @override
+  State<_PurchaseCommentCard> createState() => _PurchaseCommentCardState();
+}
+
+class _PurchaseCommentCardState extends State<_PurchaseCommentCard> {
+  bool _expanded = false;
+
+  @override
+  void didUpdateWidget(covariant _PurchaseCommentCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.purchaseId != widget.purchaseId ||
+        oldWidget.spaceId != widget.spaceId) {
+      _expanded = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _RowSurface(
+          icon: widget.icon,
+          title: widget.title,
+          subtitle: widget.subtitle,
+          trailing: widget.amount,
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: ValueKey('comment-purchase:${widget.purchaseId}'),
+            onPressed: () => setState(() => _expanded = !_expanded),
+            icon: Icon(
+              _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
+              size: 16,
+            ),
+            label: Text(
+              _expanded ? 'fechar comentário' : 'comentário da compra',
+            ),
+          ),
+        ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+            child: FinancialNoteEditor(
+              key: ValueKey('purchase-note:${widget.purchaseId}'),
+              repository: widget.repository,
+              spaceId: widget.spaceId,
+              targetType: 'card_purchase',
+              targetId: widget.purchaseId,
+            ),
+          ),
+      ],
     );
   }
 }
