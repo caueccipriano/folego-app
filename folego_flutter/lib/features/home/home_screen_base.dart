@@ -26,6 +26,7 @@ import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'home_pulse_card.dart';
+import 'home_data_freshness.dart';
 import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
@@ -60,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _loading = true;
   String? _error;
+  DateTime? _lastSuccessfulSnapshotAt;
   bool _monthlyMoneyUnavailable = false;
   bool _projectionUnavailable = false;
   bool _recentUnavailable = false;
@@ -167,7 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final snapshot = values[0] as FolegoSnapshot?;
 
       setState(() {
-        _snapshot = snapshot;
+        _snapshot = snapshot ?? _snapshot;
+        if (snapshot != null) _lastSuccessfulSnapshotAt = DateTime.now();
         _error = snapshot == null
             ? 'não consegui carregar seu resumo financeiro'
             : null;
@@ -400,6 +403,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               children: [
                 header,
+                const SizedBox(height: 7),
+                HomeDataFreshness(
+                  lastLoadedAt: _lastSuccessfulSnapshotAt,
+                  failed: _error != null,
+                  loading: _loading,
+                  onRefresh: _load,
+                ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
