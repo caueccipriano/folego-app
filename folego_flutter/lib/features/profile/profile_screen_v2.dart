@@ -628,6 +628,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
 
+  Future<void> _showIphoneInstallHelp() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        title: const Text('Fôlego na Tela de Início'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('No iPhone, abra o Fôlego pelo Safari.'),
+            SizedBox(height: 9),
+            Text('1. Toque em Compartilhar e escolha Adicionar à Tela de Início.'),
+            SizedBox(height: 9),
+            Text('2. Confirme o nome Fôlego e toque em Adicionar.'),
+            SizedBox(height: 9),
+            Text('3. Se o atalho antigo estiver sem ícone, confira primeiro que seus dados recentes aparecem no app. Depois remova apenas o atalho e adicione-o novamente pelo Safari.'),
+            SizedBox(height: 12),
+            SelectableText('https://caueccipriano.github.io/folego-app/'),
+            SizedBox(height: 12),
+            Text('O iOS pode manter a imagem antiga no atalho já instalado. Atualizar o site não garante a troca imediata do ícone.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('entendi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _dataSection() => _ProfileSection(
         title: 'dados e aplicativo',
         subtitle: 'exportação, versão e informações',
@@ -650,6 +683,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     enabled: !_exporting,
                     onTap: () => _exportData(exportContext),
                   ),
+                ),
+                _SettingsRow(
+                  icon: Icons.add_to_home_screen_outlined,
+                  title: 'instalar no iPhone',
+                  subtitle: 'corrigir ícone ou recriar atalho na Tela de Início',
+                  onTap: _showIphoneInstallHelp,
                 ),
               ],
             ),
