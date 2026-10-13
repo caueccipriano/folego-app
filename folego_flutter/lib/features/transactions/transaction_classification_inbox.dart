@@ -26,12 +26,12 @@ List<TransactionItem> matchingClassificationCandidates(
   Iterable<TransactionItem> pending,
 ) {
   final name = normalizeAutomationText(original.description);
-  if (name.length < 4 || original.accountId == null) {
+  if (!isSpecificAutomationDescription(name) || original.accountId == null) {
     return const <TransactionItem>[];
   }
   return pending.where((candidate) =>
       candidate.id != original.id &&
-      candidate.categoryId == null &&
+      candidate.categoryId == original.categoryId &&
       candidate.eventType == original.eventType &&
       candidate.source == original.source &&
       candidate.accountId == original.accountId &&
@@ -46,7 +46,7 @@ CategoryItem? reviewedCategorySuggestion({
   required List<CategoryItem> categories,
 }) {
   final description = normalizeAutomationText(item.description);
-  if (description.length < 4) return null;
+  if (description.length < 4 || isGenericAutomationDescription(description)) return null;
   final kind = transactionClassificationKind(item.eventType);
   if (kind == null) return null;
   final matches = rules.where((rule) {
@@ -85,6 +85,30 @@ CategoryItem? reviewedCategorySuggestion({
   return null;
 }
 
+bool isGenericAutomationDescription(String normalized) {
+  final value = normalizeAutomationText(normalized);
+  // Bank-app and CSV exports often use the same generic label for
+  // completely different people, purposes and categories.
+  const generic = {
+    'pix enviada - santander',
+    'pix enviado - santander',
+    'pix recebida - santander',
+    'pix recebido - santander',
+    'pix enviado',
+    'pix recebida',
+    'transferencia',
+    'compra cartao',
+    'compra no cartao',
+    'pagamento pix',
+  };
+  return generic.contains(value);
+}
+
+bool isSpecificAutomationDescription(String normalized) {
+  final value = normalizeAutomationText(normalized);
+  return value.length >= 10 && !isGenericAutomationDescription(value);
+}
+
 /// Very conservative, read-only suggestions learned from *two or more*
 /// already categorized events with the same account, source, event type and
 /// exact normalized description. Conflicting historical categories reject
@@ -110,7 +134,7 @@ Map<String, String> historicalCategorySuggestions({
       return null;
     }
     final description = normalizeAutomationText(item.description);
-    if (description.length < 4) {
+    if (!isSpecificAutomationDescription(description)) {
       return null;
     }
     return '${item.accountId}|${item.eventType}|${item.source}|$description';
@@ -130,7 +154,7 @@ Map<String, String> historicalCategorySuggestions({
 
   final suggestions = <String, String>{};
   for (final item in pending) {
-    if (item.categoryId != null) {
+    if (item.categoryId != null && allowed.contains(item.categoryId)) {
       continue;
     }
     final k = key(item);
@@ -145,6 +169,96 @@ Map<String, String> historicalCategorySuggestions({
     suggestions[item.id] = categoriesSeen.first;
   }
   return suggestions;
+}
+
+/// User-approved, account-scoped automatic rule candidate. Existing data are
+/// evidence only; nothing is classified or enabled without consent.
+class AutopilotRuleProposal {
+  const AutopilotRuleProposal({
+    required this.accountId,
+    required this.accountName,
+    required this.description,
+    required this.eventType,
+    required this.categoryId,
+    required this.categoryName,
+    required this.sampleCount,
+  });
+
+  final String accountId;
+  final String? accountName;
+  final String description;
+  final String eventType;
+  final String categoryId;
+  final String categoryName;
+  final int sampleCount;
+}
+
+List<AutopilotRuleProposal> safeAutopilotRuleProposals({
+  required Iterable<TransactionItem> history,
+  required Iterable<CategoryItem> categories,
+  required Iterable<AutomationRule> existingRules,
+}) {
+  final allowed = <String, CategoryItem>{
+    for (final c in categories)
+      if (c.active && c.isSelectable && c.categoryRole == 'economic')
+        c.id: c,
+  };
+  final groups = <String, List<TransactionItem>>{};
+  for (final item in history) {
+    final category = allowed[item.categoryId];
+    final name = normalizeAutomationText(item.description);
+    if (item.status != 'confirmed' ||
+        item.source != 'sheet-sync' ||
+        (item.eventType != 'income' && item.eventType != 'expense') ||
+        item.accountId == null ||
+        category == null ||
+        category.kind != item.eventType ||
+        !isSpecificAutomationDescription(name)) {
+      continue;
+    }
+    final key = '${item.accountId}|${item.eventType}|$name';
+    groups.putIfAbsent(key, () => []).add(item);
+  }
+
+  final proposals = <AutopilotRuleProposal>[];
+  for (final rows in groups.values) {
+    if (rows.length < 3) {
+      continue;
+    }
+    final first = rows.first;
+    if (rows.any((row) => row.categoryId != first.categoryId)) {
+      continue;
+    }
+    final direction = first.eventType == 'income'
+        ? AutomationDirection.credit
+        : AutomationDirection.debit;
+    final normalized = normalizeAutomationText(first.description);
+    final existing = existingRules.any((rule) =>
+        rule.active &&
+        rule.matchField == AutomationMatchField.description &&
+        rule.matchType == AutomationMatchType.equals &&
+        rule.sourceScope == AutomationSourceScope.account &&
+        rule.sourceAccountId == first.accountId &&
+        rule.direction == direction &&
+        normalizeAutomationText(rule.matchValue) == normalized);
+    if (existing) {
+      continue;
+    }
+    proposals.add(AutopilotRuleProposal(
+      accountId: first.accountId!,
+      accountName: first.accountName,
+      description: first.description,
+      eventType: first.eventType,
+      categoryId: first.categoryId!,
+      categoryName: allowed[first.categoryId]!.breadcrumb,
+      sampleCount: rows.length,
+    ));
+  }
+  proposals.sort((a,b) {
+    final count=b.sampleCount.compareTo(a.sampleCount);
+    return count != 0 ? count : a.description.compareTo(b.description);
+  });
+  return proposals;
 }
 
 class TransactionClassificationInbox extends StatefulWidget {
@@ -174,6 +288,7 @@ class _TransactionClassificationInboxState
   List<AutomationRule> _reviewRules = const [];
   List<TransactionItem> _knownHistory = const [];
   bool _applyingSuggestions = false;
+  bool _creatingAutomaticRule = false;
   String? _savingEventId;
   bool _loading = true;
   bool _refreshing = false;
@@ -356,6 +471,95 @@ class _TransactionClassificationInboxState
       }
     } finally {
       if (mounted) setState(() => _applyingSuggestions = false);
+    }
+  }
+
+  Future<void> _activateAutopilotRule(AutopilotRuleProposal proposal) async {
+    if (_creatingAutomaticRule || !_automationEnabled) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('ativar classificação automática?'),
+        content: Text(
+          'Para futuras movimentações, o Fôlego poderá aplicar '
+          '"${proposal.categoryName}" quando encontrar a descrição '
+          'exatamente igual a "${proposal.description}", na mesma conta. '
+          'Foram encontradas ${proposal.sampleCount} classificações '
+          'anteriores concordantes.\n\n'
+          'PIX genéricos e compras diferentes continuarão em revisão. '
+          'Você pode desativar a regra depois. Saldos, valores e '
+          'pagamentos não serão alterados.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('agora não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('ativar esta regra'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() => _creatingAutomaticRule = true);
+    try {
+      // Recheck catalog + examples immediately before enabling a rule.
+      final history = await widget.repository.getTransactionsPage(
+        widget.spaceId, pageSize: 400,
+      );
+      final eligible = safeAutopilotRuleProposals(
+        history: history.items,
+        categories: [..._expenseCategories, ..._incomeCategories],
+        existingRules: _reviewRules,
+      );
+      final normalized = normalizeAutomationText(proposal.description);
+      final trusted = eligible.any((candidate) =>
+          candidate.accountId == proposal.accountId &&
+          candidate.categoryId == proposal.categoryId &&
+          candidate.eventType == proposal.eventType &&
+          normalizeAutomationText(candidate.description) == normalized);
+      if (!trusted) {
+        if (mounted) {
+          setState(() => _error =
+              'O histórico mudou. Atualize antes de ativar a regra.');
+        }
+        return;
+      }
+      final created = await widget.repository.createAutomationRule(
+        spaceId: widget.spaceId,
+        draft: AutomationRuleDraft(
+          name: 'autopilot: ${_shortLabel(proposal.description)}',
+          matchField: AutomationMatchField.description,
+          matchType: AutomationMatchType.equals,
+          matchValue: proposal.description,
+          sourceScope: AutomationSourceScope.account,
+          sourceAccountId: proposal.accountId,
+          direction: proposal.eventType == 'income'
+              ? AutomationDirection.credit
+              : AutomationDirection.debit,
+          categoryId: proposal.categoryId,
+          actionType: AutomationActionType.reviewCategory,
+          executionMode: AutomationExecutionMode.automatic,
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _reviewRules = [..._reviewRules, created]);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Regra ativada. Aplicação na próxima conferência.'),
+      ));
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error =
+            'Não foi possível ativar a regra. Tente novamente.');
+      }
+    } finally {
+      if (mounted) setState(() => _creatingAutomaticRule = false);
     }
   }
 
@@ -744,6 +948,44 @@ class _TransactionClassificationInboxState
               ),
             ),
             Divider(height: 1, color: border),
+            if (!_loading && _automationEnabled &&
+                safeAutopilotRuleProposals(
+                  history: _knownHistory,
+                  categories: [..._expenseCategories, ..._incomeCategories],
+                  existingRules: _reviewRules,
+                ).isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: ExpansionTile(
+                  key: const ValueKey('autopilot-trusted-rules'),
+                  title: const Text('ensinar o Autopilot'),
+                  subtitle: const Text(
+                    'padrões confiáveis para classificar compras futuras',
+                  ),
+                  children: [
+                    for (final proposal in safeAutopilotRuleProposals(
+                      history: _knownHistory,
+                      categories: [..._expenseCategories, ..._incomeCategories],
+                      existingRules: _reviewRules,
+                    ).take(8))
+                      ListTile(
+                        title: Text(proposal.description, maxLines: 2),
+                        subtitle: Text(
+                          '${proposal.sampleCount} exemplos · '
+                          '${proposal.categoryName}',
+                          maxLines: 2,
+                        ),
+                        trailing: OutlinedButton(
+                          onPressed: _creatingAutomaticRule
+                              ? null
+                              : () => _activateAutopilotRule(proposal),
+                          child: const Text('ativar'),
+                        ),
+                      ),
+                    if (_creatingAutomaticRule) const LinearProgressIndicator(),
+                  ],
+                ),
+              ),
             if (!_loading && !_applyingSuggestions &&
                 _readySuggestions.isNotEmpty)
               Padding(

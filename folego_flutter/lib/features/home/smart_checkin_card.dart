@@ -22,12 +22,15 @@ class SmartCheckinCard extends StatefulWidget {
     required this.repository,
     this.loadReview,
     this.loadWallet,
+    this.applyApprovedRules,
   });
 
   final String spaceId;
   final FolegoRepository repository;
   final Future<Map<String, dynamic>> Function(String spaceId)? loadReview;
   final Future<WalletOverview> Function(String spaceId)? loadWallet;
+  final Future<Map<String, dynamic>> Function(String spaceId)?
+      applyApprovedRules;
 
   @override
   State<SmartCheckinCard> createState() => _SmartCheckinCardState();
@@ -40,6 +43,8 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
   int? _pending;
   WalletOverview? _wallet;
   String? _error;
+  int _autopilotApplied = 0;
+  bool _autopilotUnavailable = false;
 
   @override
   void initState() {
@@ -53,6 +58,8 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
     if (oldWidget.spaceId != widget.spaceId) {
       _pending = null;
       _wallet = null;
+      _autopilotApplied = 0;
+      _autopilotUnavailable = false;
       _load();
     }
   }
@@ -68,6 +75,30 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
     final generation = ++_generation;
     if (mounted) setState(() { _loading = true; _error = null; });
     try {
+      // An authenticated server RPC, not a browser-side pattern guess.
+      // It applies *only* exact, user-approved, historically consistent
+      // rules, updates category-only fields atomically, and is idempotent.
+      var applied = 0;
+      var unavailable = false;
+      try {
+        if (widget.applyApprovedRules != null) {
+          final result = await widget.applyApprovedRules!(id);
+          applied = (result['applied'] as num?)?.toInt() ?? 0;
+        } else if (widget.loadReview == null && widget.loadWallet == null) {
+          final result = await Supabase.instance.client.rpc(
+            'autopilot_apply_approved_categories',
+            params: {'p_space_id': id},
+          );
+          applied = (Map<String, dynamic>.from(result as Map)['applied']
+                  as num?)
+              ?.toInt() ?? 0;
+        }
+      } catch (_) {
+        unavailable = true; // Keep the original read-only review available.
+      }
+      if (!mounted || widget.spaceId != id || generation != _generation) {
+        return;
+      }
       final reviewFuture = widget.loadReview != null
           ? widget.loadReview!(id)
           : Supabase.instance.client
@@ -84,6 +115,8 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
       setState(() {
         _pending = (review['pending_count'] as num?)?.toInt() ?? 0;
         _wallet = values[1] as WalletOverview;
+        _autopilotApplied = applied;
+        _autopilotUnavailable = unavailable;
         _loading = false;
       });
     } catch (_) {
@@ -201,6 +234,28 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
               style: AppTypography.body(context,
                   fontSize: 12, color: primary),
             ),
+            if (_autopilotApplied > 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Autopilot organizou $_autopilotApplied '
+                'lançamento${_autopilotApplied == 1 ? "" : "s"} '
+                'com regras que você aprovou.',
+                key: const ValueKey('smart-checkin-autopilot-applied'),
+                style: AppTypography.body(
+                  context, fontSize: 12, color: purple,
+                ),
+              ),
+            ],
+            if (_autopilotUnavailable) ...[
+              const SizedBox(height: 6),
+              Text(
+                'A classificação automática não respondeu. '
+                'Seus lançamentos foram preservados.',
+                style: AppTypography.body(
+                  context, fontSize: 11, color: secondary,
+                ),
+              ),
+            ],
             const SizedBox(height: 6),
             ValueListenableBuilder<bool>(
               valueListenable: FinancialPrivacy.hidden,
