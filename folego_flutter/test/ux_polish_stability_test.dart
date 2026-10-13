@@ -483,6 +483,7 @@ Future<void> _scrollNotifications(WidgetTester tester, double dy) async {
 Widget _organizationApp(FinancialOrganizationDataSource source) => MaterialApp(
       home: FinancialOrganizationScreen(
         repository: _TestRepositoryHolder.repository,
+        spaceId: 'space-1',
         dataSource: source,
       ),
     );
