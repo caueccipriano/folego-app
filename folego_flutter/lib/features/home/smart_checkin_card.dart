@@ -7,7 +7,6 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
-import '../../data/models/transaction_item.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
@@ -113,8 +112,10 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
         ),
       ));
     } catch (_) {
-      if (mounted) setState(() =>
-          _error = 'Não foi possível abrir as classificações. Tente novamente.');
+      if (mounted) {
+        setState(() => _error =
+            'Não foi possível abrir as classificações. Tente novamente.');
+      }
     } finally {
       if (mounted) {
         setState(() => _opening = false);
@@ -203,7 +204,7 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
             const SizedBox(height: 6),
             ValueListenableBuilder<bool>(
               valueListenable: FinancialPrivacy.hidden,
-              builder: (context, _, __) => Text(
+              builder: (context, hidden, child) => Text(
                 wallet == null
                     ? 'Saldos não consultados.'
                     : '${wallet.paymentAccounts.length} conta(s) no Fôlego · '
