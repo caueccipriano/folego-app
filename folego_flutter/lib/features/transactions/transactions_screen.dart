@@ -37,6 +37,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   FinancialSpace? _space;
   List<TransactionItem> _pending = const [];
   bool _loadingPending = true;
+  bool _pendingUnavailable = false;
   bool _openedPushClassification = false;
   RealtimeRefreshBinding? _realtimeBinding;
   int _pendingLoadGeneration = 0;
@@ -61,6 +62,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       _space = widget.space;
       _pending = const [];
       _loadingPending = true;
+      _pendingUnavailable = false;
       _openedPushClassification = false;
       unawaited(_loadPending());
     }
@@ -85,6 +87,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final requestGeneration = ++_pendingLoadGeneration;
     final requestedEpoch = _spaceEpoch;
     final requestedSpaceId = widget.space?.id ?? _space?.id;
+    if (mounted) {
+      setState(() {
+        _loadingPending = true;
+        _pendingUnavailable = false;
+      });
+    }
     try {
       final space =
           widget.space ?? _space ?? await widget.repository.getPrimarySpace();
@@ -106,6 +114,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         _space = space;
         _pending = pending;
         _loadingPending = false;
+        _pendingUnavailable = false;
       });
     } catch (_) {
       if (!mounted ||
@@ -123,6 +132,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         // Keep no stale counter when a fresh pending read fails.
         _pending = const [];
         _loadingPending = false;
+        _pendingUnavailable = true;
       });
     }
   }
@@ -170,6 +180,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Future<void> _openClassificationInbox() async {
+    // Do not open an empty inbox when a failed request only means 'unknown'.
+    if (_pendingUnavailable) {
+      await _loadPending();
+      if (!mounted) return;
+      if (_pendingUnavailable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('não consegui consultar pendências agora')),
+        );
+        return;
+      }
+    }
     final space = widget.space ?? _space;
     if (space == null) {
       await _loadPending();
@@ -233,6 +254,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       onClassificationRequested: _openClassificationInbox,
       pendingClassificationCount: _pending.length,
       pendingClassificationLoading: _loadingPending,
+      pendingClassificationUnavailable: _pendingUnavailable,
     );
 
     if (!desktop) return content;
