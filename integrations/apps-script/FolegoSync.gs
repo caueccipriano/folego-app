@@ -27,7 +27,7 @@ const FOLEGO_SYNC_CONFIG = Object.freeze({
  *
  * Contrato:
  * - A planilha captura data, valor, descrição e conta/cartão.
- * - O Fôlego é a fonte da classificação econômica.
+ * - Classificações são bidirecionais por IDs estáveis e comparação da versão anterior.
  * - A classificação volta para H + X:Y:Z da mesma linha.
  *
  * Pré-requisito: FOLEGO_SYNC_TOKEN nas Script Properties.
@@ -346,7 +346,7 @@ function _folegoSyncPull_(spreadsheet) {
 
 function _folegoSyncUpdateExistingLaunch_(sheet, targetRow, row) {
   // Category protocol owns these cells, including local drafts and conflicts.
-  if (PropertiesService.getScriptProperties().getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true' && sheet.getMaxColumns()>=36 && sheet.getRange(targetRow,27).getValue()) return;
+  if (PropertiesService.getScriptProperties().getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true' && _folegoSyncIsClassifiable_(row)) return;
   if (_folegoSyncIsClassifiable_(row)) {
     const parts = _folegoSyncCategoryParts_(row);
     sheet.getRange(targetRow, 8).setValue(row.category || 'A classificar'); // H

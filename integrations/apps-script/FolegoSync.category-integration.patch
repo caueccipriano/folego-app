@@ -14,5 +14,5 @@
 @@
  function _folegoSyncUpdateExistingLaunch_(sheet, targetRow, row) {
 +  // Category protocol owns these cells, including local drafts and conflicts.
-+  if (PropertiesService.getScriptProperties().getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true' && sheet.getMaxColumns()>=36 && sheet.getRange(targetRow,27).getValue()) return;
++  if (PropertiesService.getScriptProperties().getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true' && _folegoSyncIsClassifiable_(row)) return;
    if (_folegoSyncIsClassifiable_(row)) {
