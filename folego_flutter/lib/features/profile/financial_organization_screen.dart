@@ -140,7 +140,9 @@ class _FinancialOrganizationScreenState
         _dataSource.listCategories(space.id),
       );
       if (!mounted || generation != _categoryLoadGeneration ||
-          widget.spaceId != space.id || _space?.id != space.id) return;
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _categories = categories;
         _categoriesLoading = false;
@@ -148,7 +150,9 @@ class _FinancialOrganizationScreenState
       });
     } catch (error) {
       if (!mounted || generation != _categoryLoadGeneration ||
-          widget.spaceId != space.id || _space?.id != space.id) return;
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _categoriesLoading = false;
         _categoriesError = _sectionLoadError(error, 'categorias');
@@ -173,7 +177,9 @@ class _FinancialOrganizationScreenState
         _dataSource.listMarkers(space.id),
       );
       if (!mounted || generation != _markerLoadGeneration ||
-          widget.spaceId != space.id || _space?.id != space.id) return;
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _markers = markers;
         _markersLoading = false;
@@ -181,7 +187,9 @@ class _FinancialOrganizationScreenState
       });
     } catch (error) {
       if (!mounted || generation != _markerLoadGeneration ||
-          widget.spaceId != space.id || _space?.id != space.id) return;
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _markersLoading = false;
         _markersError = _sectionLoadError(error, 'marcadores');
