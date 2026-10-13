@@ -52,14 +52,18 @@ class _SheetSyncStatusCardState extends State<SheetSyncStatusCard> {
     try {
       final status = await widget.loadStatus(requestedSpaceId);
       if (!mounted || generation != _generation ||
-          widget.spaceId != requestedSpaceId) return;
+          widget.spaceId != requestedSpaceId) {
+        return;
+      }
       setState(() {
         _status = status;
         _loading = false;
       });
     } catch (_) {
       if (!mounted || generation != _generation ||
-          widget.spaceId != requestedSpaceId) return;
+          widget.spaceId != requestedSpaceId) {
+        return;
+      }
       setState(() {
         _status = null;
         _failed = true;
