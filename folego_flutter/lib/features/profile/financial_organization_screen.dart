@@ -23,10 +23,12 @@ class FinancialOrganizationScreen extends StatefulWidget {
   const FinancialOrganizationScreen({
     super.key,
     required this.repository,
+    required this.spaceId,
     this.dataSource,
   });
 
   final FolegoRepository repository;
+  final String spaceId;
   final FinancialOrganizationDataSource? dataSource;
 
   @override
@@ -55,6 +57,8 @@ class _FinancialOrganizationScreenState
   String? _spaceError;
   String? _categoriesError;
   String? _markersError;
+  int _categoryLoadGeneration = 0;
+  int _markerLoadGeneration = 0;
 
   @override
   void initState() {
@@ -62,6 +66,28 @@ class _FinancialOrganizationScreenState
     _dataSource = widget.dataSource ??
         RepositoryFinancialOrganizationDataSource(widget.repository);
     _loadSpaceAndSections();
+  }
+
+  @override
+  void didUpdateWidget(covariant FinancialOrganizationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spaceId == widget.spaceId) return;
+
+    // Clear the former space immediately; old requests cannot fill the UI.
+    _categoryLoadGeneration++;
+    _markerLoadGeneration++;
+    _space = null;
+    _categories = const [];
+    _markers = const [];
+    _categoriesError = null;
+    _markersError = null;
+    _spaceLoading = true;
+    final currentSpaceId = widget.spaceId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.spaceId == currentSpaceId) {
+        _loadSpaceAndSections();
+      }
+    });
   }
 
   Future<T> _withUxTimeout<T>(Future<T> future) => future.timeout(_uxTimeout);
@@ -75,7 +101,8 @@ class _FinancialOrganizationScreenState
     }
 
     try {
-      final space = _space ?? await _withUxTimeout(_dataSource.getPrimarySpace());
+      // The active financial space is authoritative: never guess the first.
+      final space = FinancialSpace(id: widget.spaceId, name: '');
       if (!mounted) return;
 
       setState(() {
@@ -99,6 +126,7 @@ class _FinancialOrganizationScreenState
   Future<void> _loadCategories({bool showLoading = true}) async {
     final space = _space;
     if (space == null) return;
+    final generation = ++_categoryLoadGeneration;
 
     if (mounted) {
       setState(() {
@@ -111,14 +139,20 @@ class _FinancialOrganizationScreenState
       final categories = await _withUxTimeout(
         _dataSource.listCategories(space.id),
       );
-      if (!mounted) return;
+      if (!mounted || generation != _categoryLoadGeneration ||
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _categories = categories;
         _categoriesLoading = false;
         _categoriesError = null;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _categoryLoadGeneration ||
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _categoriesLoading = false;
         _categoriesError = _sectionLoadError(error, 'categorias');
@@ -129,6 +163,7 @@ class _FinancialOrganizationScreenState
   Future<void> _loadMarkers({bool showLoading = true}) async {
     final space = _space;
     if (space == null) return;
+    final generation = ++_markerLoadGeneration;
 
     if (mounted) {
       setState(() {
@@ -141,14 +176,20 @@ class _FinancialOrganizationScreenState
       final markers = await _withUxTimeout(
         _dataSource.listMarkers(space.id),
       );
-      if (!mounted) return;
+      if (!mounted || generation != _markerLoadGeneration ||
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _markers = markers;
         _markersLoading = false;
         _markersError = null;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _markerLoadGeneration ||
+          widget.spaceId != space.id || _space?.id != space.id) {
+        return;
+      }
       setState(() {
         _markersLoading = false;
         _markersError = _sectionLoadError(error, 'marcadores');

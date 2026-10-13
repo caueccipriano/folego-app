@@ -138,7 +138,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _openFinancialOrganization() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => FinancialOrganizationScreen(repository: widget.repository),
+        builder: (_) => FinancialOrganizationScreen(
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
       ),
     );
   }

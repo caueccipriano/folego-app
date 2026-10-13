@@ -60,6 +60,8 @@ jobs:
             test/daily_review_async_safety_test.dart \
             test/home_financial_copy_test.dart \
             test/sheet_sync_status_test.dart \
+            test/financial_organization_space_isolation_test.dart \
+            test/transaction_pending_guard_test.dart \
             test/smart_home_classification_test.dart \
             test/closed_month_evolution_test.dart \
             test/financial_next_step_and_debt_test.dart \
