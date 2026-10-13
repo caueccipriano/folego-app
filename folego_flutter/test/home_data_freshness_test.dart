@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/features/home/home_data_freshness.dart';
+import 'package:folego/features/home/home_data_freshness.dart';
 
 void main() {
   test('the app never claims a Google Sheets sync from a snapshot read', () {
