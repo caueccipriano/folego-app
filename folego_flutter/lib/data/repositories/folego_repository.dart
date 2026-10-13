@@ -5,6 +5,7 @@ import '../models/budget_overview_item.dart';
 import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
+import '../models/sheet_sync_status.dart';
 import '../models/monthly_money_summary.dart';
 import '../models/projection_model.dart';
 import '../models/onboarding_state.dart';
@@ -22,6 +23,17 @@ class FolegoRepository {
   // ---------------------------------------------------------------------------
   // ESPAÇO / PERFIL
   // ---------------------------------------------------------------------------
+
+  /// Reads only safe operational timestamps. Does not expose any integration
+  /// secret or claim the spreadsheet is fully reconciled.
+  Future<SheetSyncStatus> getSheetSyncStatus(String spaceId) async {
+    final response = await _client.rpc(
+      'get_folego_sheet_sync_status',
+      params: {'p_space_id': spaceId},
+    );
+    return SheetSyncStatus.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
 
   Future<FinancialSpace> getPrimarySpace() async {
     final response = await _client
