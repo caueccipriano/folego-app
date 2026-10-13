@@ -27,6 +27,7 @@ import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'home_pulse_card.dart';
 import 'home_pulse_insight.dart';
+import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
 import 'closed_month_evolution.dart';
@@ -343,6 +344,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     );
+    final smartCheckin = SmartCheckinCard(
+      spaceId: widget.space.id,
+      repository: widget.repository,
+    );
     final quickActions = _buildQuickActions(
       surface: surface,
       border: border,
@@ -400,6 +405,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   hero,
                   const SizedBox(height: 12),
                   pulse,
+                  const SizedBox(height: 10),
+                  smartCheckin,
                   const SizedBox(height: 12),
                   quickActions,
                   if (showUpcoming) ...[
@@ -420,6 +427,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   hero,
                   const SizedBox(height: 16),
                   pulse,
+                  const SizedBox(height: 12),
+                  smartCheckin,
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,6 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 16),
                   pulse,
+                  const SizedBox(height: 12),
+                  smartCheckin,
                   const SizedBox(height: 24),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
