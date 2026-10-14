@@ -121,7 +121,18 @@ function makeSandbox() {
     const response = await handler(request);
     return {code:response.status,data:await response.json()};
   }
-  return {send,events,receipts,mutations,queries};
+  // This read model mirrors the SQL membership/current-version predicates.
+  // Real PostgreSQL execution is a separate pending integration gate.
+  function readAsMember(actor, spaceId, eventIds) {
+    const memberSpace = [A, B].find(x => x.user === actor.user)?.space;
+    if (memberSpace !== spaceId) throw new Error('not authorized for financial space');
+    return events.filter(event =>
+      event.space_id === spaceId && eventIds.includes(event.id) &&
+      receipts.has([[A, B].find(x => x.space === spaceId).integration,
+        event.id, event.updated_at].join(':'))
+    ).map(event => ({event_id:event.id}));
+  }
+  return {send,events,receipts,mutations,queries,readAsMember};
 }
 
 test('real Edge handler authenticates two independent synthetic sheet tokens', async () => {
@@ -186,6 +197,19 @@ test('invalid row identity, hash and oversized batch never produce receipts',asy
   assert.equal(badHash.data.results[0].status,'invalid_request');
   assert.equal(big.code,400);
   assert.equal(env.receipts.size,0);
+});
+
+test('synthetic member-scoped read model excludes foreign events and stale revisions', async()=>{
+  const env=makeSandbox();
+  await env.send(A,[ackRow(A)]);
+  await env.send(B,[ackRow(B)]);
+  assert.deepEqual(env.readAsMember(A,A.space,[A.event,B.event]),[{event_id:A.event}]);
+  assert.deepEqual(env.readAsMember(B,B.space,[A.event,B.event]),[{event_id:B.event}]);
+  assert.throws(()=>env.readAsMember(A,B.space,[B.event]),/not authorized/);
+  assert.throws(()=>env.readAsMember(B,A.space,[A.event]),/not authorized/);
+  env.events[0].updated_at='2026-10-15T12:00:00.000Z';
+  assert.deepEqual(env.readAsMember(A,A.space,[A.event]),[]);
+  assert.equal(env.receipts.size,2); // old receipt is retained, not current proof
 });
 
 test('SQL permissions and current-version member guard are explicitly present',()=>{
