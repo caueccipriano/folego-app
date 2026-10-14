@@ -1,0 +1,64 @@
+name: Folego Sync 2.0 - Apps Script safe rollout
+
+on:
+  pull_request:
+    paths:
+      - 'integrations/apps-script/**'
+      - 'qa/staging/folego-ack-*.test.mjs'
+      - 'ops/apps-script/**'
+      - '.github/workflows/folego-sync2-apps-script.yml'
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'validate (offline), remote-audit (read-only), install (source only)'
+        required: true
+        type: choice
+        default: validate
+        options:
+          - validate
+          - remote-audit
+          - install
+
+permissions:
+  contents: read
+
+concurrency:
+  group: folego-sync2-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Syntax and isolated ACK tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source without credentials or network
+        run: node ops/apps-script/deploy-sync2.mjs --mode=validate
+      - name: Isolated synthetic readback, conflict and retry tests
+        run: |
+          node --test \
+            qa/staging/folego-ack-double-readback.test.mjs \
+            qa/staging/folego-ack-pull-bridge.test.mjs \
+            qa/staging/folego-ack-retry-queue.test.mjs
+
+  remote:
+    name: Inspect or install in the EXISTING Apps Script project
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && inputs.operation != 'validate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: folego-apps-script-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconcile script files only (never deploy web app or enable ACK)
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          SYNC_OPERATION: ${{ inputs.operation }}
+        run: node ops/apps-script/deploy-sync2.mjs --mode="$SYNC_OPERATION"
