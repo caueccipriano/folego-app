@@ -114,6 +114,28 @@ test.describe('Fôlego public PWA shell', () => {
     expect(manifestAppleIcon?.sizes).toBe('180x180');
   });
 
+  test('detects new PWA version and offers a safe user-controlled update', async ({
+    page,
+    baseURL,
+  }) => {
+    await page.route('**/folego_version.json?*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ version: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }),
+      });
+    });
+
+    await page.goto(baseURL!);
+    const notice = page.locator('#folego-new-version-notice');
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText('nova versão disponível');
+    await expect(notice).toContainText('seus dados continuam salvos');
+
+    await notice.getByRole('button', { name: 'depois' }).click();
+    await expect(notice).toHaveCount(0);
+  });
+
   test('keeps Flutter surface inside the viewport after resize', async ({
     page,
   }, testInfo) => {

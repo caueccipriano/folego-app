@@ -99,11 +99,16 @@ jobs:
           sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/index.html
           sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/manifest.json
           sed -i "s#main.dart.js#main.dart.js?v=${GITHUB_SHA}#g" build/web/flutter_bootstrap.js
+          printf '{ "version": "%s" }\n' "$GITHUB_SHA" > build/web/folego_version.json
 
       - name: Verify PWA artifact
         run: |
           test -f build/web/index.html
           test -f build/web/manifest.json
+          test -f build/web/folego_update.js
+          test -f build/web/folego_version.json
+          grep -F "${GITHUB_SHA}" build/web/folego_version.json
+          grep -F 'folego_update.js?v=' build/web/index.html
           grep -F "${GITHUB_SHA}" build/web/manifest.json
           ! grep -F "__FOLEGO_BUILD_VERSION__" build/web/manifest.json
           test -f build/web/folego_push_sw.js
