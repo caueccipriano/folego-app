@@ -42,7 +42,7 @@ jobs:
       - name: Flutter test
         run: |
           set +e
-          flutter test test/projection_screen_test.dart -r expanded --concurrency=1 --fail-fast > /tmp/flutter-test.log 2>&1
+          flutter test test/projection_screen_test.dart test/premium_sandbox_screen_test.dart test/feature_entitlements_test.dart test/profile_settings_test.dart test/pwa_web_contract_test.dart -r expanded --concurrency=1 --fail-fast > /tmp/flutter-test.log 2>&1
           code=$?
           if [ "$code" -ne 0 ]; then
             tr '\r' '\n' < /tmp/flutter-test.log > /tmp/flutter-test-normalized.log
@@ -52,5 +52,26 @@ jobs:
           fi
           echo "Projection tests passed"
 
+      - name: Generate canonical PWA install assets
+        if: github.head_ref == 'feat/asaas-web-sandbox-20261014'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          bash scripts/generate_brand_icons.sh
+
       - name: Flutter build web
-        run: flutter build web --release
+        env:
+          FOLEGO_ASAAS_SANDBOX_UI: ${{ github.head_ref == 'feat/asaas-web-sandbox-20261014' && 'true' || 'false' }}
+        run: flutter build web --release --dart-define=FOLEGO_ASAAS_SANDBOX_UI="$FOLEGO_ASAAS_SANDBOX_UI"
+
+      - name: Prepare isolated sandbox hosting artifact
+        if: github.head_ref == 'feat/asaas-web-sandbox-20261014'
+        run: python ../ops/hosting/prepare_cloudflare.py --build build/web --version "$GITHUB_SHA"
+
+      - name: Upload sandbox PWA candidate without deploying
+        if: github.head_ref == 'feat/asaas-web-sandbox-20261014'
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-asaas-sandbox-pwa-${{ github.sha }}
+          path: folego_flutter/build/web
+          retention-days: 7

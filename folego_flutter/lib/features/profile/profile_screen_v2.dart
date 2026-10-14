@@ -26,6 +26,7 @@ import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
+import '../premium/premium_sandbox_screen.dart';
 import 'financial_organization_screen.dart';
 import 'folego_admin_screen.dart';
 import 'folego_feedback_screen.dart';
@@ -698,6 +699,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
+                if (const bool.fromEnvironment('FOLEGO_ASAAS_SANDBOX_UI'))
+                  _SettingsRow(
+                    icon: AppIcons.recurring,
+                    title: 'Fôlego Premium · teste',
+                    subtitle: 'assinatura em homologação, sem dinheiro real',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PremiumSandboxScreen(client: widget.client),
+                      ),
+                    ),
+                  ),
                 _SettingsRow(
                   icon: AppIcons.edit,
                   title: 'alterar e-mail',
