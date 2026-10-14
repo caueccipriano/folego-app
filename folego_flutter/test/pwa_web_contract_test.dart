@@ -10,7 +10,8 @@ void main() {
 
       expect(index, contains('viewport-fit=cover'));
       expect(index, contains('apple-mobile-web-app-capable'));
-      expect(index, contains('apple-touch-icon.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(index, contains('href="apple-touch-icon-ios-v2.png"'));
+      expect(index, isNot(contains('apple-touch-icon.png?v=')));
       expect(index, contains('apple-mobile-web-app-status-bar-style'));
       expect(
         index,
@@ -52,6 +53,10 @@ void main() {
       expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
       expect(workflow, contains('web/icons/folego-logo.svg'));
+      expect(workflow, contains('build/web/apple-touch-icon-ios-v2.png'));
+      expect(workflow, contains('cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png'));
+      final generator = File('scripts/generate_brand_icons.sh').readAsStringSync();
+      expect(generator, contains('cp web/apple-touch-icon.png web/apple-touch-icon-ios-v2.png'));
     });
 
     test('manifest is installable inside the GitHub Pages app scope', () {
@@ -64,6 +69,7 @@ void main() {
       expect(manifest['scope'], './');
       expect(manifest['display'], 'standalone');
       expect(manifest['lang'], 'pt-BR');
+      expect((manifest['icons'] as List).any((icon) => icon['src'] == 'apple-touch-icon-ios-v2.png' && icon['sizes'] == '180x180'), isTrue);
 
       final icons = (manifest['icons'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
