@@ -67,7 +67,7 @@ class _FolegoAdminScreenState extends State<FolegoAdminScreen> {
                 _metric('confirmados', metrics['confirmed']),
                 _metric('login em 30 dias', metrics['logged_in_30d']),
                 _metric('premium vitalício', metrics['lifetime_premium']),
-                _metric('introdução concluída', metrics['completed_intro']),
+                _metric('configuração financeira concluída', metrics['completed_intro']),
                 _metric('com conta cadastrada', metrics['users_with_account']),
                 _metric('com lançamentos', metrics['users_with_transactions']),
                 _metric('lançamentos nos últimos 30 dias', metrics['users_with_transactions_30d']),
