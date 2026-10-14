@@ -16,6 +16,8 @@ void main() {
       loadOverride: () async => data,
     )));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byType(FilledButton), 150);
+    await tester.pumpAndSettle();
   }
 
   testWidgets('unconfigured backend keeps checkout disabled', (tester) async {
