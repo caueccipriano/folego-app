@@ -51,12 +51,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _step = 0;
   bool _finishing = false;
   bool _signingOut = false;
+  String? _actionError;
 
   Future<void> _finish() async {
     if (_finishing) return;
-    setState(() => _finishing = true);
+    setState(() {
+      _finishing = true;
+      _actionError = null;
+    });
     try {
       await widget.onCompleted();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _actionError =
+            'não consegui concluir sua apresentação. tente novamente.');
+      }
     } finally {
       if (mounted) setState(() => _finishing = false);
     }
@@ -64,9 +73,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _signOut() async {
     if (_signingOut) return;
-    setState(() => _signingOut = true);
+    setState(() {
+      _signingOut = true;
+      _actionError = null;
+    });
     try {
       await widget.onSignOut();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _actionError =
+            'não consegui encerrar sua sessão agora. tente novamente.');
+      }
     } finally {
       if (mounted) setState(() => _signingOut = false);
     }
@@ -95,12 +112,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const Spacer(),
                   TextButton(
                     key: const ValueKey('onboarding-skip'),
-                    onPressed: _finishing ? null : _finish,
+                    onPressed: (_finishing || _signingOut) ? null : _finish,
                     child: const Text('pular'),
                   ),
                   IconButton(
                     tooltip: 'sair da conta',
-                    onPressed: _signingOut ? null : _signOut,
+                    onPressed: (_signingOut || _finishing) ? null : _signOut,
                     icon: _signingOut
                         ? const SizedBox.square(
                             dimension: 18,
@@ -151,7 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   if (_step > 0)
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _finishing
+                        onPressed: (_finishing || _signingOut)
                             ? null
                             : () => setState(() => _step -= 1),
                         icon: const Icon(AppIcons.back),
@@ -163,7 +180,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     flex: _step > 0 ? 1 : 2,
                     child: FilledButton.icon(
                       key: ValueKey(last ? 'onboarding-finish' : 'onboarding-next'),
-                      onPressed: _finishing
+                      onPressed: (_finishing || _signingOut)
                           ? null
                           : last
                           ? _finish
@@ -181,11 +198,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'você não precisa configurar tudo agora',
+                _actionError ??
+                    'comece sem conectar bancos ou planilhas. configure no seu ritmo.',
+                key: const ValueKey('onboarding-action-feedback'),
                 textAlign: TextAlign.center,
                 style: AppTypography.label(
                   context,
-                  color: AppColors.secondaryText(brightness),
+                  color: _actionError == null
+                      ? AppColors.secondaryText(brightness)
+                      : Theme.of(context).colorScheme.error,
                 ),
               ),
             ],
