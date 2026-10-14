@@ -295,6 +295,31 @@ function _folegoSyncPush_(spreadsheet) {
 
 function _folegoSyncPull_(spreadsheet) {
   const props = PropertiesService.getScriptProperties();
+  // The default is OFF. Do not start a pull if the durable outbox or
+  // spreadsheet ACK add-on is missing while the feature is enabled.
+  const ackRequested = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true';
+  const categoriesReady = props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
+  if (ackRequested && !categoriesReady) {
+    // Do not silently downgrade to the legacy category-overwriting path
+    // when an operator intended to enable protected ACK delivery.
+    throw new Error('ack_categories_guard_missing');
+  }
+  const ackEnabled = ackRequested && categoriesReady;
+  if (ackEnabled) {
+    if (typeof _folegoAckRetryDrain_ !== 'function'
+        || typeof _folegoAckRetryCapture_ !== 'function'
+        || typeof folegoEnviarAckAposGravacao_ !== 'function') {
+      throw new Error('ack_retry_support_missing');
+    }
+    // Existing deliveries can be recovered even if the next pull is empty.
+    _folegoAckRetryDrain_(spreadsheet, props);
+    if (_folegoAckRetryCount_(props) >= FOLEGO_ACK_RETRY_PAUSE_AT) {
+      // Reserve space for one full pull batch. Never advance the cursor
+      // if the outbox cannot persist all eligible write confirmations.
+      console.log('FÔLEGO ACK: aguardando revisão da fila; cursor preservado.');
+      return;
+    }
+  }
   const cursor = props.getProperty('FOLEGO_SYNC_CURSOR') || FOLEGO_SYNC_CONFIG.initialPullSince;
   const response = _folegoSyncApi_({
     action: 'pull',
@@ -302,6 +327,8 @@ function _folegoSyncPull_(spreadsheet) {
     limit: FOLEGO_SYNC_CONFIG.maxPullPerRun,
   });
   const rows = Array.isArray(response.rows) ? response.rows : [];
+  const ackCandidates = [];
+  const possibleAckRows = [];
 
   if (!rows.length) {
     if (response.cursor) props.setProperty('FOLEGO_SYNC_CURSOR', String(response.cursor));
@@ -317,9 +344,13 @@ function _folegoSyncPull_(spreadsheet) {
     .getDisplayValues()
     .flat();
   const rowById = new Map();
+  const ackIdCounts = new Map();
   idValues.forEach((value, offset) => {
     const id = String(value || '').trim();
-    if (id && !rowById.has(id)) rowById.set(id, FOLEGO_SYNC_CONFIG.firstDataRow + offset);
+    if (id) {
+      ackIdCounts.set(id, (ackIdCounts.get(id) || 0) + 1);
+      if (!rowById.has(id)) rowById.set(id, FOLEGO_SYNC_CONFIG.firstDataRow + offset);
+    }
   });
 
   for (const row of rows) {
@@ -334,14 +365,72 @@ function _folegoSyncPull_(spreadsheet) {
       targetRow = _folegoSyncFirstEmptyIdRow_(launches);
       _folegoSyncAppendLaunch_(launches, targetRow, row);
       rowById.set(id, targetRow);
+      ackIdCounts.set(id, (ackIdCounts.get(id) || 0) + 1);
     }
 
     if (row.event_type === 'card_purchase') {
       _folegoSyncEnsureCardPurchase_(spreadsheet, row);
     }
+
+    // Record candidates only; the sheet must be flushed ONCE at the end
+    // before re-reading any of them.
+    // The initial pilot is app-originated event:* only. A sheet:* ID
+    // cannot prove that the record was originally created in the app.
+    // Never certify duplicate sheet identifiers.
+    if (ackEnabled && /^event:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+        && ackIdCounts.get(id) === 1) {
+      possibleAckRows.push({ rowNumber: targetRow, remote: row });
+    }
+  }
+
+  if (ackEnabled && possibleAckRows.length) {
+    SpreadsheetApp.flush();
+    possibleAckRows.forEach(function (candidate) {
+      if (_folegoSyncAckCandidate_(launches, candidate.rowNumber, candidate.remote)) {
+        ackCandidates.push({
+          rowNumber: candidate.rowNumber,
+          id: candidate.remote.id,
+          updated_at: candidate.remote.updated_at,
+        });
+      }
+    });
+    // CRITICAL: this write must finish before the pull cursor advances.
+    // Failure propagates, so the next cycle replays the same pull safely.
+    if (ackCandidates.length) _folegoAckRetryCapture_(launches, props, ackCandidates);
   }
 
   if (response.cursor) props.setProperty('FOLEGO_SYNC_CURSOR', String(response.cursor));
+  // ACK delivery is independent of the financial ledger and can retry later.
+  if (ackEnabled && ackCandidates.length) _folegoAckRetryDrain_(spreadsheet, props);
+
+}
+
+/** Post-write guard: rejects old or locally edited rows rather than issuing
+ * false receipts. The server checks the backend event/version again.
+ */
+function _folegoSyncAckCandidate_(sheet, rowNumber, remote) {
+  if (!remote || !remote.updated_at || !Number.isFinite(Date.parse(remote.updated_at))
+      || !remote.occurred_at || !Number.isFinite(Date.parse(remote.occurred_at))
+      || !Number.isInteger(rowNumber) || rowNumber < FOLEGO_SYNC_CONFIG.firstDataRow) {
+    return false;
+  }
+  const cells = sheet.getRange(rowNumber, 2, 1, 20).getValues()[0]; // B:U
+  const label = function (value) { return _folegoSyncNormalize_(value); };
+  if (String(cells[0] || '').trim() !== String(remote.id || '').trim()) return false;
+  if (label(cells[9]) !== 'folego app' || label(cells[8]) !== 'confirmado'
+      || label(cells[19]) !== 'pulled') return false;
+  // The source row must match date/time and payment method as well as money.
+  // Spreadsheet date cells are Date objects; allow only subsecond rounding.
+  if (!(cells[1] instanceof Date) || !Number.isFinite(cells[1].getTime())
+      || Math.abs(cells[1].getTime() - Date.parse(remote.occurred_at)) > 999) return false;
+  if (label(cells[2]) !== label(remote.payment_method)) return false;
+  if (String(cells[3] || '').trim() !== String(remote.description || '').trim()) return false;
+  if (!Number.isFinite(Number(cells[4])) ||
+      Math.abs(Number(cells[4]) - Number(remote.amount)) > 0.005) return false;
+  if (label(cells[5]) !== label(remote.type)) return false;
+  if (label(cells[7]) !== label(remote.account_card)) return false;
+  if (label(cells[6]) !== label(_folegoSyncLegacyCategoryForRow_(remote))) return false;
+  return true;
 }
 
 function _folegoSyncUpdateExistingLaunch_(sheet, targetRow, row) {
