@@ -103,7 +103,7 @@ jobs:
         run: node --test qa/staging/staging-guard.test.mjs
 
       - name: Verify pull ACK bridge (synthetic only)
-        run: node --test qa/staging/folego-ack-pull-bridge.test.mjs qa/staging/folego-ack-retry-queue.test.mjs
+        run: node --test qa/staging/folego-ack-pull-bridge.test.mjs qa/staging/folego-ack-retry-queue.test.mjs qa/staging/folego-ack-double-readback.test.mjs
 
       - name: Install QA dependencies
         working-directory: qa
