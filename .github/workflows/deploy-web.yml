@@ -21,7 +21,9 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  # Pull-request preview builds must never cancel or queue the public PWA deployment.
+  # One serial group per ref keeps repeat production pushes supersedable.
+  group: github-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -71,6 +73,7 @@ jobs:
             test/statement_import_ui_test.dart \
             test/sheet_sync_status_test.dart \
             test/sheet_reconciliation_audit_test.dart \
+            test/onboarding_commercial_safety_test.dart \
             test/transaction_pending_guard_test.dart \
             test/projection_screen_test.dart
 
@@ -100,6 +103,7 @@ jobs:
           sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/manifest.json
           sed -i "s#main.dart.js#main.dart.js?v=${GITHUB_SHA}#g" build/web/flutter_bootstrap.js
           printf '{ "version": "%s" }\n' "$GITHUB_SHA" > build/web/folego_version.json
+          python3 scripts/embed_apple_touch_icon.py
 
       - name: Verify PWA artifact
         run: |
@@ -125,8 +129,12 @@ jobs:
           test -f build/web/icons/Icon-192.png
           test -f build/web/icons/Icon-180.png
           test -f build/web/apple-touch-icon.png
-          grep -F 'href="apple-touch-icon.png?v=' build/web/index.html
-          grep -F '"src": "apple-touch-icon.png?v=' build/web/manifest.json
+          test -f build/web/apple-touch-icon-ios-v2.png
+          grep -F 'href="data:image/png;base64,' build/web/index.html
+          ! grep -F '__FOLEGO_IOS_INSTALL_ICON_DATA_URI__' build/web/index.html
+          grep -F '"src": "apple-touch-icon-ios-v2.png"' build/web/manifest.json
+          ! grep -F 'apple-touch-icon.png?v=' build/web/index.html
+          cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png
           grep -F '"display": "standalone"' build/web/manifest.json
 
       - name: Add SPA fallback
