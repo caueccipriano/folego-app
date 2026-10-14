@@ -11,11 +11,16 @@ class SheetSyncStatusCard extends StatefulWidget {
     required this.spaceId,
     required this.loadStatus,
     this.onOpenAudit,
+    this.hideWhenUnconfigured = false,
   });
 
   final String spaceId;
   final SheetSyncStatusLoader loadStatus;
   final VoidCallback? onOpenAudit;
+
+  /// An integration is optional; hide this technical card for spaces without one.
+  /// Existing direct uses keep their explanatory status when false.
+  final bool hideWhenUnconfigured;
 
   @override
   State<SheetSyncStatusCard> createState() => _SheetSyncStatusCardState();
@@ -85,6 +90,10 @@ class _SheetSyncStatusCardState extends State<SheetSyncStatusCard> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final status = _status;
+    if (widget.hideWhenUnconfigured &&
+        (_loading || _failed || status?.configured != true)) {
+      return const SizedBox.shrink();
+    }
     return Card(
       key: const ValueKey('sheet-sync-status'),
       margin: EdgeInsets.zero,

@@ -72,6 +72,56 @@ void main() {
     expect(find.text('Planilha não conectada'), findsOneWidget);
   });
 
+  testWidgets('users without Sheets never see optional synchronization UI',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SheetSyncStatusCard(
+          hideWhenUnconfigured: true,
+          spaceId: 'regular-user-space',
+          loadStatus: (_) async =>
+              const SheetSyncStatus(configured: false, enabled: false),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sheet-sync-status')), findsNothing);
+    expect(find.text('Planilha não conectada'), findsNothing);
+  });
+
+  testWidgets('connected users can still access optional diagnostics',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SheetSyncStatusCard(
+          hideWhenUnconfigured: true,
+          spaceId: 'connected-space',
+          loadStatus: (_) async =>
+              const SheetSyncStatus(configured: true, enabled: true),
+          onOpenAudit: () {},
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sheet-sync-status')), findsOneWidget);
+    expect(find.byKey(const ValueKey('sheet-audit-open')), findsOneWidget);
+  });
+
+  testWidgets('optional card keeps ordinary users clear of technical failures',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SheetSyncStatusCard(
+          hideWhenUnconfigured: true,
+          spaceId: 'unconnected-space',
+          loadStatus: (_) async => throw StateError('service unavailable'),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sheet-sync-status')), findsNothing);
+  });
+
   testWidgets('discloses connection failures without stale success',
       (tester) async {
     await tester.pumpWidget(MaterialApp(

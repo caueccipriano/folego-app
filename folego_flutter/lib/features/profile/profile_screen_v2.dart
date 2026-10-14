@@ -17,6 +17,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import '../../data/models/profile_export.dart';
+import '../../data/models/financial_space.dart';
 import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
@@ -30,6 +31,7 @@ import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 import 'sheet_sync_status_card.dart';
 import 'sheet_audit_screen.dart';
+import '../transactions/transactions_screen.dart';
 
 part 'profile_widgets.dart';
 
@@ -142,6 +144,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (_) => SheetAuditScreen(
           spaceId: widget.spaceId,
           loadItems: widget.repository.getSheetAuditItems,
+        ),
+      ),
+    );
+  }
+
+  // Every financial space has the same review path, with or without Sheets.
+  Future<void> _openFinancialReview() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionsScreen(
+          repository: widget.repository,
+          space: FinancialSpace(id: widget.spaceId, name: 'Minhas Finanças'),
+          initialPushRoute: '/transactions/classification',
         ),
       ),
     );
@@ -685,6 +700,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _SettingsCard(
               children: [
+                _SettingsRow(
+                  icon: Icons.fact_check_outlined,
+                  title: 'revisar lançamentos',
+                  subtitle: 'conferir categorias e pendências dos seus gastos',
+                  onTap: _openFinancialReview,
+                ),
                 Builder(
                   builder: (exportContext) => _SettingsRow(
                     icon: AppIcons.exportData,
@@ -714,6 +735,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               spaceId: widget.spaceId,
               loadStatus: widget.repository.getSheetSyncStatus,
               onOpenAudit: _openSheetAudit,
+              hideWhenUnconfigured: true,
             ),
             const SizedBox(height: 10),
             _AboutCard(

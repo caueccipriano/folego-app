@@ -139,7 +139,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void _openClassificationFromPushIfNeeded() {
     if (_openedPushClassification || !mounted) return;
-    final route = Uri.base.queryParameters['push_route'];
+    final route = widget.initialPushRoute ?? Uri.base.queryParameters['push_route'];
     if (route != '/transactions/classification') return;
 
     _openedPushClassification = true;

@@ -7,6 +7,12 @@ on:
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/deploy-web.yml'
+  pull_request:
+    branches:
+      - feat/transactions-recurring
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
 
 permissions:
@@ -63,6 +69,9 @@ jobs:
             test/statement_import_qa_synthetic_test.dart \
             test/statement_import_reconciliation_test.dart \
             test/statement_import_ui_test.dart \
+            test/sheet_sync_status_test.dart \
+            test/sheet_reconciliation_audit_test.dart \
+            test/transaction_pending_guard_test.dart \
             test/projection_screen_test.dart
 
       - name: Verify live Home privacy masking
@@ -164,6 +173,7 @@ jobs:
           path: folego_flutter/build/web
 
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feat/transactions-recurring'
     needs: build
     runs-on: ubuntu-latest
     environment:
