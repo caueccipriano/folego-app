@@ -113,6 +113,15 @@ jobs:
       - name: Verify sheet ACK protocol (synthetic only)
         run: node --test qa/staging/sheet-row-ack-contract.test.mjs
 
+      - name: Verify durable ACK recovery (synthetic only)
+        run: node --test qa/staging/folego-ack-pull-bridge.test.mjs qa/staging/folego-ack-retry-queue.test.mjs qa/staging/folego-ack-double-readback.test.mjs
+
+      - name: Verify ACK Edge isolation (two synthetic spaces)
+        run: node --test qa/staging/sheet-row-ack-isolated-runtime.test.mjs
+
+      - name: Verify notes API isolation and concurrency (synthetic only)
+        run: node --test qa/staging/folego-comments-api-isolation.test.mjs
+
       - name: Verify isolated staging guard (synthetic only)
         run: node --test qa/staging/staging-guard.test.mjs
 
