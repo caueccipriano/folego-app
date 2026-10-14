@@ -54,7 +54,18 @@ DECLARE
   v_users jsonb;
   v_feedback jsonb;
   v_metrics jsonb;
+  v_sandbox_subscription_records bigint := 0;
+  v_production_subscription_records bigint := 0;
 BEGIN
+  -- Billing is a separate, optional rollout. Fresh development installs may
+  -- not have its tables yet; do not break the admin foundation in that case.
+  IF to_regclass('public.folego_asaas_subscriptions') IS NOT NULL THEN
+    EXECUTE 'SELECT count(*) FROM public.folego_asaas_subscriptions WHERE environment = $1'
+      INTO v_sandbox_subscription_records USING 'sandbox';
+    EXECUTE 'SELECT count(*) FROM public.folego_asaas_subscriptions WHERE environment = $1'
+      INTO v_production_subscription_records USING 'production';
+  END IF;
+
   IF (SELECT auth.uid()) IS NULL OR NOT EXISTS (
     SELECT 1 FROM private.folego_admins a
     WHERE a.user_id = (SELECT auth.uid())
@@ -103,10 +114,8 @@ BEGIN
                        WHERE last_sign_in_at >= now() - interval '30 days'),
     'lifetime_premium', (SELECT count(*) FROM public.premium_grants
                          WHERE grant_type = 'lifetime' AND valid_until IS NULL),
-    'sandbox_subscription_records', (SELECT count(*) FROM public.folego_asaas_subscriptions
-                                    WHERE environment = 'sandbox'),
-    'production_subscription_records', (SELECT count(*) FROM public.folego_asaas_subscriptions
-                                       WHERE environment = 'production'),
+    'sandbox_subscription_records', v_sandbox_subscription_records,
+    'production_subscription_records', v_production_subscription_records,
     'feedback_count', (SELECT count(*) FROM public.folego_product_feedback),
     'completed_intro', (SELECT count(*) FROM public.profiles WHERE onboarding_completed),
     'users_with_account', (SELECT count(DISTINCT fs.owner_id)
