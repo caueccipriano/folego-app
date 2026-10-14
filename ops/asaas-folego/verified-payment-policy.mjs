@@ -11,7 +11,7 @@ export const PLANS=Object.freeze({
 export function asCents(value){
   if(typeof value!=="number" && typeof value!=="string") return null;
   const s=String(value);
-  if(!/^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$/.test(s)) return null;
+  if(!/^(0|[1-9][0-9]*)(\.[0-9]{1,2})?$/.test(s)) return null;
   const [integer,decimal=""]=s.split(".");
   const cents=Number(integer)*100+Number(decimal.padEnd(2,"0"));
   return Number.isSafeInteger(cents)?cents:null;
@@ -25,7 +25,7 @@ export function linkMatchesPlan(link,planKey,expectedLinkId,expectedUrl){
   try{actual=new URL(link.url);expected=new URL(expectedUrl);}
   catch{return false;}
   if(actual.protocol!=="https:" || expected.protocol!=="https:" ||
-     !/^(?:[a-z0-9-]+\\.)?asaas\\.com$/i.test(actual.hostname) ||
+     !/^(?:[a-z0-9-]+\.)?asaas\.com$/i.test(actual.hostname) ||
      actual.href!==expected.href) return false;
   return link.id===expectedLinkId &&
     link.active!==false && link.deleted!==true &&
