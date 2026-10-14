@@ -168,6 +168,9 @@ function _folegoAckRetryDrain_(spreadsheet, props) {
       id: item.entry.id,
       updated_at: item.entry.updated_at,
       rowNumber: item.entry.rowNumber,
+      // The add-on rechecks this AFTER its own flush and immediately before
+      // it hashes/sends the observed sheet row.
+      expected_bu_sha256: item.entry.fingerprint,
     };
   });
   let outcomes;
