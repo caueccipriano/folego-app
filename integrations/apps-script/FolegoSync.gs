@@ -303,7 +303,10 @@ function _folegoSyncPull_(spreadsheet) {
   });
   const rows = Array.isArray(response.rows) ? response.rows : [];
   // Disabled by default: the ACK backend and add-on must be verified first.
-  const ackEnabled = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true';
+  // Never attest rows if the category CAS guard is absent: the legacy pull
+  // path can overwrite a locally edited category before a readback.
+  const ackEnabled = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true'
+    && props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
   const ackCandidates = [];
   const possibleAckRows = [];
 
