@@ -44,7 +44,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: AppIcons.flame,
       title: 'quanto dá pra gastar hoje?',
       body:
-          'essa é a pergunta que guia o Fôlego. você pode entrar agora e configurar suas finanças no seu ritmo.',
+          'comece cadastrando uma conta e sua primeira entrada ou despesa. nenhuma planilha ou conexão bancária é obrigatória.',
     ),
   ];
 
