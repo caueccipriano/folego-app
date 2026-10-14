@@ -107,7 +107,15 @@ BEGIN
                                     WHERE environment = 'sandbox'),
     'production_subscription_records', (SELECT count(*) FROM public.folego_asaas_subscriptions
                                        WHERE environment = 'production'),
-    'feedback_count', (SELECT count(*) FROM public.folego_product_feedback)
+    'feedback_count', (SELECT count(*) FROM public.folego_product_feedback),
+    'completed_intro', (SELECT count(*) FROM public.profiles WHERE onboarding_completed),
+    'users_with_account', (SELECT count(DISTINCT fs.owner_id)
+      FROM public.accounts a JOIN public.financial_spaces fs ON fs.id = a.space_id),
+    'users_with_transactions', (SELECT count(DISTINCT fs.owner_id)
+      FROM public.financial_events e JOIN public.financial_spaces fs ON fs.id = e.space_id),
+    'users_with_transactions_30d', (SELECT count(DISTINCT fs.owner_id)
+      FROM public.financial_events e JOIN public.financial_spaces fs ON fs.id = e.space_id
+      WHERE e.created_at >= now() - interval '30 days')
   )
   INTO v_metrics;
 
