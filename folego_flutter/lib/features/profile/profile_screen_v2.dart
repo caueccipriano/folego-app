@@ -28,8 +28,6 @@ import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'folego_admin_screen.dart';
-import 'folego_feedback_dialog.dart';
-import 'folego_admin_screen.dart';
 import 'folego_feedback_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
@@ -67,7 +65,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _accountActionRunning = false;
   bool _deletingAccount = false;
   bool _isLifetimePremium = false;
-  bool _isAdmin = false;
   bool _isFolegoAdmin = false;
   String? _identityError;
   String? _versionError;
@@ -87,7 +84,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadIdentity();
     _loadVersion();
     _loadPremiumGrant();
-    _loadAdminStatus();
     _loadAdminAccess();
   }
 
@@ -159,26 +155,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
   }
-
-  Future<void> _loadAdminStatus() async {
-    try {
-      final permitted = await widget.client.rpc('folego_is_admin');
-      if (mounted) setState(() => _isAdmin = permitted == true);
-    } catch (_) {
-      if (mounted) setState(() => _isAdmin = false);
-    }
-  }
-
-  void _openAdminDashboard() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => FolegoAdminScreen(client: widget.client),
-      ),
-    );
-  }
-
-  Future<void> _openFeedback() =>
-      showFolegoFeedbackDialog(context, widget.client);
 
   Future<void> _loadVersion() async {
     setState(() {
@@ -855,19 +831,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () => _exportData(exportContext),
                   ),
                 ),
-                _SettingsRow(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  title: 'envie uma sugestão',
-                  subtitle: 'conte o que podemos melhorar no Fôlego',
-                  onTap: _openFeedback,
-                ),
-                if (_isAdmin)
-                  _SettingsRow(
-                    icon: Icons.admin_panel_settings_outlined,
-                    title: 'painel administrativo',
-                    subtitle: 'usuários, Premium e sugestões — acesso restrito',
-                    onTap: _openAdminDashboard,
-                  ),
                 _SettingsRow(
                   icon: Icons.add_to_home_screen_outlined,
                   title: 'instalar no iPhone',
