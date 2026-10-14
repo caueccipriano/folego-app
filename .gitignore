@@ -46,3 +46,8 @@ coverage/
 *.ipa
 *.xcarchive
 *.dSYM.zip
+
+# Google Apps Script OAuth credentials (never commit)
+.clasprc.json
+.clasp.json
+client_secret.json
