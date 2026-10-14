@@ -52,7 +52,7 @@ async function upsert(table:string,conflict:string,payload:object){
     body:JSON.stringify(payload)
   });
 }
-function paidUntil(due:string):string|null{
+function paidUntil(due:unknown):string|null{
   if(typeof due!=="string"||!/^\d{4}-\d\d-\d\d$/.test(due))return null;
   const [year,month,day]=due.split("-").map(Number);
   const original=new Date(Date.UTC(year,month-1,day));
