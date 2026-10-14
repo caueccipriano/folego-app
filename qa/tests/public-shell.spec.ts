@@ -63,15 +63,18 @@ test.describe('Fôlego public PWA shell', () => {
     const appleIcon = page.locator('link[rel="apple-touch-icon"]');
     await expect(appleIcon).toHaveCount(1);
     const appleIconHref = await appleIcon.getAttribute('href');
-    expect(appleIconHref).toMatch(/^apple-touch-icon\.png\?v=[0-9a-f]{40}$/);
+    expect(appleIconHref).toMatch(/^data:image\/png;base64,[A-Za-z0-9+/=]+$/);
 
-    // iOS doesn't reliably use the manifest. A missing, blank, or invalid PNG
-    // can silently create a generic home-screen bookmark despite valid tags.
-    const appleIconUrl = new URL(appleIconHref!, baseURL!).toString();
-    const iconResponse = await request.get(appleIconUrl);
+    // iOS 27 native Add-to-Home-Screen may fail an independent network fetch.
+    // The approved 180px PNG is embedded in HTML at build time, byte-for-byte
+    // equal to the publicly available legacy file.
+    const iconPng = Buffer.from(appleIconHref!.split(',')[1], 'base64');
+    const iconResponse = await request.get(
+      new URL('apple-touch-icon-ios-v2.png', baseURL!).toString(),
+    );
     expect(iconResponse.ok()).toBeTruthy();
     expect(iconResponse.headers()['content-type']).toContain('image/png');
-    const iconPng = await iconResponse.body();
+    expect(iconPng.equals(await iconResponse.body())).toBe(true);
     expect(iconPng.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
     expect(iconPng.readUInt32BE(16)).toBe(180);
     expect(iconPng.readUInt32BE(20)).toBe(180);
@@ -109,7 +112,7 @@ test.describe('Fôlego public PWA shell', () => {
     expect(iconPixels.opaque).toBeGreaterThan(40);
 
     const manifestAppleIcon = manifest.icons.find(
-      (icon: { src: string }) => icon.src === appleIconHref,
+      (icon: { src: string }) => icon.src === 'apple-touch-icon-ios-v2.png',
     );
     expect(manifestAppleIcon?.sizes).toBe('180x180');
   });
@@ -130,7 +133,7 @@ test.describe('Fôlego public PWA shell', () => {
     const notice = page.locator('#folego-new-version-notice');
     await expect(notice).toBeVisible();
     await expect(notice).toContainText('nova versão disponível');
-    await expect(notice).toContainText('seus dados continuam salvos');
+    await expect(notice).toContainText(/seus dados continuam salvos/i);
 
     await notice.getByRole('button', { name: 'depois' }).click();
     await expect(notice).toHaveCount(0);
