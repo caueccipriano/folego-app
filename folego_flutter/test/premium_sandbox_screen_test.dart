@@ -5,8 +5,13 @@ import 'package:folego/features/premium/premium_sandbox_screen.dart';
 
 void main() {
   Future<void> render(WidgetTester tester, Map<String, dynamic> data) async {
+    final client = SupabaseClient(
+      'https://example.supabase.co', 'test-public',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    );
+    addTearDown(client.dispose);
     await tester.pumpWidget(MaterialApp(home: PremiumSandboxScreen(
-      client: SupabaseClient('https://example.supabase.co', 'test-public'),
+      client: client,
       loadOverride: () async => data,
     )));
     await tester.pumpAndSettle();
