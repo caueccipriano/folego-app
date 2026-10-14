@@ -84,7 +84,11 @@ List<SheetAuditItem> mergeSheetAuditSamples({
 }) {
   final byId = <String, SheetAuditItem>{};
   for (final row in recent.followedBy(pending)) {
-    if (!row.hidden && row.sheetLinked) byId[row.id] = row;
+    // App-originated events are not sheet_linked until the sheet confirms
+    // their current version. A genuine receipt makes them auditable.
+    if (!row.hidden && (row.sheetLinked || row.sheetAppliedAt != null)) {
+      byId[row.id] = row;
+    }
   }
   final items = byId.values.toList(growable: false);
   items.sort((a, b) {

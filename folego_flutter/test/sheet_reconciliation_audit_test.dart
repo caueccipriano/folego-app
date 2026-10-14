@@ -79,6 +79,21 @@ void main() {
     expect(sample.first.needsReview, isTrue);
   });
 
+  test('new app-originated rows remain hidden until the sheet confirms the version', () {
+    final unconfirmed = _entry('app-only', linked: false);
+    final confirmed = _entry('app-acked', linked: false)
+        .withSheetAppliedAt(DateTime.utc(2026, 10, 14, 3, 0));
+    final staleOrHidden = _entry('hidden-acked', linked: false, hidden: true)
+        .withSheetAppliedAt(DateTime.utc(2026, 10, 14, 3, 0));
+
+    final sample = mergeSheetAuditSamples(
+      recent: [unconfirmed, confirmed, staleOrHidden],
+      pending: const [],
+    );
+    expect(sample.map((e) => e.id), ['app-acked']);
+    expect(sample.single.reviewLabel, 'Aplicação confirmada pela planilha');
+  });
+
   testWidgets('auditor warns about missing sheet receipts and masks money',
       (tester) async {
     await tester.pumpWidget(MaterialApp(home: SheetAuditScreen(
