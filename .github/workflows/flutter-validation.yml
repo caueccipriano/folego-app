@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - feat/transactions-recurring
+      - feat/asaas-web-sandbox-20261014
   workflow_dispatch:
 
 permissions:
