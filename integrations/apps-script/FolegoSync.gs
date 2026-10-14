@@ -297,8 +297,14 @@ function _folegoSyncPull_(spreadsheet) {
   const props = PropertiesService.getScriptProperties();
   // The default is OFF. Do not start a pull if the durable outbox or
   // spreadsheet ACK add-on is missing while the feature is enabled.
-  const ackEnabled = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true'
-    && props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
+  const ackRequested = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true';
+  const categoriesReady = props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
+  if (ackRequested && !categoriesReady) {
+    // Do not silently downgrade to the legacy category-overwriting path
+    // when an operator intended to enable protected ACK delivery.
+    throw new Error('ack_categories_guard_missing');
+  }
+  const ackEnabled = ackRequested && categoriesReady;
   if (ackEnabled) {
     if (typeof _folegoAckRetryDrain_ !== 'function'
         || typeof _folegoAckRetryCapture_ !== 'function'
