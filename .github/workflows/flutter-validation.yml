@@ -52,6 +52,13 @@ jobs:
           fi
           echo "Projection tests passed"
 
+      - name: Generate canonical PWA install assets
+        if: github.head_ref == 'feat/asaas-web-sandbox-20261014'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          bash scripts/generate_brand_icons.sh
+
       - name: Flutter build web
         env:
           FOLEGO_ASAAS_SANDBOX_UI: ${{ github.head_ref == 'feat/asaas-web-sandbox-20261014' && 'true' || 'false' }}
