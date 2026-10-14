@@ -118,17 +118,21 @@
             )
           : Promise.resolve(),
       ])
-        .then(() => {
+        .then(([, deletedLegacyCaches]) => {
           try {
             localStorage.setItem(repairKey, repairVersion);
           } catch (_) {
             // Best effort only.
           }
 
-          // Reload once after clearing the legacy shell cache so the currently
-          // controlled page boots Flutter from the network. We keep the
-          // registration itself so an existing Web Push subscription survives.
-          if (hadController) window.location.reload();
+          // Reload only if a legacy shell cache was actually removed.
+          // Otherwise, an ordinary PWA build update must not force a reload.
+          // The Web Push registration and the user's local data are preserved.
+          if (hadController &&
+              Array.isArray(deletedLegacyCaches) &&
+              deletedLegacyCaches.some(Boolean)) {
+            window.location.reload();
+          }
         })
         .catch(() => {
           // Cache repair must never prevent the app from starting.
@@ -137,6 +141,7 @@
   </script>
   <script src="folego_ios_zoom_fix.js"></script>
   <script src="folego_push_bridge.js"></script>
+  <script defer src="folego_update.js?v=__FOLEGO_BUILD_VERSION__"></script>
   <script src="flutter_bootstrap.js?v=__FOLEGO_BUILD_VERSION__" async></script>
 </body>
 </html>

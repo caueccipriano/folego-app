@@ -17,6 +17,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import '../../data/models/profile_export.dart';
+import '../../data/models/financial_space.dart';
 import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
@@ -31,6 +32,7 @@ import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 import 'sheet_sync_status_card.dart';
 import 'sheet_audit_screen.dart';
+import '../transactions/transactions_screen.dart';
 
 part 'profile_widgets.dart';
 
@@ -61,6 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _signingOut = false;
   bool _accountActionRunning = false;
   bool _deletingAccount = false;
+  bool _isLifetimePremium = false;
   String? _identityError;
   String? _versionError;
 
@@ -78,6 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     _loadIdentity();
     _loadVersion();
+    _loadPremiumGrant();
   }
 
   Future<void> _loadIdentity() async {
@@ -98,6 +102,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _loadingIdentity = false;
         _identityError = 'não consegui atualizar os dados da sua conta';
       });
+    }
+  }
+
+  Future<void> _loadPremiumGrant() async {
+    try {
+      final grants = await widget.client.rpc('get_my_premium_grant');
+      final hasLifetimeGrant = grants is List &&
+          grants.any(
+            (grant) =>
+                grant is Map &&
+                grant['grant_type'] == 'lifetime' &&
+                grant['valid_until'] == null,
+          );
+      if (!mounted) return;
+      setState(() => _isLifetimePremium = hasLifetimeGrant);
+    } catch (_) {
+      // Nunca exibir um benefício sem confirmação do servidor.
+      if (mounted) setState(() => _isLifetimePremium = false);
     }
   }
 
@@ -143,6 +165,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (_) => SheetAuditScreen(
           spaceId: widget.spaceId,
           loadItems: widget.repository.getSheetAuditItems,
+        ),
+      ),
+    );
+  }
+
+  // Every financial space has the same review path, with or without Sheets.
+  Future<void> _openFinancialReview() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionsScreen(
+          repository: widget.repository,
+          space: FinancialSpace(id: widget.spaceId, name: 'Minhas Finanças'),
+          initialPushRoute: '/transactions/classification',
         ),
       ),
     );
@@ -584,6 +619,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
               error: _identityError,
               onRetry: _loadIdentity,
             ),
+            if (_isLifetimePremium) ...[
+              const SizedBox(height: 10),
+              Container(
+                key: const ValueKey('profile-lifetime-premium-notice'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'premium vitalício ativado',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'obrigado por fazer parte dos primeiros usuários do Fôlego! '
+                            'seu acesso Premium é uma cortesia permanente, sem mensalidade.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
@@ -697,6 +775,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _SettingsCard(
               children: [
+                _SettingsRow(
+                  icon: Icons.fact_check_outlined,
+                  title: 'revisar lançamentos',
+                  subtitle: 'conferir categorias e pendências dos seus gastos',
+                  onTap: _openFinancialReview,
+                ),
                 Builder(
                   builder: (exportContext) => _SettingsRow(
                     icon: AppIcons.exportData,
@@ -726,6 +810,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               spaceId: widget.spaceId,
               loadStatus: widget.repository.getSheetSyncStatus,
               onOpenAudit: _openSheetAudit,
+              hideWhenUnconfigured: true,
             ),
             const SizedBox(height: 10),
             _AboutCard(

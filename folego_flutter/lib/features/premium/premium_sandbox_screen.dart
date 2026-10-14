@@ -5,8 +5,11 @@ import 'checkout_navigation.dart';
 
 /// Visible only in explicitly configured test builds. Never grants app rights.
 class PremiumSandboxScreen extends StatefulWidget {
-  const PremiumSandboxScreen({super.key, required this.client});
+  const PremiumSandboxScreen({super.key, required this.client, this.loadOverride});
   final SupabaseClient client;
+
+  @visibleForTesting
+  final Future<Map<String, dynamic>> Function()? loadOverride;
 
   @override
   State<PremiumSandboxScreen> createState() => _PremiumSandboxScreenState();
@@ -28,10 +31,15 @@ class _PremiumSandboxScreenState extends State<PremiumSandboxScreen> {
   Future<void> _refresh() async {
     setState(() => _busy = true);
     try {
-      final response = await widget.client.functions.invoke(
-        'folego-asaas-checkout-sandbox', method: HttpMethod.get,
-      );
-      final data = response.data;
+      final Object? data;
+      if (widget.loadOverride != null) {
+        data = await widget.loadOverride!();
+      } else {
+        final response = await widget.client.functions.invoke(
+          'folego-asaas-checkout-sandbox', method: HttpMethod.get,
+        );
+        data = response.data;
+      }
       if (data is! Map || data['environment'] != 'sandbox') {
         throw StateError('invalid_billing_status');
       }
