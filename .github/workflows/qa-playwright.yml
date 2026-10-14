@@ -99,11 +99,37 @@ jobs:
         with:
           node-version: 22
 
+      - name: Checkout release ACK source for synthetic verification
+        uses: actions/checkout@v4
+        with:
+          ref: feat/transactions-recurring
+          path: .ci-release-source
+          sparse-checkout: supabase
+          persist-credentials: false
+
+      - name: Prepare read-only ACK source in isolated runner
+        run: |
+          test -f supabase/functions/sheet-sync/index.ts # this branch owns the live sync source
+          test -f .ci-release-source/supabase/functions/sheet-row-ack/index.ts
+          test -f .ci-release-source/supabase/migrations/20261014034000_sheet_delivery_ack_v1.sql
+          test -f .ci-release-source/supabase/migrations/20261014034200_sheet_delivery_ack_explicit_deny.sql
+          mkdir -p supabase/functions/sheet-row-ack supabase/functions/sheet-sync supabase/migrations
+          cp .ci-release-source/supabase/functions/sheet-row-ack/index.ts supabase/functions/sheet-row-ack/index.ts
+
+          cp .ci-release-source/supabase/migrations/20261014034000_sheet_delivery_ack_v1.sql supabase/migrations/20261014034000_sheet_delivery_ack_v1.sql
+          cp .ci-release-source/supabase/migrations/20261014034200_sheet_delivery_ack_explicit_deny.sql supabase/migrations/20261014034200_sheet_delivery_ack_explicit_deny.sql
+
+      - name: Verify ACK Edge isolation (two synthetic tenants)
+        run: node --test qa/staging/sheet-row-ack-isolated-runtime.test.mjs
+
+      - name: Verify notes API with concurrent synthetic writers
+        run: node --test qa/staging/folego-comments-api-isolation.test.mjs
+
       - name: Verify isolated staging guard (synthetic only)
         run: node --test qa/staging/staging-guard.test.mjs
 
       - name: Verify pull ACK bridge (synthetic only)
-        run: node --test qa/staging/folego-ack-pull-bridge.test.mjs
+        run: node --test qa/staging/folego-ack-pull-bridge.test.mjs qa/staging/folego-ack-retry-queue.test.mjs qa/staging/folego-ack-double-readback.test.mjs
 
       - name: Install QA dependencies
         working-directory: qa

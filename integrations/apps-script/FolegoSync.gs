@@ -295,6 +295,31 @@ function _folegoSyncPush_(spreadsheet) {
 
 function _folegoSyncPull_(spreadsheet) {
   const props = PropertiesService.getScriptProperties();
+  // The default is OFF. Do not start a pull if the durable outbox or
+  // spreadsheet ACK add-on is missing while the feature is enabled.
+  const ackRequested = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true';
+  const categoriesReady = props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
+  if (ackRequested && !categoriesReady) {
+    // Do not silently downgrade to the legacy category-overwriting path
+    // when an operator intended to enable protected ACK delivery.
+    throw new Error('ack_categories_guard_missing');
+  }
+  const ackEnabled = ackRequested && categoriesReady;
+  if (ackEnabled) {
+    if (typeof _folegoAckRetryDrain_ !== 'function'
+        || typeof _folegoAckRetryCapture_ !== 'function'
+        || typeof folegoEnviarAckAposGravacao_ !== 'function') {
+      throw new Error('ack_retry_support_missing');
+    }
+    // Existing deliveries can be recovered even if the next pull is empty.
+    _folegoAckRetryDrain_(spreadsheet, props);
+    if (_folegoAckRetryCount_(props) >= FOLEGO_ACK_RETRY_PAUSE_AT) {
+      // Reserve space for one full pull batch. Never advance the cursor
+      // if the outbox cannot persist all eligible write confirmations.
+      console.log('FÔLEGO ACK: aguardando revisão da fila; cursor preservado.');
+      return;
+    }
+  }
   const cursor = props.getProperty('FOLEGO_SYNC_CURSOR') || FOLEGO_SYNC_CONFIG.initialPullSince;
   const response = _folegoSyncApi_({
     action: 'pull',
@@ -302,11 +327,6 @@ function _folegoSyncPull_(spreadsheet) {
     limit: FOLEGO_SYNC_CONFIG.maxPullPerRun,
   });
   const rows = Array.isArray(response.rows) ? response.rows : [];
-  // Disabled by default: the ACK backend and add-on must be verified first.
-  // Never attest rows if the category CAS guard is absent: the legacy pull
-  // path can overwrite a locally edited category before a readback.
-  const ackEnabled = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true'
-    && props.getProperty('FOLEGO_CATEGORIES_INSTALLED') === 'true';
   const ackCandidates = [];
   const possibleAckRows = [];
 
@@ -364,48 +384,25 @@ function _folegoSyncPull_(spreadsheet) {
   }
 
   if (ackEnabled && possibleAckRows.length) {
-    if (typeof folegoEnviarAckAposGravacao_ !== 'function') {
-      console.log('FÔLEGO ACK: complemento não instalado; nenhum recibo enviado.');
-    } else {
-      try {
-        SpreadsheetApp.flush();
-        possibleAckRows.forEach(function (candidate) {
-          if (_folegoSyncAckCandidate_(launches, candidate.rowNumber, candidate.remote)) {
-            ackCandidates.push({
-              rowNumber: candidate.rowNumber,
-              id: candidate.remote.id,
-              updated_at: candidate.remote.updated_at,
-            });
-          }
+    SpreadsheetApp.flush();
+    possibleAckRows.forEach(function (candidate) {
+      if (_folegoSyncAckCandidate_(launches, candidate.rowNumber, candidate.remote)) {
+        ackCandidates.push({
+          rowNumber: candidate.rowNumber,
+          id: candidate.remote.id,
+          updated_at: candidate.remote.updated_at,
         });
-        if (ackCandidates.length) {
-          const ackUrl = FOLEGO_SYNC_CONFIG.endpoint.replace(/\/sheet-sync$/, '/sheet-row-ack');
-          const results = folegoEnviarAckAposGravacao_({
-            sheet: launches,
-            endpoint: ackUrl,
-            spreadsheetId: FOLEGO_SYNC_CONFIG.spreadsheetId,
-            token: props.getProperty('FOLEGO_SYNC_TOKEN'),
-            applied: ackCandidates,
-          });
-          const accepted = results.filter(function (r) {
-            return r.status === 'applied' || r.status === 'already_acknowledged';
-          }).length;
-          console.log(JSON.stringify({
-            event: 'folego_ack_first_phase',
-            candidates: ackCandidates.length,
-            accepted,
-            unresolved: ackCandidates.length - accepted,
-          }));
-        }
-      } catch (error) {
-        // Keep the legacy synchronization running; no financial writes depend
-        // on this optional operational receipt service.
-        console.log('FÔLEGO ACK: envio não confirmado. Sem mudanças financeiras.');
       }
-    }
+    });
+    // CRITICAL: this write must finish before the pull cursor advances.
+    // Failure propagates, so the next cycle replays the same pull safely.
+    if (ackCandidates.length) _folegoAckRetryCapture_(launches, props, ackCandidates);
   }
 
   if (response.cursor) props.setProperty('FOLEGO_SYNC_CURSOR', String(response.cursor));
+  // ACK delivery is independent of the financial ledger and can retry later.
+  if (ackEnabled && ackCandidates.length) _folegoAckRetryDrain_(spreadsheet, props);
+
 }
 
 /** Post-write guard: rejects old or locally edited rows rather than issuing
