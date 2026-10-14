@@ -321,9 +321,13 @@ function _folegoSyncPull_(spreadsheet) {
     .getDisplayValues()
     .flat();
   const rowById = new Map();
+  const ackIdCounts = new Map();
   idValues.forEach((value, offset) => {
     const id = String(value || '').trim();
-    if (id && !rowById.has(id)) rowById.set(id, FOLEGO_SYNC_CONFIG.firstDataRow + offset);
+    if (id) {
+      ackIdCounts.set(id, (ackIdCounts.get(id) || 0) + 1);
+      if (!rowById.has(id)) rowById.set(id, FOLEGO_SYNC_CONFIG.firstDataRow + offset);
+    }
   });
 
   for (const row of rows) {
@@ -338,6 +342,7 @@ function _folegoSyncPull_(spreadsheet) {
       targetRow = _folegoSyncFirstEmptyIdRow_(launches);
       _folegoSyncAppendLaunch_(launches, targetRow, row);
       rowById.set(id, targetRow);
+      ackIdCounts.set(id, (ackIdCounts.get(id) || 0) + 1);
     }
 
     if (row.event_type === 'card_purchase') {
@@ -346,7 +351,13 @@ function _folegoSyncPull_(spreadsheet) {
 
     // Record candidates only; the sheet must be flushed ONCE at the end
     // before re-reading any of them.
-    if (ackEnabled) possibleAckRows.push({ rowNumber: targetRow, remote: row });
+    // The initial pilot is app-originated event:* only. A sheet:* ID
+    // cannot prove that the record was originally created in the app.
+    // Never certify duplicate sheet identifiers.
+    if (ackEnabled && /^event:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+        && ackIdCounts.get(id) === 1) {
+      possibleAckRows.push({ rowNumber: targetRow, remote: row });
+    }
   }
 
   if (ackEnabled && possibleAckRows.length) {
@@ -365,23 +376,23 @@ function _folegoSyncPull_(spreadsheet) {
           }
         });
         if (ackCandidates.length) {
-        const ackUrl = FOLEGO_SYNC_CONFIG.endpoint.replace(/\/sheet-sync$/, '/sheet-row-ack');
-        const results = folegoEnviarAckAposGravacao_({
-          sheet: launches,
-          endpoint: ackUrl,
-          spreadsheetId: FOLEGO_SYNC_CONFIG.spreadsheetId,
-          token: props.getProperty('FOLEGO_SYNC_TOKEN'),
-          applied: ackCandidates,
-        });
-        const accepted = results.filter(function (r) {
-          return r.status === 'applied' || r.status === 'already_acknowledged';
-        }).length;
-        console.log(JSON.stringify({
-          event: 'folego_ack_first_phase',
-          candidates: ackCandidates.length,
-          accepted,
-          unresolved: ackCandidates.length - accepted,
-        }));
+          const ackUrl = FOLEGO_SYNC_CONFIG.endpoint.replace(/\/sheet-sync$/, '/sheet-row-ack');
+          const results = folegoEnviarAckAposGravacao_({
+            sheet: launches,
+            endpoint: ackUrl,
+            spreadsheetId: FOLEGO_SYNC_CONFIG.spreadsheetId,
+            token: props.getProperty('FOLEGO_SYNC_TOKEN'),
+            applied: ackCandidates,
+          });
+          const accepted = results.filter(function (r) {
+            return r.status === 'applied' || r.status === 'already_acknowledged';
+          }).length;
+          console.log(JSON.stringify({
+            event: 'folego_ack_first_phase',
+            candidates: ackCandidates.length,
+            accepted,
+            unresolved: ackCandidates.length - accepted,
+          }));
         }
       } catch (error) {
         // Keep the legacy synchronization running; no financial writes depend
@@ -399,6 +410,7 @@ function _folegoSyncPull_(spreadsheet) {
  */
 function _folegoSyncAckCandidate_(sheet, rowNumber, remote) {
   if (!remote || !remote.updated_at || !Number.isFinite(Date.parse(remote.updated_at))
+      || !remote.occurred_at || !Number.isFinite(Date.parse(remote.occurred_at))
       || !Number.isInteger(rowNumber) || rowNumber < FOLEGO_SYNC_CONFIG.firstDataRow) {
     return false;
   }
@@ -407,6 +419,11 @@ function _folegoSyncAckCandidate_(sheet, rowNumber, remote) {
   if (String(cells[0] || '').trim() !== String(remote.id || '').trim()) return false;
   if (label(cells[9]) !== 'folego app' || label(cells[8]) !== 'confirmado'
       || label(cells[19]) !== 'pulled') return false;
+  // The source row must match date/time and payment method as well as money.
+  // Spreadsheet date cells are Date objects; allow only subsecond rounding.
+  if (!(cells[1] instanceof Date) || !Number.isFinite(cells[1].getTime())
+      || Math.abs(cells[1].getTime() - Date.parse(remote.occurred_at)) > 999) return false;
+  if (label(cells[2]) !== label(remote.payment_method)) return false;
   if (String(cells[3] || '').trim() !== String(remote.description || '').trim()) return false;
   if (!Number.isFinite(Number(cells[4])) ||
       Math.abs(Number(cells[4]) - Number(remote.amount)) > 0.005) return false;
