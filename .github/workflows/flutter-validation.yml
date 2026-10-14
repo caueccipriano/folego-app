@@ -53,4 +53,18 @@ jobs:
           echo "Projection tests passed"
 
       - name: Flutter build web
-        run: flutter build web --release
+        env:
+          FOLEGO_ASAAS_SANDBOX_UI: ${{ github.head_ref == 'feat/asaas-web-sandbox-20261014' && 'true' || 'false' }}
+        run: flutter build web --release --dart-define=FOLEGO_ASAAS_SANDBOX_UI="$FOLEGO_ASAAS_SANDBOX_UI"
+
+      - name: Prepare isolated sandbox hosting artifact
+        if: github.head_ref == 'feat/asaas-web-sandbox-20261014'
+        run: python ../ops/hosting/prepare_cloudflare.py --build build/web --version "$GITHUB_SHA"
+
+      - name: Upload sandbox PWA candidate without deploying
+        if: github.head_ref == 'feat/asaas-web-sandbox-20261014'
+        uses: actions/upload-artifact@v4
+        with:
+          name: folego-asaas-sandbox-pwa-${{ github.sha }}
+          path: folego_flutter/build/web
+          retention-days: 7
