@@ -68,11 +68,11 @@ test('ACK is sent only after second post-flush B:U fingerprint matches',()=>{
 });
 test('edit between first and second readback prevents outbound receipt',()=>{
   const e=environment({mutateBeforeSend:true});
-  assert.deepEqual(e.call(),[]);
+  assert.equal(e.call().length,0);
   assert.equal(e.sent,0);
 });
 test('identity changed at final readback cannot be acknowledged',()=>{
   const e=environment({wrongIdentity:true});
-  assert.deepEqual(e.call(),[]);
+  assert.equal(e.call().length,0);
   assert.equal(e.sent,0);
 });
