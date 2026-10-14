@@ -37,7 +37,14 @@ function runtime(name, options={}) {
     }
     return new Response(null,{status:204});
    }
-   if(table==='premium_grants')result=options.grants??[];
+   if(table==='premium_grants'){
+     result=(options.grants??[]).filter(g=>
+       (!u.searchParams.has('grant_type')||g.grant_type===u.searchParams.get('grant_type')?.slice(3))&&
+       (!u.searchParams.has('valid_until')||
+         (u.searchParams.get('valid_until')==='is.null'&&g.valid_until==null))
+     );
+     if(u.searchParams.has('limit'))result=result.slice(0,Number(u.searchParams.get('limit')));
+   }
    else if(table==='folego_asaas_billing_intents')result=intents;
    else if(table==='folego_asaas_subscriptions')result=subscriptions;
    else throw Error('unexpected DB table '+url);
@@ -47,7 +54,8 @@ function runtime(name, options={}) {
  const source=readFileSync(new URL('../../supabase/functions/'+name+'/index.ts',import.meta.url),'utf8');
  vm.runInNewContext(stripTypeScriptTypes(source),{Deno:{env:{get:k=>env[k]},serve:h=>handler=h},fetch,Response,Request,URL,TextEncoder,crypto,Date,Set,console});
  const call=async(body={id:'evt_test',event:'PAYMENT_CONFIRMED',payment:{id:'pay_test',subscription:'sub_test'}},headers={'asaas-access-token':token})=>handler(new Request('https://test.invalid',{method:'POST',headers,body:JSON.stringify(body)}));
- return {call,writes,calls,subscriptions,events};
+ const get=async(headers={authorization:'Bearer '+token})=>handler(new Request('https://test.invalid',{method:'GET',headers}));
+ return {call,get,writes,calls,subscriptions,events};
 }
 const webhook='folego-asaas-webhook-sandbox';
 const checkout='folego-asaas-checkout-sandbox';
@@ -78,3 +86,41 @@ test('chargeback event reconciles current API status',async()=>{const r=runtime(
 test('existing owner can renew after checkout intention expires',async()=>{const r=runtime(webhook,{intents:[{user_id:'user_a',expires_at:'2020-01-01T00:00:00Z'}],subscriptions:[{subscription_id:'sub_test',user_id:'user_a',customer_id:'cus_test'}]});assert.equal((await r.call()).status,200);assert.equal(r.subscriptions[0].verified_payment_id,'pay_test');});
 test('new checkout refreshes only authenticated owner intention',async()=>{const r=runtime(checkout);await r.call({}, {authorization:'Bearer '+token});assert.equal(r.writes[0].table,'folego_asaas_billing_intents');assert.ok(Date.parse(r.writes[0].value.expires_at)>Date.now());assert.ok(r.calls.some(u=>u.includes('user_id=eq.user_a')));});
 test('month end validity uses calendar month and clamps February',async()=>{const r=runtime(webhook,{payments:[{...payment,dueDate:'2027-01-31'}]});await r.call();assert.equal(r.subscriptions[0].paid_until,'2027-02-28T00:00:00.000Z');});
+
+test('lifetime founder remains protected even after an earlier non-lifetime grant',async()=>{
+ const r=runtime(checkout,{grants:[
+   {grant_type:'trial',valid_until:'2026-10-01T00:00:00Z'},
+   {grant_type:'lifetime',valid_until:null}
+ ],intents:[]});
+ const response=await r.call({}, {authorization:'Bearer '+token});
+ assert.equal(response.status,409);
+ assert.equal((await response.json()).error,'lifetime_premium_no_checkout');
+ assert.equal(r.writes.length,0);
+ assert.ok(r.calls.some(u=>u.includes('grant_type=eq.lifetime')&&u.includes('valid_until=is.null')));
+ assert.equal(r.calls.filter(u=>u.includes('api-sandbox.asaas.com')).length,0);
+});
+test('inactive sandbox subscription cannot be displayed as confirmed paid',async()=>{
+ const r=runtime(checkout,{subscriptions:[{
+   billing_status:'INACTIVE',paid_until:'2099-12-31T00:00:00Z',
+   verified_payment_id:'paid_api_receipt',source_verified:true
+ }]});
+ const response=await r.get();
+ assert.equal(response.status,200);
+ const result=await response.json();
+ assert.equal(result.environment,'sandbox');
+ assert.equal(result.paymentConfirmed,false);
+ assert.equal(result.paidUntil,null);
+});
+test('active verified sandbox subscription is displayed only as a sandbox status',async()=>{
+ const r=runtime(checkout,{subscriptions:[{
+   billing_status:'ACTIVE',paid_until:'2099-12-31T00:00:00Z',
+   verified_payment_id:'paid_api_receipt',source_verified:true
+ }]});
+ const response=await r.get();
+ assert.equal(response.status,200);
+ const result=await response.json();
+ assert.equal(result.environment,'sandbox');
+ assert.equal(result.paymentConfirmed,true);
+ assert.equal(result.paidUntil,'2099-12-31T00:00:00Z');
+ assert.equal(r.writes.length,0);
+});
