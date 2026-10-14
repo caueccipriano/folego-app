@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/data/models/wallet_overview.dart';
@@ -82,6 +84,7 @@ void main() {
   });
 
   setUp(() {
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     FinancialPrivacy.hidden.value = false;
   });
 
