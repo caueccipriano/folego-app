@@ -1,6 +1,6 @@
 # FÔLEGO Premium via Asaas (PWA) — CANDIDATO DE HOMOLOGAÇÃO
 
-**Situação:** preparo em branch isolada. Não cobrar, não publicar o checkout, não ativar entitlements e não alterar o app em uso.
+**Situação em 14/10/2026:** candidato na PR #118; tabelas isoladas criadas no Fôlego Dev pela migração `folego_asaas_sandbox_isolation_20261014` e duas funções *sandbox-only* implantadas. Nenhuma chave ou link configurado/verificado; endpoints têm travas explícitas desligadas. Nenhuma cobrança realizada e nenhuma alteração no PWA, movimentações ou acesso Premium de usuários existentes. Testes Node e `deno check` aprovados no GitHub Actions. Sem homologação ponta a ponta.
 
 ## Escopo e preço a homologar
 
@@ -37,10 +37,15 @@ O código `verified-payment-policy.mjs` nesta pasta é SOMENTE uma barreira prel
 ## Preparação que ainda falta antes de ativar qualquer cobrança
 
 - [ ] Confirmar no Asaas os termos comerciais, identificação pública da CIPRI Studios e operação do Sandbox.
-- [ ] Criar **dois novos links sandbox** FÔLEGO e salvar URLs e IDs exatos (não reutilizar links do EDITALUME).
-- [ ] Separar secrets Asaas Sandbox no Supabase do FÔLEGO; NUNCA publicá-los no GitHub, Dart, Flutter, Pages ou chat.
-- [ ] Revisar e aplicar migração própria para intenção, assinatura, ledger e entitlement com RLS negando escrita de clientes. **Não migrado nesta branch.**
-- [ ] Adaptar as duas Edge Functions em endpoint distinto e **sandbox only**; definir CORS do domínio comercial validado. **Não implantadas nesta branch.**
+- [ ] Criar novo link **mensal sandbox R$ 9,90** para FÔLEGO (recorrente MONTHLY) e salvar URL e ID da API. Plano anual somente após homologar mensal. NÃO reutilizar link EDITALUME.
+- [ ] Preencher secrets Asaas Sandbox no **Supabase Fôlego Dev** (aba Edge Function Secrets): `FOLEGO_ASAAS_SANDBOX_API_KEY`, `FOLEGO_ASAAS_SANDBOX_MONTHLY_LINK_ID`, `FOLEGO_ASAAS_SANDBOX_MONTHLY_LINK_URL`, `FOLEGO_ASAAS_SANDBOX_WEBHOOK_TOKEN`. Não informar valores no GitHub/chat; a chave de produção do EDITALUME não funciona no Sandbox e não é legível automaticamente por outro projeto Supabase.
+- [ ] No Asaas **Sandbox**, configurar um webhook próprio com URL `https://ycumrvkwqizlnehelhek.supabase.co/functions/v1/folego-asaas-webhook-sandbox`, token igual ao segredo do Supabase (mínimo 32 caracteres) e eventos PAYMENT_*/SUBSCRIPTION_* documentados.
+- [ ] Somente após instalar segredos, liberar flags `FOLEGO_ASAAS_SANDBOX_CHECKOUT_ENABLED=true` e `FOLEGO_ASAAS_SANDBOX_WEBHOOK_ENABLED=true` para transações **fictícias** e homologação; produção continua bloqueada.
+- [x] Aplicada migração nova com tabelas de intenção, eventos e assinaturas isoladas ao **Fôlego Dev** (RLS ativo; privilégios de tabela revogados a anon e authenticated). Contagens iniciais: 0/0/0. Apenas função de leitura de produção, não vinculada ao app. SQL versionado nesta branch.
+- [x] Implantadas duas Edge Functions distintas **somente sandbox** em Fôlego Dev, checkout com JWT obrigatório e webhook com token próprio, sem ativação. CORS atual do checkout: `https://caueccipriano.github.io` (testes); migrar para domínio comercial no lançamento.
+  - `folego-asaas-checkout-sandbox` (versão 1, bloqueio `FOLEGO_ASAAS_SANDBOX_CHECKOUT_ENABLED` desligado).
+  - `folego-asaas-webhook-sandbox` (versão 1, bloqueio `FOLEGO_ASAAS_SANDBOX_WEBHOOK_ENABLED` desligado).
+  - QA sintético em GitHub Actions: node tests e `deno check` verdes; não constitui teste com API Asaas real.
 - [ ] Integrar botão no FÔLEGO para usuários autenticados, sem ativar recursos pagos antes da confirmação. **Não alterado nesta branch.**
 - [ ] Testar 2 usuários diferentes, cobrança confirmada, pendente, duplicada, estornada, expirada, cancelada, falta de webhook, reembolso, outro produto/plano e restauração após reconciliação.
 - [ ] Preservar e homologar os acessos Free, cortesia e RevenueCat (sem sobrescrever fontes), mais testes no iPhone real.
