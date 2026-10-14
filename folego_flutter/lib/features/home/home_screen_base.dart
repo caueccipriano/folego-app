@@ -368,7 +368,9 @@ class _HomeScreenState extends State<HomeScreen> {
       onOpenUpcoming: _openUpcomingEvents,
       onOpenBudget: FlexibleBudgetNavigationScope.maybeOf(context)?.open,
     );
-    final optionalReview = ExpansionTile(
+    final optionalReview = Material(
+      color: background,
+      child: ExpansionTile(
       key: const ValueKey('home-optional-review'),
       tilePadding: const EdgeInsets.symmetric(horizontal: 2),
       title: Text(
@@ -391,6 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
           repository: widget.repository,
         ),
       ],
+      ),
     );
     final smartCheckin = SmartCheckinCard(
       spaceId: widget.space.id,
@@ -469,7 +472,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     upcoming,
                   ],
                   const SizedBox(height: 14),
-                  ExpansionTile(
+                  Material(
+                    color: background,
+                    child: ExpansionTile(
                     key: const ValueKey('home-monthly-details'),
                     initiallyExpanded: false,
                     tilePadding: const EdgeInsets.symmetric(horizontal: 2),
@@ -496,6 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 10),
                       projectionInsight,
                     ],
+                    ),
                   ),
                   if (showLatest) ...[
                     const SizedBox(height: 14),
