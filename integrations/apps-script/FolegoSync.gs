@@ -305,6 +305,7 @@ function _folegoSyncPull_(spreadsheet) {
   // Disabled by default: the ACK backend and add-on must be verified first.
   const ackEnabled = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true';
   const ackCandidates = [];
+  const possibleAckRows = [];
 
   if (!rows.length) {
     if (response.cursor) props.setProperty('FOLEGO_SYNC_CURSOR', String(response.cursor));
@@ -343,22 +344,27 @@ function _folegoSyncPull_(spreadsheet) {
       _folegoSyncEnsureCardPurchase_(spreadsheet, row);
     }
 
-    // Attest only an applied, re-observed Fôlego-originated row; never infer
-    // success from HTTP 200, a preexisting ID, or the PULLED status alone.
-    if (ackEnabled && _folegoSyncAckCandidate_(launches, targetRow, row)) {
-      ackCandidates.push({
-        rowNumber: targetRow,
-        id,
-        updated_at: row.updated_at,
-      });
-    }
+    // Record candidates only; the sheet must be flushed ONCE at the end
+    // before re-reading any of them.
+    if (ackEnabled) possibleAckRows.push({ rowNumber: targetRow, remote: row });
   }
 
-  if (ackEnabled && ackCandidates.length) {
+  if (ackEnabled && possibleAckRows.length) {
     if (typeof folegoEnviarAckAposGravacao_ !== 'function') {
       console.log('FÔLEGO ACK: complemento não instalado; nenhum recibo enviado.');
     } else {
       try {
+        SpreadsheetApp.flush();
+        possibleAckRows.forEach(function (candidate) {
+          if (_folegoSyncAckCandidate_(launches, candidate.rowNumber, candidate.remote)) {
+            ackCandidates.push({
+              rowNumber: candidate.rowNumber,
+              id: candidate.remote.id,
+              updated_at: candidate.remote.updated_at,
+            });
+          }
+        });
+        if (ackCandidates.length) {
         const ackUrl = FOLEGO_SYNC_CONFIG.endpoint.replace(/\/sheet-sync$/, '/sheet-row-ack');
         const results = folegoEnviarAckAposGravacao_({
           sheet: launches,
@@ -376,6 +382,7 @@ function _folegoSyncPull_(spreadsheet) {
           accepted,
           unresolved: ackCandidates.length - accepted,
         }));
+        }
       } catch (error) {
         // Keep the legacy synchronization running; no financial writes depend
         // on this optional operational receipt service.
@@ -395,7 +402,6 @@ function _folegoSyncAckCandidate_(sheet, rowNumber, remote) {
       || !Number.isInteger(rowNumber) || rowNumber < FOLEGO_SYNC_CONFIG.firstDataRow) {
     return false;
   }
-  SpreadsheetApp.flush();
   const cells = sheet.getRange(rowNumber, 2, 1, 20).getValues()[0]; // B:U
   const label = function (value) { return _folegoSyncNormalize_(value); };
   if (String(cells[0] || '').trim() !== String(remote.id || '').trim()) return false;
