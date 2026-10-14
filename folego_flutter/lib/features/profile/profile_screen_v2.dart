@@ -28,6 +28,8 @@ import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
 import '../premium/premium_sandbox_screen.dart';
 import 'financial_organization_screen.dart';
+import 'folego_admin_screen.dart';
+import 'folego_feedback_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 import 'sheet_sync_status_card.dart';
@@ -64,6 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _accountActionRunning = false;
   bool _deletingAccount = false;
   bool _isLifetimePremium = false;
+  bool _isFolegoAdmin = false;
   String? _identityError;
   String? _versionError;
 
@@ -82,6 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadIdentity();
     _loadVersion();
     _loadPremiumGrant();
+    _loadAdminAccess();
   }
 
   Future<void> _loadIdentity() async {
@@ -120,6 +124,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {
       // Nunca exibir um benefício sem confirmação do servidor.
       if (mounted) setState(() => _isLifetimePremium = false);
+    }
+  }
+
+  Future<void> _loadAdminAccess() async {
+    try {
+      final value = await widget.client.rpc('folego_is_admin');
+      if (!mounted) return;
+      setState(() => _isFolegoAdmin = value == true);
+    } catch (_) {
+      if (mounted) setState(() => _isFolegoAdmin = false);
+    }
+  }
+
+  Future<void> _openFolegoAdmin() async {
+    if (!_isFolegoAdmin) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => FolegoAdminScreen(client: widget.client),
+    ));
+  }
+
+  Future<void> _openFolegoFeedback() async {
+    final sent = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => FolegoFeedbackScreen(client: widget.client),
+      ),
+    );
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('sugestão enviada. obrigado!')),
+      );
     }
   }
 
@@ -697,6 +731,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: 'categorias e marcadores em um só lugar',
                   onTap: _openFinancialOrganization,
                 ),
+                _SettingsRow(
+                  icon: Icons.forum_outlined,
+                  title: 'enviar sugestão',
+                  subtitle: 'ajude a melhorar o Fôlego sem compartilhar seus saldos',
+                  onTap: _openFolegoFeedback,
+                ),
+                if (_isFolegoAdmin)
+                  _SettingsRow(
+                    icon: Icons.admin_panel_settings_outlined,
+                    title: 'painel administrativo',
+                    subtitle: 'usuários, acesso Premium e sugestões',
+                    onTap: _openFolegoAdmin,
+                  ),
               ],
             ),
           ],

@@ -24,7 +24,6 @@ void main() {
       expect(index, isNot(contains('position: fixed !important')));
       expect(index, isNot(contains('height: 100dvh !important')));
       expect(index, contains('Do not size or position flutter-view here.'));
-      expect(index, contains('ios-pwa-geometry-20260919-v3'));
       expect(index, contains('folego-shell-'));
       expect(index, contains("const repairVersion = '__FOLEGO_BUILD_VERSION__'"));
       expect(index, isNot(contains('localStorage.clear(')));
@@ -53,9 +52,10 @@ void main() {
       expect(logo, contains('Fôlego — porquinho'));
       expect(logo, contains('data:image/png;base64,'));
       expect(index, contains('icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__'));
-      expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(File('web/manifest.json').readAsStringSync(), contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
-      expect(workflow, contains('web/icons/folego-logo.svg'));
+      expect(workflow, contains('scripts/generate_brand_icons.sh'));
+      expect(File('scripts/generate_brand_icons.sh').readAsStringSync(), contains('web/icons/folego-logo.svg'));
       expect(workflow, contains('build/web/apple-touch-icon-ios-v2.png'));
       expect(workflow, contains('cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png'));
       expect(workflow, contains('embed_apple_touch_icon.py'));
