@@ -7,6 +7,12 @@ on:
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/deploy-web.yml'
+  pull_request:
+    branches:
+      - feat/transactions-recurring
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
 
 permissions:
@@ -164,6 +170,7 @@ jobs:
           path: folego_flutter/build/web
 
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feat/transactions-recurring'
     needs: build
     runs-on: ubuntu-latest
     environment:
