@@ -66,8 +66,7 @@ function environment({
       }),
     },
   };
-  runInNewContext(source, script);
-  runInNewContext(retrySource, script);
+  runInNewContext(source + '\n' + retrySource, script);
   const sheet = {
     getMaxRows: () => 15,
     getRange(row, col, length, width) {
