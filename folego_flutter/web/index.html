@@ -29,9 +29,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Fôlego">
-  <!-- Keep the conventional root icon for iOS auto-discovery. Explicitly use a clean,
-       version-free 180px URL with a NEW filename to bypass Safari's earlier failed icon cache. -->
-  <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="apple-touch-icon-ios-v2.png">
+  <!-- Build step embeds the *same* 180px Fôlego PNG directly for iOS 27
+       Add-to-Home-Screen. Its native icon loader may fail a separate URL fetch,
+       even when the image opens normally in Safari. Keep the separate PNG for
+       manifest and backwards compatibility. -->
+  <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="__FOLEGO_IOS_INSTALL_ICON_DATA_URI__">
 
   <link rel="icon" type="image/png" href="favicon.png?v=__FOLEGO_BUILD_VERSION__">
 
