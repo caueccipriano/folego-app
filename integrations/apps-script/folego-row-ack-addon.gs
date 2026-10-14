@@ -43,6 +43,15 @@ function folegoEnviarAckAposGravacao_(opts) {
       .getDisplayValues()[0];
     if (String(row[idColumn]).trim() !== applied.id) return;
     if (seen[applied.id]) return;
+    // Outbox replay: second validation immediately before posting the ACK.
+    // A concurrent edit between the first readback and this readback blocks
+    // the receipt. The expected fingerprint is never sent to the endpoint.
+    if (applied.expected_bu_sha256 !== undefined) {
+      if (typeof applied.expected_bu_sha256 !== 'string' ||
+          !/^[0-9a-f]{64}$/.test(applied.expected_bu_sha256)) return;
+      const business = opts.sheet.getRange(applied.rowNumber, 2, 1, 20).getValues()[0];
+      if (_folegoSyncHash_(business) !== applied.expected_bu_sha256) return;
+    }
     seen[applied.id] = true;
     // Fingerprint only cells actually re-read after the successful write.
     const observed = [idColumn, nameColumn, valueColumn, typeColumn,
