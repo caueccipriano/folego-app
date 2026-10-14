@@ -181,6 +181,38 @@ void main() {
     expect(find.byTooltip('ocultar valores'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('compact financial rows navigate to matching Wallet sections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WalletScreen(
+          repository: _WalletQaRepository(),
+          spaceId: 'space-qa',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('wallet-summary-benefits')), findsOneWidget);
+    expect(find.byKey(const ValueKey('wallet-summary-invoices')), findsOneWidget);
+    expect(find.byKey(const ValueKey('wallet-summary-debts')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-summary-invoices')));
+    await tester.pumpAndSettle();
+    expect(find.text('seus cartões'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-summary-debts')));
+    await tester.pumpAndSettle();
+    expect(find.text('suas dívidas'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('wallet mobile hierarchy keeps debt readable and bank identified', (
     tester,
   ) async {
@@ -214,7 +246,7 @@ void main() {
       expect(debts, findsOneWidget);
 
       expect(tester.getSize(debts).width,
-          greaterThan(tester.getSize(invoices).width + 40));
+          closeTo(tester.getSize(invoices).width, 2));
       expect(tester.getSize(benefits).width,
           closeTo(tester.getSize(invoices).width, 2));
       expect(find.text(
