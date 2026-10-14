@@ -1,0 +1,23 @@
+name: Folego Asaas Sandbox Policy
+on:
+  pull_request:
+    paths:
+      - 'ops/asaas-folego/**'
+      - '.github/workflows/folego-asaas-sandbox.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verified-payment-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run sandbox-only payment policy tests
+        run: node --test ops/asaas-folego/verified-payment-policy.test.mjs
+      - name: Explicit release lock
+        run: |
+          echo 'Sandbox policy unit tests only.'
+          echo 'No Asaas API calls, no Supabase deployment, no customer charges.'
