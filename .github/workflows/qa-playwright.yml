@@ -104,6 +104,8 @@ jobs:
         run: |
           sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/index.html
           sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/manifest.json
+          # Match public production PWA: retain the inline iOS 27 piggy icon.
+          python3 scripts/embed_apple_touch_icon.py
 
       - name: Set up Node
         uses: actions/setup-node@v4
