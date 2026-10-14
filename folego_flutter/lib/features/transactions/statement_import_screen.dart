@@ -738,18 +738,37 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     ]);
 
     if (!desktop) {
-      final itemCount = rows.isEmpty ? 3 : rows.length + 2;
-      return ListView.separated(
-        key: const ValueKey('statement-import-review-mobile'),
-        padding: const EdgeInsets.only(bottom: 12),
-        itemCount: itemCount,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (_, index) {
-          if (index == 0) return header;
-          if (rows.isEmpty && index == 1) return const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: Text('nenhuma linha neste filtro')));
-          if (rows.isNotEmpty && index <= rows.length) return buildRow(rows[index - 1]);
-          return actions;
-        },
+      // The confirmation stays visible even when the statement has 2,000 rows.
+      // No rows are submitted until the user explicitly presses confirm.
+      return Column(
+        key: const ValueKey('statement-import-review-mobile-layout'),
+        children: [
+          Expanded(
+            child: ListView.separated(
+              key: const ValueKey('statement-import-review-mobile'),
+              padding: const EdgeInsets.only(bottom: 14),
+              itemCount: rows.isEmpty ? 2 : rows.length + 1,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (_, index) {
+                if (index == 0) return header;
+                if (rows.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 28),
+                    child: Center(child: Text('nenhuma linha neste filtro')),
+                  );
+                }
+                return buildRow(rows[index - 1]);
+              },
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 6),
+              child: actions,
+            ),
+          ),
+        ],
       );
     }
 
