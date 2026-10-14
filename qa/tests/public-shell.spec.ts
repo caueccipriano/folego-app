@@ -150,6 +150,20 @@ test.describe('Fôlego public PWA shell', () => {
     expect(html).not.toContain('checkout.asaas.com');
   });
 
+  test('second landing presents plans without payment collection', async ({
+    request,
+    baseURL,
+  }) => {
+    const response = await request.get(new URL('conheca/', baseURL!).toString());
+    expect(response.ok()).toBeTruthy();
+    const html = await response.text();
+    expect(html).toContain('Quanto posso gastar sem apertar amanhã?');
+    expect(html).toContain('R$ 9,90');
+    expect(html).toContain('Assinaturas em preparação');
+    expect(html).toContain('../legal/privacy.html');
+    expect(html).not.toContain('checkout.asaas.com');
+  });
+
   test('keeps Flutter surface inside the viewport after resize', async ({
     page,
   }, testInfo) => {
