@@ -37,7 +37,8 @@ function runtime(name, options={}) {
     }
     return new Response(null,{status:204});
    }
-   if(table==='folego_asaas_billing_intents')result=intents;
+   if(table==='premium_grants')result=options.grants??[];
+   else if(table==='folego_asaas_billing_intents')result=intents;
    else if(table==='folego_asaas_subscriptions')result=subscriptions;
    else throw Error('unexpected DB table '+url);
   } else throw Error('network destination not allowed '+url);
@@ -61,6 +62,14 @@ test('API outage requests retry without entitlement',async()=>{const r=runtime(w
 test('cross-user association collision fails closed',async()=>{const r=runtime(webhook,{subscriptions:[{subscription_id:'sub_test',user_id:'user_b',customer_id:'cus_test'}]});assert.equal((await r.call()).status,503);assert.equal(r.subscriptions[0].user_id,'user_b');});
 test('deleted subscription does not create paid access',async()=>{const r=runtime(webhook,{subscription:{deleted:true}});await r.call();assert.equal(r.subscriptions.length,0);});
 test('unconfirmed email cannot start checkout',async()=>{const r=runtime(checkout,{user:{id:'user_a',email:'a@example.test'}});assert.equal((await r.call({}, {authorization:'Bearer '+token})).status,401);assert.equal(r.writes.length,0);});
+test('lifetime Premium prevents checkout and retains previously granted access',async()=>{
+ const r=runtime(checkout,{grants:[{grant_type:'lifetime',valid_until:null}],intents:[]});
+ const response=await r.call({}, {authorization:'Bearer '+token});
+ assert.equal(response.status,409);
+ assert.equal((await response.json()).error,'lifetime_premium_no_checkout');
+ assert.equal(r.writes.length,0);
+ assert.equal(r.calls.filter(u=>u.includes('api-sandbox.asaas.com')).length,0);
+});
 test('browser identity cannot replace authenticated account',async()=>{const r=runtime(checkout,{intents:[]});assert.equal((await r.call({user_id:'user_b',email:'b@example.test'}, {authorization:'Bearer '+token})).status,200);assert.equal(r.writes[0].value.user_id,'user_a');assert.equal(r.writes[0].value.verified_email,'a@example.test');});
 test('wrong price locks checkout',async()=>{const r=runtime(checkout,{link:{value:49.90}});assert.equal((await r.call({}, {authorization:'Bearer '+token})).status,503);assert.equal(r.writes.length,0);});
 test('receipt from another product cannot extend paid period',async()=>{const r=runtime(webhook,{payments:[payment,{...payment,id:'pay_other',paymentLink:'link_other',dueDate:'2027-10-14'}]});await r.call();assert.equal(r.subscriptions[0].verified_payment_id,'pay_test');});
