@@ -179,8 +179,9 @@ test('initial pilot excludes sheet-origin external IDs', () => {
   assert.equal(x.called, 0);
 });
 
-test('ACK is blocked when bidirectional category CAS protection is missing', () => {
+test('ACK fails closed when bidirectional category CAS protection is missing', () => {
   const x = environment({ enabled: true, categoriesInstalled: false });
-  x.run();
+  assert.throws(() => x.run(), /ack_categories_guard_missing/);
   assert.equal(x.called, 0);
+  assert.equal(x.cursor, '2026-10-01T00:00:00.000Z');
 });
