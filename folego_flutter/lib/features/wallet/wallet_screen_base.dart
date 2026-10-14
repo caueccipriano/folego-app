@@ -511,29 +511,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 emphasized: true,
               ),
               const SizedBox(height: spacing),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _PositionMetricCard(
-                      key: const ValueKey('wallet-summary-benefits'),
-                      metric: metrics[1],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _PositionMetricCard(
-                      key: const ValueKey('wallet-summary-invoices'),
-                      metric: metrics[2],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: spacing),
-              _PositionMetricCard(
-                key: const ValueKey('wallet-summary-debts'),
-                metric: metrics[3],
-              ),
+              _CompactPositionBreakdown(metrics: metrics.sublist(1)),
             ],
           );
         }
@@ -785,6 +763,101 @@ class _PositionMetric {
   final String? subtitle;
   final String? helperText;
   final VoidCallback? onTap;
+}
+
+/// Keeps secondary Wallet figures readable and accessible on small phones.
+class _CompactPositionBreakdown extends StatelessWidget {
+  const _CompactPositionBreakdown({required this.metrics});
+
+  final List<_PositionMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final border = AppColors.border(brightness);
+    const keys = [
+      'wallet-summary-benefits',
+      'wallet-summary-invoices',
+      'wallet-summary-debts',
+    ];
+
+    return Material(
+      color: AppColors.surface(brightness),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        side: BorderSide(color: border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < metrics.length; i++) ...[
+            if (i > 0) Divider(height: 1, thickness: 1, color: border),
+            InkWell(
+              key: ValueKey(keys[i]),
+              onTap: metrics[i].onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 13,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      metrics[i].icon,
+                      size: 17,
+                      color: AppColors.primaryPurple(brightness),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      flex: 5,
+                      child: Text(
+                        metrics[i].label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 12,
+                          color: AppColors.secondaryText(brightness),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      flex: 4,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            Formatters.money(metrics[i].value),
+                            maxLines: 1,
+                            style: AppTypography.money(
+                              context,
+                              fontSize: 16,
+                              color: metrics[i].value < 0
+                                  ? AppColors.expenseText(brightness)
+                                  : AppColors.primaryText(brightness),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Icon(
+                      AppIcons.chevronRight,
+                      size: 14,
+                      color: AppColors.secondaryText(brightness),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _PositionMetricCard extends StatelessWidget {
