@@ -10,7 +10,8 @@ void main() {
 
       expect(index, contains('viewport-fit=cover'));
       expect(index, contains('apple-mobile-web-app-capable'));
-      expect(index, contains('apple-touch-icon.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(index, contains('href="__FOLEGO_IOS_INSTALL_ICON_DATA_URI__"'));
+      expect(index, isNot(contains('apple-touch-icon.png?v=')));
       expect(index, contains('apple-mobile-web-app-status-bar-style'));
       expect(
         index,
@@ -23,10 +24,11 @@ void main() {
       expect(index, isNot(contains('position: fixed !important')));
       expect(index, isNot(contains('height: 100dvh !important')));
       expect(index, contains('Do not size or position flutter-view here.'));
+      expect(index, contains('ios-pwa-geometry-20260919-v3'));
+      expect(index, contains('folego-shell-'));
       expect(index, contains("const repairVersion = '__FOLEGO_BUILD_VERSION__'"));
       expect(index, isNot(contains('localStorage.clear(')));
       expect(index, isNot(contains('registration.unregister(')));
-      expect(index, contains('folego-shell-'));
       expect(index, isNot(contains(r'</script>\n')));
 
       final zoomFix = index.indexOf('folego_ios_zoom_fix.js');
@@ -41,7 +43,6 @@ void main() {
     test('approved piggy bank stays canonical across app branding', () {
       final logo = File('web/icons/folego-logo.svg').readAsStringSync();
       final index = File('web/index.html').readAsStringSync();
-      final manifest = File('web/manifest.json').readAsStringSync();
       final auth = File(
         'lib/features/auth/auth_widgets.dart',
       ).readAsStringSync();
@@ -52,9 +53,15 @@ void main() {
       expect(logo, contains('Fôlego — porquinho'));
       expect(logo, contains('data:image/png;base64,'));
       expect(index, contains('icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__'));
-      expect(manifest, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
       expect(workflow, contains('web/icons/folego-logo.svg'));
+      expect(workflow, contains('build/web/apple-touch-icon-ios-v2.png'));
+      expect(workflow, contains('cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png'));
+      expect(workflow, contains('embed_apple_touch_icon.py'));
+      expect(File('scripts/embed_apple_touch_icon.py').readAsStringSync(), contains('data:image/png;base64,'));
+      final generator = File('scripts/generate_brand_icons.sh').readAsStringSync();
+      expect(generator, contains('cp web/apple-touch-icon.png web/apple-touch-icon-ios-v2.png'));
     });
 
     test('manifest is installable inside the GitHub Pages app scope', () {
@@ -67,6 +74,7 @@ void main() {
       expect(manifest['scope'], './');
       expect(manifest['display'], 'standalone');
       expect(manifest['lang'], 'pt-BR');
+      expect((manifest['icons'] as List).any((icon) => icon['src'] == 'apple-touch-icon-ios-v2.png' && icon['sizes'] == '180x180'), isTrue);
 
       final icons = (manifest['icons'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
