@@ -65,6 +65,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
   String? _error;
   String? _realizingKey;
   AgendaFilter _filter = AgendaFilter.all;
+  bool _groupByMonth = false;
   List<UpcomingFinancialEvent> _events = const [];
 
   @override
@@ -264,8 +265,15 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
     final visible = _visibleEvents;
     final summary = AgendaSummary.nextDays(_events);
     final grouped = <AgendaSection, List<UpcomingFinancialEvent>>{};
+    final monthly = <DateTime, List<UpcomingFinancialEvent>>{};
     for (final event in visible) {
       grouped.putIfAbsent(event.section, () => []).add(event);
+      final month = DateTime(event.dueDate.year, event.dueDate.month);
+      monthly.putIfAbsent(month, () => []).add(event);
+    }
+    final sortedMonths = monthly.keys.toList()..sort();
+    for (final events in monthly.values) {
+      events.sort((a, b) => a.dueDate.compareTo(b.dueDate));
     }
 
     return RefreshIndicator(
@@ -297,9 +305,47 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
               }).toList(growable: false),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              ChoiceChip(
+                key: const ValueKey('agenda-view-urgency'),
+                label: const Text('por urgência'),
+                selected: !_groupByMonth,
+                onSelected: (_) => setState(() => _groupByMonth = false),
+              ),
+              ChoiceChip(
+                key: const ValueKey('agenda-view-month'),
+                label: const Text('por mês'),
+                selected: _groupByMonth,
+                onSelected: (_) => setState(() => _groupByMonth = true),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           if (visible.isEmpty)
             const _AgendaEmpty()
+          else if (_groupByMonth)
+            for (final month in sortedMonths) ...[
+              _AgendaSectionHeader(
+                label: Formatters.monthYear.format(month),
+                count: monthly[month]!.length,
+                overdue: false,
+              ),
+              const SizedBox(height: 9),
+              ...monthly[month]!.map((event) => Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: _AgendaEventCard(
+                  event: event,
+                  realizing: _realizingKey == event.eventKey,
+                  onTap: () => _openEvent(event),
+                  onRealize: event.isRecurring ? () => _realize(event) : null,
+                ),
+              )),
+              const SizedBox(height: 13),
+            ]
           else
             for (final section in AgendaSection.values)
               if (grouped[section]?.isNotEmpty == true) ...[
