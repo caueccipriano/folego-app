@@ -47,7 +47,8 @@ class FolegoRepository {
           .from('financial_events')
           .select(columns)
           .eq('space_id', spaceId)
-          .eq('source', 'sheet-sync')
+          // App-originated items are shown ONLY after a current-version ACK.
+          .inFilter('source', const ['sheet-sync', 'app'])
           .eq('status', 'confirmed')
           .order('occurred_at', ascending: false)
           .limit(50),
@@ -66,19 +67,23 @@ class FolegoRepository {
             .map(SheetAuditItem.fromJson)
             .toList(growable: false);
 
-    final sample = mergeSheetAuditSamples(
-      recent: parse(queries[0]),
-      pending: parse(queries[1]),
-    );
-    if (sample.isEmpty) return sample;
+    final recent = parse(queries[0]);
+    final pending = parse(queries[1]);
+    // Ask for acknowledgements BEFORE filtering app-originated events, or
+    // genuine app→sheet receipts would be permanently invisible.
+    final candidates = <String, SheetAuditItem>{};
+    for (final event in recent.followedBy(pending)) {
+      if (!event.hidden) candidates[event.id] = event;
+    }
+    if (candidates.isEmpty) return const [];
 
-    // A receipt is accepted only when it matches this event's CURRENT
-    // updated_at. The member-scoped RPC excludes stale revisions and secrets.
+    // Member-scoped RPC exposes only current-version receipts and no tokens.
+    // The sample is bounded to at most 50 recent + 100 pending IDs.
     final ackResponse = await _client.rpc(
       'get_folego_sheet_delivery_receipts',
       params: {
         'p_space_id': spaceId,
-        'p_event_ids': sample.map((e) => e.id).toList(growable: false),
+        'p_event_ids': candidates.keys.toList(growable: false),
       },
     );
     final ackDates = <String, DateTime>{};
@@ -90,10 +95,17 @@ class FolegoRepository {
       final parsed = DateTime.tryParse(acknowledged);
       if (parsed != null) ackDates[eventId] = parsed.toLocal();
     }
-    return sample.map((event) {
+    Iterable<SheetAuditItem> withAcknowledgements(
+      Iterable<SheetAuditItem> events,
+    ) => events.map((event) {
       final date = ackDates[event.id];
       return date == null ? event : event.withSheetAppliedAt(date);
-    }).toList(growable: false);
+    });
+
+    return mergeSheetAuditSamples(
+      recent: withAcknowledgements(recent),
+      pending: withAcknowledgements(pending),
+    );
   }
 
   Future<FinancialSpace> getPrimarySpace() async {
