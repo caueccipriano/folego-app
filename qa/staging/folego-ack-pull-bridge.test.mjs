@@ -2,8 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import crypto from 'node:crypto';
 
 const source = readFileSync('integrations/apps-script/FolegoSync.gs', 'utf8');
+const retrySource = readFileSync('integrations/apps-script/FolegoAckRetry.gs', 'utf8');
 const remote = Object.freeze({
   id: 'event:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   updated_at: '2026-10-14T10:00:00.000Z',
@@ -47,14 +49,25 @@ function environment({
   const script = {
     Number, Date, Map, Array, String, JSON, Error, console: { log() {} },
     SpreadsheetApp: { flush() { flushed++; } },
+    Utilities: {
+      DigestAlgorithm: { SHA_256: 'sha256' },
+      Charset: { UTF_8: 'utf8' },
+      computeDigest(algorithm, value) {
+        assert.equal(algorithm, 'sha256');
+        return [...crypto.createHash('sha256').update(value).digest()];
+      },
+    },
     PropertiesService: {
       getScriptProperties: () => ({
         getProperty: (key) => properties[key] ?? null,
         setProperty: (key, value) => { properties[key] = value; },
+        getProperties: () => ({ ...properties }),
+        deleteProperty: (key) => { delete properties[key]; },
       }),
     },
   };
   runInNewContext(source, script);
+  runInNewContext(retrySource, script);
   const sheet = {
     getMaxRows: () => 15,
     getRange(row, col, length, width) {
@@ -78,7 +91,7 @@ function environment({
       applied = opts.applied;
       assert.equal(opts.token, 'synthetic-token');
       assert.match(opts.endpoint, /\/sheet-row-ack$/);
-      return opts.applied.map(() => ({ status: ackStatus }));
+      return opts.applied.map((item) => ({ id: item.id, status: ackStatus }));
     };
   }
   return {
@@ -129,10 +142,11 @@ test('matching existing row can be checked but never changes its values', () => 
   assert.equal(x.called, 1);
 });
 
-test('without add-on, sync remains read/write operational and does not claim ACK', () => {
+test('missing addon fails closed before new rows or cursor changes', () => {
   const x = environment({enabled:true, addon:false});
-  x.run();
+  assert.throws(() => x.run(), /ack_retry_support_missing/);
   assert.equal(x.called, 0);
+  assert.equal(x.cursor, '2026-10-01T00:00:00.000Z');
 });
 
 test('stale or disputed response is not silently promoted to receipt', () => {
