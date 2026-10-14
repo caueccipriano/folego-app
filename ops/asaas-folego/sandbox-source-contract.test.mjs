@@ -35,3 +35,11 @@ test("sandbox functions do not enable real charging or client-granted benefits",
  assert.match(webhook,/folego_asaas_events/);
  assert.match(webhook,/folego_asaas_subscriptions/);
 });
+
+test("pioneer lifetime Premium is server-side protected from checkout",()=>{
+ assert.match(checkout,/premium_grants\?user_id=eq\./);
+ assert.match(checkout,/g\.grant_type==="lifetime"&&g\.valid_until==null/);
+ assert.match(checkout,/error:"lifetime_premium_no_checkout"/);
+ assert.match(checkout,/amount:0,paymentConfirmed:false,premium:true/);
+ assert.doesNotMatch(checkout,/api\.asaas\.com\/v3/);
+});
