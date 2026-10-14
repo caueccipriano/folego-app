@@ -23,7 +23,9 @@ void main() {
       expect(index, isNot(contains('position: fixed !important')));
       expect(index, isNot(contains('height: 100dvh !important')));
       expect(index, contains('Do not size or position flutter-view here.'));
-      expect(index, contains('ios-pwa-geometry-20260919-v3'));
+      expect(index, contains("const repairVersion = '__FOLEGO_BUILD_VERSION__'"));
+      expect(index, isNot(contains('localStorage.clear(')));
+      expect(index, isNot(contains('registration.unregister(')));
       expect(index, contains('folego-shell-'));
       expect(index, isNot(contains(r'</script>\n')));
 
