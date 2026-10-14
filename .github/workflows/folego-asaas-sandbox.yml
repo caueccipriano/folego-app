@@ -16,7 +16,14 @@ jobs:
         with:
           node-version: '22'
       - name: Run sandbox-only payment policy tests
-        run: node --test ops/asaas-folego/verified-payment-policy.test.mjs
+        run: node --test ops/asaas-folego/*.test.mjs
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check sandbox Edge Functions without deploying
+        run: |
+          deno check supabase/functions/folego-asaas-checkout-sandbox/index.ts
+          deno check supabase/functions/folego-asaas-webhook-sandbox/index.ts
       - name: Explicit release lock
         run: |
           echo 'Sandbox policy unit tests only.'
