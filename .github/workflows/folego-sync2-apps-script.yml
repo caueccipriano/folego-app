@@ -43,7 +43,8 @@ jobs:
           node --test \
             qa/staging/folego-ack-double-readback.test.mjs \
             qa/staging/folego-ack-pull-bridge.test.mjs \
-            qa/staging/folego-ack-retry-queue.test.mjs
+            qa/staging/folego-ack-retry-queue.test.mjs \
+            qa/staging/folego-ack-transfer-review.test.mjs
 
   remote:
     name: Inspect or install in the EXISTING Apps Script project
