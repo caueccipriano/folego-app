@@ -302,6 +302,9 @@ function _folegoSyncPull_(spreadsheet) {
     limit: FOLEGO_SYNC_CONFIG.maxPullPerRun,
   });
   const rows = Array.isArray(response.rows) ? response.rows : [];
+  // Disabled by default: the ACK backend and add-on must be verified first.
+  const ackEnabled = props.getProperty('FOLEGO_SHEET_ACK_ENABLED') === 'true';
+  const ackCandidates = [];
 
   if (!rows.length) {
     if (response.cursor) props.setProperty('FOLEGO_SYNC_CURSOR', String(response.cursor));
@@ -339,9 +342,72 @@ function _folegoSyncPull_(spreadsheet) {
     if (row.event_type === 'card_purchase') {
       _folegoSyncEnsureCardPurchase_(spreadsheet, row);
     }
+
+    // Attest only an applied, re-observed Fôlego-originated row; never infer
+    // success from HTTP 200, a preexisting ID, or the PULLED status alone.
+    if (ackEnabled && _folegoSyncAckCandidate_(launches, targetRow, row)) {
+      ackCandidates.push({
+        rowNumber: targetRow,
+        id,
+        updated_at: row.updated_at,
+      });
+    }
+  }
+
+  if (ackEnabled && ackCandidates.length) {
+    if (typeof folegoEnviarAckAposGravacao_ !== 'function') {
+      console.log('FÔLEGO ACK: complemento não instalado; nenhum recibo enviado.');
+    } else {
+      try {
+        const ackUrl = FOLEGO_SYNC_CONFIG.endpoint.replace(/\/sheet-sync$/, '/sheet-row-ack');
+        const results = folegoEnviarAckAposGravacao_({
+          sheet: launches,
+          endpoint: ackUrl,
+          spreadsheetId: FOLEGO_SYNC_CONFIG.spreadsheetId,
+          token: props.getProperty('FOLEGO_SYNC_TOKEN'),
+          applied: ackCandidates,
+        });
+        const accepted = results.filter(function (r) {
+          return r.status === 'applied' || r.status === 'already_acknowledged';
+        }).length;
+        console.log(JSON.stringify({
+          event: 'folego_ack_first_phase',
+          candidates: ackCandidates.length,
+          accepted,
+          unresolved: ackCandidates.length - accepted,
+        }));
+      } catch (error) {
+        // Keep the legacy synchronization running; no financial writes depend
+        // on this optional operational receipt service.
+        console.log('FÔLEGO ACK: envio não confirmado. Sem mudanças financeiras.');
+      }
+    }
   }
 
   if (response.cursor) props.setProperty('FOLEGO_SYNC_CURSOR', String(response.cursor));
+}
+
+/** Post-write guard: rejects old or locally edited rows rather than issuing
+ * false receipts. The server checks the backend event/version again.
+ */
+function _folegoSyncAckCandidate_(sheet, rowNumber, remote) {
+  if (!remote || !remote.updated_at || !Number.isFinite(Date.parse(remote.updated_at))
+      || !Number.isInteger(rowNumber) || rowNumber < FOLEGO_SYNC_CONFIG.firstDataRow) {
+    return false;
+  }
+  SpreadsheetApp.flush();
+  const cells = sheet.getRange(rowNumber, 2, 1, 20).getValues()[0]; // B:U
+  const label = function (value) { return _folegoSyncNormalize_(value); };
+  if (String(cells[0] || '').trim() !== String(remote.id || '').trim()) return false;
+  if (label(cells[9]) !== 'folego app' || label(cells[8]) !== 'confirmado'
+      || label(cells[19]) !== 'pulled') return false;
+  if (String(cells[3] || '').trim() !== String(remote.description || '').trim()) return false;
+  if (!Number.isFinite(Number(cells[4])) ||
+      Math.abs(Number(cells[4]) - Number(remote.amount)) > 0.005) return false;
+  if (label(cells[5]) !== label(remote.type)) return false;
+  if (label(cells[7]) !== label(remote.account_card)) return false;
+  if (label(cells[6]) !== label(_folegoSyncLegacyCategoryForRow_(remote))) return false;
+  return true;
 }
 
 function _folegoSyncUpdateExistingLaunch_(sheet, targetRow, row) {
