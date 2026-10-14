@@ -21,7 +21,8 @@ permissions:
   id-token: write
 
 concurrency:
-  # Prevent preview builds from cancelling production deployment.
+  # Pull-request preview builds must never cancel or queue the public PWA deployment.
+  # One serial group per ref keeps repeat production pushes supersedable.
   group: github-pages-${{ github.ref }}
   cancel-in-progress: true
 
