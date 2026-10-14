@@ -13,6 +13,7 @@ final class SheetAuditItem {
     required this.needsClassification,
     required this.hidden,
     required this.sheetLinked,
+    this.sheetAppliedAt,
   });
 
   final String id;
@@ -24,6 +25,8 @@ final class SheetAuditItem {
   final bool needsClassification;
   final bool hidden;
   final bool sheetLinked;
+  /// Sheet-side post-write ACK, only for the current backend event version.
+  final DateTime? sheetAppliedAt;
 
   static bool _flag(dynamic value) =>
       value == true || value?.toString().toLowerCase() == 'true';
@@ -46,6 +49,19 @@ final class SheetAuditItem {
     );
   }
 
+  SheetAuditItem withSheetAppliedAt(DateTime at) => SheetAuditItem(
+    id: id,
+    description: description,
+    amount: amount,
+    occurredAt: occurredAt,
+    eventType: eventType,
+    categoryId: categoryId,
+    needsClassification: needsClassification,
+    hidden: hidden,
+    sheetLinked: sheetLinked,
+    sheetAppliedAt: at,
+  );
+
   bool get needsReview => needsClassification && !hidden;
 
   /// Only the flagged economic classification is actionable from this audit.
@@ -55,6 +71,7 @@ final class SheetAuditItem {
       return 'Categoria pendente';
     }
     if (needsReview) return 'Conferir categoria';
+    if (sheetAppliedAt != null) return 'Aplicação confirmada pela planilha';
     return 'Sem confirmação de retorno da planilha';
   }
 }

@@ -66,10 +66,34 @@ class FolegoRepository {
             .map(SheetAuditItem.fromJson)
             .toList(growable: false);
 
-    return mergeSheetAuditSamples(
+    final sample = mergeSheetAuditSamples(
       recent: parse(queries[0]),
       pending: parse(queries[1]),
     );
+    if (sample.isEmpty) return sample;
+
+    // A receipt is accepted only when it matches this event's CURRENT
+    // updated_at. The member-scoped RPC excludes stale revisions and secrets.
+    final ackResponse = await _client.rpc(
+      'get_folego_sheet_delivery_receipts',
+      params: {
+        'p_space_id': spaceId,
+        'p_event_ids': sample.map((e) => e.id).toList(growable: false),
+      },
+    );
+    final ackDates = <String, DateTime>{};
+    for (final raw in ackResponse as List<dynamic>) {
+      final row = Map<String, dynamic>.from(raw as Map);
+      final eventId = row['event_id'];
+      final acknowledged = row['acknowledged_at'];
+      if (eventId is! String || acknowledged is! String) continue;
+      final parsed = DateTime.tryParse(acknowledged);
+      if (parsed != null) ackDates[eventId] = parsed.toLocal();
+    }
+    return sample.map((event) {
+      final date = ackDates[event.id];
+      return date == null ? event : event.withSheetAppliedAt(date);
+    }).toList(growable: false);
   }
 
   Future<FinancialSpace> getPrimarySpace() async {

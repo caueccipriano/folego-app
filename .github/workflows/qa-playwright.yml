@@ -110,6 +110,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Verify sheet ACK protocol (synthetic only)
+        run: node --test qa/staging/sheet-row-ack-contract.test.mjs
+
       - name: Verify isolated staging guard (synthetic only)
         run: node --test qa/staging/staging-guard.test.mjs
 

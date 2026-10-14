@@ -50,6 +50,19 @@ void main() {
     expect(_entry('y', review: true).reviewLabel, 'Categoria pendente');
   });
 
+  test('only explicit latest-version ACK changes the row label', () {
+    final withoutReceipt = _entry('linked', category: 'cat-1');
+    expect(withoutReceipt.reviewLabel, 'Sem confirmação de retorno da planilha');
+    final withReceipt = withoutReceipt.withSheetAppliedAt(
+      DateTime.utc(2026, 10, 14, 3, 0),
+    );
+    expect(withReceipt.reviewLabel, 'Aplicação confirmada pela planilha');
+    // A classification still awaiting manual review is NOT reconciled.
+    final manualReview = _entry('review', review: true, category: 'cat-1')
+        .withSheetAppliedAt(DateTime.utc(2026, 10, 14, 3, 0));
+    expect(manualReview.reviewLabel, 'Conferir categoria');
+  });
+
   test('samples remove hidden/unlinked duplicates and prioritize reviews', () {
     final sample = mergeSheetAuditSamples(
       recent: [
@@ -86,6 +99,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sheet-audit-all')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('sheet-audit-row-other')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('sheet-audit-ack-summary')),
+        findsOneWidget);
+    expect(find.textContaining('0 aplicação(ões) confirmada(s)'),
         findsOneWidget);
 
     FinancialPrivacy.hidden.value = true;

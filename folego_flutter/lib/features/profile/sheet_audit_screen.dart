@@ -88,6 +88,7 @@ class _SheetAuditScreenState extends State<SheetAuditScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final reviewCount = _items.where((e) => e.needsReview).length;
+    final appliedCount = _items.where((e) => e.sheetAppliedAt != null).length;
     final visible = _onlyReview
         ? _items.where((e) => e.needsReview).toList(growable: false)
         : _items;
@@ -157,6 +158,14 @@ class _SheetAuditScreenState extends State<SheetAuditScreen> {
                       onSelected: (_) => setState(() => _onlyReview = false),
                     ),
                   ],
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  '$appliedCount aplicação(ões) confirmada(s) pela planilha '
+                  'nesta amostra. Confirmação por linha não é conciliação '
+                  'completa dos saldos.',
+                  key: const ValueKey('sheet-audit-ack-summary'),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 10),
                 if (visible.isEmpty)
