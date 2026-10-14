@@ -18,6 +18,8 @@ rsvg-convert -w 192 -h 192 web/icons/folego-logo-maskable.svg -o web/icons/Icon-
 # iOS Safari may look for apple-touch-icon.png at the site's root even when
 # a manifest exists. Always generate a real, opaque 180px PNG there.
 rsvg-convert -w 180 -h 180 web/icons/folego-logo.svg -o web/apple-touch-icon.png
+# Dedicated, no-query iOS installation URL. New filename bypasses earlier cached monogram.
+cp web/apple-touch-icon.png web/apple-touch-icon-ios-v2.png
 # Keep the legacy path valid for older iOS bookmarks and links.
 cp web/apple-touch-icon.png web/icons/Icon-180.png
 rsvg-convert -w 64 -h 64 web/icons/folego-logo.svg -o web/favicon.png
@@ -29,6 +31,7 @@ import struct
 
 icons = {
     "web/apple-touch-icon.png": 180,
+    "web/apple-touch-icon-ios-v2.png": 180,
     "web/icons/Icon-180.png": 180,
     "web/icons/Icon-192.png": 192,
     "web/icons/Icon-maskable-192.png": 192,
