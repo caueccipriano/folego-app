@@ -11,20 +11,37 @@ const remote = Object.freeze({
   source: 'Fôlego App',
   event_type: 'expense',
   description: 'Conta fictícia',
+  occurred_at: '2026-10-14T09:30:00.000Z',
+  payment_method: 'Conta',
   amount: 42.50,
   type: 'Despesa',
   account_card: 'Teste',
   category: 'Moradia',
 });
 
-function environment({ enabled = false, existing = false, mismatch = false, ackStatus = 'applied', addon = true } = {}) {
+function environment({
+  enabled = false, existing = false, mismatch = false,
+  mismatchDate = false, mismatchPayment = false, duplicateId = false,
+  externalRow = false, ackStatus = 'applied', addon = true,
+} = {}) {
   const properties = {
     FOLEGO_SHEET_ACK_ENABLED: String(enabled),
     FOLEGO_SYNC_TOKEN: 'synthetic-token',
     FOLEGO_SYNC_CURSOR: '2026-10-01T00:00:00.000Z',
   };
   const observed = new Map();
-  if (existing) observed.set(5, buildCells({ ...remote, category: mismatch ? 'Outra' : remote.category }));
+  const payload = externalRow ? { ...remote, id: 'legacy-sheet-row-123' } : remote;
+  if (existing) {
+    observed.set(5, buildCells({
+      ...payload, category: mismatch ? 'Outra' : remote.category,
+      occurred_at: mismatchDate ? '2026-10-13T09:30:00.000Z' : remote.occurred_at,
+      payment_method: mismatchPayment ? 'Cartão' : remote.payment_method,
+    }));
+  }
+  if (duplicateId) {
+    observed.set(6, buildCells(payload));
+    if (!existing) observed.set(5, buildCells(payload));
+  }
   let called = 0, flushed = 0, applied = null;
   const script = {
     Number, Date, Map, Array, String, JSON, Error, console: { log() {} },
@@ -50,7 +67,7 @@ function environment({ enabled = false, existing = false, mismatch = false, ackS
     },
   };
   const book = { getSheetByName: () => sheet };
-  script._folegoSyncApi_ = () => ({ rows: [remote], cursor: '2026-10-14T10:00:00.000Z' });
+  script._folegoSyncApi_ = () => ({ rows: [payload], cursor: '2026-10-14T10:00:00.000Z' });
   script._folegoSyncFirstEmptyIdRow_ = () => 5;
   script._folegoSyncAppendLaunch_ = (_, rowNumber, item) => { observed.set(rowNumber, buildCells(item)); };
   script._folegoSyncUpdateExistingLaunch_ = () => {};
@@ -74,7 +91,9 @@ function environment({ enabled = false, existing = false, mismatch = false, ackS
 
 function buildCells(item) {
   const cells = Array(20).fill('');
-  cells[0] = item.id; cells[3] = item.description; cells[4] = item.amount;
+  cells[0] = item.id; cells[1] = new Date(item.occurred_at);
+  cells[2] = item.payment_method;
+  cells[3] = item.description; cells[4] = item.amount;
   cells[5] = item.type; cells[6] = item.category; cells[7] = item.account_card;
   cells[8] = 'Confirmado'; cells[9] = 'Fôlego App'; cells[19] = 'PULLED';
   return cells;
@@ -120,4 +139,28 @@ test('stale or disputed response is not silently promoted to receipt', () => {
   x.run();
   assert.equal(x.called, 1);
   assert.equal(x.cursor, '2026-10-14T10:00:00.000Z');
+});
+
+test('no receipt for a timestamp changed in the spreadsheet', () => {
+  const x = environment({ enabled: true, existing: true, mismatchDate: true });
+  x.run();
+  assert.equal(x.called, 0);
+});
+
+test('no receipt for a locally changed payment method', () => {
+  const x = environment({ enabled: true, existing: true, mismatchPayment: true });
+  x.run();
+  assert.equal(x.called, 0);
+});
+
+test('duplicate row identifiers are never acknowledged', () => {
+  const x = environment({ enabled: true, existing: true, duplicateId: true });
+  x.run();
+  assert.equal(x.called, 0);
+});
+
+test('initial pilot excludes sheet-origin external IDs', () => {
+  const x = environment({ enabled: true, existing: true, externalRow: true });
+  x.run();
+  assert.equal(x.called, 0);
 });
