@@ -43,14 +43,15 @@ class _PremiumSandboxScreenState extends State<PremiumSandboxScreen> {
       if (data is! Map || data['environment'] != 'sandbox') {
         throw StateError('invalid_billing_status');
       }
+      final billing = Map<String, dynamic>.from(data);
       if (!mounted) return;
       setState(() {
-        _ready = data['ready'] == true;
-        _confirmed = data['paymentConfirmed'] == true;
-        _paidUntil = data['paidUntil'] as String?;
+        _ready = billing['ready'] == true;
+        _confirmed = billing['paymentConfirmed'] == true;
+        _paidUntil = billing['paidUntil'] as String?;
         _status = _confirmed
             ? 'pagamento fictício confirmado pelo backend'
-            : data['status'] == 'pending_or_expired'
+            : billing['status'] == 'pending_or_expired'
                 ? 'pagamento pendente ou período encerrado'
                 : 'nenhuma assinatura de teste confirmada';
       });
