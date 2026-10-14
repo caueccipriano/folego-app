@@ -48,19 +48,16 @@ extension FolegoRepositoryTransactionClassification on FolegoRepository {
           'refund',
           'debt_payment',
         ])
+        // Filter *before* pagination. Filtering a page of the 500 newest
+        // general transactions can hide older pending classifications.
+        .eq('metadata->>needs_classification', 'true')
         .order('occurred_at', ascending: false)
         .limit(limit);
 
     final rows = List<Map<String, dynamic>>.from(response);
     return rows
         .where((row) {
-          final metadata = row['metadata'];
-          if (metadata is! Map) return false;
-          final value = metadata['needs_classification'];
-          final pending = value == true || value?.toString().toLowerCase() == 'true';
-          final hidden = metadata['hidden'] == true ||
-              metadata['hidden']?.toString().toLowerCase() == 'true';
-          return pending && !hidden;
+          return isVisiblePendingClassificationMetadata(row['metadata']);
         })
         .map(TransactionItem.fromJson)
         .toList(growable: false);
@@ -106,4 +103,17 @@ String? transactionClassificationKind(String eventType) {
   }
 
   return null;
+}
+
+
+/// Defense-in-depth after the database's JSON filter. Hidden or malformed
+/// entries are never displayed for classification.
+bool isVisiblePendingClassificationMetadata(dynamic metadata) {
+  if (metadata is! Map) return false;
+  final value = metadata['needs_classification'];
+  final pending =
+      value == true || value?.toString().toLowerCase() == 'true';
+  final hidden = metadata['hidden'] == true ||
+      metadata['hidden']?.toString().toLowerCase() == 'true';
+  return pending && !hidden;
 }

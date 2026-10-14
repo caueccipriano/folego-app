@@ -36,6 +36,7 @@ import 'subscriptions_tab.dart';
 import 'transaction_detail_sheet.dart';
 import 'transaction_edit_sheet.dart';
 import 'transaction_filter_sheet.dart';
+import 'classification_review_overview.dart';
 
 part 'transactions_recurring_widgets_v3.dart';
 
@@ -64,6 +65,7 @@ class TransactionsScreenV3 extends StatefulWidget {
     this.onClassificationRequested,
     this.pendingClassificationCount = 0,
     this.pendingClassificationLoading = false,
+    this.pendingClassificationUnavailable = false,
   });
 
   final FolegoRepository repository;
@@ -76,6 +78,7 @@ class TransactionsScreenV3 extends StatefulWidget {
   final VoidCallback? onClassificationRequested;
   final int pendingClassificationCount;
   final bool pendingClassificationLoading;
+  final bool pendingClassificationUnavailable;
 
   @override
   State<TransactionsScreenV3> createState() => _TransactionsScreenV3State();
@@ -866,13 +869,11 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                     key: const ValueKey(
                                       'transaction-classification-inbox',
                                     ),
-                                    tooltip:
-                                        widget.pendingClassificationLoading
-                                            ? 'classificar lançamentos'
-                                            : widget.pendingClassificationCount >
-                                                    0
-                                                ? 'classificar ${widget.pendingClassificationCount} pendentes'
-                                                : 'classificar lançamentos',
+                                    tooltip: pendingClassificationTooltip(
+                                      loading: widget.pendingClassificationLoading,
+                                      unavailable: widget.pendingClassificationUnavailable,
+                                      pendingCount: widget.pendingClassificationCount,
+                                    ),
                                     onPressed:
                                         widget.onClassificationRequested,
                                     style: IconButton.styleFrom(
@@ -884,13 +885,17 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                     icon: Badge(
                                       isLabelVisible:
                                           !widget.pendingClassificationLoading &&
-                                              widget.pendingClassificationCount >
-                                                  0,
+                                              !widget.pendingClassificationUnavailable &&
+                                              widget.pendingClassificationCount > 0,
                                       label: Text(
                                         '${widget.pendingClassificationCount}',
                                       ),
                                       child: Icon(
-                                        widget.pendingClassificationCount > 0
+                                        widget.pendingClassificationUnavailable
+                                            ? AppIcons.warning
+                                            : widget.pendingClassificationLoading
+                                            ? AppIcons.refresh
+                                            : widget.pendingClassificationCount > 0
                                             ? AppIcons.categoryUnclassified
                                             : AppIcons.check,
                                         size: 19,

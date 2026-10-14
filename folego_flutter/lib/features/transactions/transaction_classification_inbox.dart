@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'classification_review_overview.dart';
+
 import '../../core/entitlements/feature_entitlements.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
@@ -932,7 +934,9 @@ class _TransactionClassificationInboxState
                               ? 'tudo em dia por aqui'
                               : widget.batchSize != null
                               ? '$_batchDone/$_batchTarget neste lote • ${_items.length} pendentes no total'
-                              : '${_items.length} pendente${_items.length == 1 ? '' : 's'} • escolha categoria e subcategoria',
+                              : ClassificationReviewOverview.fromItems(
+                                  _items,
+                                ).description,
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
@@ -1099,7 +1103,7 @@ class _TransactionClassificationInboxState
                   border: Border(top: BorderSide(color: border)),
                 ),
                 child: Text(
-                  'Classificar não altera valor, data, saldo ou parcela. A planilha recebe a categoria no próximo ciclo de sincronização.',
+                  'Classificar não altera valor, data, saldo ou parcela. Se a planilha estiver conectada, a categoria poderá ser enviada na próxima sincronização; confira o status em Perfil.',
                   textAlign: TextAlign.center,
                   style: AppTypography.body(
                     context,
