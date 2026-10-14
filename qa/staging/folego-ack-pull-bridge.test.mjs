@@ -20,12 +20,13 @@ const remote = Object.freeze({
 });
 
 function environment({
-  enabled = false, existing = false, mismatch = false,
+  enabled = false, categoriesInstalled = true, existing = false, mismatch = false,
   mismatchDate = false, mismatchPayment = false, duplicateId = false,
   externalRow = false, ackStatus = 'applied', addon = true,
 } = {}) {
   const properties = {
     FOLEGO_SHEET_ACK_ENABLED: String(enabled),
+    FOLEGO_CATEGORIES_INSTALLED: String(categoriesInstalled),
     FOLEGO_SYNC_TOKEN: 'synthetic-token',
     FOLEGO_SYNC_CURSOR: '2026-10-01T00:00:00.000Z',
   };
@@ -161,6 +162,12 @@ test('duplicate row identifiers are never acknowledged', () => {
 
 test('initial pilot excludes sheet-origin external IDs', () => {
   const x = environment({ enabled: true, existing: true, externalRow: true });
+  x.run();
+  assert.equal(x.called, 0);
+});
+
+test('ACK is blocked when bidirectional category CAS protection is missing', () => {
+  const x = environment({ enabled: true, categoriesInstalled: false });
   x.run();
   assert.equal(x.called, 0);
 });
