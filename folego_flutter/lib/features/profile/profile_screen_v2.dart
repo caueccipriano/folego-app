@@ -29,6 +29,7 @@ import 'financial_organization_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 import 'sheet_sync_status_card.dart';
+import 'sheet_audit_screen.dart';
 
 part 'profile_widgets.dart';
 
@@ -133,6 +134,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _openSheetAudit() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SheetAuditScreen(
+          spaceId: widget.spaceId,
+          loadItems: widget.repository.getSheetAuditItems,
+        ),
+      ),
+    );
   }
 
   Future<void> _openFinancialOrganization() async {
@@ -701,6 +713,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               key: ValueKey('sheet-sync-${widget.spaceId}'),
               spaceId: widget.spaceId,
               loadStatus: widget.repository.getSheetSyncStatus,
+              onOpenAudit: _openSheetAudit,
             ),
             const SizedBox(height: 10),
             _AboutCard(
