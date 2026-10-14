@@ -10,7 +10,7 @@ void main() {
 
       expect(index, contains('viewport-fit=cover'));
       expect(index, contains('apple-mobile-web-app-capable'));
-      expect(index, contains('href="apple-touch-icon-ios-v2.png"'));
+      expect(index, contains('href="__FOLEGO_IOS_INSTALL_ICON_DATA_URI__"'));
       expect(index, isNot(contains('apple-touch-icon.png?v=')));
       expect(index, contains('apple-mobile-web-app-status-bar-style'));
       expect(
@@ -55,6 +55,8 @@ void main() {
       expect(workflow, contains('web/icons/folego-logo.svg'));
       expect(workflow, contains('build/web/apple-touch-icon-ios-v2.png'));
       expect(workflow, contains('cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png'));
+      expect(workflow, contains('embed_apple_touch_icon.py'));
+      expect(File('scripts/embed_apple_touch_icon.py').readAsStringSync(), contains('data:image/png;base64,'));
       final generator = File('scripts/generate_brand_icons.sh').readAsStringSync();
       expect(generator, contains('cp web/apple-touch-icon.png web/apple-touch-icon-ios-v2.png'));
     });
