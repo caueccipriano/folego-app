@@ -69,6 +69,9 @@ jobs:
             test/statement_import_qa_synthetic_test.dart \
             test/statement_import_reconciliation_test.dart \
             test/statement_import_ui_test.dart \
+            test/sheet_sync_status_test.dart \
+            test/sheet_reconciliation_audit_test.dart \
+            test/transaction_pending_guard_test.dart \
             test/projection_screen_test.dart
 
       - name: Verify live Home privacy masking
