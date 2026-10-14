@@ -41,6 +41,7 @@ void main() {
     test('approved piggy bank stays canonical across app branding', () {
       final logo = File('web/icons/folego-logo.svg').readAsStringSync();
       final index = File('web/index.html').readAsStringSync();
+      final manifest = File('web/manifest.json').readAsStringSync();
       final auth = File(
         'lib/features/auth/auth_widgets.dart',
       ).readAsStringSync();
@@ -51,7 +52,7 @@ void main() {
       expect(logo, contains('Fôlego — porquinho'));
       expect(logo, contains('data:image/png;base64,'));
       expect(index, contains('icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__'));
-      expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
+      expect(manifest, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
       expect(workflow, contains('web/icons/folego-logo.svg'));
     });
