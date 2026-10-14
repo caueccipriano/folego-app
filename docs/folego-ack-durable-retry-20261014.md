@@ -7,6 +7,8 @@ O bridge instalado no Apps Script pode enviar uma confirmação após aplicar um
 - `FolegoAckRetry.gs` é novo complemento separado e inerte com `FOLEGO_SHEET_ACK_ENABLED` ausente/`false`.
 - `FolegoSync.gs` chama o outbox apenas quando **ACK e proteção de categorias estão habilitados**; se o complemento ou o emissor de ACK faltar, bloqueia o `pull` antes de alterar linhas.
 - Um candidato só entra na fila após `SpreadsheetApp.flush()`, leitura de volta e todas as verificações originais de ID, data, forma, descrição, valor, tipo, categoria, origem e estado da linha.
+- O **remetente atualizado** `folego-row-ack-addon.gs` exige a mesma fingerprint de `B:U` novamente **depois do flush no momento do envio**. Se outra edição ocorreu entre a captura e o envio, a requisição daquela linha é omitida e a fila continua pendente. A fingerprint não é transmitida à Edge.
+- **Importante no rollout:** o arquivo já instalado `FolegoRowAck.gs` ainda é a versão anterior. Substituir somente esse complemento pela fonte validada deste PR junto de `FolegoAckRetry.gs` e da atualização em `FolegoSync.gs`; não habilitar a flag com versões misturadas.
 - **Persistir a intenção verificada antes de avançar o cursor** é obrigatório. Se a cota ou gravação de propriedades falhar, a rotina falha sem avançar o cursor.
 - O script grava, nas Script Properties, apenas identificador de evento, versão, linha, fingerprint SHA256 de `B:U`, tentativa, backoff e estado. Nunca grava token, descrição, valor, categoria nominal, observação ou conteúdo de comentários na fila.
 - Todo novo ciclo percorre a fila **mesmo sem novas linhas**: relê `B:U`, confirma que o hash permanece igual, verifica unicidade do ID na aba e chama o endpoint ACK; idempotência é checada de novo pela função do Supabase.
