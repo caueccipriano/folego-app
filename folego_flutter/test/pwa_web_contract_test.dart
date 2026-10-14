@@ -55,7 +55,9 @@ void main() {
       expect(logo, contains('Fôlego — porquinho'));
       expect(logo, contains('data:image/png;base64,'));
       expect(index, contains('icons/Icon-512.png?v=__FOLEGO_BUILD_VERSION__'));
-      expect(index, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
+      // Install-size icons are declared in the manifest, not as HTML links.
+      final manifestSource = File('web/manifest.json').readAsStringSync();
+      expect(manifestSource, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
       expect(workflow, contains('web/icons/folego-logo.svg'));
       expect(workflow, contains('build/web/apple-touch-icon-ios-v2.png'));
