@@ -62,6 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _signingOut = false;
   bool _accountActionRunning = false;
   bool _deletingAccount = false;
+  bool _isLifetimePremium = false;
   String? _identityError;
   String? _versionError;
 
@@ -79,6 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     _loadIdentity();
     _loadVersion();
+    _loadPremiumGrant();
   }
 
   Future<void> _loadIdentity() async {
@@ -99,6 +101,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _loadingIdentity = false;
         _identityError = 'não consegui atualizar os dados da sua conta';
       });
+    }
+  }
+
+  Future<void> _loadPremiumGrant() async {
+    try {
+      final grants = await widget.client.rpc('get_my_premium_grant');
+      final hasLifetimeGrant = grants is List &&
+          grants.any(
+            (grant) =>
+                grant is Map &&
+                grant['grant_type'] == 'lifetime' &&
+                grant['valid_until'] == null,
+          );
+      if (!mounted) return;
+      setState(() => _isLifetimePremium = hasLifetimeGrant);
+    } catch (_) {
+      // Nunca exibir um benefício sem confirmação do servidor.
+      if (mounted) setState(() => _isLifetimePremium = false);
     }
   }
 
@@ -598,6 +618,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
               error: _identityError,
               onRetry: _loadIdentity,
             ),
+            if (_isLifetimePremium) ...[
+              const SizedBox(height: 10),
+              Container(
+                key: const ValueKey('profile-lifetime-premium-notice'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'premium vitalício ativado',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'obrigado por fazer parte dos primeiros usuários do Fôlego! '
+                            'seu acesso Premium é uma cortesia permanente, sem mensalidade.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
