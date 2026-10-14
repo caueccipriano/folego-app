@@ -106,7 +106,8 @@ void main() {
       expect(worker, contains('self.clients.openWindow'));
       expect(worker, contains('__FOLEGO_CACHE_VERSION__'));
       expect(worker, isNot(contains("addEventListener('fetch'")));
-      expect(worker, isNot(contains('main.dart.js')));
+      expect(worker, isNot(contains('caches.open(')));
+      expect(worker, isNot(contains('caches.match(')));
       expect(bridge, contains('updateViaCache'));
       expect(bridge, contains('DOMContentLoaded'));
       expect(bridge, contains('registration.update()'));
