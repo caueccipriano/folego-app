@@ -187,7 +187,7 @@ class _SheetAuditScreenState extends State<SheetAuditScreen> {
                         trailing: ValueListenableBuilder<bool>(
                           valueListenable: FinancialPrivacy.hidden,
                           builder: (context, hidden, _) => Text(
-                            hidden ? 'R$ ••••' : Formatters.money(item.amount),
+                            hidden ? FinancialPrivacy.maskMoney() : Formatters.money(item.amount),
                             key: ValueKey('sheet-audit-amount-${item.id}'),
                           ),
                         ),
