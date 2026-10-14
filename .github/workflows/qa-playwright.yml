@@ -102,6 +102,9 @@ jobs:
       - name: Verify isolated staging guard (synthetic only)
         run: node --test qa/staging/staging-guard.test.mjs
 
+      - name: Verify pull ACK bridge (synthetic only)
+        run: node --test qa/staging/folego-ack-pull-bridge.test.mjs
+
       - name: Install QA dependencies
         working-directory: qa
         run: npm install --no-audit --no-fund
