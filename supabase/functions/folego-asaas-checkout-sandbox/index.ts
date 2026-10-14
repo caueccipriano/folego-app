@@ -67,8 +67,11 @@ Deno.serve(async req=>{
     if(!user)return reply({error:"verified_login_required"},401);
     // Founder accounts already hold an irrevocable complimentary entitlement.
     // Block checkout on the server, regardless of what the client displays.
+    // Query only lifetime, non-expiring grants. LIMIT 1 on all grant types
+    // could hide an existing founder entitlement behind an unrelated row.
     const grantResponse=await db("premium_grants?user_id=eq."+
-      encodeURIComponent(user.id)+"&select=grant_type,valid_until&limit=1");
+      encodeURIComponent(user.id)+"&grant_type=eq.lifetime&valid_until=is.null"+
+      "&select=grant_type,valid_until&limit=1");
     if(!grantResponse.ok)return reply({error:"premium_status_unavailable"},503);
     const grants=await grantResponse.json();
     const lifetime=Array.isArray(grants)&&grants.some((g:any)=>
@@ -85,7 +88,10 @@ Deno.serve(async req=>{
         encodeURIComponent(user.id)+"&select=billing_status,paid_until,verified_payment_id,source_verified&order=paid_until.desc.nullslast&limit=10");
       if(!response.ok)return reply({error:"status_lookup_failed"},503);
       const subscriptions=await response.json();
-      const paid=subscriptions.find((s:any)=>s.source_verified===true&&s.verified_payment_id&&
+      // Sandbox reporting must not claim an inactive/cancelled subscription
+      // is currently paid just because an old invoice had a future date.
+      const paid=subscriptions.find((s:any)=>s.source_verified===true&&
+        s.billing_status==="ACTIVE"&&s.verified_payment_id&&
         s.paid_until&&Date.parse(s.paid_until)>Date.now());
       return reply({ready,environment:"sandbox",plan:"monthly",amount:9.90,
         paymentConfirmed:!!paid,paidUntil:paid?.paid_until||null,
