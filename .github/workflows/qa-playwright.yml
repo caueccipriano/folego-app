@@ -99,6 +99,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Verify ACK Edge isolation (two synthetic tenants)
+        run: node --test qa/staging/sheet-row-ack-isolated-runtime.test.mjs
+
       - name: Verify isolated staging guard (synthetic only)
         run: node --test qa/staging/staging-guard.test.mjs
 
