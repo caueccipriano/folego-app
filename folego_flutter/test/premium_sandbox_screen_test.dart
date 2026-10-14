@@ -4,12 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:folego/features/premium/premium_sandbox_screen.dart';
 
 void main() {
+  final client = SupabaseClient(
+    'https://example.supabase.co', 'test-public',
+    authOptions: const AuthClientOptions(autoRefreshToken: false),
+  );
+  tearDownAll(client.dispose);
+
   Future<void> render(WidgetTester tester, Map<String, dynamic> data) async {
-    final client = SupabaseClient(
-      'https://example.supabase.co', 'test-public',
-      authOptions: const AuthClientOptions(autoRefreshToken: false),
-    );
-    addTearDown(client.dispose);
     await tester.pumpWidget(MaterialApp(home: PremiumSandboxScreen(
       client: client,
       loadOverride: () async => data,
