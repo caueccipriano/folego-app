@@ -21,7 +21,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  # Prevent preview builds from cancelling production deployment.
+  group: github-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
