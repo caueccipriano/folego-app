@@ -66,7 +66,17 @@ Deno.serve(async req=>{
     const user=await authUser(req);
     if(!user)return reply({error:"verified_login_required"},401);
     const ready=await fetchLink();
-    if(req.method==="GET")return reply({ready,environment:"sandbox",plan:"monthly",amount:9.90});
+    if(req.method==="GET"){
+      const response=await db("folego_asaas_subscriptions?environment=eq.sandbox&user_id=eq."+
+        encodeURIComponent(user.id)+"&select=billing_status,paid_until,verified_payment_id,source_verified&order=paid_until.desc.nullslast&limit=10");
+      if(!response.ok)return reply({error:"status_lookup_failed"},503);
+      const subscriptions=await response.json();
+      const paid=subscriptions.find((s:any)=>s.source_verified===true&&s.verified_payment_id&&
+        s.paid_until&&Date.parse(s.paid_until)>Date.now());
+      return reply({ready,environment:"sandbox",plan:"monthly",amount:9.90,
+        paymentConfirmed:!!paid,paidUntil:paid?.paid_until||null,
+        status:paid?"confirmed":subscriptions.length?"pending_or_expired":"none"});
+    }
     if(!ready)return reply({error:"sandbox_checkout_locked"},503);
     // The user ID and e-mail come ONLY from Supabase Auth; not from the caller.
     const lookup=await db("folego_asaas_billing_intents?environment=eq.sandbox&verified_email=eq."+encodeURIComponent(user.email)+"&select=user_id,plan&limit=1");
@@ -74,6 +84,14 @@ Deno.serve(async req=>{
     const existing=await lookup.json();
     if(existing.length && existing[0].user_id!==user.id)return reply({error:"email_account_conflict"},409);
     if(existing.length && existing[0].plan!=="monthly")return reply({error:"plan_account_conflict"},409);
+    if(existing.length){
+      const refreshed=await db("folego_asaas_billing_intents?environment=eq.sandbox&user_id=eq."+
+        encodeURIComponent(user.id)+"&verified_email=eq."+encodeURIComponent(user.email),{
+        method:"PATCH",headers:{"Prefer":"return=minimal"},
+        body:JSON.stringify({expires_at:new Date(Date.now()+30*60*1000).toISOString()})
+      });
+      if(!refreshed.ok)return reply({error:"intent_refresh_failed"},503);
+    }
     if(!existing.length){
       const inserted=await db("folego_asaas_billing_intents",{
         method:"POST",headers:{"Prefer":"return=minimal"},

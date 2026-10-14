@@ -82,11 +82,15 @@ function acceptablePayment(payment:any,sub:any){
   return payment&&typeof payment.id==="string"&&
      ["CONFIRMED","RECEIVED"].includes(payment.status)&&
      payment.subscription===sub.id&&payment.customer===sub.customer&&
+     (!payment.paymentLink||payment.paymentLink===LINK_ID)&&
      !payment.deleted&&!payment.refunded&&cents(payment.value)===990&&
      paidUntil(payment.dueDate)!==null;
 }
 const ACCEPTED=new Set(["PAYMENT_CREATED","PAYMENT_UPDATED","PAYMENT_CONFIRMED","PAYMENT_RECEIVED",
-  "PAYMENT_OVERDUE","PAYMENT_REFUNDED","PAYMENT_DELETED","SUBSCRIPTION_CREATED",
+  "PAYMENT_OVERDUE","PAYMENT_REFUNDED","PAYMENT_DELETED",
+  "PAYMENT_PARTIALLY_REFUNDED","PAYMENT_CHARGEBACK_REQUESTED",
+  "PAYMENT_CHARGEBACK_DISPUTE","PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+  "SUBSCRIPTION_CREATED",
   "SUBSCRIPTION_UPDATED","SUBSCRIPTION_INACTIVATED","SUBSCRIPTION_DELETED"]);
 Deno.serve(async req=>{
  if(req.method!=="POST")return send({error:"method_not_allowed"},405);
@@ -128,11 +132,18 @@ Deno.serve(async req=>{
    }
    if(!sub||sub.id!==id||!sub.customer||sub.cycle!=="MONTHLY"||cents(sub.value)!==990||
       sub.deleted===true||(sub.paymentLink&&sub.paymentLink!==LINK_ID))return finish("ignored");
+   const old=await rows("folego_asaas_subscriptions?environment=eq.sandbox&subscription_id=eq."+
+      encodeURIComponent(id)+"&select=user_id,customer_id&limit=1");
    const customer=await asaas("/customers/"+encodeURIComponent(sub.customer));
    const email=typeof customer.email==="string"?customer.email.trim().toLowerCase():"";
    if(!email)return finish("unmatched");
-   const intents=await rows("folego_asaas_billing_intents?environment=eq.sandbox&verified_email=eq."+encodeURIComponent(email)+"&plan=eq.monthly&select=user_id&limit=2");
+   const intents=await rows("folego_asaas_billing_intents?environment=eq.sandbox&verified_email=eq."+encodeURIComponent(email)+"&plan=eq.monthly&select=user_id,expires_at&limit=2");
    if(!Array.isArray(intents)||intents.length!==1)return finish("unmatched");
+   // A new association requires a live authenticated checkout intention.
+   // Renewals retain their existing binding and do not require a fresh checkout.
+   if(!old.length&&(!intents[0].expires_at||
+      !Number.isFinite(Date.parse(intents[0].expires_at))||
+      Date.parse(intents[0].expires_at)<=Date.now()))return finish("unmatched");
    const payments=await listPayments(id);
    const fromCorrectLink=sub.paymentLink===LINK_ID||payments.some(p=>
       p.paymentLink===LINK_ID&&p.subscription===id&&p.customer===sub.customer&&cents(p.value)===990);
@@ -140,8 +151,6 @@ Deno.serve(async req=>{
    const paid=payments.filter(p=>acceptablePayment(p,sub))
       .map(p=>({id:p.id,until:paidUntil(p.dueDate)})).sort((a,b)=>String(b.until).localeCompare(String(a.until)));
    const best=paid[0];
-   const old=await rows("folego_asaas_subscriptions?environment=eq.sandbox&subscription_id=eq."+
-      encodeURIComponent(id)+"&select=user_id,customer_id&limit=1");
    if(old.length&&(old[0].user_id!==intents[0].user_id||old[0].customer_id!==sub.customer))
       throw new Error("subscription_account_collision");
    await upsert("folego_asaas_subscriptions","environment,subscription_id",{
