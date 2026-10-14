@@ -166,7 +166,7 @@ class _FolegoAdminScreenState extends State<FolegoAdminScreen> {
 
   Widget _tabButton(int tab, String label, IconData icon) =>
       ChoiceChip(
-        key: ValueKey('admin-tab-' + tab.toString()),
+        key: ValueKey('admin-tab-$tab'),
         avatar: Icon(icon, size: 17),
         label: Text(label),
         selected: _tab == tab,
@@ -205,12 +205,12 @@ class _FolegoAdminScreenState extends State<FolegoAdminScreen> {
     final users = _rows('users');
     final q = _search.trim().toLowerCase();
     final filtered = users.where((u) => (
-      (u['name'] ?? '').toString() + ' ' + (u['email'] ?? '').toString()
+      "${(u['name'] ?? '').toString()} ${(u['email'] ?? '').toString()}"
     ).toLowerCase().contains(q)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Heading('pessoas no fôlego', users.length.toString() + ' cadastros'),
+        _Heading('pessoas no fôlego', '${users.length} cadastros'),
         const SizedBox(height: 12),
         TextField(
           key: const ValueKey('admin-user-search'),
@@ -259,8 +259,7 @@ class _FolegoAdminScreenState extends State<FolegoAdminScreen> {
                   const _Pill('premium cortesia'),
               ]),
               const SizedBox(height: 10),
-              Text('cadastro ' + _date(user['created_at']) +
-                  ' · login ' + _date(user['last_login']),
+              Text('cadastro ${_date(user['created_at'])} · login ${_date(user['last_login'])}',
                   style: AppTypography.body(context, fontSize: 11)),
             ],
           )),
