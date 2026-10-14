@@ -59,7 +59,10 @@ void main() {
       final manifestSource = File('web/manifest.json').readAsStringSync();
       expect(manifestSource, contains('icons/Icon-192.png?v=__FOLEGO_BUILD_VERSION__'));
       expect(auth, contains("'web/icons/Icon-512.png'"));
-      expect(workflow, contains('web/icons/folego-logo.svg'));
+      expect(
+        File('scripts/generate_brand_icons.sh').readAsStringSync(),
+        contains('web/icons/folego-logo.svg'),
+      );
       expect(workflow, contains('build/web/apple-touch-icon-ios-v2.png'));
       expect(workflow, contains('cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png'));
       expect(workflow, contains('embed_apple_touch_icon.py'));
