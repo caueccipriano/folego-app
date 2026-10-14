@@ -28,12 +28,14 @@ class PlanScreen extends StatefulWidget {
 
 class _PlanScreenState extends State<PlanScreen> {
   bool _projection = false;
+  bool _startWithPurchase = false;
 
   @override
   void didUpdateWidget(covariant PlanScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId) {
       _projection = false;
+      _startWithPurchase = false;
     }
     if (oldWidget.projectionOpenToken != widget.projectionOpenToken &&
         widget.projectionOpenToken != null) {
@@ -43,12 +45,25 @@ class _PlanScreenState extends State<PlanScreen> {
 
   void _openProjection() {
     if (_projection) return;
-    setState(() => _projection = true);
+    setState(() {
+      _startWithPurchase = false;
+      _projection = true;
+    });
+  }
+
+  void _openPurchaseProjection() {
+    setState(() {
+      _startWithPurchase = true;
+      _projection = true;
+    });
   }
 
   void _openSummary() {
     if (!_projection) return;
-    setState(() => _projection = false);
+    setState(() {
+      _projection = false;
+      _startWithPurchase = false;
+    });
   }
 
   @override
@@ -58,6 +73,7 @@ class _PlanScreenState extends State<PlanScreen> {
         repository: widget.repository,
         spaceId: widget.spaceId,
         onBack: _openSummary,
+        startWithPurchase: _startWithPurchase,
       );
     }
 
@@ -69,6 +85,7 @@ class _PlanScreenState extends State<PlanScreen> {
         spaceId: widget.spaceId,
         refreshToken: refreshToken,
         onProjectionRequested: _openProjection,
+        onPurchaseSimulationRequested: _openPurchaseProjection,
         onFlexibleBudgetRequested: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => FlexibleBudgetScreen(
