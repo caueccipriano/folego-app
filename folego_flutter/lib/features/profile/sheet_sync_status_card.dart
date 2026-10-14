@@ -10,10 +10,12 @@ class SheetSyncStatusCard extends StatefulWidget {
     super.key,
     required this.spaceId,
     required this.loadStatus,
+    this.onOpenAudit,
   });
 
   final String spaceId;
   final SheetSyncStatusLoader loadStatus;
+  final VoidCallback? onOpenAudit;
 
   @override
   State<SheetSyncStatusCard> createState() => _SheetSyncStatusCardState();
@@ -146,6 +148,16 @@ class _SheetSyncStatusCardState extends State<SheetSyncStatusCard> {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   )),
+              ],
+              if (status.configured && status.enabled &&
+                  widget.onOpenAudit != null) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  key: const ValueKey('sheet-audit-open'),
+                  onPressed: widget.onOpenAudit,
+                  icon: const Icon(Icons.fact_check_outlined, size: 18),
+                  label: const Text('conferir lançamentos vinculados'),
+                ),
               ],
             ],
           ],
