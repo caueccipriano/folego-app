@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/data/models/wallet_overview.dart';
@@ -76,6 +77,10 @@ class _WalletQaRepository implements FolegoRepository {
 }
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('pt_BR');
+  });
+
   setUp(() {
     FinancialPrivacy.hidden.value = false;
   });
@@ -166,7 +171,7 @@ void main() {
     expect(find.text('de onde vem seu disponível'), findsOneWidget);
     expect(find.text('como cada conta entra no cálculo'), findsOneWidget);
     expect(find.text('diferença entre total e disponível'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('de onde vem seu disponível'))).pop();
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
