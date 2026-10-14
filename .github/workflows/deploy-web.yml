@@ -128,8 +128,11 @@ jobs:
           test -f build/web/icons/Icon-192.png
           test -f build/web/icons/Icon-180.png
           test -f build/web/apple-touch-icon.png
-          grep -F 'href="apple-touch-icon.png?v=' build/web/index.html
-          grep -F '"src": "apple-touch-icon.png?v=' build/web/manifest.json
+          test -f build/web/apple-touch-icon-ios-v2.png
+          grep -F 'href="apple-touch-icon-ios-v2.png"' build/web/index.html
+          grep -F '"src": "apple-touch-icon-ios-v2.png"' build/web/manifest.json
+          ! grep -F 'apple-touch-icon.png?v=' build/web/index.html
+          cmp build/web/apple-touch-icon.png build/web/apple-touch-icon-ios-v2.png
           grep -F '"display": "standalone"' build/web/manifest.json
 
       - name: Add SPA fallback
