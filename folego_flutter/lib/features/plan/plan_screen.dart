@@ -21,7 +21,7 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  late final DateTime _period;
+  late DateTime _period;
   List<BudgetItem> _items = const [];
   bool _loading = true;
   String? _error;
@@ -35,24 +35,36 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Future<void> _load() async {
+    final selectedMonth = _period;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final items = await widget.repository.listBudgetItems(
         spaceId: widget.space.id,
-        periodMonth: _period,
+        periodMonth: selectedMonth,
       );
-      if (!mounted) return;
+      if (!mounted || _period != selectedMonth) return;
       setState(() {
         _items = items;
         _loading = false;
         _error = null;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || _period != selectedMonth) return;
       setState(() {
         _loading = false;
         _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _period = DateTime(_period.year, _period.month + delta);
+    });
+    _load();
   }
 
   num get _totalPlanned =>
@@ -93,9 +105,26 @@ class _PlanScreenState extends State<PlanScreen> {
                   ?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 4),
-            Text(
-              _periodLabel,
-              style: Theme.of(context).textTheme.bodyLarge,
+            Row(
+              children: [
+                IconButton(
+                  tooltip: 'Mês anterior',
+                  onPressed: () => _changeMonth(-1),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                Expanded(
+                  child: Text(
+                    _periodLabel,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Próximo mês',
+                  onPressed: () => _changeMonth(1),
+                  icon: const Icon(Icons.chevron_right_rounded),
+                ),
+              ],
             ),
             const SizedBox(height: 18),
             if (_loading)
