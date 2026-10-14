@@ -81,11 +81,10 @@ class _FolegoAdminScreenState extends State<FolegoAdminScreen> {
                       ? Icons.workspace_premium_outlined : Icons.person_outline),
                   title: Text((user['name'] ?? '').toString()),
                   subtitle: Text(
-                    (user['email'] ?? '').toString() + '\n'
-                    + 'cadastro ' + _date(user['created_at'])
-                    + ' • último login ' + _date(user['last_login']) + '\n'
-                    + (user['email_confirmed'] == true ? 'confirmado' : 'pendente')
-                    + (user['lifetime_premium'] == true ? ' • premium vitalício' : ''),
+                    '${user['email'] ?? ''}\n'
+                    'cadastro ${_date(user['created_at'])} • último login ${_date(user['last_login'])}\n'
+                    '${user['email_confirmed'] == true ? 'confirmado' : 'pendente'}'
+                    '${user['lifetime_premium'] == true ? ' • premium vitalício' : ''}',
                   ),
                   isThreeLine: true,
                 )),
@@ -95,8 +94,8 @@ class _FolegoAdminScreenState extends State<FolegoAdminScreen> {
               if (_rows('feedback').isEmpty) const Text('nenhuma sugestão até agora'),
               for (final item in _rows('feedback'))
                 Card(child: ListTile(
-                  title: Text((item['kind'] ?? '').toString() + ' • ' + (item['name'] ?? '').toString()),
-                  subtitle: Text((item['message'] ?? '').toString() + '\n' + _date(item['created_at'])),
+                  title: Text('${item['kind'] ?? ''} • ${item['name'] ?? ''}'),
+                  subtitle: Text('${item['message'] ?? ''}\n${_date(item['created_at'])}'),
                   isThreeLine: true,
                 )),
               const SizedBox(height: 20),
