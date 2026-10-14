@@ -30,7 +30,7 @@ Subdomínio de teste: escolher nome livre no próprio painel; disponibilidade n�
 
 ## Documentos e atendimento — bloqueios de lançamento
 
-Os textos atuais `/legal/terms.html` e `/legal/privacy.html` ainda descrevem lojas/RevenueCat. Antes de venda web: incluir Asaas, dados necessários para cobrança, identidade legal e contato validado de suporte/privacidade, renovação, cancelamento e tratamento de reembolso. Não publicar contato, CNPJ, política financeira ou prazo inventado.
+Os textos atuais `/legal/terms.html` e `/legal/privacy.html` já mencionam Asaas e a preservação das cortesias vitalícias. Antes de venda web: finalizar identidade legal e contato validado de suporte/privacidade, dados necessários para cobrança, renovação, cancelamento e tratamento de reembolso. Não publicar contato, CNPJ, política financeira ou prazo inventado.
 
 Proposta para revisão: mensal R$9,90; anual R$89,90 apenas quando homologado; nenhuma promessa de trial implementado; cartão recorrente prioritário; Pix comum exige pagamento em cada ciclo; Pix Automático exige autorização específica e validação própria. Benefícios atuais/cortesias/vitalícios devem ser somados por fonte no backend, nunca sobrescritos pelo cliente ou pela cobrança.
 
