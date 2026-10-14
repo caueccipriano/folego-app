@@ -81,8 +81,7 @@ function fixture({reply = 'applied', failSave = false} = {}) {
     },
     console: {log() {}},
   };
-  vm.runInNewContext(source, context);
-  vm.runInNewContext(retry, context);
+  vm.runInNewContext(source + '\n' + retry, context);
   context._folegoSyncApi_ = () => {
     pullCalls++;
     return {rows: rowsFromServer, cursor:'2026-10-14T12:00:00.000Z'};
