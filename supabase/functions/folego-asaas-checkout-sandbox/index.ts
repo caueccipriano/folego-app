@@ -65,6 +65,20 @@ Deno.serve(async req=>{
   try{
     const user=await authUser(req);
     if(!user)return reply({error:"verified_login_required"},401);
+    // Founder accounts already hold an irrevocable complimentary entitlement.
+    // Block checkout on the server, regardless of what the client displays.
+    const grantResponse=await db("premium_grants?user_id=eq."+
+      encodeURIComponent(user.id)+"&select=grant_type,valid_until&limit=1");
+    if(!grantResponse.ok)return reply({error:"premium_status_unavailable"},503);
+    const grants=await grantResponse.json();
+    const lifetime=Array.isArray(grants)&&grants.some((g:any)=>
+      g.grant_type==="lifetime"&&g.valid_until==null);
+    if(lifetime){
+      if(req.method==="GET")return reply({ready:false,environment:"sandbox",
+        plan:"lifetime",amount:0,paymentConfirmed:false,premium:true,
+        status:"lifetime"});
+      return reply({error:"lifetime_premium_no_checkout"},409);
+    }
     const ready=await fetchLink();
     if(req.method==="GET"){
       const response=await db("folego_asaas_subscriptions?environment=eq.sandbox&user_id=eq."+
