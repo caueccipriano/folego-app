@@ -24,7 +24,9 @@ void main() {
       expect(index, isNot(contains('position: fixed !important')));
       expect(index, isNot(contains('height: 100dvh !important')));
       expect(index, contains('Do not size or position flutter-view here.'));
-      expect(index, contains('ios-pwa-geometry-20260919-v3'));
+      // Geometry protection now lives in a dedicated iOS script, not a
+      // legacy inline version marker removed from the release HTML.
+      expect(index, contains('folego_ios_zoom_fix.js'));
       expect(index, contains('folego-shell-'));
       expect(index, contains("const repairVersion = '__FOLEGO_BUILD_VERSION__'"));
       expect(index, isNot(contains('localStorage.clear(')));
