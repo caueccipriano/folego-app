@@ -6,6 +6,7 @@ import '../models/category_item.dart';
 import '../models/financial_space.dart';
 import '../models/folego_snapshot.dart';
 import '../models/sheet_sync_status.dart';
+import '../models/sheet_reconciliation_audit.dart';
 import '../models/monthly_money_summary.dart';
 import '../models/projection_model.dart';
 import '../models/onboarding_state.dart';
@@ -34,6 +35,42 @@ class FolegoRepository {
     return SheetSyncStatus.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
+
+  /// A bounded, read-only preview of sheet-linked records. The recent and
+  /// pending queries are independent to avoid hiding old manual reviews.
+  /// No sheet acknowledgment exists, so none of these rows is called "synced".
+  Future<List<SheetAuditItem>> getSheetAuditItems(String spaceId) async {
+    const columns = 'id,source,event_type,description,amount,occurred_at,'
+        'category_id,metadata';
+    final queries = await Future.wait<dynamic>([
+      _client
+          .from('financial_events')
+          .select(columns)
+          .eq('space_id', spaceId)
+          .eq('source', 'sheet-sync')
+          .eq('status', 'confirmed')
+          .order('occurred_at', ascending: false)
+          .limit(50),
+      _client
+          .from('financial_events')
+          .select(columns)
+          .eq('space_id', spaceId)
+          .eq('source', 'sheet-sync')
+          .eq('status', 'confirmed')
+          .eq('metadata->>needs_classification', 'true')
+          .order('occurred_at', ascending: false)
+          .limit(100),
+    ]);
+    List<SheetAuditItem> parse(dynamic response) =>
+        List<Map<String, dynamic>>.from(response as List)
+            .map(SheetAuditItem.fromJson)
+            .toList(growable: false);
+
+    return mergeSheetAuditSamples(
+      recent: parse(queries[0]),
+      pending: parse(queries[1]),
+    );
+  }
 
   Future<FinancialSpace> getPrimarySpace() async {
     final response = await _client
