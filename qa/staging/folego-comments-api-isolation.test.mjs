@@ -24,6 +24,7 @@ const execute=context.notesPushForTest;
 const SPACE_A='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SPACE_B='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const TARGET='aaaaaaaa-2222-4222-8222-aaaaaaaaaaaa';
+const TARGET_B='bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb';
 
 function fixture() {
   const store=new Map();const writes=[];let counter=0;
@@ -43,6 +44,12 @@ function fixture() {
           return { select(){
             return { async single(){
               const id=key(record.space_id,record.target_type,record.target_id);
+              // Mirror the existing database's financial_note_validate_scope
+              // trigger for the fixture; no real database write is performed.
+              if(record.target_id===TARGET && record.space_id!==SPACE_A ||
+                 record.target_id===TARGET_B && record.space_id!==SPACE_B) {
+                return {data:null,error:{code:'23503'}};
+              }
               if(store.has(id))return {data:null,error:{code:'23505'}};
               counter++;
               const saved={...record,id:'note-'+counter,revision:1,
@@ -72,7 +79,7 @@ function fixture() {
     },
   });
   const push=(space,rows)=>execute({rows},createClient(),space);
-  const get=(space=SPACE_A)=>store.get(key(space,'event',TARGET));
+  const get=(space=SPACE_A,targetId=TARGET)=>store.get(key(space,'event',targetId));
   return {push,get,writes,store};
 }
 const item=(content,revision=0,targetId=TARGET)=>({
@@ -102,10 +109,12 @@ test('stale revision cannot overwrite a concurrently edited note',async()=>{
 test('two isolated spaces cannot see or change each other via notes_push',async()=>{
   const f=fixture();
   await f.push(SPACE_A,[item('Private A')]);
-  const other=await f.push(SPACE_B,[item('Private B')]);
+  const other=await f.push(SPACE_B,[item('Private B',0,TARGET_B)]);
   assert.equal(other.results[0].status,'inserted');
+  const foreign=await f.push(SPACE_B,[item('Attempt other user',0,TARGET)]);
+  assert.equal(foreign.results[0].status,'error');
   assert.equal(f.get(SPACE_A).content,'Private A');
-  assert.equal(f.get(SPACE_B).content,'Private B');
+  assert.equal(f.get(SPACE_B,TARGET_B).content,'Private B');
   assert.equal(f.writes.length,2);
 });
 
