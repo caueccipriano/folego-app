@@ -158,8 +158,14 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
     }
     return showDialog<bool>(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
+      // Dim the detail behind the editor to avoid competing modal layers.
+      barrierColor: Colors.black.withValues(alpha: .72),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: AppColors.surface(Theme.of(dialogContext).brightness),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.feature),
+        ),
+        clipBehavior: Clip.antiAlias,
         insetPadding: const EdgeInsets.all(28),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
