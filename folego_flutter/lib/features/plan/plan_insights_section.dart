@@ -49,7 +49,9 @@ class PlanInsightsSection extends StatelessWidget {
             color: scheme.surface,
             border: Border.all(color: scheme.outlineVariant),
           ),
-          child: Column(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('entenda seu dinheiro',
@@ -198,6 +200,7 @@ class PlanInsightsSection extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         );
       },
