@@ -164,7 +164,6 @@ class HomeFinancialHero extends StatelessWidget {
   }
 
   Widget _buildHero(BuildContext context, {required bool compact}) {
-    final brightness = Theme.of(context).brightness;
     final tokens = FolegoColorTokens.of(context);
     final primaryPurple = tokens.marcaHero;
     final onPurple = tokens.marcaHeroSobre;
@@ -251,7 +250,7 @@ class HomeFinancialHero extends StatelessWidget {
                   style: AppTypography.money(
                     context,
                     fontSize: compact ? 44 : 52,
-                    color: AppColors.lime,
+                    color: heroValueColor,
                   ),
                 ),
               ),
