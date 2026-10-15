@@ -371,7 +371,6 @@ class _FolegoActionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
     final surface = AppColors.surface(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
