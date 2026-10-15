@@ -14,6 +14,7 @@ class PlanScreen extends StatefulWidget {
     required this.repository,
     required this.spaceId,
     this.projectionOpenToken,
+    this.disableInsightsForTesting = false,
   });
 
   final FolegoRepository repository;
@@ -22,6 +23,9 @@ class PlanScreen extends StatefulWidget {
   /// Changes when another area (for example Home) asks to open
   /// Planejamento > Projeção directly.
   final Object? projectionOpenToken;
+
+  @visibleForTesting
+  final bool disableInsightsForTesting;
 
   @override
   State<PlanScreen> createState() => _PlanScreenState();
@@ -95,6 +99,7 @@ class _PlanScreenState extends State<PlanScreen> {
         repository: widget.repository,
         spaceId: widget.spaceId,
         refreshToken: refreshToken,
+        disableInsightsForTesting: widget.disableInsightsForTesting,
         onProjectionRequested: _openProjection,
         onPurchaseSimulationRequested: _openPurchaseProjection,
         onSpendingBehaviorRequested: _openSpendingBehavior,
