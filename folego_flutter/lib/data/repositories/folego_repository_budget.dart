@@ -61,6 +61,29 @@ extension FolegoRepositoryBudget on FolegoRepository {
     }
   }
 
+  /// Read-only drilldown. The RPC checks membership of the selected space.
+  Future<List<BudgetImpactDetail>> getBudgetImpactDetails({
+    required String spaceId,
+    required DateTime periodMonth,
+    required String categoryId,
+  }) async {
+    final result = await Supabase.instance.client.rpc(
+      'get_budget_impact_details',
+      params: {
+        'p_space_id': spaceId,
+        'p_period_month': _date(DateTime(periodMonth.year, periodMonth.month)),
+        'p_category_id': categoryId,
+      },
+    );
+    final items = List<Map<String, dynamic>>.from(result as List<dynamic>);
+    final details = items.map(BudgetImpactDetail.fromJson).toList();
+    details.sort((a, b) {
+      final date = b.effectiveDate.compareTo(a.effectiveDate);
+      return date == 0 ? a.description.compareTo(b.description) : date;
+    });
+    return details;
+  }
+
   Future<void> setBudgetLimit({
     required String spaceId,
     required DateTime periodMonth,
