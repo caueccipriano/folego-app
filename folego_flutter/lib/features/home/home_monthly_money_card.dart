@@ -108,17 +108,20 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
             items: [
               _MonthlyHeadlineData(
                 label: 'receitas reais',
+                icon: AppIcons.income,
                 value: Formatters.money(value.realIncome),
                 valueColor: AppColors.positiveText(brightness),
               ),
               _MonthlyHeadlineData(
                 label: 'gastos feitos no mês',
+                icon: AppIcons.expense,
                 value: Formatters.money(value.spendingNet),
                 valueColor: primary,
                 valueKey: const ValueKey('monthly-spending-net'),
               ),
               _MonthlyHeadlineData(
                 label: 'resultado econômico',
+                icon: AppIcons.chartLine,
                 value: _signedMoney(value.economicResult),
                 valueColor: value.economicResult < 0
                     ? AppColors.expenseText(brightness)
@@ -200,12 +203,14 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
 class _MonthlyHeadlineData {
   const _MonthlyHeadlineData({
     required this.label,
+    required this.icon,
     required this.value,
     required this.valueColor,
     this.valueKey,
   });
 
   final String label;
+  final IconData icon;
   final String value;
   final Color valueColor;
   final Key? valueKey;
@@ -272,15 +277,23 @@ class _MonthlyHeadlineTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            data.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.label(
-              context,
-              fontSize: 10,
-              color: secondary,
-            ),
+          Row(
+            children: [
+              Icon(data.icon, size: 15, color: secondary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  data.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 10,
+                    color: secondary,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           FittedBox(
