@@ -178,11 +178,11 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          event.isIncome ? 'confirmar recebimento?' : 'registrar pagamento?',
+          event.isIncome ? 'registrar receita manual?' : 'registrar pagamento manual?',
         ),
         content: Text(
           '${event.title}\n${Formatters.money(event.amount)}\n\n'
-          'a previsão será transformada no lançamento correspondente',
+          'este botão cria um novo lançamento manual. use apenas se a movimentação NÃO entrou automaticamente pelo banco. se o PIX ou débito já aparece nas transações, cancele para evitar duplicidade.',
         ),
         actions: [
           TextButton(
@@ -192,7 +192,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
-              event.isIncome ? 'confirmar recebimento' : 'registrar pagamento',
+              event.isIncome ? 'registrar manualmente' : 'registrar manualmente',
             ),
           ),
         ],
@@ -236,7 +236,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
                 padding: const EdgeInsets.only(top: 20, bottom: 12),
                 child: AppPageHeader(
                   title: 'agenda',
-                  subtitle: 'próximos compromissos e entradas do seu dinheiro',
+                  subtitle: 'recebimentos e pagamentos que ainda estão pendentes',
                   leading: IconButton(
                     tooltip: 'voltar',
                     onPressed: () => Navigator.of(context).maybePop(),
@@ -288,7 +288,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
           const SizedBox(height: 22),
           const AppSectionHeader(
             title: 'o que vem pela frente',
-            subtitle: 'obrigações e entradas reais, sem contar a mesma saída duas vezes',
+            subtitle: 'só previsões pendentes · o banco pode confirmar automaticamente',
           ),
           const SizedBox(height: 14),
           SingleChildScrollView(
@@ -413,7 +413,7 @@ class _AgendaHero extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'um mapa curto do que já está previsto',
+            'o que ainda falta acontecer',
             style: AppTypography.section(
               context,
               fontSize: 21,
@@ -427,12 +427,12 @@ class _AgendaHero extends StatelessWidget {
             children: [
               _AgendaHeroMetric(
                 icon: AppIcons.expense,
-                label: '${summary.outflowCount} saídas',
+                label: '${summary.outflowCount} saídas previstas',
                 value: Formatters.money(summary.outflowAmount),
               ),
               _AgendaHeroMetric(
                 icon: AppIcons.income,
-                label: '${summary.incomeCount} entradas',
+                label: '${summary.incomeCount} entradas previstas',
                 value: Formatters.money(summary.incomeAmount),
               ),
             ],
