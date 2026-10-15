@@ -36,7 +36,7 @@ void main() {
   test('upcoming invoices count only open known due dates in window', () {
     final value = summarizeDueCardInvoices([
       card('a', due: DateTime(2026, 10, 16), invoice: 250, invoiceId: 'a1'),
-      card('b', due: DateTime(2026, 11, 15), invoice: 100, invoiceId: 'b1'),
+      card('b', due: DateTime(2026, 11, 14), invoice: 100, invoiceId: 'b1'),
       card('c', due: DateTime(2026, 11, 16), invoice: 100, invoiceId: 'c1'),
       card('d', due: DateTime(2026, 10, 14), invoice: 15, invoiceId: 'd1'),
       card('e', due: DateTime(2026, 10, 17), invoice: 500),
