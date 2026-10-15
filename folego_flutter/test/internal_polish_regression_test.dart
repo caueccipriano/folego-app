@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:folego/data/models/account_item.dart';
 import 'package:folego/data/models/category_item.dart';
+import 'package:folego/data/models/credit_card_item.dart';
 import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/quick_register_sheet.dart';
@@ -100,7 +101,7 @@ void main() {
                       ),
                     ],
                     benefits: const <AccountItem>[],
-                    cards: const [],
+                    cards: const <CreditCardItem>[],
                     categories: <CategoryItem>[],
                   ),
                 ),

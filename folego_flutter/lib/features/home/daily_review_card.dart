@@ -645,8 +645,9 @@ class DailyReviewPrompt extends StatelessWidget {
     if (loading) return 'organizando seu dia…';
     if (complete) return 'concluída · volte quando quiser';
     if (pace?['status'] == 'at_risk') return 'se quiser, confira seu ritmo';
-    if (pending > 0)
+    if (pending > 0) {
       return 'conferência opcional · pendências ficam para depois';
+    }
     return 'uma revisão rápida, só quando fizer sentido';
   }
 

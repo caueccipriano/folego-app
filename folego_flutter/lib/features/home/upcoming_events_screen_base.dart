@@ -697,8 +697,9 @@ class _AgendaEventCard extends StatelessWidget {
   }
 
   String _dateText(UpcomingFinancialEvent event) {
-    if (event.overdue)
+    if (event.overdue) {
       return 'atrasado · ${Formatters.shortDate.format(event.dueDate)}';
+    }
     if (event.dayOffset == 0) return 'hoje';
     if (event.dayOffset == 1) return 'amanhã';
     return Formatters.shortDate.format(event.dueDate);
