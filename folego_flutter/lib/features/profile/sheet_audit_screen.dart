@@ -13,10 +13,12 @@ class SheetAuditScreen extends StatefulWidget {
     super.key,
     required this.spaceId,
     required this.loadItems,
+    this.initialReviewOnly = true,
   });
 
   final String spaceId;
   final SheetAuditLoader loadItems;
+  final bool initialReviewOnly;
 
   @override
   State<SheetAuditScreen> createState() => _SheetAuditScreenState();
@@ -32,6 +34,7 @@ class _SheetAuditScreenState extends State<SheetAuditScreen> {
   @override
   void initState() {
     super.initState();
+    _onlyReview = widget.initialReviewOnly;
     _refresh();
   }
 

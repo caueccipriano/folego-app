@@ -18,54 +18,53 @@ Future<bool?> showExistingPaymentPicker(
   required double outstanding,
 }) => showDialog<bool>(
   context: context,
-  builder: (_) => _ExistingPaymentPicker(
-    repository: repository,
-    spaceId: spaceId,
-    targetKind: targetKind,
-    targetId: targetId,
+  builder: (_) => ExistingPaymentPicker(
     targetName: targetName,
-    outstanding: outstanding,
+    loadCandidates: () => repository.paymentCandidates(spaceId, outstanding),
+    linkPayment: (item) => repository.recognizePayment(
+      spaceId: spaceId,
+      eventId: item.id,
+      targetKind: targetKind,
+      targetId: targetId,
+    ),
   ),
 );
 
-class _ExistingPaymentPicker extends StatefulWidget {
-  const _ExistingPaymentPicker({
-    required this.repository,
-    required this.spaceId,
-    required this.targetKind,
-    required this.targetId,
+class ExistingPaymentPicker extends StatefulWidget {
+  const ExistingPaymentPicker({
+    super.key,
     required this.targetName,
-    required this.outstanding,
+    required this.loadCandidates,
+    required this.linkPayment,
   });
-  final FolegoRepository repository;
-  final String spaceId, targetKind, targetId, targetName;
-  final double outstanding;
+  final String targetName;
+  final Future<List<TransactionItem>> Function() loadCandidates;
+  final Future<void> Function(TransactionItem) linkPayment;
   @override
-  State<_ExistingPaymentPicker> createState() => _ExistingPaymentPickerState();
+  State<ExistingPaymentPicker> createState() => _ExistingPaymentPickerState();
 }
 
-class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
+class _ExistingPaymentPickerState extends State<ExistingPaymentPicker> {
   late Future<List<TransactionItem>> _rows;
   String _query = '';
   bool _saving = false;
+  bool _choosing = false;
   String? _error;
   @override
   void initState() {
     super.initState();
-    _rows = widget.repository.paymentCandidates(
-      widget.spaceId,
-      widget.outstanding,
-    );
+    _rows = widget.loadCandidates();
   }
 
   Future<void> _choose(TransactionItem item) async {
-    if (_saving) return;
+    if (_saving || _choosing) return;
+    setState(() => _choosing = true);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('reconhecer este pagamento?'),
         content: Text(
-          '${item.description} → ${widget.targetName}\n\nO saldo da conta permanece igual. Esta saída será vinculada ao compromisso e deixará de contar como uma nova despesa no orçamento. Confira conta, data e valor antes de confirmar.',
+          '${item.description} → ${widget.targetName}\n${Formatters.money(item.amount)} · ${item.accountName ?? 'conta'} · ${Formatters.fullDate.format(item.occurredAt)}\n\nO saldo da conta permanece igual. Esta saída será vinculada ao compromisso e deixará de contar como uma nova despesa no orçamento. Confira conta, data e valor antes de confirmar.',
         ),
         actions: [
           TextButton(
@@ -79,18 +78,15 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (!mounted) return;
+    setState(() => _choosing = false);
+    if (confirmed != true) return;
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      await widget.repository.recognizePayment(
-        spaceId: widget.spaceId,
-        eventId: item.id,
-        targetKind: widget.targetKind,
-        targetId: widget.targetId,
-      );
+      await widget.linkPayment(item);
       AppRealtimeRegistry.coordinator?.invalidateDomains({
         AppRealtimeDomain.home,
         AppRealtimeDomain.wallet,
@@ -140,12 +136,8 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
                     children: [
                       const Text('Não foi possível consultar as saídas.'),
                       TextButton(
-                        onPressed: () => setState(
-                          () => _rows = widget.repository.paymentCandidates(
-                            widget.spaceId,
-                            widget.outstanding,
-                          ),
-                        ),
+                        onPressed: () =>
+                            setState(() => _rows = widget.loadCandidates()),
                         child: const Text('tentar novamente'),
                       ),
                     ],
@@ -175,7 +167,7 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
                     itemBuilder: (context, index) {
                       final r = rows[index];
                       return ListTile(
-                        enabled: !_saving,
+                        enabled: !_saving && !_choosing,
                         title: Text(r.description),
                         subtitle: Text(
                           '${r.accountName ?? 'conta'} · ${Formatters.fullDate.format(r.occurredAt)}',

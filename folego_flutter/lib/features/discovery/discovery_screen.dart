@@ -159,7 +159,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                           ),
                           title: Text(source.name),
                           subtitle: Text(
-                            '${source.confirmed ? 'consulta concluída' : 'consulta falhou'} · ${source.checkedAt.hour.toString().padLeft(2, '0')}:${source.checkedAt.minute.toString().padLeft(2, '0')}',
+                            '${source.confirmed ? 'consulta concluída' : 'consulta falhou'} · ${source.checkedAt.hour.toString().padLeft(2, '0')}:${source.checkedAt.minute.toString().padLeft(2, '0')}${source.note == null ? '' : '\n${source.note}'}',
                           ),
                         ),
                     ],

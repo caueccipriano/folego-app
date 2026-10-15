@@ -93,10 +93,12 @@ class DiscoverySourceStatus {
     required this.name,
     required this.confirmed,
     required this.checkedAt,
+    this.note,
   });
   final String name;
   final bool confirmed;
   final DateTime checkedAt;
+  final String? note;
 }
 
 String discoveryOrigin(String source) => switch (source) {

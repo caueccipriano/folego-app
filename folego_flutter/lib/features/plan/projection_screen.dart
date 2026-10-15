@@ -270,11 +270,15 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
 
   Future<void> _ensureSimulationSources() async {
     if (_recurringItems != null && _expenseCategories != null) return;
+    final spaceId = widget.spaceId;
+    final repository = widget.repository;
     final values = await Future.wait<dynamic>([
-      widget.repository.listRecurringItems(widget.spaceId),
-      widget.repository.listExpenseCategories(widget.spaceId),
+      repository.listRecurringItems(spaceId),
+      repository.listExpenseCategories(spaceId),
     ]);
-    if (!mounted) return;
+    if (!mounted || widget.spaceId != spaceId || widget.repository != repository) {
+      throw StateError('O espaço financeiro mudou. Abra a simulação novamente.');
+    }
     _recurringItems = values[0] as List<RecurringItem>;
     _expenseCategories = values[1] as List<CategoryItem>;
   }

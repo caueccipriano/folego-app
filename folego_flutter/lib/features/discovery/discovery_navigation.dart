@@ -94,6 +94,7 @@ Future<void> openDiscovery(
               return;
             }
             destination = SheetAuditScreen(
+              initialReviewOnly: false,
               spaceId: space.id,
               loadItems: (id) async =>
                   (await repository.getSheetAuditItems(id))

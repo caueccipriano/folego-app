@@ -76,7 +76,7 @@ class HomeDataFreshness extends StatelessWidget {
                 const SizedBox(height:12),
                 const Text('Saldo e compromissos: registros deste espaço no Fôlego. Valores de bancos e cartões dependem dos registros e importações disponíveis.'),
                 const SizedBox(height:12),
-                Text(sourceFailures.isEmpty ? 'Nenhuma seção com falha na última consulta.' : 'Não foi possível atualizar: ${sourceFailures.join(', ')}. Essas seções podem estar incompletas.'),
+                Text(failed ? 'O resumo principal não foi atualizado.' : loading ? 'Consulta em andamento; aguarde a conclusão.' : sourceFailures.isEmpty ? 'Nenhuma seção com falha na última consulta.' : 'Não foi possível atualizar: ${sourceFailures.join(', ')}. Essas seções podem estar incompletas.'),
                 const SizedBox(height:12),
                 const Text('Entradas previstas continuam previstas até serem confirmadas. Para comunicação e retorno da planilha, consulte perfil → integração.'),
               ])),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('entendi'))])),

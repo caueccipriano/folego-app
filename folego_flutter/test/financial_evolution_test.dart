@@ -5,6 +5,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:folego/data/models/projection_model.dart';
 import 'package:folego/data/models/wallet_detail.dart';
 import 'package:folego/features/plan/purchase_comparison.dart';
+import 'package:folego/features/wallet/existing_payment_picker.dart';
+import 'package:folego/data/models/transaction_item.dart';
+import 'package:folego/core/privacy/financial_privacy.dart';
 
 void main() {
   setUpAll(() async {
@@ -71,6 +74,76 @@ void main() {
     expect(item.outstandingAmount, 200);
     expect(item.progress, closeTo(1 / 3, .001));
   });
+  for (final width in [320.0, 768.0, 1440.0]) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        'payment recognition at $width $brightness requires confirmation',
+        (tester) async {
+          tester.view.physicalSize = Size(width, 900);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          addTearDown(() => FinancialPrivacy.hidden.value = false);
+          var writes = 0;
+          final candidate = TransactionItem(
+            id: 'expense',
+            eventType: 'expense',
+            description: 'PIX exemplo',
+            amount: 100,
+            occurredAt: DateTime(2026, 10, 15),
+            status: 'confirmed',
+            source: 'app',
+            accountId: 'account',
+            accountName: 'Conta exemplo',
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: ThemeData(brightness: brightness),
+              home: Builder(
+                builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => showDialog<bool>(
+                      context: context,
+                      builder: (_) => ExistingPaymentPicker(
+                        targetName: 'Parcela exemplo',
+                        loadCandidates: () async => [candidate],
+                        linkPayment: (_) async {
+                          writes++;
+                        },
+                      ),
+                    ),
+                    child: const Text('open'),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.text('open'));
+          await tester.pumpAndSettle();
+          expect(writes, 0);
+          expect(tester.takeException(), isNull);
+          FinancialPrivacy.hidden.value = true;
+          await tester.pump();
+          expect(find.text('R\$ 100,00'), findsNothing);
+          FinancialPrivacy.hidden.value = false;
+          await tester.pump();
+          await tester.tap(find.text('PIX exemplo'));
+          await tester.pumpAndSettle();
+          expect(find.text('reconhecer este pagamento?'), findsOneWidget);
+          expect(writes, 0);
+          await tester.tap(find.text('voltar').last);
+          await tester.pumpAndSettle();
+          expect(writes, 0);
+          await tester.tap(find.text('PIX exemplo'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('confirmar vínculo'));
+          await tester.pumpAndSettle();
+          expect(writes, 1);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
   final result = ProjectionResult.fromJson({
     'as_of_date': '2026-10-15',
     'horizon_months': 12,
