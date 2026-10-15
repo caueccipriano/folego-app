@@ -26,6 +26,7 @@ import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
+import '../discovery/discovery_navigation.dart';
 import 'home_pulse_card.dart';
 import 'home_data_freshness.dart';
 import 'home_load_guard.dart';
@@ -724,7 +725,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 6),
+        IconButton(
+          key: const ValueKey('home-global-search'),
+          tooltip: 'buscar no Fôlego',
+          onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository),
+          icon: const Icon(AppIcons.search, size: 19),
+        ),
+        IconButton(
+          key: const ValueKey('home-pending-center'),
+          tooltip: 'central de pendências',
+          onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository, pendingOnly: true),
+          icon: const Icon(AppIcons.check, size: 19),
+        ),
+        const SizedBox(width: 6),
         IconButton(
           key: const ValueKey('home-agenda-shortcut'),
           tooltip: 'abrir agenda',
