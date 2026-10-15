@@ -29,6 +29,7 @@ import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
 import 'folego_admin_screen.dart';
 import 'folego_feedback_screen.dart';
+import 'folego_help_screen.dart';
 import 'notification_settings_screen.dart';
 import 'profile_actions.dart';
 import 'sheet_sync_status_card.dart';
@@ -140,6 +141,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!_isFolegoAdmin) return;
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => FolegoAdminScreen(client: widget.client),
+    ));
+  }
+
+  Future<void> _openHelpCenter() async {
+    await Navigator.of(context).push<void>(MaterialPageRoute<void>(
+      builder: (_) => FolegoHelpScreen(onContact: () {
+        _openFolegoFeedback();
+      }),
     ));
   }
 
@@ -718,6 +727,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'organização',
                   subtitle: 'categorias e marcadores em um só lugar',
                   onTap: _openFinancialOrganization,
+                ),
+                _SettingsRow(
+                  icon: Icons.help_outline_rounded,
+                  title: 'ajuda e perguntas frequentes',
+                  subtitle: 'entenda gastos, faturas, parcelas e importações',
+                  onTap: _openHelpCenter,
                 ),
                 _SettingsRow(
                   icon: Icons.forum_outlined,
