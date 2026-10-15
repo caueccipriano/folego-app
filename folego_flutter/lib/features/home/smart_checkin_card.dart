@@ -282,15 +282,20 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
               runSpacing: 5,
               children: [
                 if (pending != null && pending > 0)
-                  FilledButton.tonal(
+                  FilledButton.tonalIcon(
                     key: const ValueKey('smart-checkin-categorize'),
                     onPressed: _opening ? null : _classify,
-                    child: const Text('organizar sugestões'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 44),
+                    ),
+                    icon: const Icon(AppIcons.categoryUnclassified, size: 18),
+                    label: const Text('organizar sugestões'),
                   ),
-                TextButton(
+                TextButton.icon(
                   key: const ValueKey('smart-checkin-accounts'),
                   onPressed: _opening ? null : _openWallet,
-                  child: const Text('conferir minhas contas'),
+                  icon: const Icon(AppIcons.wallet, size: 18),
+                  label: const Text('conferir minhas contas'),
                 ),
               ],
             ),
