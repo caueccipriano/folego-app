@@ -541,6 +541,24 @@ class _FolegoExplanation extends StatelessWidget {
               label: 'compromissos até receber',
               value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome),
             ),
+            _ExplanationRow(
+              label: 'folga calculada pelo caixa',
+              value: Formatters.money(snapshot.cashHeadroom),
+            ),
+            if (snapshot.needsIncomeSetup ||
+                (snapshot.nextIncomeDate == null &&
+                 snapshot.daysUntilIncome == null)) ...[
+              const SizedBox(height: 7),
+              Text(
+                'previsão parcial: informe o próximo recebimento para '
+                'delimitar os compromissos do período. Este valor não '
+                'autoriza gastar o saldo bancário.',
+                key: const ValueKey('home-spending-incomplete-input'),
+                style: AppTypography.body(
+                  context, fontSize: 12, color: secondary,
+                ),
+              ),
+            ],
             if (snapshot.budgetConfigured) ...[
               _ExplanationRow(
                 label: 'orçamento para gastos flexíveis',
@@ -572,6 +590,14 @@ class _FolegoExplanation extends StatelessWidget {
                     ? '$timing · ${Formatters.money(snapshot.nextIncomeAmount)}'
                     : timing,
               ),
+            const SizedBox(height: 8),
+            Text(
+              'O menor limite aplicável entre caixa e planejamento '
+              'orienta o Fôlego; não some esses valores.',
+              style: AppTypography.body(
+                context, fontSize: 11, color: secondary,
+              ),
+            ),
             const Divider(height: 28),
             _ExplanationRow(
               label: 'te sobra pra gastar',
@@ -602,7 +628,9 @@ class _FolegoExplanation extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             Text(
-              'Reservas, investimentos protegidos e benefícios ficam separados do valor para gastar.',
+              'Reservas, investimentos protegidos e benefícios ficam separados '
+              'do valor para gastar. Faturas e parcelas são compromissos: '
+              'confira as datas e evite descontá-las duas vezes.',
               style: AppTypography.label(
                 context,
                 fontSize: 11,
