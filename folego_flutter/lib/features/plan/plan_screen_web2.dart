@@ -1035,9 +1035,11 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ],
           const SizedBox(height: 10),
-          Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
+          Material(
+            type: MaterialType.transparency,
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
               key: const ValueKey('plan-explain-budget'),
               tilePadding: const EdgeInsets.symmetric(horizontal: 2),
               childrenPadding: const EdgeInsets.fromLTRB(10, 4, 10, 14),
@@ -1085,6 +1087,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   ),
                 ),
               ],
+              ),
             ),
           ),
           if (widget.onSpendingBehaviorRequested != null) ...[
