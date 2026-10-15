@@ -697,8 +697,66 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
     final rows = _visibleRows;
     final selectedCount = _rows.where((row) => row.selected).length;
     final duplicateCount = _rows.where((row) => row.duplicateState != StatementImportDuplicateState.unique).length;
+    final risk = summarizeSensitiveStatementImport(
+      _rows.where((row) => row.selected).toList(growable: false),
+    );
     final header = Column(mainAxisSize: MainAxisSize.min, children: [
       Wrap(spacing: 8, runSpacing: 8, children: [_MetricChip(label: '${_rows.length} linhas'), _MetricChip(label: '$selectedCount selecionadas'), _MetricChip(label: '$duplicateCount duplicadas/possíveis')]),
+      if (risk.requiresConfirmation) ...[
+        const SizedBox(height: 10),
+        Container(
+          key: const ValueKey('statement-import-autopilot-risk-preview'),
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
+            border: Border.all(color: AppColors.border(Theme.of(context).brightness)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'conciliação: revisar antes de importar',
+                style: AppTypography.body(
+                  context, fontSize: 12, fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                [
+                  if (risk.duplicateOverrides > 0)
+                    '${risk.duplicateOverrides} possível(is) duplicidade(s)',
+                  if (risk.transfers > 0)
+                    '${risk.transfers} transferência(s)',
+                  if (risk.cardPayments > 0)
+                    '${risk.cardPayments} pagamento(s) de fatura',
+                  if (risk.possibleRefunds > 0)
+                    '${risk.possibleRefunds} possível(is) estorno(s)',
+                ].join(' · '),
+                style: AppTypography.body(context, fontSize: 11),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Contagens podem se sobrepor. Nenhuma duplicidade foi '
+                'resolvida automaticamente e nada será lançado sem confirmação.',
+                style: AppTypography.body(context, fontSize: 11),
+              ),
+              if (risk.duplicateOverrides > 0)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const ValueKey('statement-import-review-duplicates'),
+                    onPressed: () => setState(
+                      () => _reviewFilter = _ReviewFilter.duplicates,
+                    ),
+                    icon: const Icon(AppIcons.search, size: 16),
+                    label: const Text('revisar duplicidades'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
       const SizedBox(height: 10),
       TextField(controller: _search, onChanged: (_) => setState(() {}), decoration: const InputDecoration(prefixIcon: Icon(AppIcons.search), labelText: 'buscar neste lote')),
       const SizedBox(height: 10),
