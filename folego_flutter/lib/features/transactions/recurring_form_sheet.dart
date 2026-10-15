@@ -626,13 +626,11 @@ monthlyLastDay:
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final accent = _isExpense
-        ? AppColors.lime
+        ? AppColors.action(brightness)
         : AppColors.primaryPurple(brightness);
     final accentForeground = _isExpense
-        ? AppColors.iconOnLime
-        : isDark
-            ? AppColors.darkPrimaryText
-            : Colors.white;
+        ? AppColors.onAction(brightness)
+        : AppColors.onBrand(brightness);
 
     final iconBackground = accent;
     final iconForeground = accentForeground;
