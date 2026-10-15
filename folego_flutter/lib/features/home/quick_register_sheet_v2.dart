@@ -196,7 +196,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             context: context,
             useRootNavigator: true,
             builder: (dialogContext) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: SizedBox(
                 width: AppContentWidths.form,
@@ -215,7 +215,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             useRootNavigator: true,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .86,
               child: CategorySearchPicker(
@@ -1019,7 +1019,7 @@ class _CategoryTile extends StatelessWidget {
     );
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
