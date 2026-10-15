@@ -57,7 +57,7 @@ class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
                         context, fontSize: 28, color: ink)),
                 const SizedBox(height: 6),
                 Text(
-                  'revisão de ' + Formatters.monthYear.format(summary.periodMonth),
+                  'revisão de ${Formatters.monthYear.format(summary.periodMonth)}',
                   style: AppTypography.body(context, fontSize: 13, color: secondary),
                 ),
                 const SizedBox(height: 12),
@@ -102,7 +102,7 @@ class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
                 const SizedBox(height: 8),
                 for (var index = 0; index < _steps.length; index++)
                   CheckboxListTile(
-                    key: ValueKey('monthly-close-check-' + index.toString()),
+                    key: ValueKey('monthly-close-check-$index'),
                     value: _checked[index],
                     onChanged: (value) => setState(() {
                       _checked[index] = value ?? false;
