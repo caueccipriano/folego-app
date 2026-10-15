@@ -1,5 +1,94 @@
 /// One confirmed economic posting contributing to the month's Plan.
 /// A card purchase from a previous month may have an installment in this one.
+/// A read-only snapshot of what the Plan knows about money and anomalies.
+class PlanInsights {
+  const PlanInsights({
+    required this.economicSpending,
+    required this.debtPayments,
+    required this.budgetTracked,
+    required this.cashOutflows,
+    required this.cashInflows,
+    required this.estimatedAvailableNow,
+    required this.issues,
+    required this.suggestions,
+  });
+
+  final double economicSpending;
+  final double debtPayments;
+  final double budgetTracked;
+  final double cashOutflows;
+  final double cashInflows;
+  /// Estimated using recorded transactions, NOT directly verified by a bank.
+  final double estimatedAvailableNow;
+  final List<PlanIssue> issues;
+  final List<PlanSuggestion> suggestions;
+
+  factory PlanInsights.fromJson(Map<String, dynamic> json) {
+    List<Map<String, dynamic>> array(String key) =>
+        (json[key] as List<dynamic>? ?? const [])
+            .map((v) => Map<String, dynamic>.from(v as Map))
+            .toList();
+    return PlanInsights(
+      economicSpending: _budgetDouble(json['economic_spending']),
+      debtPayments: _budgetDouble(json['debt_payments']),
+      budgetTracked: _budgetDouble(json['budget_tracked']),
+      cashOutflows: _budgetDouble(json['cash_outflows']),
+      cashInflows: _budgetDouble(json['cash_inflows']),
+      estimatedAvailableNow: _budgetDouble(json['estimated_available_now']),
+      issues: array('issues').map(PlanIssue.fromJson).toList(),
+      suggestions: array('suggestions').map(PlanSuggestion.fromJson).toList(),
+    );
+  }
+}
+
+class PlanIssue {
+  const PlanIssue({
+    required this.code,
+    required this.title,
+    required this.description,
+    required this.count,
+    required this.amount,
+  });
+
+  final String code;
+  final String title;
+  final String description;
+  final int count;
+  final double amount;
+
+  factory PlanIssue.fromJson(Map<String, dynamic> json) => PlanIssue(
+    code: json['code'] as String? ?? '',
+    title: json['title'] as String? ?? 'Revisar lançamento',
+    description: json['description'] as String? ?? '',
+    count: (json['count'] as num?)?.toInt() ?? 0,
+    amount: _budgetDouble(json['amount']),
+  );
+}
+
+class PlanSuggestion {
+  const PlanSuggestion({
+    required this.categoryId,
+    required this.categoryName,
+    required this.historicalAverage,
+    required this.suggestedLimit,
+    required this.sampleMonths,
+  });
+
+  final String categoryId;
+  final String categoryName;
+  final double historicalAverage;
+  final double suggestedLimit;
+  final int sampleMonths;
+
+  factory PlanSuggestion.fromJson(Map<String, dynamic> json) => PlanSuggestion(
+    categoryId: json['category_id'] as String? ?? '',
+    categoryName: json['category_name'] as String? ?? '',
+    historicalAverage: _budgetDouble(json['historical_average']),
+    suggestedLimit: _budgetDouble(json['suggested_limit']),
+    sampleMonths: (json['sample_months'] as num?)?.toInt() ?? 0,
+  );
+}
+
 class BudgetImpactDetail {
   const BudgetImpactDetail({
     required this.impactId,
