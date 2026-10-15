@@ -77,6 +77,14 @@ void main() {
         expect(theme.colorScheme.secondary, tokens.acao);
         expect(theme.colorScheme.tertiary, tokens.acao);
         expect(theme.colorScheme.onSurface, tokens.textoPrincipal);
+        expect(theme.colorScheme.surfaceContainer, tokens.superficie);
+        expect(theme.colorScheme.surfaceContainerHigh, tokens.superficieAlta);
+        expect(theme.colorScheme.onPrimaryContainer, tokens.textoPrincipal);
+        expect(theme.colorScheme.onSecondaryContainer, tokens.textoPrincipal);
+        expect(FolegoColorTokens.contrastRatio(
+          theme.colorScheme.secondaryContainer,
+          theme.colorScheme.onSecondaryContainer,
+        ), greaterThanOrEqualTo(4.5));
         expect(theme.extension<FolegoColorTokens>()?.marcaHero, tokens.marcaHero);
       }
     }
