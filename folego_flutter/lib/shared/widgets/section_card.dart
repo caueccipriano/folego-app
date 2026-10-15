@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radii.dart';
+
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -12,11 +15,16 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: AppColors.surface(brightness),
+      surfaceTintColor: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        side: BorderSide(color: AppColors.border(brightness)),
       ),
       child: Padding(padding: padding, child: child),
     );

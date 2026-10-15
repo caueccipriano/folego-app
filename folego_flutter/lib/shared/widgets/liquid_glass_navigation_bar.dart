@@ -42,13 +42,15 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final highlight = Colors.white.withValues(alpha: isDark ? .08 : .72);
     final lower = surface.withValues(alpha: isDark ? .98 : .94);
+    final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
+    final navigationHeight = 64.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
       top: false,
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 5),
       child: SizedBox(
-        height: 64,
+        height: navigationHeight,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -57,7 +59,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: Container(
                   width: double.infinity,
-                  height: 64,
+                  height: navigationHeight,
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -68,9 +70,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(AppRadii.navigation),
                     border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: .14)
-                          : Colors.white.withValues(alpha: .78),
+                      color: AppColors.border(theme.brightness),
                       width: .85,
                     ),
                     boxShadow: [
@@ -140,6 +140,9 @@ class _Destination extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          mouseCursor: SystemMouseCursors.click,
+          focusColor: activePurple.withValues(alpha: .16),
+          hoverColor: activePurple.withValues(alpha: .07),
           borderRadius: BorderRadius.circular(AppRadii.feature),
           overlayColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) {
@@ -180,8 +183,7 @@ class _Destination extends StatelessWidget {
                     style: AppTypography.label(
                       context,
                       fontSize: 11,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? activeForeground : inactiveColor,
                     ),
                   ),
