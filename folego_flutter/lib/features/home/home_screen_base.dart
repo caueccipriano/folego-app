@@ -22,7 +22,6 @@ import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
-import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../onboarding/getting_started_screen.dart';
 import '../goals/goals_screen.dart';
@@ -35,6 +34,8 @@ import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
+import 'home_expense_navigation_scope.dart';
+import 'home_wallet_navigation_scope.dart';
 import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
@@ -262,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
@@ -425,6 +426,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
+      onOpenTransactions: HomeExpenseNavigationScope.maybeOf(context)
+                  ?.onOpenMonthlyTransactions ==
+              null
+          ? null
+          : (kind, periodMonth) {
+              // Keep the backend's monthly totals as the source of truth.
+              // The transaction screen is a read-only, filtered drilldown.
+              final types = kind == MonthlyMoneyTransactionKind.income
+                  ? const <String>{'income'}
+                  : const <String>{
+                      'expense',
+                      'card_purchase',
+                      'benefit_expense',
+                      'refund',
+                      'reimbursement',
+                    };
+              HomeExpenseNavigationScope.maybeOf(context)
+                  ?.onOpenMonthlyTransactions?.call(periodMonth, types);
+            },
       onOpenClosing: _monthlyMoney == null ? null
           : () => showMonthlyClosingReview(context, summary: _monthlyMoney!),
       onOpenEvolution: () => showClosedMonthEvolution(
@@ -473,12 +493,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
-                  hero,
-                  const SizedBox(height: 12),
                   quickActions,
                   const SizedBox(height: 12),
-                  if (showUpcoming) ...[upcoming, const SizedBox(height: 13)],
+                  hero,
+                  const SizedBox(height: 12),
                   pulse,
+                  if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
                   const SizedBox(height: 12),
                   smartCheckin,
                   const SizedBox(height: 14),
@@ -520,20 +540,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 18),
                   optionalReview,
                 ] else if (layout == AppLayoutSize.medium) ...[
+                  quickActions,
+                  const SizedBox(height:12),
                   hero,
                   const SizedBox(height: 16),
                   pulse,
-                  const SizedBox(height: 20),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 5, child: quickActions),
-                      if (showUpcoming) ...[
-                        const SizedBox(width: 20),
-                        Expanded(flex: 4, child: upcoming),
-                      ],
-                    ],
-                  ),
+                  if (showUpcoming) ...[
+                    const SizedBox(height: 16),
+                    upcoming,
+                  ],
                   const SizedBox(height: 16),
                   smartCheckin,
                   const SizedBox(height: 22),
@@ -547,6 +562,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 20),
                   optionalReview,
                 ] else ...[
+                  // Independent desktop columns: a tall card in one column
+                  // must not create a blank strip above the other column.
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -554,56 +571,38 @@ class _HomeScreenState extends State<HomeScreen> {
                         flex: 7,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [hero],
-                        ),
-                      ),
-                      const SizedBox(width: 28),
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            quickActions,
+                            hero,
                             const SizedBox(height: 16),
-                            pulse,
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 7,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
                             monthlyMoney,
                             const SizedBox(height: 16),
                             projectionInsight,
                           ],
                         ),
                       ),
-                      const SizedBox(width: 28),
+                      const SizedBox(width: 20),
                       Expanded(
                         flex: 5,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (showUpcoming) upcoming,
-                            if (showUpcoming && showLatest)
-                              const SizedBox(height: 28),
-                            if (showLatest) latestSection,
+                            pulse,
+                            if (showUpcoming) ...[
+                              const SizedBox(height: 16),
+                              upcoming,
+                            ],
+                            const SizedBox(height: 16),
+                            smartCheckin,
+                            if (showLatest) ...[
+                              const SizedBox(height: 16),
+                              latestSection,
+                            ],
                           ],
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  smartCheckin,
-                  const SizedBox(height: 22),
                   optionalReview,
                 ],
               ],
@@ -773,7 +772,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHero({required FolegoSnapshot snapshot}) {
-    return HomeFinancialHero(snapshot: snapshot);
+    final wallet = HomeWalletNavigationScope.maybeOf(context);
+    return HomeFinancialHero(
+      snapshot: snapshot,
+      onOpenAccounts: wallet == null ? null : () => wallet.onOpenSection(0),
+      onOpenInvoices: wallet == null ? null : () => wallet.onOpenSection(1),
+      onOpenCommitments: () { _openUpcomingEvents(); },
+    );
   }
 
   Widget _buildQuickActions({
@@ -791,8 +796,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'gasto',
             semanticLabel: 'registrar gasto',
             icon: AppIcons.expense,
-            background: AppColors.lime,
-            foreground: AppColors.iconOnLime,
+            background: AppColors.action(Theme.of(context).brightness),
+            foreground: AppColors.onAction(Theme.of(context).brightness),
             onTap: () => _openRegister('expense'),
           ),
         ),
@@ -848,7 +853,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final visible = sorted.take(3).toList(growable: false);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -951,15 +956,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Row(
       children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: event.isIncome
-                ? AppColors.positiveText(brightness)
-                : AppColors.primaryPurple(brightness),
-            shape: BoxShape.circle,
-          ),
+        CategoryIconBadge(
+          icon: event.isIncome ? AppIcons.income : AppIcons.expense,
+          color: event.isIncome
+              ? AppColors.positiveText(brightness)
+              : AppColors.primaryPurple(brightness),
+          size: 26,
+          iconSize: 14,
+          radius: AppRadii.control,
         ),
         const SizedBox(width: 9),
         SizedBox(
@@ -1005,51 +1009,83 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          title: 'último movimento',
-          subtitle: 'o registro mais recente da sua vida financeira',
-        ),
-        const SizedBox(height: 10),
-        if (_recentUnavailable)
-          _buildCompactEmptyCard(
-            message: 'não foi possível carregar o último movimento',
-            surface: surface,
-            border: border,
-            primaryText: primaryText,
-            secondaryText: secondaryText,
-          )
-        else if (latest == null)
-          _buildCompactEmptyCard(
-            message:
-                'nada por aqui ainda — quando você movimentar, eu organizo.',
-            surface: surface,
-            border: border,
-            primaryText: primaryText,
-            secondaryText: secondaryText,
-            actionLabel: 'registrar gasto',
-            onAction: () => _openRegister('expense'),
-          )
-        else
-          _buildLatestCard(
-            latest: latest,
-            brightness: brightness,
-            surface: surface,
-            border: border,
-            primaryText: primaryText,
-            secondaryText: secondaryText,
+    final purple = AppColors.primaryPurple(brightness);
+    return Container(
+      key: const ValueKey('home-latest-section-card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              CategoryIconBadge(
+                icon: AppIcons.transactions,
+                color: purple,
+                size: 32,
+                iconSize: 16,
+                radius: AppRadii.control,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  'último movimento',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: primaryText,
+                  ),
+                ),
+              ),
+            ],
           ),
-      ],
+          const SizedBox(height: 6),
+          Text(
+            'o registro mais recente da sua vida financeira',
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              color: secondaryText,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (_recentUnavailable)
+            _buildCompactEmptyCard(
+              message: 'não foi possível carregar o último movimento',
+              surface: AppColors.background(brightness),
+              border: border,
+              primaryText: primaryText,
+              secondaryText: secondaryText,
+            )
+          else if (latest == null)
+            _buildCompactEmptyCard(
+              message:
+                  'nada por aqui ainda — quando você movimentar, eu organizo.',
+              surface: AppColors.background(brightness),
+              border: border,
+              primaryText: primaryText,
+              secondaryText: secondaryText,
+              actionLabel: 'registrar gasto',
+              onAction: () => _openRegister('expense'),
+            )
+          else
+            _buildLatestCard(
+              latest: latest,
+              brightness: brightness,
+              surface: AppColors.background(brightness),
+              border: border,
+              primaryText: primaryText,
+              secondaryText: secondaryText,
+            ),
+        ],
+      ),
     );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required String subtitle,
-  }) {
-    return AppSectionHeader(title: title, subtitle: subtitle);
   }
 
   Widget _buildCompactEmptyCard({

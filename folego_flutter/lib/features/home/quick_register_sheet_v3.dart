@@ -18,6 +18,7 @@ import '../../data/models/credit_card_item.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/models/transaction_reflection.dart';
+import '../../data/smart_category_suggestion.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../data/repositories/folego_repository_diary.dart';
@@ -71,6 +72,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   List<CreditCardItem> _creditCards = const [];
   List<CategoryItem> _categories = const [];
   List<_QuickSuggestion> _suggestions = const [];
+  List<TransactionItem> _categoryHistory = const [];
 
   String? _incomeAccountId;
   String? _categoryId;
@@ -94,6 +96,16 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   bool get _isExpense => widget.initialType == 'expense';
   bool get _isRecurring => _repeat != 'once';
   bool get _canReflect => _isExpense && !_isRecurring;
+
+  SmartCategorySuggestion? get _suggestedCategory {
+    if (_categoryId != null || _description.text.trim().isEmpty) return null;
+    return suggestSmartCategory(
+      description: _description.text,
+      eventType: widget.initialType,
+      history: _categoryHistory,
+      categories: _categories,
+    );
+  }
 
   CategoryItem? get _selectedCategory {
     final id = _categoryId;
@@ -277,7 +289,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     if (widget.loadCatalog != null) return;
     try {
       final page = await _withTimeout(
-        widget.repository.getTransactionsPage(widget.space.id, pageSize: 24),
+        widget.repository.getTransactionsPage(widget.space.id, pageSize: 120),
         'Os atalhos demoraram demais para carregar.',
       );
       final counts = <String, int>{};
@@ -302,6 +314,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
       if (!mounted) return;
       setState(() {
+        _categoryHistory = page.items;
         _suggestions = ranked
             .take(4)
             .map(
@@ -404,7 +417,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             context: context,
             useRootNavigator: true,
             builder: (dialogContext) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               insetPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 24,
@@ -426,7 +439,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             useRootNavigator: true,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .86,
               child: CategorySearchPicker(
@@ -779,6 +792,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         ],
                         const SizedBox(height: 12),
                         _detailsSection(),
+                        if (_suggestedCategory != null) ...[
+                          const SizedBox(height: 8),
+                          _smartCategoryHint(brightness),
+                        ],
                         const SizedBox(height: 12),
                         _categoryField(brightness),
                         const SizedBox(height: 14),
@@ -804,8 +821,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         FilledButton(
                           onPressed: _saving ? null : _save,
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.lime,
-                            foregroundColor: AppColors.iconOnLime,
+                            backgroundColor: AppColors.action(Theme.of(context).brightness),
+                            foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                             minimumSize: const Size.fromHeight(50),
                           ),
                           child: _saving
@@ -1119,9 +1136,30 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     );
   }
 
+  Widget _smartCategoryHint(Brightness brightness) {
+    final suggestion = _suggestedCategory;
+    if (suggestion == null) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        key: const ValueKey('quick-register-smart-category-suggestion'),
+        onPressed: () => setState(() {
+          _categoryId = suggestion.category.id;
+          _error = null;
+        }),
+        icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+        label: Text(
+          'sugestão: ${suggestion.category.breadcrumb} · ${suggestion.reason}',
+          style: AppTypography.body(context, fontSize: 11),
+        ),
+      ),
+    );
+  }
+
   Widget _detailsSection() {
     return TextField(
       controller: _description,
+      onChanged: (_) => setState(() {}),
       textCapitalization: TextCapitalization.sentences,
       decoration: const InputDecoration(
         labelText: 'o que foi?',

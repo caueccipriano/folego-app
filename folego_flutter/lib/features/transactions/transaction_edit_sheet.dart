@@ -127,7 +127,7 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
         ? await showDialog<CategoryItem>(
             context: context,
             builder: (dialogContext) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               child: SizedBox(
                 width: AppContentWidths.form,
                 height: MediaQuery.sizeOf(dialogContext).height * .80,
@@ -144,7 +144,7 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
             context: context,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .84,
               child: CategorySearchPicker(
@@ -376,8 +376,8 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                     FilledButton(
                       onPressed: _saving ? null : _save,
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.lime,
-                        foregroundColor: AppColors.iconOnLime,
+                        backgroundColor: AppColors.action(Theme.of(context).brightness),
+                        foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                       ),
                       child: _saving
                           ? const SizedBox(

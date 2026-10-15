@@ -144,7 +144,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  'este é o máximo que você quer gastar no mês com o que é flexível. limites por categoria ajudam a distribuir, mas não mudam este teto.',
+                  'este é o máximo de gastos flexíveis para o mês, não o dinheiro disponível em conta. limites por categoria ajudam a distribuir, mas não mudam este teto.',
                   style: AppTypography.body(
                     context,
                     fontSize: 12,
@@ -456,7 +456,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                 brightness: brightness,
               ),
               _MiniMetric(
-                label: overview.isExceeded ? 'ultrapassou' : 'ainda pode gastar',
+                label: overview.isExceeded ? 'ultrapassou' : 'resta no teto',
                 value: Formatters.money(
                   overview.isExceeded ? overview.exceededAmount : overview.remainingAmount,
                 ),
@@ -479,7 +479,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
             Text(
               overview.isExceeded
                   ? 'você ultrapassou seu orçamento flexível em ${Formatters.money(overview.exceededAmount)}'
-                  : 'você ainda tem ${Formatters.money(overview.remainingAmount)} dentro do teto flexível',
+                  : 'restam ${Formatters.money(overview.remainingAmount)} até o teto flexível; confira seu saldo disponível antes de gastar',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -508,7 +508,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
         const AppSectionHeader(
           title: 'limites por categoria',
           subtitle:
-              'eles ajudam a distribuir seu dinheiro. um gasto flexível continua contando no teto global mesmo quando a categoria está sem limite',
+              'eles ajudam a distribuir o limite. gastos flexíveis sem categoria ou sem limite também contam no teto global; consulte o saldo bancário antes de gastar',
         ),
         if (_activeWithoutLimit > 0) ...[
           const SizedBox(height: 12),

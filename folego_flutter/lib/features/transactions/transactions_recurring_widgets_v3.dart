@@ -143,12 +143,10 @@ class _RecurringCard extends StatelessWidget {
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final surface = AppColors.surface(brightness);
     final visual = _visualForRecurring(context);
     final amountColor = item.isIncome
-        ? isDark
-              ? AppPalette.lime
-              : AppPalette.green
+        ? AppColors.positiveText(brightness)
         : primaryText;
 
     return Container(
@@ -355,7 +353,7 @@ class _RecurringCard extends StatelessWidget {
       context: context,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _FolegoActionSheet(title: item.name, actions: actions),
     );
     if (action == 'realize') onRealize();
@@ -373,8 +371,7 @@ class _FolegoActionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final surface = AppColors.surface(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);

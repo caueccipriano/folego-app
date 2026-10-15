@@ -4,6 +4,7 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -195,11 +196,11 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          event.isIncome ? 'confirmar recebimento?' : 'registrar pagamento?',
+          event.isIncome ? 'registrar receita manual?' : 'registrar pagamento manual?',
         ),
         content: Text(
           '${event.title}\n${Formatters.money(event.amount)}\n\n'
-          'a previsão será transformada no lançamento correspondente',
+          'este botão cria um novo lançamento manual. use apenas se a movimentação NÃO entrou automaticamente pelo banco. se o PIX ou débito já aparece nas transações, cancele para evitar duplicidade.',
         ),
         actions: [
           TextButton(
@@ -209,7 +210,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
-              event.isIncome ? 'confirmar recebimento' : 'registrar pagamento',
+              event.isIncome ? 'registrar manualmente' : 'registrar manualmente',
             ),
           ),
         ],
@@ -253,7 +254,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
                 padding: const EdgeInsets.only(top: 20, bottom: 12),
                 child: AppPageHeader(
                   title: 'agenda',
-                  subtitle: 'próximos compromissos e entradas do seu dinheiro',
+                  subtitle: 'recebimentos e pagamentos que ainda estão pendentes',
                   leading: IconButton(
                     tooltip: 'voltar',
                     onPressed: () => Navigator.of(context).maybePop(),
@@ -308,7 +309,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
           const SizedBox(height: 22),
           const AppSectionHeader(
             title: 'o que vem pela frente',
-            subtitle: 'obrigações e entradas reais, sem contar a mesma saída duas vezes',
+            subtitle: 'só previsões pendentes · o banco pode confirmar automaticamente',
           ),
           const SizedBox(height: 14),
           SingleChildScrollView(
@@ -409,11 +410,9 @@ class _AgendaHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final purple = AppColors.primaryPurple(brightness);
-    final onPurple = brightness == Brightness.dark
-        ? AppColors.iconOnPurpleDark
-        : AppColors.iconOnPurpleLight;
+    final tokens = FolegoColorTokens.of(context);
+    final purple = tokens.marcaHero;
+    final onPurple = tokens.marcaHeroSobre;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -433,7 +432,7 @@ class _AgendaHero extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'um mapa curto do que já está previsto',
+            'o que ainda falta acontecer',
             style: AppTypography.section(
               context,
               fontSize: 21,
@@ -447,12 +446,12 @@ class _AgendaHero extends StatelessWidget {
             children: [
               _AgendaHeroMetric(
                 icon: AppIcons.expense,
-                label: '${summary.outflowCount} saídas',
+                label: '${summary.outflowCount} saídas previstas',
                 value: Formatters.money(summary.outflowAmount),
               ),
               _AgendaHeroMetric(
                 icon: AppIcons.income,
-                label: '${summary.incomeCount} entradas',
+                label: '${summary.incomeCount} entradas previstas',
                 value: Formatters.money(summary.incomeAmount),
               ),
             ],
@@ -475,28 +474,29 @@ class _AgendaHeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onHero = FolegoColorTokens.of(context).marcaHeroSobre;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .12),
+        color: onHero.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(AppRadii.control),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: Colors.white),
+          Icon(icon, size: 17, color: onHero),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                style: TextStyle(color: onHero.withValues(alpha: .84), fontSize: 11),
               ),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: onHero,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -592,7 +592,7 @@ class _AgendaEventCard extends StatelessWidget {
         : '';
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),

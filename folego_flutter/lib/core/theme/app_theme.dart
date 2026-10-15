@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_color_tokens.dart';
 import 'app_radii.dart';
 import 'app_typography.dart';
 
@@ -22,18 +23,18 @@ abstract final class AppPalette {
   static const lime = AppColors.lime;
 
   // Compatibilidade com componentes antigos.
-  static const pink = Color(0xFFD4457A);
-  static const green = Color(0xFF3B6D11);
-  static const orange = Color(0xFFE8A87C);
-  static const teal = Color(0xFF58A8A0);
-  static const indigo = Color(0xFF5969C9);
+  static const pink = FolegoLegacyColors.hexFFD4457A;
+  static const green = FolegoLegacyColors.hexFF3B6D11;
+  static const orange = FolegoLegacyColors.hexFFE8A87C;
+  static const teal = FolegoLegacyColors.hexFF58A8A0;
+  static const indigo = FolegoLegacyColors.hexFF5969C9;
 
   // Light
   static const lightBackground = AppColors.lightBackground;
 
   static const lightSurface = AppColors.lightSurface;
 
-  static const lightSurfaceMuted = Color(0xFFF0ECE2);
+  static const lightSurfaceMuted = FolegoLegacyColors.hexFFF0ECE2;
 
   static const lightText = AppColors.lightPrimaryText;
 
@@ -46,7 +47,7 @@ abstract final class AppPalette {
 
   static const darkSurface = AppColors.darkSurface;
 
-  static const darkSurfaceMuted = Color(0xFF25252D);
+  static const darkSurfaceMuted = FolegoLegacyColors.hexFF25252D;
 
   static const darkText = AppColors.darkPrimaryText;
 
@@ -59,7 +60,7 @@ abstract final class AppPalette {
   static const expense = pink;
   static const transfer = AppColors.purpleDark;
 
-  static const warning = Color(0xFFE8A87C);
+  static const warning = FolegoLegacyColors.hexFFE8A87C;
 
   static const chartColors = <Color>[
     AppColors.purpleLight,
@@ -78,7 +79,9 @@ abstract final class AppPalette {
 /// Dark Mode é a identidade principal do Fôlego.
 /// A preferência é persistida por AppPreferences e restaurada no bootstrap.
 abstract final class AppThemeController {
-  static final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.dark);
+  static final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.system);
+  static final ValueNotifier<String> paletteId = AppColorSelection.selected;
+  static void selectPalette(String id) => AppColorSelection.choose(id);
 
   static void toggle(BuildContext context) {
     mode.value = Theme.of(context).brightness == Brightness.dark
@@ -106,39 +109,41 @@ abstract final class AppTheme {
 
   static ThemeData light() {
     const brightness = Brightness.light;
+    final tokens = FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness);
 
     final scheme =
         ColorScheme.fromSeed(
-          seedColor: AppColors.purpleLight,
+          seedColor: tokens.marca,
           brightness: brightness,
         ).copyWith(
-          primary: AppColors.purpleLight,
-          onPrimary: Colors.white,
+          primary: tokens.marca,
+          onPrimary: tokens.marcaSobre,
 
-          secondary: AppColors.lime,
-          onSecondary: AppColors.darkBackground,
+          secondary: tokens.acao,
+          onSecondary: tokens.acaoSobre,
 
-          surface: AppColors.lightSurface,
-          onSurface: AppColors.lightPrimaryText,
+          surface: tokens.superficie,
+          onSurface: tokens.textoPrincipal,
 
-          error: AppColors.lightExpenseText,
-          onError: Colors.white,
+          error: tokens.estourado,
+          onError: tokens.estouradoSobre,
 
-          outline: AppColors.lightBorder,
-          outlineVariant: AppColors.lightBorder,
+          outline: tokens.borda,
+          outlineVariant: tokens.borda,
 
-          surfaceContainerHighest: AppColors.lightBackground,
+          surfaceContainerHighest: tokens.superficieAlta,
         );
 
     return _baseTheme(
       scheme: scheme,
+      tokens: tokens,
       brightness: brightness,
-      scaffoldBackground: AppColors.lightBackground,
-      surface: AppColors.lightSurface,
-      border: AppColors.lightBorder,
-      primaryText: AppColors.lightPrimaryText,
-      secondaryText: AppColors.lightSecondaryText,
-      primaryPurple: AppColors.purpleLight,
+      scaffoldBackground: tokens.fundo,
+      surface: tokens.superficie,
+      border: tokens.borda,
+      primaryText: tokens.textoPrincipal,
+      secondaryText: tokens.textoSecundario,
+      primaryPurple: tokens.marca,
     );
   }
 
@@ -148,39 +153,41 @@ abstract final class AppTheme {
 
   static ThemeData dark() {
     const brightness = Brightness.dark;
+    final tokens = FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness);
 
     final scheme =
         ColorScheme.fromSeed(
-          seedColor: AppColors.purpleDark,
+          seedColor: tokens.marca,
           brightness: brightness,
         ).copyWith(
-          primary: AppColors.purpleDark,
-          onPrimary: AppColors.darkPrimaryText,
+          primary: tokens.marca,
+          onPrimary: tokens.marcaSobre,
 
-          secondary: AppColors.lime,
-          onSecondary: AppColors.darkBackground,
+          secondary: tokens.acao,
+          onSecondary: tokens.acaoSobre,
 
-          surface: AppColors.darkSurface,
-          onSurface: AppColors.darkPrimaryText,
+          surface: tokens.superficie,
+          onSurface: tokens.textoPrincipal,
 
-          error: AppColors.darkExpenseText,
-          onError: AppColors.darkBackground,
+          error: tokens.estourado,
+          onError: tokens.estouradoSobre,
 
-          outline: AppColors.darkBorder,
-          outlineVariant: AppColors.darkBorder,
+          outline: tokens.borda,
+          outlineVariant: tokens.borda,
 
-          surfaceContainerHighest: AppColors.darkSurface,
+          surfaceContainerHighest: tokens.superficieAlta,
         );
 
     return _baseTheme(
       scheme: scheme,
+      tokens: tokens,
       brightness: brightness,
-      scaffoldBackground: AppColors.darkBackground,
-      surface: AppColors.darkSurface,
-      border: AppColors.darkBorder,
-      primaryText: AppColors.darkPrimaryText,
-      secondaryText: AppColors.darkSecondaryText,
-      primaryPurple: AppColors.purpleDark,
+      scaffoldBackground: tokens.fundo,
+      surface: tokens.superficie,
+      border: tokens.borda,
+      primaryText: tokens.textoPrincipal,
+      secondaryText: tokens.textoSecundario,
+      primaryPurple: tokens.marca,
     );
   }
 
@@ -190,6 +197,7 @@ abstract final class AppTheme {
 
   static ThemeData _baseTheme({
     required ColorScheme scheme,
+    required FolegoColorTokens tokens,
     required Brightness brightness,
     required Color scaffoldBackground,
     required Color surface,
@@ -213,6 +221,7 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
+      extensions: <ThemeExtension<dynamic>>[tokens],
 
       scaffoldBackgroundColor: scaffoldBackground,
 
@@ -237,7 +246,7 @@ abstract final class AppTheme {
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         foregroundColor: primaryText,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(color: primaryText),
@@ -251,7 +260,7 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         elevation: 0,
         color: surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
           side: BorderSide(color: border),
@@ -312,11 +321,9 @@ abstract final class AppTheme {
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
 
-          backgroundColor: primaryPurple,
+          backgroundColor: tokens.acao,
 
-          foregroundColor: brightness == Brightness.dark
-              ? AppColors.darkPrimaryText
-              : Colors.white,
+          foregroundColor: tokens.acaoSobre,
 
           textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
@@ -385,7 +392,7 @@ abstract final class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return brightness == Brightness.dark
                 ? AppColors.darkPrimaryText
-                : Colors.white;
+                : tokens.marcaSobre;
           }
           return secondaryText;
         }),
@@ -462,7 +469,7 @@ abstract final class AppTheme {
       // -----------------------------------------------------------------------
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
 
         titleTextStyle: textTheme.titleLarge?.copyWith(color: primaryText),
 
@@ -481,7 +488,7 @@ abstract final class AppTheme {
         backgroundColor: surface,
         modalBackgroundColor: surface,
 
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
 
         showDragHandle: true,
 
@@ -505,7 +512,7 @@ abstract final class AppTheme {
       // NAVIGATION
       // -----------------------------------------------------------------------
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
 
         elevation: 0,
 
@@ -545,13 +552,13 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
 
         backgroundColor: brightness == Brightness.dark
-            ? AppColors.darkSurface
-            : AppColors.lightPrimaryText,
+            ? tokens.superficieAlta
+            : tokens.textoPrincipal,
 
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: brightness == Brightness.dark
-              ? AppColors.darkPrimaryText
-              : Colors.white,
+              ? tokens.textoPrincipal
+              : tokens.fundo,
         ),
 
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control)),

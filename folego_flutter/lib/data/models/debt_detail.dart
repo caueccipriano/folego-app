@@ -11,14 +11,16 @@ class DebtDetail {
   final List<DebtPaymentRecord> payments;
   final DateTime today;
 
-  double get paidAmount {
-    final paid = debt.originalAmount - debt.remainingBalance;
-    return paid.clamp(0, debt.originalAmount).toDouble();
-  }
+  // Count actual installment payments, never infer them from a lower
+  // balance: refinancing, cancelled installments and interest can change it.
+  double get paidAmount => installments
+      .where((item) => item.status != 'cancelled')
+      .fold<double>(0, (sum, item) => sum + item.paidAmount);
 
   double get progress {
-    if (debt.originalAmount <= 0) return 0;
-    return (paidAmount / debt.originalAmount).clamp(0.0, 1.0).toDouble();
+    final totalScheduled = paidAmount + debt.remainingBalance;
+    if (totalScheduled <= 0) return 0;
+    return (paidAmount / totalScheduled).clamp(0.0, 1.0).toDouble();
   }
 
   bool get hasPayments => payments.isNotEmpty ||
@@ -59,6 +61,7 @@ class DebtRecord {
     required this.totalInstallments,
     required this.status,
     this.notes,
+    this.originalAmountKnown = true,
     this.interestRateMonthly,
     this.paymentAccountId,
     this.startedOn,
@@ -73,6 +76,7 @@ class DebtRecord {
   final String debtType;
   final String? notes;
   final double originalAmount;
+  final bool originalAmountKnown;
   final double openingBalance;
   final double remainingBalance;
   final double? interestRateMonthly;
@@ -97,6 +101,7 @@ class DebtRecord {
       debtType: json['debt_type'] as String? ?? 'other',
       notes: json['notes'] as String?,
       originalAmount: original,
+      originalAmountKnown: json['original_amount'] != null,
       openingBalance: _number(json['opening_balance']),
       remainingBalance: _number(json['remaining_balance']),
       interestRateMonthly: _nullableNumber(json['interest_rate_monthly']),

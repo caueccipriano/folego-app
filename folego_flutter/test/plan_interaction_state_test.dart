@@ -28,6 +28,22 @@ void main() {
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
   });
 
+  testWidgets('inactive subcategories stay accessible under show more',
+      (tester) async {
+    final repository = _FakePlanRepository(_fixture());
+    await _pumpPlan(tester, repository);
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await tester.ensureVisible(parent);
+    await tester.tap(parent);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('plan-child-market')), findsNothing);
+    final more = find.byKey(const ValueKey('plan-toggle-unused-food'));
+    expect(more, findsOneWidget);
+    await tester.tap(more);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('plan-child-market')), findsOneWidget);
+  });
+
   testWidgets('second category click closes it again', (tester) async {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
@@ -125,6 +141,7 @@ void main() {
           body: realtime_plan.PlanScreen(
             repository: repository,
             spaceId: 'space',
+            disableInsightsForTesting: true,
           ),
         ),
       ),
@@ -243,6 +260,7 @@ Future<void> _pumpPlan(
         body: plan.PlanScreen(
           repository: repository,
           spaceId: 'space',
+          disableInsightsForTesting: true,
           saveOverride: saver,
         ),
       ),
@@ -294,6 +312,12 @@ Future<void> _openAndSave(
   await tester.pump();
 
   final child = find.byKey(const ValueKey('plan-child-market'));
+  if (child.evaluate().isEmpty) {
+    final more = find.byKey(const ValueKey('plan-toggle-unused-food'));
+    await tester.ensureVisible(more);
+    await tester.tap(more);
+    await tester.pump();
+  }
   await tester.ensureVisible(child);
   await tester.pump();
   await tester.tap(child);

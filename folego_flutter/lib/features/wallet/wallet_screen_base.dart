@@ -14,6 +14,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/error_translator.dart';
 import '../../data/models/wallet_detail.dart';
 import '../../data/models/wallet_overview.dart';
+import '../../data/models/wallet_commitment_insights.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_section_header.dart';
@@ -30,12 +31,16 @@ class WalletScreen extends StatefulWidget {
     required this.spaceId,
     this.initialPushRoute,
     this.onAddRequested,
+    this.requestedSection = 0,
+    this.sectionOpenToken = 0,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final String? initialPushRoute;
   final VoidCallback? onAddRequested;
+  final int requestedSection;
+  final int sectionOpenToken;
 
   @override
   State<WalletScreen> createState() => _WalletScreenState();
@@ -55,7 +60,17 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
+    _section = widget.requestedSection == 1 ? 1 : 0;
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant WalletScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sectionOpenToken != widget.sectionOpenToken ||
+        oldWidget.spaceId != widget.spaceId) {
+      _section = widget.requestedSection == 1 ? 1 : 0;
+    }
   }
 
   Future<void> _load() async {
@@ -115,7 +130,7 @@ class _WalletScreenState extends State<WalletScreen> {
         return;
       }
 
-      if (_section != 3) setState(() => _section = 3);
+      if (_section != 2) setState(() => _section = 2);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         unawaited(_openDebt(debt!));
@@ -543,8 +558,8 @@ class _WalletScreenState extends State<WalletScreen> {
     final sections = [
       ('contas', AppIcons.account, _overview!.paymentAccounts.length),
       ('cartões', AppIcons.creditCard, _overview!.cards.length),
-      ('benefícios', AppIcons.benefit, _overview!.benefits.length),
       ('dívidas', AppIcons.debt, _overview!.debts.length),
+      ('benefícios', AppIcons.benefit, _overview!.benefits.length),
       (
         'parcelas',
         AppIcons.calendar,
@@ -586,9 +601,9 @@ class _WalletScreenState extends State<WalletScreen> {
       case 1:
         return _buildCards();
       case 2:
-        return _buildBenefits();
-      case 3:
         return _buildDebts();
+      case 3:
+        return _buildBenefits();
       case 4:
         return _buildInstallments();
       default:
@@ -627,6 +642,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildCards() {
     final cards = _overview!.cards;
+    final due = summarizeDueCardInvoices(cards, DateTime.now());
     return _WalletSection(
       title: 'seus cartões',
       description: 'o que está em aberto e quanto limite ainda existe',
@@ -640,18 +656,60 @@ class _WalletScreenState extends State<WalletScreen> {
                   : 'adicionar à carteira',
               onAction: widget.onAddRequested,
             )
-          : _ResponsiveWalletGrid(
-              children: cards
-                  .map(
-                    (card) => _CreditCardCard(
-                      card: card,
-                      onTap: () => _openCard(card),
-                      onPay: card.canPayInvoice
-                          ? () => _openInvoicePayment(card)
-                          : null,
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (due.count > 0 || due.overdueCount > 0) ...[
+                  Container(
+                    key: const ValueKey('wallet-upcoming-invoice-summary'),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface(Theme.of(context).brightness),
+                      borderRadius: BorderRadius.circular(AppRadii.compactCard),
+                      border: Border.all(
+                        color: AppColors.border(Theme.of(context).brightness),
+                      ),
                     ),
-                  )
-                  .toList(growable: false),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${due.count} fatura(s) com vencimento nos próximos 30 dias'
+                          ' · ${Formatters.money(due.total)}',
+                          style: AppTypography.body(
+                            context, fontSize: 12, fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (due.overdueCount > 0)
+                          Text(
+                            '${due.overdueCount} fatura(s) com data vencida: '
+                            'confira se já foram pagas.',
+                            style: AppTypography.body(context, fontSize: 11),
+                          ),
+                        Text(
+                          'Valores das faturas abaixo, não some novamente às '
+                          'parcelas nem desconte duas vezes do dinheiro disponível.',
+                          style: AppTypography.body(context, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                _ResponsiveWalletGrid(
+                  children: cards
+                      .map(
+                        (card) => _CreditCardCard(
+                          card: card,
+                          onTap: () => _openCard(card),
+                          onPay: card.canPayInvoice
+                              ? () => _openInvoicePayment(card)
+                              : null,
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ],
             ),
     );
   }
@@ -713,6 +771,10 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildInstallments() {
+    final ending = summarizeEndingInstallments(
+      _overview!.installments,
+      DateTime.now(),
+    );
     Widget content;
     if (_installmentsLoading && _installmentPositions == null) {
       content = const _WalletSectionLoading();
@@ -733,6 +795,38 @@ class _WalletScreenState extends State<WalletScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (ending.count > 0) ...[
+                  Container(
+                    key: const ValueKey('wallet-ending-installments'),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface(Theme.of(context).brightness),
+                      borderRadius: BorderRadius.circular(AppRadii.compactCard),
+                      border: Border.all(
+                        color: AppColors.border(Theme.of(context).brightness),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${ending.count} compra(s) termina(m) as parcelas neste mês',
+                          style: AppTypography.body(
+                            context, fontSize: 12, fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Últimas parcelas previstas: '
+                          '${Formatters.money(ending.lastInstallmentTotal)}. '
+                          'Isso pode reduzir compromissos futuros, mas NÃO é '
+                          'dinheiro já disponível.',
+                          style: AppTypography.body(context, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (_installmentsError != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -891,7 +985,7 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: metric.onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -1542,7 +1636,7 @@ class _DebtCard extends StatelessWidget {
             Formatters.money(debt.remainingBalance),
             style: AppTypography.money(context, fontSize: 21, color: primary),
           ),
-          if (progress != null && debt.originalAmount != null) ...[
+          if (progress != null && debt.paidAmount != null) ...[
             const SizedBox(height: 13),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -1555,7 +1649,7 @@ class _DebtCard extends StatelessWidget {
             ),
             const SizedBox(height: 7),
             Text(
-              '${Formatters.money(debt.paidAmount)} de ${Formatters.money(debt.originalAmount)} pagos · ${(progress * 100).round()}%',
+              '${Formatters.money(debt.paidAmount)} de ${Formatters.money(debt.currentScheduleTotal)} pagos no cronograma vigente · ${(progress * 100).round()}%',
               style: AppTypography.body(
                 context,
                 fontSize: 10,
@@ -1968,7 +2062,7 @@ class _WalletSectionChip extends StatelessWidget {
       button: true,
       label: '$label, $count',
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -1979,7 +2073,7 @@ class _WalletSectionChip extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected
                   ? purple.withValues(alpha: .12)
-                  : Colors.transparent,
+                  : AppColors.transparent,
               borderRadius: BorderRadius.circular(AppRadii.pill),
               border: Border.all(
                 color: selected

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -39,8 +40,9 @@ class LiquidGlassNavigationBar extends StatelessWidget {
       _NavItem(icon: AppIcons.profile, label: l10n.profile.toLowerCase()),
     ];
 
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final highlight = Colors.white.withValues(alpha: isDark ? .08 : .72);
+    final tokens = FolegoColorTokens.of(context);
+    final surface = tokens.superficie;
+    final highlight = tokens.superficieAlta.withValues(alpha: isDark ? .42 : .72);
     final lower = surface.withValues(alpha: isDark ? .98 : .94);
     final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
     final navigationHeight = 64.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
@@ -75,9 +77,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? .24 : .09,
-                        ),
+                        color: tokens.textoPrincipal.withValues(alpha: isDark ? .24 : .09),
                         blurRadius: 28,
                         spreadRadius: -9,
                         offset: const Offset(0, 10),
@@ -123,10 +123,8 @@ class _Destination extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final activePurple = isDark ? AppColors.purpleDark : AppColors.purpleLight;
-    final inactiveColor = isDark
-        ? AppColors.darkSecondaryText
-        : AppColors.lightSecondaryText;
+    final activePurple = FolegoColorTokens.of(context).marca;
+    final inactiveColor = FolegoColorTokens.of(context).textoSecundario;
     final activeForeground = activePurple;
     final motionDuration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
@@ -137,7 +135,7 @@ class _Destination extends StatelessWidget {
       button: true,
       label: item.label,
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: onTap,
           mouseCursor: SystemMouseCursors.click,
@@ -157,7 +155,7 @@ class _Destination extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected
                   ? activePurple.withValues(alpha: isDark ? .14 : .10)
-                  : Colors.transparent,
+                  : AppColors.transparent,
               borderRadius: BorderRadius.circular(AppRadii.feature),
             ),
             child: Column(

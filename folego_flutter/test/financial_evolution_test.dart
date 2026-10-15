@@ -8,12 +8,32 @@ import 'package:folego/features/plan/purchase_comparison.dart';
 import 'package:folego/features/wallet/existing_payment_picker.dart';
 import 'package:folego/data/models/transaction_item.dart';
 import 'package:folego/core/privacy/financial_privacy.dart';
+import 'package:folego/core/theme/app_typography.dart';
 
 void main() {
   setUpAll(() async {
     GoogleFonts.config.allowRuntimeFetching = false;
     await initializeDateFormatting('pt_BR');
   });
+  testWidgets(
+    'monetary typography keeps the same face and tabular digits at every scale',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              final small = AppTypography.money(context, fontSize: 14);
+              final hero = AppTypography.money(context, fontSize: 52);
+              expect(small.fontFamily, hero.fontFamily);
+              expect(small.fontFeatures, hero.fontFeatures);
+              expect(small.letterSpacing, 0);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+    },
+  );
   List<PurchaseOption> options() => buildPurchaseOptions(
     name: 'Notebook',
     cashCents: 90001,

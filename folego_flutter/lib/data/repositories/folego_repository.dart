@@ -23,6 +23,30 @@ class FolegoRepository {
   final SupabaseClient _client;
 
 
+  /// Fetch one confirmed expense inside the selected space. This is used by
+  /// transaction details, so the user does not need to open a monthly report
+  /// just to read or change the expense behavior.
+  Future<SpendingBehaviorEntry?> getSpendingBehaviorEntry({
+    required String spaceId,
+    required String eventId,
+  }) async {
+    final row = await _client
+        .from('financial_events')
+        .select(
+          'id,description,amount,occurred_at,event_type,'
+          'behavior_class,necessity_class,frequency_class',
+        )
+        .eq('space_id', spaceId)
+        .eq('id', eventId)
+        .eq('status', 'confirmed')
+        .inFilter(
+          'event_type',
+          const ['expense', 'card_purchase', 'benefit_expense'],
+        )
+        .maybeSingle();
+    return row == null ? null : SpendingBehaviorEntry.fromJson(row);
+  }
+
   /// Confirmed expenses by purchase date, rather than card installment month.
   /// Excludes payment of the invoice, transfers and refunds to avoid counting
   /// them as additional purchases. A missing classification stays unknown.

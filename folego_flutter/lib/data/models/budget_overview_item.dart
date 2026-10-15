@@ -1,3 +1,137 @@
+/// One confirmed economic posting contributing to the month's Plan.
+/// A card purchase from a previous month may have an installment in this one.
+/// A read-only snapshot of what the Plan knows about money and anomalies.
+class PlanInsights {
+  const PlanInsights({
+    required this.economicSpending,
+    required this.debtPayments,
+    required this.budgetTracked,
+    required this.cashOutflows,
+    required this.cashInflows,
+    required this.estimatedAvailableNow,
+    required this.issues,
+    required this.suggestions,
+  });
+
+  final double economicSpending;
+  final double debtPayments;
+  final double budgetTracked;
+  final double cashOutflows;
+  final double cashInflows;
+  /// Estimated using recorded transactions, NOT directly verified by a bank.
+  final double estimatedAvailableNow;
+  final List<PlanIssue> issues;
+  final List<PlanSuggestion> suggestions;
+
+  factory PlanInsights.fromJson(Map<String, dynamic> json) {
+    List<Map<String, dynamic>> array(String key) =>
+        (json[key] as List<dynamic>? ?? const [])
+            .map((v) => Map<String, dynamic>.from(v as Map))
+            .toList();
+    return PlanInsights(
+      economicSpending: _budgetDouble(json['economic_spending']),
+      debtPayments: _budgetDouble(json['debt_payments']),
+      budgetTracked: _budgetDouble(json['budget_tracked']),
+      cashOutflows: _budgetDouble(json['cash_outflows']),
+      cashInflows: _budgetDouble(json['cash_inflows']),
+      estimatedAvailableNow: _budgetDouble(json['estimated_available_now']),
+      issues: array('issues').map(PlanIssue.fromJson).toList(),
+      suggestions: array('suggestions').map(PlanSuggestion.fromJson).toList(),
+    );
+  }
+}
+
+class PlanIssue {
+  const PlanIssue({
+    required this.code,
+    required this.title,
+    required this.description,
+    required this.count,
+    required this.amount,
+  });
+
+  final String code;
+  final String title;
+  final String description;
+  final int count;
+  final double amount;
+
+  factory PlanIssue.fromJson(Map<String, dynamic> json) => PlanIssue(
+    code: json['code'] as String? ?? '',
+    title: json['title'] as String? ?? 'Revisar lançamento',
+    description: json['description'] as String? ?? '',
+    count: (json['count'] as num?)?.toInt() ?? 0,
+    amount: _budgetDouble(json['amount']),
+  );
+}
+
+class PlanSuggestion {
+  const PlanSuggestion({
+    required this.categoryId,
+    required this.categoryName,
+    required this.historicalAverage,
+    required this.suggestedLimit,
+    required this.sampleMonths,
+  });
+
+  final String categoryId;
+  final String categoryName;
+  final double historicalAverage;
+  final double suggestedLimit;
+  final int sampleMonths;
+
+  factory PlanSuggestion.fromJson(Map<String, dynamic> json) => PlanSuggestion(
+    categoryId: json['category_id'] as String? ?? '',
+    categoryName: json['category_name'] as String? ?? '',
+    historicalAverage: _budgetDouble(json['historical_average']),
+    suggestedLimit: _budgetDouble(json['suggested_limit']),
+    sampleMonths: (json['sample_months'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class BudgetImpactDetail {
+  const BudgetImpactDetail({
+    required this.impactId,
+    required this.description,
+    required this.categoryName,
+    required this.eventType,
+    required this.effectiveDate,
+    required this.budgetAmount,
+    this.purchaseDate,
+    this.installmentNumber,
+    this.totalInstallments,
+  });
+
+  final String impactId;
+  final String description;
+  final String categoryName;
+  final String eventType;
+  final DateTime effectiveDate;
+  final DateTime? purchaseDate;
+  final double budgetAmount;
+  final int? installmentNumber;
+  final int? totalInstallments;
+
+  bool get comesFromEarlierMonth =>
+      eventType == 'card_purchase' && purchaseDate != null &&
+      (purchaseDate!.month != effectiveDate.month ||
+        purchaseDate!.year != effectiveDate.year);
+
+  factory BudgetImpactDetail.fromJson(Map<String, dynamic> json) =>
+      BudgetImpactDetail(
+        impactId: json['impact_id'] as String,
+        description: json['description'] as String? ?? 'Lançamento',
+        categoryName: json['category_name'] as String? ?? 'Sem categoria',
+        eventType: json['event_type'] as String? ?? 'expense',
+        effectiveDate: DateTime.parse(json['effective_date'] as String),
+        purchaseDate: json['purchase_date'] == null
+            ? null : DateTime.parse(json['purchase_date'] as String),
+        budgetAmount: _budgetDouble(json['budget_amount']),
+        installmentNumber: (json['installment_number'] as num?)?.toInt(),
+        totalInstallments: (json['total_installments'] as num?)?.toInt(),
+      );
+}
+
 enum BudgetLimitScope {
   month,
   fromMonth,
@@ -109,6 +243,59 @@ class BudgetMonthSummary {
   }
 }
 
+/// Explains why some categories exceed their limits even when the month
+/// as a whole is close to budget. Only parent totals count, never children
+/// again. Expenses without a limit are still real expenses.
+class BudgetMonthDiagnostics {
+  const BudgetMonthDiagnostics({
+    required this.exceededInLimitedCategories,
+    required this.remainingInLimitedCategories,
+    required this.spendingWithoutLimit,
+    required this.pendingClassification,
+    required this.categoriesOverLimit,
+  });
+
+  final double exceededInLimitedCategories;
+  final double remainingInLimitedCategories;
+  final double spendingWithoutLimit;
+  final double pendingClassification;
+  final int categoriesOverLimit;
+
+  /// Must reconcile to "planned minus actual" in BudgetMonthSummary.
+  double get netRemaining =>
+      remainingInLimitedCategories - exceededInLimitedCategories
+        - spendingWithoutLimit;
+
+  factory BudgetMonthDiagnostics.fromItems(
+    Iterable<BudgetOverviewItem> items,
+  ) {
+    double exceeded = 0;
+    double remaining = 0;
+    double withoutLimit = 0;
+    double pending = 0;
+    int exceededCategories = 0;
+    for (final item in items) {
+      if (!item.isParent) continue;
+      if (item.isPending) pending += item.actualAmount;
+      if (!item.hasBudget) {
+        withoutLimit += item.actualAmount;
+      } else if (item.remainingAmount < 0) {
+        exceeded -= item.remainingAmount;
+        exceededCategories++;
+      } else {
+        remaining += item.remainingAmount;
+      }
+    }
+    return BudgetMonthDiagnostics(
+      exceededInLimitedCategories: exceeded,
+      remainingInLimitedCategories: remaining,
+      spendingWithoutLimit: withoutLimit,
+      pendingClassification: pending,
+      categoriesOverLimit: exceededCategories,
+    );
+  }
+}
+
 class BudgetOverviewItem {
   const BudgetOverviewItem({
     required this.categoryId,
@@ -160,7 +347,20 @@ class BudgetOverviewItem {
 
   bool get isParent => parentId == null;
 
+  /// Confirmed spending waiting for an economic category. Count it in the
+  /// monthly total, but never offer a budget limit for this technical bucket.
+  bool get isPending => budgetSource == 'pending';
+
   bool get isSubcategory => parentId != null;
+
+  /// Direct charges recorded on a parent category without a subcategory.
+  /// Child figures must not be counted twice in the family total.
+  double withoutSubcategory(Iterable<BudgetOverviewItem> children) {
+    final inChildren = children.fold<double>(
+      0.0, (sum, child) => sum + child.actualAmount,
+    );
+    return (actualAmount - inChildren).clamp(0.0, double.infinity).toDouble();
+  }
 
   bool get hasBudget => plannedAmount > 0;
 

@@ -9,11 +9,13 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/monthly_money_summary.dart';
 
 const monthlyCardSemanticsTooltip =
-    'Gastos feitos no mês mostram o que você comprou ou gastou neste mês. '
-    'Compras no cartão entram pelo valor total no dia da compra. '
-    'Despesa por competência mostra o que pertence financeiramente ao mês, '
-    'e compras parceladas entram parcela a parcela. '
-    'Pagar a fatura reduz seu saldo, mas não conta como uma nova despesa.';
+    'Aqui você vê o que recebeu e o que gastou neste mês, não o saldo do banco. '
+    'Transferir dinheiro entre suas contas não é receber uma nova receita. '
+    'Uma compra no cartão entra nos gastos na data da compra; pagar a fatura '
+    'não conta como outro gasto. O resultado do mês considera as parcelas '
+    'que pertencem a ele.';
+
+enum MonthlyMoneyTransactionKind { income, spending }
 
 class HomeMonthlyMoneyCard extends StatelessWidget {
   const HomeMonthlyMoneyCard({
@@ -22,12 +24,15 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     required this.unavailable,
     this.onOpenEvolution,
     this.onOpenClosing,
+    this.onOpenTransactions,
   });
 
   final MonthlyMoneySummary? summary;
   final bool unavailable;
   final VoidCallback? onOpenEvolution;
   final VoidCallback? onOpenClosing;
+  final void Function(MonthlyMoneyTransactionKind, DateTime)?
+      onOpenTransactions;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +91,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'o essencial de $monthName, sem ruído',
+                      'movimentações de $monthName · não são saldos disponíveis',
                       style: AppTypography.body(
                         context,
                         fontSize: 12,
@@ -107,56 +112,59 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
           _MonthlyHeadlineGrid(
             items: [
               _MonthlyHeadlineData(
-                label: 'receitas reais',
+                label: 'quanto entrou?',
+                icon: AppIcons.income,
                 value: Formatters.money(value.realIncome),
                 valueColor: AppColors.positiveText(brightness),
+                hint: 'receitas do mês · ver transações',
+                tapKey: const ValueKey('monthly-income-open-transactions'),
+                onTap: onOpenTransactions == null
+                    ? null
+                    : () => onOpenTransactions!(
+                          MonthlyMoneyTransactionKind.income,
+                          value.periodMonth,
+                        ),
               ),
               _MonthlyHeadlineData(
-                label: 'gastos feitos no mês',
-                value: Formatters.money(value.spendingNet),
+                label: 'quanto gastei?',
+                icon: AppIcons.expense,
+                value: Formatters.money(value.spendingMade),
                 valueColor: primary,
                 valueKey: const ValueKey('monthly-spending-net'),
-              ),
-              _MonthlyHeadlineData(
-                label: 'resultado econômico',
-                value: _signedMoney(value.economicResult),
-                valueColor: value.economicResult < 0
-                    ? AppColors.expenseText(brightness)
-                    : primary,
+                hint: 'compras e gastos · ver transações',
+                tapKey: const ValueKey('monthly-spending-open-transactions'),
+                onTap: onOpenTransactions == null
+                    ? null
+                    : () => onOpenTransactions!(
+                          MonthlyMoneyTransactionKind.spending,
+                          value.periodMonth,
+                        ),
               ),
             ],
+          ),
+          const SizedBox(height: 7),
+          Text(
+            'Receitas não incluem transferências internas. Os gastos incluem compras no cartão, mesmo quando a fatura será paga depois.',
+            style: AppTypography.body(context, fontSize: 11, color: secondary),
           ),
           const SizedBox(height: 10),
+          _EconomicResultTile(summary: value),
+          const SizedBox(height: 15),
           Text(
-            'de onde vieram os gastos',
+            'onde os gastos aconteceram',
             style: AppTypography.label(context, color: secondary),
           ),
-          const SizedBox(height: 8),
-          _MetricGrid(
-            items: [
-              _MetricData(
-                label: 'conta',
-                amount: value.spendingAccount,
-                icon: AppIcons.account,
-              ),
-              _MetricData(
-                label: 'cartões',
-                amount: value.spendingCards,
-                icon: AppIcons.creditCard,
-              ),
-              _MetricData(
-                label: 'benefícios',
-                amount: value.spendingBenefits,
-                icon: AppIcons.benefit,
-              ),
-              _MetricData(
-                label: 'reembolsos',
-                amount: value.refundsAmount,
-                icon: AppIcons.refresh,
-                subtract: true,
-              ),
-            ],
+          const SizedBox(height: 5),
+          Text(
+            'valores gastos no período, não saldos de contas ou cartões',
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              color: secondary,
+            ),
           ),
+          const SizedBox(height: 10),
+          _SpendingSourceList(summary: value),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -200,15 +208,23 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
 class _MonthlyHeadlineData {
   const _MonthlyHeadlineData({
     required this.label,
+    required this.icon,
     required this.value,
     required this.valueColor,
     this.valueKey,
+    this.tapKey,
+    this.onTap,
+    this.hint,
   });
 
   final String label;
+  final IconData icon;
   final String value;
   final Color valueColor;
   final Key? valueKey;
+  final Key? tapKey;
+  final VoidCallback? onTap;
+  final String? hint;
 }
 
 class _MonthlyHeadlineGrid extends StatelessWidget {
@@ -232,17 +248,11 @@ class _MonthlyHeadlineGrid extends StatelessWidget {
           );
         }
 
-        return Column(
+        return Row(
           children: [
-            Row(
-              children: [
-                Expanded(child: _MonthlyHeadlineTile(data: items[0])),
-                const SizedBox(width: 10),
-                Expanded(child: _MonthlyHeadlineTile(data: items[1])),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _MonthlyHeadlineTile(data: items[2]),
+            Expanded(child: _MonthlyHeadlineTile(data: items[0])),
+            const SizedBox(width: 10),
+            Expanded(child: _MonthlyHeadlineTile(data: items[1])),
           ],
         );
       },
@@ -261,8 +271,12 @@ class _MonthlyHeadlineTile extends StatelessWidget {
     final muted = AppColors.background(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Container(
-      width: double.infinity,
+    return InkWell(
+      key: data.tapKey,
+      onTap: data.onTap,
+      borderRadius: BorderRadius.circular(AppRadii.compactCard),
+      child: Ink(
+        width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: muted,
@@ -272,15 +286,23 @@ class _MonthlyHeadlineTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            data.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.label(
-              context,
-              fontSize: 10,
-              color: secondary,
-            ),
+          Row(
+            children: [
+              Icon(data.icon, size: 15, color: secondary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  data.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 10,
+                    color: secondary,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           FittedBox(
@@ -296,182 +318,193 @@ class _MonthlyHeadlineTile extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricData {
-  const _MetricData({
-    required this.label,
-    required this.amount,
-    required this.icon,
-    this.subtract = false,
-  });
-
-  final String label;
-  final double amount;
-  final IconData icon;
-  final bool subtract;
-}
-
-class _MetricGrid extends StatelessWidget {
-  const _MetricGrid({required this.items});
-
-  final List<_MetricData> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 560;
-        if (!compact) {
-          return Row(
-            children: [
-              for (var i = 0; i < items.length; i++) ...[
-                Expanded(child: _MetricTile(data: items[i])),
-                if (i != items.length - 1) const SizedBox(width: 10),
-              ],
-            ],
-          );
-        }
-
-        const gap = 8.0;
-        final itemWidth = (constraints.maxWidth - gap) / 2;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: [
-            for (final item in items)
-              SizedBox(
-                width: itemWidth,
-                child: _CompactMetricTile(data: item),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _CompactMetricTile extends StatelessWidget {
-  const _CompactMetricTile({required this.data});
-
-  final _MetricData data;
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final muted = AppColors.background(brightness);
-    final border = AppColors.border(brightness);
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    final amount = data.subtract && data.amount > 0
-        ? '-${Formatters.money(data.amount)}'
-        : Formatters.money(data.amount);
-
-    return Container(
-      constraints: const BoxConstraints(minHeight: 50),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-      decoration: BoxDecoration(
-        color: muted,
-        borderRadius: BorderRadius.circular(AppRadii.control),
-        border: Border.all(color: border.withValues(alpha: .68)),
-      ),
-      child: Row(
-        children: [
-          Icon(data.icon, size: 16, color: secondary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if (data.onTap != null) ...[
+            const SizedBox(height: 7),
+            Row(
               children: [
-                Text(
-                  data.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(
-                    context,
-                    fontSize: 9,
-                    color: secondary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
+                Expanded(
                   child: Text(
-                    amount,
-                    style: AppTypography.money(
-                      context,
-                      fontSize: 12,
-                      color: primary,
-                    ),
+                    data.hint ?? 'ver transações',
+                    maxLines: 2,
+                    style: AppTypography.label(context, fontSize: 10, color: secondary),
                   ),
                 ),
+                Icon(AppIcons.chevronRight, size: 15, color: secondary),
               ],
             ),
-          ),
+          ],
         ],
+      ),
       ),
     );
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.data});
+class _EconomicResultTile extends StatelessWidget {
+  const _EconomicResultTile({required this.summary});
 
-  final _MetricData data;
+  final MonthlyMoneySummary summary;
 
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final muted = AppColors.background(brightness);
-    final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
-    final amount = data.subtract && data.amount > 0
-        ? '-${Formatters.money(data.amount)}'
-        : Formatters.money(data.amount);
+    final primary = AppColors.primaryText(brightness);
+    final difference = summary.competenceExpenses - summary.spendingMade;
 
     return Container(
-      padding: const EdgeInsets.all(13),
+      key: const ValueKey('monthly-economic-result'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: muted,
+        color: AppColors.background(brightness),
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
-        border: null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(data.icon, size: 18, color: secondary),
-          const SizedBox(height: 9),
-          Text(
-            data.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.label(
-              context,
-              fontSize: 10,
-              color: secondary,
-            ),
-          ),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              amount,
-              style: AppTypography.money(
-                context,
-                fontSize: 14,
-                color: primary,
+          Row(
+            children: [
+              Icon(AppIcons.chartLine, size: 17, color: secondary),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  'resultado econômico · não é saldo disponível',
+                  style: AppTypography.label(context, fontSize: 11, color: secondary),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            _signedMoney(summary.economicResult),
+            style: AppTypography.money(
+              context,
+              fontSize: 22,
+              color: summary.economicResult < 0
+                  ? AppColors.expenseText(brightness)
+                  : AppColors.positiveText(brightness),
             ),
           ),
+          const SizedBox(height: 6),
+          Text(
+            'receitas ${Formatters.money(summary.realIncome)} '
+            '− despesas por competência ${Formatters.money(summary.competenceExpenses)}',
+            style: AppTypography.body(context, fontSize: 11, color: primary),
+          ),
+          if (difference.abs() >= 0.005) ...[
+            const SizedBox(height: 5),
+            Text(
+              'as despesas por competência são '
+              '${difference > 0 ? 'maiores' : 'menores'} que os gastos feitos '
+              'em ${Formatters.money(difference.abs())}, pois seguem '
+              'datas de reconhecimento diferentes (como parcelas).',
+              key: const ValueKey('monthly-competence-difference'),
+              style: AppTypography.body(context, fontSize: 10, color: secondary),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _SpendSource {
+  const _SpendSource(this.label, this.amount, this.icon);
+
+  final String label;
+  final double amount;
+  final IconData icon;
+}
+
+class _SpendingSourceList extends StatelessWidget {
+  const _SpendingSourceList({required this.summary});
+
+  final MonthlyMoneySummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    final purple = AppColors.primaryPurple(brightness);
+    final sources = <_SpendSource>[
+      _SpendSource('gastos pela conta / PIX', summary.accountSpending, AppIcons.account),
+      _SpendSource('compras no cartão', summary.cardPurchasesMade, AppIcons.creditCard),
+      _SpendSource('benefícios utilizados', summary.benefitSpending, AppIcons.benefit),
+    ].where((item) => item.amount > 0).toList(growable: false);
+    final gross = sources.fold<double>(0, (total, item) => total + item.amount);
+
+    if (sources.isEmpty && summary.refunds <= 0) {
+      return Text(
+        'nenhum gasto registrado neste mês',
+        style: AppTypography.body(context, fontSize: 12, color: secondary),
+      );
+    }
+
+    return Column(
+      key: const ValueKey('monthly-spending-origins'),
+      children: [
+        for (final item in sources) ...[
+          Row(
+            children: [
+              Icon(item.icon, size: 18, color: secondary),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.label,
+                      style: AppTypography.body(context, fontSize: 12, color: primary),
+                    ),
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: LinearProgressIndicator(
+                        value: gross <= 0 ? 0 : (item.amount / gross).clamp(0.0, 1.0),
+                        minHeight: 5,
+                        backgroundColor: AppColors.border(brightness),
+                        color: purple,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 104,
+                child: FittedBox(
+                  alignment: Alignment.centerRight,
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    Formatters.money(item.amount),
+                    style: AppTypography.money(context, fontSize: 13, color: primary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+        ],
+        if (summary.refunds > 0)
+          Row(
+            children: [
+              Icon(AppIcons.refresh, size: 17, color: secondary),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  'reembolsos abatidos dos gastos',
+                  style: AppTypography.body(context, fontSize: 11, color: secondary),
+                ),
+              ),
+              Text(
+                '-${Formatters.money(summary.refunds)}',
+                style: AppTypography.money(context, fontSize: 12, color: primary),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }
@@ -538,7 +571,7 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Cada bloco responde uma pergunta diferente. Eles não são somados entre si.',
+              'Cada bloco explica um jeito de olhar para o seu dinheiro. Não some os blocos: o mesmo pagamento pode aparecer em visões diferentes.',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -547,9 +580,9 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _CompositionSection(
-              title: 'gastos feitos',
+              title: 'o que comprei ou gastei',
               subtitle:
-                  'mostra o que você comprou ou gastou neste mês; cartão entra pelo valor total no dia da compra',
+                  'compras do mês, mesmo no cartão. A compra conta agora; o pagamento da fatura não conta de novo',
               rows: [
                 _CompositionRow(
                   'conta / PIX / débito',
@@ -574,9 +607,9 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _CompositionSection(
-              title: 'competência do mês',
+              title: 'despesas atribuídas a este mês',
               subtitle:
-                  'mostra o que pertence financeiramente a ${_monthName(summary.periodMonth.month)}; parceladas entram parcela a parcela',
+                  'para calcular o resultado do mês, uma compra parcelada entra conforme as parcelas que pertencem a ${_monthName(summary.periodMonth.month)}',
               rows: [
                 _CompositionRow(
                   'despesas diretas',
@@ -599,6 +632,45 @@ class _MonthlyMoneyComposition extends StatelessWidget {
               ],
               totalLabel: 'despesa por competência',
               total: summary.competenceExpenses,
+            ),
+            const SizedBox(height: 14),
+            Container(
+              key: const ValueKey('monthly-economic-calculation'),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface(brightness),
+                border: Border.all(color: border),
+                borderRadius: BorderRadius.circular(AppRadii.card),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'como chegamos ao resultado econômico',
+                    style: AppTypography.body(context, fontSize: 15, fontWeight: FontWeight.w700, color: primary),
+                  ),
+                  const SizedBox(height: 10),
+                  _PlainRow(label: 'receitas do mês', value: Formatters.money(summary.realIncome)),
+                  const SizedBox(height: 8),
+                  _PlainRow(
+                    label: 'despesas por competência',
+                    value: '-${Formatters.money(summary.competenceExpenses)}',
+                  ),
+                  const SizedBox(height: 10),
+                  Divider(color: border),
+                  _PlainRow(
+                    label: 'resultado econômico (não é saldo)',
+                    value: _signedMoney(summary.economicResult),
+                    emphasize: true,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'gastos feitos e despesas por competência podem ter valores '
+                    'diferentes porque compras e parcelas pertencem a datas distintas.',
+                    style: AppTypography.label(context, fontSize: 10, color: secondary),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 14),
             _CompositionSection(
@@ -655,7 +727,7 @@ class _MonthlyMoneyComposition extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Caixa mostra entrada e saída de dinheiro. Não é sinônimo de receita ou despesa.',
+                    'Este bloco acompanha o dinheiro nas contas. Transferências e pagamentos de fatura movem dinheiro, mas não são receitas nem novos gastos.',
                     style: AppTypography.label(
                       context,
                       fontSize: 10,

@@ -14,11 +14,15 @@ class WalletScreen extends StatefulWidget {
     required this.repository,
     required this.spaceId,
     this.initialPushRoute,
+    this.requestedSection = 0,
+    this.sectionOpenToken = 0,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final String? initialPushRoute;
+  final int requestedSection;
+  final int sectionOpenToken;
 
   @override
   State<WalletScreen> createState() => _WalletScreenState();
@@ -79,6 +83,8 @@ class _WalletScreenState extends State<WalletScreen> {
             repository: widget.repository,
             spaceId: widget.spaceId,
             initialPushRoute: widget.initialPushRoute,
+            requestedSection: widget.requestedSection,
+            sectionOpenToken: widget.sectionOpenToken,
             onAddRequested: _addInstrument,
           ),
         );

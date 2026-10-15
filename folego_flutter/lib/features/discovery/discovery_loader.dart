@@ -98,11 +98,13 @@ Future<DiscoveryData> loadDiscovery(
         endDate: today.add(Duration(days: pendingOnly ? 7 : 30)),
         limit: 200,
       );
-      if (rows.length == 200)
+      if (rows.length == 200) {
         unavailable.add('agenda completa (limite de 200 itens nesta consulta)');
+      }
       for (final row in rows) {
-        if (row.realized || row.status == 'paid' || row.status == 'cancelled')
+        if (row.realized || row.status == 'paid' || row.status == 'cancelled') {
           continue;
+        }
         final due = DateTime(
           row.dueDate.year,
           row.dueDate.month,

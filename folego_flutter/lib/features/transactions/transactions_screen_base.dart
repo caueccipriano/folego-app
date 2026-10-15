@@ -65,6 +65,7 @@ class TransactionsScreenV3 extends StatefulWidget {
     this.initialPushRoute,
     this.onImportRequested,
     this.onClassificationRequested,
+    this.onSpendingBehaviorRequested,
     this.pendingClassificationCount = 0,
     this.pendingClassificationLoading = false,
     this.pendingClassificationUnavailable = false,
@@ -78,6 +79,7 @@ class TransactionsScreenV3 extends StatefulWidget {
   final String? initialPushRoute;
   final VoidCallback? onImportRequested;
   final VoidCallback? onClassificationRequested;
+  final VoidCallback? onSpendingBehaviorRequested;
   final int pendingClassificationCount;
   final bool pendingClassificationLoading;
   final bool pendingClassificationUnavailable;
@@ -472,7 +474,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: space,
@@ -901,6 +903,18 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                               ],
                             ),
                     ),
+                    if (widget.onSpendingBehaviorRequested != null) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          key: const ValueKey('transactions-spending-behavior-entry'),
+                          onPressed: widget.onSpendingBehaviorRequested,
+                          icon: const Icon(Icons.pie_chart_outline_rounded, size: 18),
+                          label: const Text('definir gastos fixos e variáveis'),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(3),
@@ -913,7 +927,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                       ),
                       child: TabBar(
                         controller: _tabController,
-                        dividerColor: Colors.transparent,
+                        dividerColor: AppColors.transparent,
                         indicatorSize: TabBarIndicatorSize.tab,
                         indicator: BoxDecoration(
                           color: accent.withValues(alpha: isDark ? .18 : .10),
@@ -1180,7 +1194,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                           textInputAction: TextInputAction.search,
                           onChanged: onSearchChanged,
                           decoration: InputDecoration(
-                            hintText: 'buscar lançamento',
+                            hintText: 'descrição ou comentário',
                             prefixIcon: const Icon(AppIcons.search, size: 19),
                             suffixIcon: value.text.isEmpty
                                 ? null

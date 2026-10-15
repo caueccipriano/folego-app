@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:folego/core/theme/app_colors.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/realtime/realtime_invalidation.dart';
@@ -10,6 +11,7 @@ import '../../data/models/transaction_filters.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
+import '../plan/spending_behavior_screen.dart';
 import 'statement_import_screen.dart';
 import 'transaction_classification_inbox.dart';
 import 'transaction_pending_guard.dart';
@@ -179,6 +181,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
+  Future<void> _openExpenseBehaviors() async {
+    final space = await _resolveSpace();
+    if (space == null || !mounted) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => SpendingBehaviorScreen(
+          repository: widget.repository,
+          spaceId: space.id,
+          periodMonth: DateTime.now(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openClassificationInbox() async {
     // Do not open an empty inbox when a failed request only means 'unknown'.
     if (_pendingUnavailable) {
@@ -205,7 +221,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => FractionallySizedBox(
           heightFactor: .94,
           child: ClipRRect(
@@ -252,6 +268,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       initialPushRoute: widget.initialPushRoute,
       onImportRequested: _openImport,
       onClassificationRequested: _openClassificationInbox,
+      onSpendingBehaviorRequested: _openExpenseBehaviors,
       pendingClassificationCount: _pending.length,
       pendingClassificationLoading: _loadingPending,
       pendingClassificationUnavailable: _pendingUnavailable,

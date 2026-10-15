@@ -11,6 +11,7 @@ import '../../data/models/financial_space.dart';
 import '../../data/models/recurring_item.dart';
 import '../../data/models/transaction_detail.dart';
 import '../../data/models/transaction_item.dart';
+import '../../data/models/spending_behavior.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_detail.dart';
@@ -36,7 +37,7 @@ Future<bool?> showTransactionDetail({
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: .94,
         child: TransactionDetailPanel(
@@ -51,7 +52,7 @@ Future<bool?> showTransactionDetail({
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -66,6 +67,15 @@ Future<bool?> showTransactionDetail({
       ),
     ),
   );
+}
+
+/// Do not offer expense behavior for money transfers, invoice payments,
+/// income, or unconfirmed records.
+bool canClassifyExpenseBehavior(TransactionDetail detail) {
+  return detail.status == 'confirmed' &&
+      (detail.eventType == 'expense' ||
+       detail.eventType == 'card_purchase' ||
+       detail.eventType == 'benefit_expense');
 }
 
 class TransactionDetailPanel extends StatefulWidget {
@@ -86,6 +96,7 @@ class TransactionDetailPanel extends StatefulWidget {
 
 class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
   TransactionDetail? _detail;
+  SpendingBehaviorEntry? _spendingEntry;
   bool _loading = true;
   bool _working = false;
   bool _changed = false;
@@ -111,9 +122,22 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         spaceId: widget.space.id,
         eventId: widget.eventId,
       );
+      SpendingBehaviorEntry? spendingEntry;
+      if (canClassifyExpenseBehavior(value)) {
+        try {
+          spendingEntry = await widget.repository.getSpendingBehaviorEntry(
+            spaceId: widget.space.id,
+            eventId: value.id,
+          );
+        } catch (_) {
+          // Keep the transaction accessible even if classification is offline.
+          // Never guess an unknown behavior.
+        }
+      }
       if (!mounted) return;
       setState(() {
         _detail = value;
+        _spendingEntry = spendingEntry;
         _loading = false;
       });
     } catch (error) {
@@ -131,14 +155,20 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => child,
       );
     }
     return showDialog<bool>(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
+      // Dim the detail behind the editor to avoid competing modal layers.
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: .72),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: AppColors.surface(Theme.of(dialogContext).brightness),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.feature),
+        ),
+        clipBehavior: Clip.antiAlias,
         insetPadding: const EdgeInsets.all(28),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
@@ -149,6 +179,99 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         ),
       ),
     );
+  }
+
+  Future<void> _editSpendingBehavior() async {
+    final detail = _detail;
+    if (detail == null || !canClassifyExpenseBehavior(detail) || _working) {
+      return;
+    }
+    setState(() => _working = true);
+    try {
+      // Re-read the current annotation immediately before editing to keep
+      // the server's compare-and-swap guard effective across devices.
+      final entry = await widget.repository.getSpendingBehaviorEntry(
+        spaceId: widget.space.id,
+        eventId: detail.id,
+      );
+      if (!mounted) return;
+      if (entry == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('este gasto não está disponível para classificar.')),
+        );
+        return;
+      }
+      setState(() => _spendingEntry = entry);
+      final selected = await showModalBottomSheet<ExpenseBehavior>(
+        context: context,
+        useSafeArea: true,
+        showDragHandle: true,
+        builder: (sheetContext) => SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('como funciona este gasto?',
+                    style: AppTypography.section(sheetContext, fontSize: 18)),
+                const SizedBox(height: 8),
+                const Text('fixo costuma ter valor estável; variável pode mudar. '
+                    'recorrência é outra característica.'),
+                const SizedBox(height: 8),
+                ListTile(
+                  key: const ValueKey('detail-behavior-fixed'),
+                  title: const Text('fixo'),
+                  subtitle: const Text('aluguel ou assinatura de valor estável'),
+                  selected: entry.behavior == ExpenseBehavior.fixed,
+                  onTap: () => Navigator.pop(sheetContext, ExpenseBehavior.fixed),
+                ),
+                ListTile(
+                  key: const ValueKey('detail-behavior-variable'),
+                  title: const Text('variável'),
+                  subtitle: const Text('mercado, transporte ou energia'),
+                  selected: entry.behavior == ExpenseBehavior.variable,
+                  onTap: () => Navigator.pop(sheetContext, ExpenseBehavior.variable),
+                ),
+                ListTile(
+                  key: const ValueKey('detail-behavior-unclassified'),
+                  title: const Text('sem classificação'),
+                  selected: entry.behavior == ExpenseBehavior.unclassified,
+                  onTap: () => Navigator.pop(sheetContext, ExpenseBehavior.unclassified),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (!mounted || selected == null || selected == entry.behavior) return;
+      await widget.repository.setSpendingBehavior(
+        spaceId: widget.space.id,
+        entry: entry,
+        behavior: selected,
+      );
+      if (!mounted) return;
+      setState(() {
+        _spendingEntry = entry.withBehavior(selected);
+        _changed = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('tipo de gasto salvo, sem alterar o saldo.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      final concurrent = error is StateError &&
+          error.message.toString().contains('classificação alterada');
+      if (concurrent) await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(concurrent
+          ? 'outro dispositivo alterou este gasto. a classificação foi atualizada.'
+          : 'não foi possível salvar o tipo de gasto. tente novamente.')),
+      );
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
   }
 
   Future<void> _edit() async {
@@ -433,6 +556,33 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
             if (source != null) _DetailRow('origem', source),
           ],
         ),
+        if (canClassifyExpenseBehavior(detail)) ...[
+          const SizedBox(height: 16),
+          _Section(
+            title: 'tipo de gasto',
+            children: [
+              _DetailRow(
+                'classificação',
+                switch (_spendingEntry?.behavior) {
+                  ExpenseBehavior.fixed => 'fixo',
+                  ExpenseBehavior.variable => 'variável',
+                  ExpenseBehavior.unclassified => 'sem classificação',
+                  null => 'consultar classificação',
+                },
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const ValueKey('transaction-edit-spending-behavior'),
+                  onPressed: _working ? null : _editSpendingBehavior,
+                  icon: const Icon(Icons.pie_chart_outline_rounded, size: 18),
+                  label: const Text('definir fixo ou variável'),
+                ),
+              ),
+              const Text('não altera valor, categoria, fatura ou saldo.'),
+            ],
+          ),
+        ],
         if (specificRows.isNotEmpty) ...[
           const SizedBox(height: 16),
           _Section(title: 'como aconteceu', children: specificRows),

@@ -36,7 +36,7 @@ class HomePulseCard extends StatelessWidget {
     };
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         key: const ValueKey('home-pulse'),
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -66,7 +66,9 @@ class HomePulseCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'uma coisa para saber',
+                      insight.requiresAttention
+                          ? 'atenção agora'
+                          : 'próxima ação útil',
                       textAlign: TextAlign.end,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

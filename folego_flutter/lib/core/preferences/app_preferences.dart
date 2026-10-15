@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_color_tokens.dart';
 import '../../l10n/locale_controller.dart';
 
 enum AppLanguagePreference {
@@ -54,6 +55,7 @@ final class AppPreferenceRepository {
   AppPreferenceRepository(this._store);
 
   static const themeKey = 'folego.theme_mode';
+  static const paletteKey = 'folego.theme_palette';
   static const languageKey = 'folego.language';
   static const firstRunIntroKey = 'folego.first_run_intro_seen';
   static const rememberedEmailKey = 'folego.auth.remembered_email';
@@ -63,6 +65,14 @@ final class AppPreferenceRepository {
   Future<ThemeMode> loadThemeMode() async {
     return themeModeFromPreference(await _store.getString(themeKey));
   }
+
+  Future<String> loadPaletteId() async {
+    final id = await _store.getString(paletteKey);
+    return FolegoColorTokens.palette(id ?? 'folego').id;
+  }
+
+  Future<void> savePaletteId(String id) =>
+      _store.setString(paletteKey, FolegoColorTokens.palette(id).id);
 
   Future<void> saveThemeMode(ThemeMode mode) {
     return _store.setString(themeKey, themeModePreferenceValue(mode));
@@ -171,6 +181,7 @@ abstract final class AppPreferences {
 
   static Future<void> initialize() async {
     var themeMode = ThemeMode.system;
+    var paletteId = 'folego';
     var language = AppLanguagePreference.system;
     var introSeen = false;
 
@@ -178,6 +189,12 @@ abstract final class AppPreferences {
       themeMode = await _repository.loadThemeMode();
     } catch (_) {
       themeMode = ThemeMode.system;
+    }
+
+    try {
+      paletteId = await _repository.loadPaletteId();
+    } catch (_) {
+      paletteId = 'folego';
     }
 
     try {
@@ -192,9 +209,15 @@ abstract final class AppPreferences {
       introSeen = false;
     }
 
+    AppThemeController.selectPalette(paletteId);
     _applyTheme(themeMode);
     _applyLanguage(language);
     firstRunIntroSeen.value = introSeen;
+  }
+
+  static Future<void> setPaletteId(String id) async {
+    AppThemeController.selectPalette(id);
+    await _repository.savePaletteId(id);
   }
 
   static Future<void> setThemeMode(ThemeMode mode) async {

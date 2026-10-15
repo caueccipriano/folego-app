@@ -13,6 +13,7 @@ import '../../data/models/budget_overview_item.dart';
 import 'budget_pace_context.dart';
 import '../home/upcoming_events_screen.dart';
 import '../goals/goals_screen.dart';
+import 'plan_insights_section.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
@@ -44,6 +45,7 @@ class PlanScreen extends StatefulWidget {
     this.refreshToken,
     this.loadOverride,
     this.saveOverride,
+    this.disableInsightsForTesting = false,
     this.onProjectionRequested,
     this.onPurchaseSimulationRequested,
     this.onSpendingBehaviorRequested,
@@ -69,6 +71,9 @@ class PlanScreen extends StatefulWidget {
   @visibleForTesting
   final PlanBudgetSaver? saveOverride;
 
+  @visibleForTesting
+  final bool disableInsightsForTesting;
+
   @override
   State<PlanScreen> createState() => _PlanScreenState();
 }
@@ -78,7 +83,9 @@ class _PlanScreenState extends State<PlanScreen> {
   late final ScrollController _scrollController;
 
   final Set<String> _expandedCategoryIds = <String>{};
+  final Set<String> _showIdleCategoryIds = <String>{};
   List<BudgetOverviewItem> _items = const [];
+  Future<PlanInsights>? _insightsFuture;
 
   bool _loading = true;
   bool _refreshing = false;
@@ -104,7 +111,9 @@ class _PlanScreenState extends State<PlanScreen> {
       final now = DateTime.now();
       _month = DateTime(now.year, now.month);
       _items = const [];
+      _insightsFuture = null;
       _expandedCategoryIds.clear();
+      _showIdleCategoryIds.clear();
       _hasLoadedOnce = false;
       _loading = true;
       _error = null;
@@ -130,6 +139,7 @@ class _PlanScreenState extends State<PlanScreen> {
   List<BudgetOverviewItem> get _parents {
     final parents = _items.where((item) => item.isParent).toList();
     parents.sort((a, b) {
+      if (a.isPending != b.isPending) return a.isPending ? -1 : 1;
       final aExceeded = a.hasBudget && a.remainingAmount < 0;
       final bExceeded = b.hasBudget && b.remainingAmount < 0;
       if (aExceeded != bExceeded) return aExceeded ? -1 : 1;
@@ -194,6 +204,11 @@ class _PlanScreenState extends State<PlanScreen> {
 
       setState(() {
         _items = items;
+        _insightsFuture = widget.loadOverride == null &&
+                !widget.disableInsightsForTesting
+            ? widget.repository.getPlanInsights(
+                spaceId: widget.spaceId, periodMonth: _month)
+            : null;
         _loading = false;
         _refreshing = false;
         _hasLoadedOnce = true;
@@ -259,7 +274,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Future<void> _editBudget(BudgetOverviewItem item) async {
+  Future<void> _editBudget(BudgetOverviewItem item, {double? suggestedAmount}) async {
     if (_saving) return;
 
     if (_isPastMonth) {
@@ -270,7 +285,7 @@ class _PlanScreenState extends State<PlanScreen> {
       return;
     }
 
-    final result = await _showBudgetSheet(item);
+    final result = await _showBudgetSheet(item, initialAmount: suggestedAmount);
     if (result == null || !mounted) return;
 
     setState(() => _saving = true);
@@ -299,9 +314,11 @@ class _PlanScreenState extends State<PlanScreen> {
     }
   }
 
-  Future<_BudgetEditResult?> _showBudgetSheet(BudgetOverviewItem item) {
+  Future<_BudgetEditResult?> _showBudgetSheet(BudgetOverviewItem item, {double? initialAmount}) {
     final controller = TextEditingController(
-      text: item.hasBudget
+      text: initialAmount != null
+          ? initialAmount.toStringAsFixed(2).replaceAll('.', ',')
+          : item.hasBudget
           ? item.plannedAmount.toStringAsFixed(2).replaceAll('.', ',')
           : '',
     );
@@ -314,7 +331,7 @@ class _PlanScreenState extends State<PlanScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) {
         var scope = BudgetLimitScope.month;
         String? validationError;
@@ -525,8 +542,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             );
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.lime,
-                            foregroundColor: AppColors.iconOnLime,
+                            backgroundColor: AppColors.action(Theme.of(context).brightness),
+                            foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                             minimumSize: const Size.fromHeight(48),
                           ),
                           child: const Text('salvar limite'),
@@ -644,9 +661,27 @@ class _PlanScreenState extends State<PlanScreen> {
     const SizedBox(height:8),
     Text('2 · definir limites de gastos',style:Theme.of(context).textTheme.titleSmall),
     const Text('Use o resumo e as categorias abaixo para distribuir seu orçamento.'),
-    const SizedBox(height:8),
-    OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GoalsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.flag_outlined),label:const Text('3 · planejar metas')),
+
   ]);
+
+  Widget _goalButton() => OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GoalsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.flag_outlined),label:const Text('3 · planejar metas'));
+  Widget _buildInsights() {
+    return PlanInsightsSection(
+      insights: _insightsFuture!,
+      allowEditing: !_isPastMonth,
+      onReviewSuggestion: (suggestion) {
+        final candidates = _items.where((item) =>
+            item.categoryId == suggestion.categoryId &&
+            item.isSubcategory && !item.isPending).toList();
+        if (candidates.isEmpty) {
+          AppSnackbars.show(context, 'categoria indisponível neste mês');
+          return;
+        }
+        // Suggestions never save: the existing edit modal requires approval.
+        _editBudget(candidates.single, suggestedAmount: suggestion.suggestedLimit);
+      },
+    );
+  }
 
   Widget _purchaseSimulationButton() => OutlinedButton.icon(
     key: const ValueKey('plan-can-i-buy'),
@@ -674,6 +709,10 @@ class _PlanScreenState extends State<PlanScreen> {
           _planningPaths(),
           const SizedBox(height:12),
           _buildSummary(brightness),
+          if (_insightsFuture != null) ...[
+            const SizedBox(height: 12),
+            _buildInsights(),
+          ],
           if (widget.onPurchaseSimulationRequested != null) ...[
             const SizedBox(height: 12),
             _purchaseSimulationButton(),
@@ -684,6 +723,8 @@ class _PlanScreenState extends State<PlanScreen> {
           ],
           const SizedBox(height: 10),
           _buildCategories(brightness),
+          const SizedBox(height:16),
+          _goalButton(),
         ],
       ),
     );
@@ -717,6 +758,10 @@ class _PlanScreenState extends State<PlanScreen> {
                       _planningPaths(),
                       const SizedBox(height:12),
                       _buildSummary(brightness),
+                      if (_insightsFuture != null) ...[
+                        const SizedBox(height: 14),
+                        _buildInsights(),
+                      ],
                       if (widget.onPurchaseSimulationRequested != null) ...[
                         const SizedBox(height: 12),
                         _purchaseSimulationButton(),
@@ -725,6 +770,8 @@ class _PlanScreenState extends State<PlanScreen> {
                         const SizedBox(height: 16),
                         _buildNoPlan(brightness),
                       ],
+                      const SizedBox(height:16),
+                      _goalButton(),
                     ],
                   ),
                 ),
@@ -850,6 +897,7 @@ class _PlanScreenState extends State<PlanScreen> {
 
   Widget _buildSummary(Brightness brightness) {
     final summary = _summary;
+    final diagnostics = BudgetMonthDiagnostics.fromItems(_items);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
@@ -862,8 +910,8 @@ class _PlanScreenState extends State<PlanScreen> {
       usedAmount: summary.actualAmount,
     );
     final remainingLabel = summary.remainingAmount >= 0
-        ? 'ainda pode gastar'
-        : 'passou do planejado';
+        ? 'abaixo dos limites (não é saldo em conta)'
+        : 'acima da soma dos limites';
     final remainingColor = summary.remainingAmount < 0
         ? AppColors.expenseText(brightness)
         : primaryText;
@@ -923,7 +971,7 @@ class _PlanScreenState extends State<PlanScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _Metric(
-                  label: 'realizado',
+                  label: 'gastos + dívidas pagas',
                   value: Formatters.money(summary.actualAmount),
                   brightness: brightness,
                 ),
@@ -990,6 +1038,77 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
             ),
           ],
+          if (diagnostics.categoriesOverLimit > 0 ||
+              diagnostics.spendingWithoutLimit > 0) ...[
+            const SizedBox(height: 12),
+            Text(
+              '${diagnostics.categoriesOverLimit} categorias acima do próprio '
+              'limite: ${Formatters.money(diagnostics.exceededInLimitedCategories)}. '
+              'gastos sem limite: '
+              '${Formatters.money(diagnostics.spendingWithoutLimit)}. '
+              'limites não usados em outras categorias: '
+              '${Formatters.money(diagnostics.remainingInLimitedCategories)}.',
+              key: const ValueKey('plan-category-offset-explanation'),
+              style: AppTypography.body(
+                context, fontSize: 11, color: secondaryText),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Material(
+            type: MaterialType.transparency,
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
+              child: ExpansionTile(
+              key: const ValueKey('plan-explain-budget'),
+              tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+              childrenPadding: const EdgeInsets.fromLTRB(10, 4, 10, 14),
+              title: Text(
+                'de onde vêm esses valores?',
+                style: AppTypography.label(context, fontSize: 13,
+                  fontWeight: FontWeight.w700, color: primaryText),
+              ),
+              subtitle: Text(
+                'veja a conta e o que entra no mês',
+                style: AppTypography.body(context, fontSize: 11, color: secondaryText),
+              ),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '1. planejado = soma dos limites das subcategorias: '
+                    '${Formatters.money(summary.plannedAmount)}.\n\n'
+                    '2. total acompanhado = compras e parcelas de cartão atribuídas ao mês, '
+                    'despesas diretas, benefícios utilizados e parcelas de '
+                    'dívidas efetivamente pagas (sem contar a dívida duas vezes): '
+                    '${Formatters.money(summary.actualAmount)}.\n\n'
+                    '3. diferença = planejado − total acompanhado: '
+                    '${Formatters.money(summary.plannedAmount)} − '
+                    '${Formatters.money(summary.actualAmount)} = '
+                    '${summary.remainingAmount < 0 ? "−" : "+"}'
+                    '${Formatters.money(summary.remainingAmount.abs())}.\n\n'
+                    '4. confira onde o mês saiu do trilho: '
+                    '${Formatters.money(diagnostics.exceededInLimitedCategories)} '
+                    'de excesso em ${diagnostics.categoriesOverLimit} categorias '
+                    'com limite + '
+                    '${Formatters.money(diagnostics.spendingWithoutLimit)} '
+                    'em categorias sem limite − '
+                    '${Formatters.money(diagnostics.remainingInLimitedCategories)} '
+                    'de limites não utilizados em outras categorias.\n\n'
+                    '5. pagamentos de empréstimos já registrados consomem o limite '
+                    'de dívidas sem virar despesa econômica nova. '
+                    'despesas sem limite também contam no total. '
+                    'gastos em “a classificar” estão incluídos, mas '
+                    'a categoria ainda deve ser revisada.\n\n'
+                    '6. pagar fatura de cartão ou transferir dinheiro entre suas contas '
+                    'não deve contar como compra nova. '
+                    'este cálculo não é o saldo bancário.',
+                    style: AppTypography.body(context, fontSize: 12, color: primaryText),
+                  ),
+                ),
+              ],
+              ),
+            ),
+          ),
           if (widget.onSpendingBehaviorRequested != null) ...[
             const SizedBox(height: 10),
             Align(
@@ -1000,6 +1119,13 @@ class _PlanScreenState extends State<PlanScreen> {
                 icon: const Icon(Icons.pie_chart_outline_rounded),
                 label: const Text('gastos fixos x variáveis'),
               ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'fixos e variáveis usam a data original da compra; '
+              'o resumo acima usa o mês da parcela. os totais podem diferir.',
+              style: AppTypography.body(
+                context, fontSize: 10, color: secondaryText),
             ),
           ],
           if (widget.onFlexibleBudgetRequested != null) ...[
@@ -1075,7 +1201,7 @@ class _PlanScreenState extends State<PlanScreen> {
       children: [
         const AppSectionHeader(
           title: 'categorias',
-          subtitle: 'categorias acima do planejado primeiro · abra para ver as subcategorias',
+          subtitle: 'revise as pendências e abra uma categoria para conferir sua soma',
         ),
         const SizedBox(height: 10),
         if (_parents.isEmpty)
@@ -1088,6 +1214,11 @@ class _PlanScreenState extends State<PlanScreen> {
 
   Widget _buildParentCard(BudgetOverviewItem parent, Brightness brightness) {
     final children = _childrenOf(parent);
+    final inactiveChildren = children
+        .where((child) => !child.hasActivity && !child.hasBudget).toList();
+    final showingIdle = _showIdleCategoryIds.contains(parent.categoryId);
+    final visibleChildren = showingIdle ? children :
+        children.where((child) => child.hasActivity || child.hasBudget).toList();
     final expanded = _expandedCategoryIds.contains(parent.categoryId);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -1098,6 +1229,10 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     final icon = CategoryVisuals.iconFor(category: parent.categoryName);
     final percentage = (parent.usageRatio * 100).round();
+    final sumOfChildren = children.fold<double>(
+      0, (sum, child) => sum + child.actualAmount,
+    );
+    final amountWithoutSubcategory = parent.withoutSubcategory(children);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -1111,11 +1246,13 @@ class _PlanScreenState extends State<PlanScreen> {
         child: Column(
           children: [
             Material(
-              color: Colors.transparent,
+              color: AppColors.transparent,
               child: InkWell(
                 key: ValueKey('plan-parent-${parent.categoryId}'),
                 onTap: children.isEmpty
-                    ? null
+                    ? parent.hasActivity
+                        ? () => _showCategorySpending(parent)
+                        : null
                     : () => _toggleCategory(parent.categoryId),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -1147,14 +1284,16 @@ class _PlanScreenState extends State<PlanScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              parent.hasBudget
+                              parent.isPending
+                                  ? '${Formatters.money(parent.actualAmount)} aguardando categoria · já entra no total'
+                                  : parent.hasBudget
                                   ? parent.remainingAmount >= 0
-                                        ? '${Formatters.money(parent.remainingAmount)} ainda disponíveis'
+                                        ? '${Formatters.money(parent.remainingAmount)} abaixo do limite'
                                         : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
                                   : parent.hasActivity
                                   ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
                                   : 'sem limites nas subcategorias',
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.label(
                                 context,
@@ -1166,6 +1305,15 @@ class _PlanScreenState extends State<PlanScreen> {
                                     : secondaryText,
                               ),
                             ),
+                            if (parent.hasBudget) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                '${Formatters.money(parent.actualAmount)} gastos / '
+                                '${Formatters.money(parent.plannedAmount)} de limite',
+                                style: AppTypography.body(
+                                  context, fontSize: 11, color: secondaryText),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1216,6 +1364,16 @@ class _PlanScreenState extends State<PlanScreen> {
                   ),
                 ),
               ),
+            if (parent.hasActivity && (expanded || children.isEmpty))
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: ValueKey('plan-view-postings-${parent.categoryId}'),
+                  onPressed: () => _showCategorySpending(parent),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                  label: const Text('ver lançamentos deste total'),
+                ),
+              ),
             if (children.isNotEmpty && expanded)
               Container(
                 key: ValueKey('plan-children-${parent.categoryId}'),
@@ -1225,20 +1383,77 @@ class _PlanScreenState extends State<PlanScreen> {
                   border: Border(top: BorderSide(color: border)),
                 ),
                 child: Column(
-                  children: children
-                      .map(
-                        (child) => _buildChildCard(
-                          parent,
-                          child,
-                          familyColor,
-                          brightness,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 3, 5, 12),
+                      child: Text(
+                        amountWithoutSubcategory > .009
+                            ? 'soma: ${Formatters.money(sumOfChildren)} '
+                                'nas subcategorias + '
+                                '${Formatters.money(amountWithoutSubcategory)} '
+                                'sem subcategoria = '
+                                '${Formatters.money(parent.actualAmount)}'
+                            : 'total da categoria: '
+                                '${Formatters.money(parent.actualAmount)} '
+                                '(soma dos gastos das subcategorias)',
+                        style: AppTypography.body(
+                          context, fontSize: 11, color: secondaryText),
+                      ),
+                    ),
+                    ...visibleChildren.map(
+                      (child) => _buildChildCard(
+                        parent, child, familyColor, brightness),
+                    ),
+                    if (inactiveChildren.isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          key: ValueKey('plan-toggle-unused-${parent.categoryId}'),
+                          onPressed: () => setState(() {
+                            if (!_showIdleCategoryIds.add(parent.categoryId)) {
+                              _showIdleCategoryIds.remove(parent.categoryId);
+                            }
+                          }),
+                          child: Text(showingIdle
+                              ? 'ocultar ${inactiveChildren.length} sem gasto nem limite'
+                              : 'mostrar ${inactiveChildren.length} sem gasto nem limite'),
                         ),
-                      )
-                      .toList(growable: false),
+                      ),
+                    if (amountWithoutSubcategory > .009)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(7, 5, 7, 9),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'sem subcategoria: '
+                            '${Formatters.money(amountWithoutSubcategory)} '
+                            '— os lançamentos precisam ser detalhados',
+                            style: AppTypography.body(
+                              context, fontSize: 11, color: secondaryText),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showCategorySpending(BudgetOverviewItem category) async {
+    final future = widget.repository.getBudgetImpactDetails(
+      spaceId: widget.spaceId,
+      periodMonth: _month,
+      categoryId: category.categoryId,
+    );
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _BudgetCategorySpendingSheet(
+        categoryName: category.categoryName,
+        entries: future,
       ),
     );
   }
@@ -1371,7 +1586,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       Expanded(
                         child: Text(
                           child.hasActivity
-                              ? '${Formatters.money(child.actualAmount)} realizado · sem limite'
+                              ? '${Formatters.money(child.actualAmount)} em gastos · sem limite, mas incluído no total'
                               : 'nenhum gasto neste mês · sem limite',
                           style: AppTypography.body(
                             context,
@@ -1431,12 +1646,141 @@ class _PlanScreenState extends State<PlanScreen> {
 
   String _summaryCopy(BudgetMonthSummary summary) {
     if (summary.progressState == BudgetProgressState.exceeded) {
-      return 'o realizado passou do total planejado para o mês';
+      return 'gastos e parcelas pagas ultrapassaram os limites; confira as categorias';
     }
     if (summary.progressState == BudgetProgressState.attention) {
       return 'você já consumiu boa parte do que planejou para o mês';
     }
-    return 'seu realizado continua dentro do total planejado';
+    return 'total acompanhado dentro dos limites; isso não é saldo bancário';
+  }
+}
+
+class _BudgetCategorySpendingSheet extends StatelessWidget {
+  const _BudgetCategorySpendingSheet({
+    required this.categoryName,
+    required this.entries,
+  });
+
+  final String categoryName;
+  final Future<List<BudgetImpactDetail>> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .74,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'lançamentos de $categoryName',
+                style: AppTypography.section(context,
+                  fontSize: 19, color: primary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'valores que formam os gastos do Plano neste mês. '
+                'uma compra antiga pode aparecer pela parcela deste mês; '
+                'pagar a fatura não soma uma segunda vez.',
+                style: AppTypography.body(context,
+                  fontSize: 11, color: secondary),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<BudgetImpactDetail>>(
+                  future: entries,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'não foi possível conferir os lançamentos. '
+                          'tente novamente mais tarde.',
+                          style: AppTypography.body(context,
+                            fontSize: 12, color: secondary),
+                        ),
+                      );
+                    }
+                    final rows = snapshot.data ?? const <BudgetImpactDetail>[];
+                    if (rows.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'nenhum lançamento confirmado neste período',
+                          style: AppTypography.body(context,
+                            fontSize: 12, color: secondary),
+                        ),
+                      );
+                    }
+                    final total = rows.fold<double>(0,
+                        (sum, row) => sum + row.budgetAmount);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          '${rows.length} lançamento(s) · '
+                          'total: ${Formatters.money(total)}',
+                          style: AppTypography.label(context,
+                            fontSize: 13, color: primary,
+                            fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.separated(
+                            itemCount: rows.length,
+                            separatorBuilder: (_, _) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final row = rows[index];
+                              final isCredit = row.budgetAmount < 0;
+                              final isOld = row.comesFromEarlierMonth;
+                              final installment = row.installmentNumber != null &&
+                                  row.totalInstallments != null
+                                  ? ' · parcela ${row.installmentNumber}/${row.totalInstallments}'
+                                  : '';
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                                title: Text(row.description,
+                                  style: AppTypography.body(context,
+                                    fontSize: 12, color: primary)),
+                                subtitle: Text(
+                                  '${row.categoryName} · '
+                                  '${Formatters.shortDate.format(row.effectiveDate)} '
+                                  'no Plano$installment'
+                                  '${isOld && row.purchaseDate != null ? " · compra de ${Formatters.shortDate.format(row.purchaseDate!)}" : ""}',
+                                  style: AppTypography.body(context,
+                                    fontSize: 10, color: secondary),
+                                ),
+                                trailing: Text(
+                                  '${isCredit ? "+" : ""}'
+                                  '${Formatters.money(row.budgetAmount.abs())}',
+                                  style: AppTypography.label(context,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: primary),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1513,7 +1857,7 @@ class _ScopeChoice extends StatelessWidget {
     final accent = AppColors.primaryPurple(brightness);
     final border = selected ? accent : AppColors.border(brightness);
     return Material(
-      color: selected ? accent.withValues(alpha: .08) : Colors.transparent,
+      color: selected ? accent.withValues(alpha: .08) : AppColors.transparent,
       borderRadius: BorderRadius.circular(AppRadii.control),
       child: InkWell(
         onTap: onTap,
@@ -1707,7 +2051,7 @@ class _PlanModeToggle extends StatelessWidget {
     }) {
       return Expanded(
         child: Material(
-          color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
+          color: selected ? accent.withValues(alpha: .13) : AppColors.transparent,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             onTap: onTap,

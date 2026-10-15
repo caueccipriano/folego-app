@@ -13,6 +13,7 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/automation_rule.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/transaction_item.dart';
+import '../../data/smart_category_suggestion.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_automation.dart';
 import '../../data/repositories/folego_repository_categories.dart';
@@ -309,6 +310,7 @@ class _TransactionClassificationInboxState
   bool _loading = true;
   bool _refreshing = false;
   bool _changed = false;
+  bool _suggestionsOnly = false;
   int _batchDone = 0;
   int _batchTarget = 0;
   bool get _batchFinished =>
@@ -611,6 +613,33 @@ class _TransactionClassificationInboxState
     }
   }
 
+  SmartCategorySuggestion? _suggestionForItem(TransactionItem item) {
+    final kind = transactionClassificationKind(item.eventType);
+    if (kind == null) return null;
+    final categories = kind == 'income'
+        ? _incomeCategories : _expenseCategories;
+    if (_automationEnabled) {
+      final reviewed = reviewedCategorySuggestion(
+        item: item,
+        rules: _reviewRules,
+        categories: categories,
+      );
+      if (reviewed != null) {
+        return SmartCategorySuggestion(
+          category: reviewed,
+          reason: 'regra revisada anteriormente',
+          evidenceCount: 0,
+        );
+      }
+    }
+    return suggestSmartCategory(
+      description: item.description,
+      eventType: item.eventType,
+      history: _knownHistory,
+      categories: categories,
+    );
+  }
+
   Future<void> _chooseCategory(TransactionItem item) async {
     if (_savingEventId != null || _loading) return;
     final kind = transactionClassificationKind(item.eventType);
@@ -626,11 +655,7 @@ class _TransactionClassificationInboxState
       return;
     }
 
-    final suggestion = _automationEnabled
-        ? reviewedCategorySuggestion(
-            item: item, rules: _reviewRules, categories: categories,
-          )
-        : null;
+    final suggestion = _suggestionForItem(item);
     CategoryItem? selected;
     if (suggestion != null) {
       final confirmed = await showDialog<bool>(
@@ -638,8 +663,9 @@ class _TransactionClassificationInboxState
         builder: (dialogContext) => AlertDialog(
           title: const Text('categoria sugerida'),
           content: Text(
-            'Uma regra revisada sugere ${suggestion.breadcrumb}. '
-            'Aplicar a este lançamento? Você pode escolher outra categoria.',
+            'O FÔLEGO sugere ${suggestion.category.breadcrumb} '
+            '(${suggestion.reason}). Aplicar a este lançamento? '
+            'Você pode escolher outra categoria.',
           ),
           actions: [
             TextButton(
@@ -654,15 +680,35 @@ class _TransactionClassificationInboxState
         ),
       );
       if (!mounted) return;
-      if (confirmed == true) selected = suggestion;
+      if (confirmed == true) selected = suggestion.category;
     }
     selected ??= await _showCategoryPicker(
       categories: categories,
-      selectedId: suggestion?.id ?? item.categoryId,
+      selectedId: suggestion?.category.id ?? item.categoryId,
       eventType: kind,
     );
     if (selected == null || !mounted) return;
 
+    await _saveSelectedCategory(item, selected);
+  }
+
+  Future<void> _acceptCategorySuggestion(
+    TransactionItem item,
+    SmartCategorySuggestion suggestion,
+  ) async {
+    if (_savingEventId != null || _loading || _applyingSuggestions) return;
+    // An explicit tap is required. Never run classifications while building.
+    await _saveSelectedCategory(item, suggestion.category, showOffers: false);
+  }
+
+  Future<void> _saveSelectedCategory(
+    TransactionItem item,
+    CategoryItem selected, {
+    bool showOffers = true,
+  }) async {
+    if (_savingEventId != null || !_items.any((row) => row.id == item.id)) {
+      return;
+    }
     setState(() {
       _savingEventId = item.id;
       _error = null;
@@ -683,14 +729,18 @@ class _TransactionClassificationInboxState
       });
 
       final remaining = _batchTarget - _batchDone;
-      final matches = matchingClassificationCandidates(item, _items)
-          .take(remaining > 4 ? 4 : (remaining < 0 ? 0 : remaining))
-          .toList(growable: false);
+      final matches = showOffers
+          ? matchingClassificationCandidates(item, _items)
+              .take(remaining > 4 ? 4 : (remaining < 0 ? 0 : remaining))
+              .toList(growable: false)
+          : const <TransactionItem>[];
       final grouped = matches.isEmpty
           ? 0
           : await _offerMatchBatch(matches, selected);
       if (!mounted) return;
-      final ruleCreated = await _offerAlwaysCategorize(item, selected);
+      final ruleCreated = showOffers
+          ? await _offerAlwaysCategorize(item, selected)
+          : false;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -866,7 +916,7 @@ class _TransactionClassificationInboxState
       return showDialog<CategoryItem>(
         context: context,
         builder: (_) => Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           child: SizedBox(
             width: 520,
             height: MediaQuery.sizeOf(context).height * .8,
@@ -885,7 +935,7 @@ class _TransactionClassificationInboxState
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: .86,
         child: CategorySearchPicker(
@@ -906,6 +956,13 @@ class _TransactionClassificationInboxState
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
+    final visibleItems = _suggestionsOnly
+        ? _items.where((item) => _suggestionForItem(item) != null).toList()
+        : _items;
+    final remainingInBatch = _batchTarget - _batchDone;
+    final displayedItems = widget.batchSize == null
+        ? visibleItems
+        : visibleItems.take(remainingInBatch < 0 ? 0 : remainingInBatch).toList();
 
     return Material(
       color: background,
@@ -966,6 +1023,29 @@ class _TransactionClassificationInboxState
               ),
             ),
             Divider(height: 1, color: border),
+            if (!_loading && _items.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
+                child: Row(
+                  children: [
+                    ChoiceChip(
+                      key: const ValueKey('classification-filter-all'),
+                      label: Text('todos (${_items.length})'),
+                      selected: !_suggestionsOnly,
+                      onSelected: (_) => setState(() => _suggestionsOnly = false),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      key: const ValueKey('classification-filter-suggested'),
+                      label: Text(
+                        'com sugestão (${_items.where((i) => _suggestionForItem(i) != null).length})',
+                      ),
+                      selected: _suggestionsOnly,
+                      onSelected: (_) => setState(() => _suggestionsOnly = true),
+                    ),
+                  ],
+                ),
+              ),
             if (!_loading && _automationEnabled &&
                 safeAutopilotRuleProposals(
                   history: _knownHistory,
@@ -1049,6 +1129,14 @@ class _TransactionClassificationInboxState
                       secondaryText: secondaryText,
                       purple: purple,
                     )
+                  : _suggestionsOnly && displayedItems.isEmpty
+                  ? Center(
+                      child: Text(
+                        'sem sugestões seguras. veja todos para classificar manualmente.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.body(context, fontSize: 12),
+                      ),
+                    )
                   : _batchFinished
                   ? Center(
                       child: Column(
@@ -1077,18 +1165,19 @@ class _TransactionClassificationInboxState
                       onRefresh: _refresh,
                       child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(14, 14, 14, 110),
-                        itemCount: widget.batchSize == null
-                            ? _items.length
-                            : (_items.length < _batchTarget - _batchDone
-                                  ? _items.length
-                                  : _batchTarget - _batchDone),
+                        itemCount: displayedItems.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 9),
                         itemBuilder: (context, index) {
-                          final item = _items[index];
+                          final item = displayedItems[index];
+                          final suggestion = _suggestionForItem(item);
                           return _ClassificationCard(
                             item: item,
+                            suggestion: suggestion,
                             saving: _savingEventId == item.id,
                             onTap: () => _chooseCategory(item),
+                            onAcceptSuggestion: suggestion == null
+                                ? null
+                                : () => _acceptCategorySuggestion(item, suggestion),
                           );
                         },
                       ),
@@ -1139,11 +1228,15 @@ class _TransactionClassificationInboxState
 class _ClassificationCard extends StatelessWidget {
   const _ClassificationCard({
     required this.item,
+    required this.suggestion,
+    required this.onAcceptSuggestion,
     required this.saving,
     required this.onTap,
   });
 
   final TransactionItem item;
+  final SmartCategorySuggestion? suggestion;
+  final VoidCallback? onAcceptSuggestion;
   final bool saving;
   final VoidCallback onTap;
 
@@ -1163,7 +1256,7 @@ class _ClassificationCard extends StatelessWidget {
         : AppColors.expenseText(brightness);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: saving ? null : onTap,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
@@ -1244,6 +1337,32 @@ class _ClassificationCard extends StatelessWidget {
                           context,
                           fontSize: 11,
                           color: secondaryText,
+                        ),
+                      ),
+                    ],
+                    if (suggestion != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'sugestão: ${suggestion!.category.breadcrumb} · '
+                        '${suggestion!.reason}',
+                        key: ValueKey('classification-smart-suggestion:${item.id}'),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: primaryText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          key: ValueKey('classification-accept-suggestion:${item.id}'),
+                          onPressed: saving ? null : onAcceptSuggestion,
+                          icon: const Icon(AppIcons.check, size: 15),
+                          label: const Text('aceitar sugestão'),
                         ),
                       ),
                     ],

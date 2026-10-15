@@ -5,8 +5,8 @@ abstract final class AppTypography {
   // ---------------------------------------------------------------------------
   // DESIGN SYSTEM
   //
-  // Unbounded = personalidade, títulos importantes e valores.
-  // Manrope   = interface, corpo, labels e navegação.
+  // Unbounded = personalidade e títulos principais.
+  // Manrope   = títulos de cards, valores, corpo, labels e navegação.
   // ---------------------------------------------------------------------------
 
   static TextTheme textTheme(
@@ -66,7 +66,7 @@ abstract final class AppTypography {
         letterSpacing: -.25,
         color: primaryText,
       ),
-      titleLarge: GoogleFonts.unbounded(
+      titleLarge: GoogleFonts.manrope(
         textStyle: manrope.titleLarge,
         fontSize: 18,
         fontWeight: FontWeight.w700,
@@ -153,41 +153,29 @@ abstract final class AppTypography {
     double fontSize = 18,
     Color? color,
   }) {
-    return GoogleFonts.unbounded(
+    return GoogleFonts.manrope(
       textStyle: Theme.of(context).textTheme.titleLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      height: 1.10,
-      letterSpacing: -.25,
+      height: 1.25,
+      letterSpacing: 0,
       color: color,
     );
   }
 
+  /// One numeric face at every size keeps amounts comparable across cards.
   static TextStyle money(
     BuildContext context, {
     double fontSize = 52,
     Color? color,
   }) {
-    // Compact amounts need open counters and stable digit widths. Keep the
-    // expressive brand face for large hero values only.
-    if (fontSize < 24) {
-      return GoogleFonts.manrope(
-        textStyle: Theme.of(context).textTheme.bodyMedium,
-        fontSize: fontSize < 13 ? 13 : fontSize,
-        fontWeight: FontWeight.w700,
-        height: 1.3,
-        letterSpacing: 0,
-        fontFeatures: const [FontFeature.tabularFigures()],
-        decoration: TextDecoration.none,
-        color: color,
-      );
-    }
-    return GoogleFonts.unbounded(
-      textStyle: Theme.of(context).textTheme.displayLarge,
-      fontSize: fontSize,
+    return GoogleFonts.manrope(
+      textStyle: Theme.of(context).textTheme.bodyMedium,
+      fontSize: fontSize < 13 ? 13 : fontSize,
       fontWeight: FontWeight.w700,
-      height: 1.12,
-      letterSpacing: -.6,
+      height: 1.2,
+      letterSpacing: 0,
+      fontFeatures: const [FontFeature.tabularFigures()],
       decoration: TextDecoration.none,
       color: color,
     );

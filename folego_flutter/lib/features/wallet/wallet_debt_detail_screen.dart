@@ -4,6 +4,7 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -228,7 +229,7 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
               if (debt.interestRateMonthly != null)
                 _MetaChip(
                   icon: AppIcons.financeInterest,
-                  text: '${debt.interestRateMonthly!.toStringAsFixed(2)}% a.m.',
+                  text: '${(debt.interestRateMonthly! * 100).toStringAsFixed(2)}% a.m.',
                 ),
               _MetaChip(
                 icon: debt.isPaid ? AppIcons.check : AppIcons.debt,
@@ -251,7 +252,9 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
           ),
           const SizedBox(height: 10),
           if (openInstallments.isEmpty)
-            _EmptyLine(text: 'nenhuma parcela em aberto')
+            _EmptyLine(text: detail.installments.isEmpty
+                ? 'cronograma de parcelas ainda não cadastrado — dívida ativa'
+                : 'nenhuma parcela pendente neste cronograma')
           else
             ...openInstallments.map(
               (item) => Padding(
@@ -270,7 +273,7 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
           ),
           const SizedBox(height: 10),
           if (detail.payments.isEmpty)
-            _EmptyLine(text: 'nenhum pagamento registrado')
+            _EmptyLine(text: 'nenhum pagamento vinculado ao FÔLEGO; pagamentos anteriores podem não ter sido importados')
           else
             ...detail.payments.map(
               (payment) => Padding(
@@ -323,26 +326,27 @@ class _DebtAmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.primaryPurple(brightness),
+        color: FolegoColorTokens.of(context).marcaHero,
         borderRadius: BorderRadius.circular(AppRadii.feature),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('saldo restante', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(detail.debt.debtType == 'loan' ? 'saldo devedor informado' : 'saldo restante', style: TextStyle(color: FolegoColorTokens.of(context).marcaHeroSobre, fontSize: 12)),
           const SizedBox(height: 5),
           Text(
             Formatters.money(detail.debt.remainingBalance),
-            style: AppTypography.money(context, fontSize: 34, color: AppColors.lime),
+            style: AppTypography.money(context, fontSize: 34, color: FolegoColorTokens.of(context).estouradoHero),
           ),
           const SizedBox(height: 7),
           Text(
-            'de ${Formatters.money(detail.debt.originalAmount)} originalmente',
-            style: const TextStyle(color: Colors.white70, fontSize: 11),
+            detail.debt.originalAmountKnown
+                ? 'de ${Formatters.money(detail.debt.originalAmount)} originalmente'
+                : 'valor original do contrato não cadastrado',
+            style: TextStyle(color: FolegoColorTokens.of(context).marcaHeroSobre, fontSize: 11),
           ),
         ],
       ),
@@ -357,6 +361,22 @@ class _DebtProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    if (detail.debt.debtType == 'loan') {
+      return Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: AppColors.surface(brightness),
+          borderRadius: BorderRadius.circular(AppRadii.compactCard),
+          border: Border.all(color: AppColors.border(brightness)),
+        ),
+        child: Text(
+          'saldo informado, não soma das parcelas com juros. '
+          'pagamentos vinculados ao FÔLEGO: ${Formatters.money(detail.paidAmount)}. '
+          'o histórico anterior pode não estar importado.',
+          style: AppTypography.body(context, fontSize: 12, color: AppColors.secondaryText(brightness)),
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -371,7 +391,7 @@ class _DebtProgressCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${Formatters.money(detail.paidAmount)} pagos',
+                  '${Formatters.money(detail.paidAmount)} pagos no cronograma',
                   style: AppTypography.label(context, fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),

@@ -721,7 +721,7 @@ class _DesktopBrandPanel extends StatelessWidget {
               width: 52,
               height: 12,
               decoration: BoxDecoration(
-                color: AppColors.lime,
+                color: AppColors.action(Theme.of(context).brightness),
                 borderRadius: BorderRadius.circular(AppRadii.pill),
               ),
             ),

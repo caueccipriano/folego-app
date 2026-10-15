@@ -20,7 +20,7 @@ class SectionCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       elevation: 0,
       color: AppColors.surface(brightness),
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),

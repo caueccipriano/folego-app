@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/account_item.dart';
@@ -74,7 +75,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
         ? await showDialog<CategoryItem>(
             context: context,
             builder: (_) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               child: SizedBox(
                 width: AppContentWidths.form,
                 height: MediaQuery.sizeOf(context).height * .8,
@@ -86,7 +87,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .84,
               child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense'),
@@ -252,8 +253,8 @@ class _BenefitExpenseEditSheetState extends State<BenefitExpenseEditSheet> {
   Future<void> _pickCategory() async {
     final dialog = AppBreakpoints.of(context) != AppLayoutSize.compact;
     final selected = dialog
-        ? await showDialog<CategoryItem>(context: context, builder: (_) => Dialog(backgroundColor: Colors.transparent, child: SizedBox(width: AppContentWidths.form, height: MediaQuery.sizeOf(context).height*.8, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense', dialogMode: true))))
-        : await showModalBottomSheet<CategoryItem>(context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: Colors.transparent, builder: (_) => FractionallySizedBox(heightFactor: .84, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense')));
+        ? await showDialog<CategoryItem>(context: context, builder: (_) => Dialog(backgroundColor: AppColors.transparent, child: SizedBox(width: AppContentWidths.form, height: MediaQuery.sizeOf(context).height*.8, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense', dialogMode: true))))
+        : await showModalBottomSheet<CategoryItem>(context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: AppColors.transparent, builder: (_) => FractionallySizedBox(heightFactor: .84, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense')));
     if (selected != null && mounted) setState(() => _categoryId = selected.id);
   }
 
@@ -437,7 +438,15 @@ class _ActionSheetFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return SafeArea(
+    return Material(
+      color: AppColors.surface(brightness),
+      borderRadius: BorderRadius.circular(
+        AppBreakpoints.of(context) == AppLayoutSize.compact
+            ? AppRadii.sheet
+            : AppRadii.feature,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
       top: false,
       child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(20, 18, 20, MediaQuery.viewInsetsOf(context).bottom + 24),
@@ -448,8 +457,23 @@ class _ActionSheetFrame extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(title, style: AppTypography.section(context, fontSize: 20, color: AppColors.primaryText(brightness))),
-                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(title, style: AppTypography.section(
+                        context,
+                        fontSize: 20,
+                        color: AppColors.primaryText(brightness),
+                      )),
+                    ),
+                    IconButton(
+                      tooltip: 'fechar edição',
+                      onPressed: saving ? null : () => Navigator.of(context).pop(false),
+                      icon: const Icon(AppIcons.close, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 ...children,
                 if (error != null) ...[
                   const SizedBox(height: 12),
@@ -464,6 +488,7 @@ class _ActionSheetFrame extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

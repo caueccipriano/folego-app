@@ -32,6 +32,46 @@ BudgetOverviewItem item({
 }
 
 void main() {
+  group('read-only financial insights', () {
+    test('parses separate budget spending, cash movement and cash estimate', () {
+      final insight = PlanInsights.fromJson({
+        'economic_spending': 3313.04,
+        'debt_payments': 1476.51,
+        'budget_tracked': 4789.55,
+        'cash_outflows': 4880.00,
+        'cash_inflows': 3700.00,
+        'estimated_available_now': 62.90,
+        'issues': [
+          {
+            'code': 'needs_classification',
+            'title': 'lançamentos a classificar',
+            'description': 'revisar',
+            'count': 7,
+            'amount': 157.69,
+          },
+        ],
+        'suggestions': [
+          {
+            'category_id': 'school',
+            'category_name': 'Escola',
+            'historical_average': 488.19,
+            'suggested_limit': 540,
+            'sample_months': 2,
+          },
+        ],
+      });
+      expect(insight.economicSpending, closeTo(3313.04, .001));
+      expect(insight.debtPayments, closeTo(1476.51, .001));
+      expect(insight.budgetTracked, closeTo(
+        insight.economicSpending + insight.debtPayments, .001));
+      expect(insight.cashOutflows, 4880);
+      expect(insight.estimatedAvailableNow, closeTo(62.90, .001));
+      expect(insight.issues.single.count, 7);
+      expect(insight.issues.single.amount, closeTo(157.69, .001));
+      expect(insight.suggestions.single.suggestedLimit, 540);
+      expect(insight.suggestions.single.sampleMonths, 2);
+    });
+  });
   group('budget frequency state', () {
     test('maps month, monthly and cancellation scopes to backend contract', () {
       expect(BudgetLimitScope.month.rpcValue, 'month');
@@ -180,6 +220,70 @@ void main() {
       expect(summary.plannedAmount, 1200);
       expect(summary.actualAmount, 700);
       expect(summary.remainingAmount, 500);
+    });
+
+    test('confirmed expenses awaiting classification are not omitted', () {
+      final limits = item(
+        id: 'education', name: 'Educação', planned: 200, actual: 655.74,
+      );
+      final pending = item(
+        id: 'pending', name: 'A classificar',
+        actual: 157.69, source: 'pending',
+      );
+      final summary = BudgetMonthSummary.fromItems([limits, pending]);
+      expect(pending.isPending, isTrue);
+      expect(summary.actualAmount, closeTo(813.43, 0.001));
+      expect(summary.remainingAmount, closeTo(-613.43, 0.001));
+    });
+
+    test('parent actual includes both child expenses and direct charges', () {
+      final education = item(
+        id: 'education', name: 'Educação', planned: 200, actual: 655.74,
+      );
+      final school = item(
+        id: 'school', name: 'Escola / Faculdade',
+        parentId: 'education', planned: 200, actual: 487.98,
+      );
+      final courses = item(
+        id: 'courses', name: 'Cursos', parentId: 'education', actual: 167.76,
+      );
+      expect(education.withoutSubcategory([school, courses]),
+        closeTo(0, .001));
+
+      final subscriptions = item(
+        id: 'subscriptions', name: 'Assinaturas',
+        actual: 78.80,
+      );
+      final music = item(
+        id: 'music', name: 'Música',
+        parentId: 'subscriptions', actual: 25.90,
+      );
+      expect(subscriptions.withoutSubcategory([music]),
+        closeTo(52.90, .001));
+    });
+
+    test('month offsets reveal category excess despite unused debt limits', () {
+      final parents = [
+        item(id: 'food', name: 'Alimentação', planned: 950, actual: 1299.99),
+        item(id: 'shop', name: 'Compras', planned: 200, actual: 483.34),
+        item(id: 'edu', name: 'Educação', planned: 200, actual: 655.74),
+        item(id: 'debts', name: 'Dívidas', planned: 1500, actual: 1558.35),
+        item(id: 'subscriptions', name: 'Assinaturas', planned: 142.80, actual: 78.80),
+        item(id: 'beauty', name: 'Beleza', planned: 140, actual: 0),
+        item(id: 'other', name: 'Outras categorias', actual: 555.64),
+        item(id: 'pending', name: 'A classificar', source: 'pending', actual: 157.69),
+      ];
+      final summary = BudgetMonthSummary.fromItems(parents);
+      final diag = BudgetMonthDiagnostics.fromItems(parents);
+      expect(summary.plannedAmount, closeTo(3132.80, 0.001));
+      expect(summary.actualAmount, closeTo(4789.55, 0.001));
+      expect(diag.categoriesOverLimit, 4);
+      expect(diag.exceededInLimitedCategories, closeTo(1147.42, 0.001));
+      expect(diag.remainingInLimitedCategories, closeTo(204.00, 0.001));
+      expect(diag.spendingWithoutLimit, closeTo(713.33, 0.001));
+      expect(diag.pendingClassification, closeTo(157.69, 0.001));
+      expect(diag.netRemaining, closeTo(summary.remainingAmount, 0.001));
+      expect(summary.remainingAmount, closeTo(-1656.75, .001));
     });
 
     test('empty month stays a valid zero summary', () {
