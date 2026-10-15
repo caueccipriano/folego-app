@@ -73,10 +73,14 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
       if (!mounted || request != _generation ||
           spaceId != widget.spaceId ||
           month.year != widget.periodMonth.year ||
-          month.month != widget.periodMonth.month) return;
+          month.month != widget.periodMonth.month) {
+        return;
+      }
       setState(() { _entries = result; _loading = false; });
     } catch (_) {
-      if (!mounted || request != _generation) return;
+      if (!mounted || request != _generation) {
+        return;
+      }
       setState(() {
         _entries = const [];
         _error = 'não foi possível consultar os tipos de gastos.';
@@ -86,7 +90,9 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
   }
 
   Future<void> _classify(SpendingBehaviorEntry entry) async {
-    if (_savingId != null) return;
+    if (_savingId != null) {
+      return;
+    }
     final selected = await showModalBottomSheet<ExpenseBehavior>(
       context: context,
       useSafeArea: true,
@@ -132,7 +138,9 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
         ),
       ),
     );
-    if (selected == null || selected == entry.behavior || !mounted) return;
+    if (selected == null || selected == entry.behavior || !mounted) {
+      return;
+    }
     setState(() => _savingId = entry.id);
     try {
       if (widget.saveOverride == null) {
