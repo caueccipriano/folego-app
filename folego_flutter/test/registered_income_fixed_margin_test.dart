@@ -60,6 +60,7 @@ void main() {
     );
     expect(short.afterClassifiedFixed, -600);
     expect(short.afterAllRecordedSpending, -1000);
+    expect(short.fixedShareOfIncome, 2.5);
     expect(
       () => buildRegisteredSpendingMargin(
         registeredIncome: double.nan, expenses: totals,
