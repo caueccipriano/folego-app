@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_color_tokens.dart';
 
 abstract final class AppColors {
   // ---------------------------------------------------------------------------
@@ -103,41 +104,39 @@ abstract final class AppColors {
   // ---------------------------------------------------------------------------
 
   static Color primaryPurple(Brightness brightness) {
-    return brightness == Brightness.dark ? purpleDark : purpleLight;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).marca;
   }
 
   static Color background(Brightness brightness) {
-    return brightness == Brightness.dark ? darkBackground : lightBackground;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).fundo;
   }
 
   static Color surface(Brightness brightness) {
-    return brightness == Brightness.dark ? darkSurface : lightSurface;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).superficie;
   }
 
   static Color border(Brightness brightness) {
-    return brightness == Brightness.dark ? darkBorder : lightBorder;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).borda;
   }
 
   static Color primaryText(Brightness brightness) {
-    return brightness == Brightness.dark ? darkPrimaryText : lightPrimaryText;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).textoPrincipal;
   }
 
   static Color secondaryText(Brightness brightness) {
-    return brightness == Brightness.dark
-        ? darkSecondaryText
-        : lightSecondaryText;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).textoSecundario;
   }
 
   static Color positiveText(Brightness brightness) {
-    return brightness == Brightness.dark ? darkPositiveText : lightPositiveText;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).folga;
   }
 
   /// Attention states intentionally use the existing Fôlego purple language.
   static Color warningText(Brightness brightness) {
-    return primaryPurple(brightness);
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).apertado;
   }
 
   static Color expenseText(Brightness brightness) {
-    return brightness == Brightness.dark ? darkExpenseText : lightExpenseText;
+    return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).estourado;
   }
 }
