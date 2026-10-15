@@ -148,6 +148,27 @@ String homeFolegoVoiceLabel(FolegoSnapshot snapshot) {
   };
 }
 
+/// Destaca apenas quantias monetárias secundárias, nunca rótulos, datas ou
+/// números do KPI principal. O texto integral segue acessível ao leitor de tela.
+List<TextSpan> heroCurrencySpans(String message, Color accent) {
+  final spans = <TextSpan>[];
+  var offset = 0;
+  for (final match in RegExp(r'R\$\s*[\d.,]+').allMatches(message)) {
+    if (match.start > offset) {
+      spans.add(TextSpan(text: message.substring(offset, match.start)));
+    }
+    spans.add(TextSpan(
+      text: match.group(0),
+      style: TextStyle(color: accent, fontWeight: FontWeight.w800),
+    ));
+    offset = match.end;
+  }
+  if (offset < message.length) {
+    spans.add(TextSpan(text: message.substring(offset)));
+  }
+  return spans;
+}
+
 class HomeFinancialHero extends StatelessWidget {
   const HomeFinancialHero({
     super.key,
@@ -260,8 +281,10 @@ class HomeFinancialHero extends StatelessWidget {
               ),
             ),
             SizedBox(height: compact ? 8 : 10),
-            Text(
-              contextCopy,
+            // O KPI principal usa texto neutro; cifras secundárias usam o
+            // acento da paleta, corrigido para legibilidade sobre o hero.
+            Text.rich(
+              TextSpan(children: heroCurrencySpans(contextCopy, tokens.acaoHero)),
               key: const ValueKey('home-daily-folego-context'),
               style: AppTypography.body(
                 context,
@@ -315,8 +338,8 @@ class HomeFinancialHero extends StatelessWidget {
                             for (final fact in zeroFacts)
                               Padding(
                                 padding: const EdgeInsets.only(top: 3),
-                                child: Text(
-                                  fact,
+                                child: Text.rich(
+                                  TextSpan(children: heroCurrencySpans(fact, tokens.acaoHero)),
                                   style: AppTypography.body(
                                     context,
                                     fontSize: 13,
