@@ -42,6 +42,9 @@ jobs:
       - name: Wallet commitment and spending clarity
         run: flutter test test/wallet_commitment_insights_test.dart
 
+      - name: Safe reconciliation and home priority
+        run: flutter test test/reconciliation_home_priority_test.dart
+
       - name: Smart category suggestions (quick register and classification)
         run: flutter test test/smart_category_suggestion_test.dart
 
