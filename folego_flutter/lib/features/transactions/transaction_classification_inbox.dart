@@ -13,6 +13,7 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/automation_rule.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/transaction_item.dart';
+import '../../data/smart_category_suggestion.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_automation.dart';
 import '../../data/repositories/folego_repository_categories.dart';
@@ -611,6 +612,33 @@ class _TransactionClassificationInboxState
     }
   }
 
+  SmartCategorySuggestion? _suggestionForItem(TransactionItem item) {
+    final kind = transactionClassificationKind(item.eventType);
+    if (kind == null) return null;
+    final categories = kind == 'income'
+        ? _incomeCategories : _expenseCategories;
+    if (_automationEnabled) {
+      final reviewed = reviewedCategorySuggestion(
+        item: item,
+        rules: _reviewRules,
+        categories: categories,
+      );
+      if (reviewed != null) {
+        return SmartCategorySuggestion(
+          category: reviewed,
+          reason: 'regra revisada anteriormente',
+          evidenceCount: 0,
+        );
+      }
+    }
+    return suggestSmartCategory(
+      description: item.description,
+      eventType: item.eventType,
+      history: _knownHistory,
+      categories: categories,
+    );
+  }
+
   Future<void> _chooseCategory(TransactionItem item) async {
     if (_savingEventId != null || _loading) return;
     final kind = transactionClassificationKind(item.eventType);
@@ -626,11 +654,7 @@ class _TransactionClassificationInboxState
       return;
     }
 
-    final suggestion = _automationEnabled
-        ? reviewedCategorySuggestion(
-            item: item, rules: _reviewRules, categories: categories,
-          )
-        : null;
+    final suggestion = _suggestionForItem(item);
     CategoryItem? selected;
     if (suggestion != null) {
       final confirmed = await showDialog<bool>(
@@ -638,8 +662,9 @@ class _TransactionClassificationInboxState
         builder: (dialogContext) => AlertDialog(
           title: const Text('categoria sugerida'),
           content: Text(
-            'Uma regra revisada sugere ${suggestion.breadcrumb}. '
-            'Aplicar a este lançamento? Você pode escolher outra categoria.',
+            'O FÔLEGO sugere ${suggestion.category.breadcrumb} '
+            '(${suggestion.reason}). Aplicar a este lançamento? '
+            'Você pode escolher outra categoria.',
           ),
           actions: [
             TextButton(
@@ -654,11 +679,11 @@ class _TransactionClassificationInboxState
         ),
       );
       if (!mounted) return;
-      if (confirmed == true) selected = suggestion;
+      if (confirmed == true) selected = suggestion.category;
     }
     selected ??= await _showCategoryPicker(
       categories: categories,
-      selectedId: suggestion?.id ?? item.categoryId,
+      selectedId: suggestion?.category.id ?? item.categoryId,
       eventType: kind,
     );
     if (selected == null || !mounted) return;
@@ -1087,6 +1112,7 @@ class _TransactionClassificationInboxState
                           final item = _items[index];
                           return _ClassificationCard(
                             item: item,
+                            suggestion: _suggestionForItem(item),
                             saving: _savingEventId == item.id,
                             onTap: () => _chooseCategory(item),
                           );
@@ -1139,11 +1165,13 @@ class _TransactionClassificationInboxState
 class _ClassificationCard extends StatelessWidget {
   const _ClassificationCard({
     required this.item,
+    required this.suggestion,
     required this.saving,
     required this.onTap,
   });
 
   final TransactionItem item;
+  final SmartCategorySuggestion? suggestion;
   final bool saving;
   final VoidCallback onTap;
 
@@ -1244,6 +1272,22 @@ class _ClassificationCard extends StatelessWidget {
                           context,
                           fontSize: 11,
                           color: secondaryText,
+                        ),
+                      ),
+                    ],
+                    if (suggestion != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'sugestão: ${suggestion!.category.breadcrumb} · '
+                        '${suggestion!.reason}',
+                        key: ValueKey('classification-smart-suggestion:${item.id}'),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: primaryText,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
