@@ -132,6 +132,25 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('320px layout keeps margins readable without overflow',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 650);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(MaterialApp(home: SpendingBehaviorScreen(
+      repository: _FakeRepository(), spaceId: 'space-320',
+      periodMonth: DateTime(2026, 10),
+      loadOverride: (space, month) async => entries,
+      incomeOverride: (space, month) async => 1600,
+    )));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('spending-registered-income-margin')),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('income query and expense query share same date and confirmation rules', () {
     final repository = File('lib/data/repositories/folego_repository.dart')
         .readAsStringSync();
