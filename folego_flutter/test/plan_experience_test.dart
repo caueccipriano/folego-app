@@ -32,6 +32,46 @@ BudgetOverviewItem item({
 }
 
 void main() {
+  group('read-only financial insights', () {
+    test('parses separate budget spending, cash movement and cash estimate', () {
+      final insight = PlanInsights.fromJson({
+        'economic_spending': 3313.04,
+        'debt_payments': 1476.51,
+        'budget_tracked': 4789.55,
+        'cash_outflows': 4880.00,
+        'cash_inflows': 3700.00,
+        'estimated_available_now': 62.90,
+        'issues': [
+          {
+            'code': 'needs_classification',
+            'title': 'lançamentos a classificar',
+            'description': 'revisar',
+            'count': 7,
+            'amount': 157.69,
+          },
+        ],
+        'suggestions': [
+          {
+            'category_id': 'school',
+            'category_name': 'Escola',
+            'historical_average': 488.19,
+            'suggested_limit': 540,
+            'sample_months': 2,
+          },
+        ],
+      });
+      expect(insight.economicSpending, closeTo(3313.04, .001));
+      expect(insight.debtPayments, closeTo(1476.51, .001));
+      expect(insight.budgetTracked, closeTo(
+        insight.economicSpending + insight.debtPayments, .001));
+      expect(insight.cashOutflows, 4880);
+      expect(insight.estimatedAvailableNow, closeTo(62.90, .001));
+      expect(insight.issues.single.count, 7);
+      expect(insight.issues.single.amount, closeTo(157.69, .001));
+      expect(insight.suggestions.single.suggestedLimit, 540);
+      expect(insight.suggestions.single.sampleMonths, 2);
+    });
+  });
   group('budget frequency state', () {
     test('maps month, monthly and cancellation scopes to backend contract', () {
       expect(BudgetLimitScope.month.rpcValue, 'month');
