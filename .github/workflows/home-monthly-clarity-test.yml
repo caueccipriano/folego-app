@@ -1,0 +1,33 @@
+name: Validate monthly home clarity
+
+on:
+  pull_request:
+    branches:
+      - feat/transactions-recurring
+    paths:
+      - 'folego_flutter/lib/features/home/home_monthly_money_card.dart'
+      - 'folego_flutter/test/home_monthly_money_card_test.dart'
+      - '.github/workflows/home-monthly-clarity-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze modified widget and tests
+        run: flutter analyze lib/features/home/home_monthly_money_card.dart test/home_monthly_money_card_test.dart
+      - name: Verify monthly financial semantics
+        run: flutter test test/home_monthly_money_card_test.dart test/monthly_money_summary_test.dart test/home_monthly_money_wiring_test.dart
+      - name: Verify public web build
+        run: flutter build web --release --base-href "/folego-app/"
