@@ -912,7 +912,7 @@ class _PlanScreenState extends State<PlanScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _Metric(
-                  label: 'gastos do mês',
+                  label: 'gastos + dívidas pagas',
                   value: Formatters.money(summary.actualAmount),
                   brightness: brightness,
                 ),
@@ -1016,10 +1016,11 @@ class _PlanScreenState extends State<PlanScreen> {
                   child: Text(
                     '1. planejado = soma dos limites das subcategorias: '
                     '${Formatters.money(summary.plannedAmount)}.\n\n'
-                    '2. gasto do mês = compras, parcelas atribuídas ao mês, '
-                    'saídas da conta e benefícios utilizados: '
+                    '2. total acompanhado = compras e parcelas de cartão atribuídas ao mês, '
+                    'despesas diretas, benefícios utilizados e parcelas de '
+                    'dívidas efetivamente pagas (sem contar a dívida duas vezes): '
                     '${Formatters.money(summary.actualAmount)}.\n\n'
-                    '3. diferença = planejado − gastos: '
+                    '3. diferença = planejado − total acompanhado: '
                     '${Formatters.money(summary.plannedAmount)} − '
                     '${Formatters.money(summary.actualAmount)} = '
                     '${summary.remainingAmount < 0 ? "−" : "+"}'
@@ -1032,10 +1033,12 @@ class _PlanScreenState extends State<PlanScreen> {
                     'em categorias sem limite − '
                     '${Formatters.money(diagnostics.remainingInLimitedCategories)} '
                     'de limites não utilizados em outras categorias.\n\n'
-                    '5. despesas sem limite também contam no total. '
+                    '5. pagamentos de empréstimos já registrados consomem o limite '
+                    'de dívidas sem virar despesa econômica nova. '
+                    'despesas sem limite também contam no total. '
                     'gastos em “a classificar” estão incluídos, mas '
                     'a categoria ainda deve ser revisada.\n\n'
-                    '6. pagar fatura ou transferir dinheiro entre suas contas '
+                    '6. pagar fatura de cartão ou transferir dinheiro entre suas contas '
                     'não deve contar como compra nova. '
                     'este cálculo não é o saldo bancário.',
                     style: AppTypography.body(context, fontSize: 12, color: primaryText),
@@ -1581,12 +1584,12 @@ class _PlanScreenState extends State<PlanScreen> {
 
   String _summaryCopy(BudgetMonthSummary summary) {
     if (summary.progressState == BudgetProgressState.exceeded) {
-      return 'gastos acima dos limites somados: confira categorias e valores a classificar';
+      return 'gastos e parcelas pagas ultrapassaram os limites; confira as categorias';
     }
     if (summary.progressState == BudgetProgressState.attention) {
       return 'você já consumiu boa parte do que planejou para o mês';
     }
-    return 'gastos dentro dos limites somados; isso não é o saldo bancário';
+    return 'total acompanhado dentro dos limites; isso não é saldo bancário';
   }
 }
 
