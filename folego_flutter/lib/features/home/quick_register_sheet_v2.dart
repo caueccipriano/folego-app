@@ -698,7 +698,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                 foregroundColor: AppColors.onAction(brightness),
                               ),
                               child: _saving
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
