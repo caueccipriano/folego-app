@@ -62,7 +62,9 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
     final request = ++_generation;
     final spaceId = widget.spaceId;
     final month = widget.periodMonth;
-    if (mounted) setState(() { _loading = true; _error = null; });
+    if (mounted) {
+      setState(() { _loading = true; _error = null; });
+    }
     try {
       final result = widget.loadOverride == null
           ? await widget.repository.getSpendingBehaviorEntries(
@@ -145,9 +147,11 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('tipo de gasto salvo.')));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(
-          'não foi possível salvar. atualize e tente novamente.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(
+            'não foi possível salvar. atualize e tente novamente.')));
+      }
     } finally {
       if (mounted) setState(() => _savingId = null);
     }
