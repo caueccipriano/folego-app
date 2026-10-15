@@ -21,7 +21,7 @@ TransactionItem event(String description, String categoryId, {
   String eventType = 'expense',
   String status = 'confirmed',
 }) => TransactionItem(
-  id: '${description}_${categoryId}_${eventType}',
+  id: '${description}_${categoryId}_$eventType',
   eventType: eventType,
   description: description,
   amount: 100,
