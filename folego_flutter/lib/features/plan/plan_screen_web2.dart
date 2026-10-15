@@ -46,6 +46,7 @@ class PlanScreen extends StatefulWidget {
     this.saveOverride,
     this.onProjectionRequested,
     this.onPurchaseSimulationRequested,
+    this.onSpendingBehaviorRequested,
     this.onFlexibleBudgetRequested,
   });
 
@@ -59,6 +60,7 @@ class PlanScreen extends StatefulWidget {
 
   final VoidCallback? onProjectionRequested;
   final VoidCallback? onPurchaseSimulationRequested;
+  final ValueChanged<DateTime>? onSpendingBehaviorRequested;
   final VoidCallback? onFlexibleBudgetRequested;
 
   @visibleForTesting
@@ -962,6 +964,18 @@ class _PlanScreenState extends State<PlanScreen> {
               'contas e compras não acontecem em ritmo uniforme.',
               style: AppTypography.body(
                 context, fontSize: 11, color: secondaryText,
+              ),
+            ),
+          ],
+          if (widget.onSpendingBehaviorRequested != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const ValueKey('plan-open-spending-behavior'),
+                onPressed: () => widget.onSpendingBehaviorRequested!(_month),
+                icon: const Icon(Icons.pie_chart_outline_rounded),
+                label: const Text('gastos fixos x variáveis'),
               ),
             ),
           ],
