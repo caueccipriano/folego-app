@@ -1029,7 +1029,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     '${Formatters.money(diagnostics.spendingWithoutLimit)} '
                     'em categorias sem limite − '
                     '${Formatters.money(diagnostics.remainingInLimitedCategories)} '
-                    'de limites não utilizados em outras categorias.\\n\\n'
+                    'de limites não utilizados em outras categorias.\n\n'
                     '5. despesas sem limite também contam no total. '
                     'gastos em “a classificar” estão incluídos, mas '
                     'a categoria ainda deve ser revisada.\n\n'
@@ -1052,6 +1052,13 @@ class _PlanScreenState extends State<PlanScreen> {
                 icon: const Icon(Icons.pie_chart_outline_rounded),
                 label: const Text('gastos fixos x variáveis'),
               ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'fixos e variáveis usam a data original da compra; '
+              'o resumo acima usa o mês da parcela. os totais podem diferir.',
+              style: AppTypography.body(
+                context, fontSize: 10, color: secondaryText),
             ),
           ],
           if (widget.onFlexibleBudgetRequested != null) ...[
