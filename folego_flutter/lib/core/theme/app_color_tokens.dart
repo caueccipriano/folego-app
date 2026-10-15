@@ -10,6 +10,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     required this.marcaHeroSobre,
     required this.acao,
     required this.acaoSobre,
+    required this.acaoHero,
     required this.fundo,
     required this.superficie,
     required this.superficieAlta,
@@ -28,7 +29,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   });
 
   final Color marca, marcaSobre, marcaHero, marcaHeroSobre;
-  final Color acao, acaoSobre;
+  final Color acao, acaoSobre, acaoHero;
   final Color fundo, superficie, superficieAlta;
   final Color textoPrincipal, textoSecundario, borda;
   final Color folga, folgaSobre, apertado, apertadoSobre;
@@ -264,6 +265,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
       marcaHeroSobre: _onColor(way.hero),
       acao: p.action,
       acaoSobre: _onColor(p.action),
+      acaoHero: _accentOnHero(p.action, way.hero),
       fundo: way.background,
       superficie: way.surface,
       superficieAlta: way.elevated,
@@ -282,6 +284,19 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
       apertadoHero: const Color(0xFFFFD18C),
       estouradoHero: const Color(0xFFFFB6B0),
     );
+  }
+
+  /// Realce numérico secundário sobre o hero. Mantém o matiz de [acao]
+  /// e clareia só o necessário para WCAG AA (4.5:1 em texto comum).
+  /// A cor original de botões/ações permanece inalterada.
+  static Color _accentOnHero(Color action, Color hero) {
+    if (contrastRatio(action, hero) >= 4.5) return action;
+    const white = Color(0xFFFFFFFF);
+    for (var step = 1; step <= 20; step++) {
+      final candidate = Color.lerp(action, white, step / 20)!;
+      if (contrastRatio(candidate, hero) >= 4.5) return candidate;
+    }
+    return white;
   }
 
   /// Marca usada como texto/ícone precisa alcançar 4.5:1 nas superfícies.
@@ -328,7 +343,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   @override
   FolegoColorTokens copyWith({
     Color? marca, Color? marcaSobre, Color? marcaHero, Color? marcaHeroSobre,
-    Color? acao, Color? acaoSobre, Color? fundo, Color? superficie,
+    Color? acao, Color? acaoSobre, Color? acaoHero, Color? fundo, Color? superficie,
     Color? superficieAlta, Color? textoPrincipal, Color? textoSecundario,
     Color? borda, Color? folga, Color? folgaSobre, Color? apertado,
     Color? apertadoSobre, Color? estourado, Color? estouradoSobre,
@@ -340,6 +355,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     marcaHeroSobre: marcaHeroSobre ?? this.marcaHeroSobre,
     acao: acao ?? this.acao,
     acaoSobre: acaoSobre ?? this.acaoSobre,
+    acaoHero: acaoHero ?? this.acaoHero,
     fundo: fundo ?? this.fundo,
     superficie: superficie ?? this.superficie,
     superficieAlta: superficieAlta ?? this.superficieAlta,
@@ -366,6 +382,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
       marcaHero: c(marcaHero, other.marcaHero),
       marcaHeroSobre: c(marcaHeroSobre, other.marcaHeroSobre),
       acao: c(acao, other.acao), acaoSobre: c(acaoSobre, other.acaoSobre),
+      acaoHero: c(acaoHero, other.acaoHero),
       fundo: c(fundo, other.fundo), superficie: c(superficie, other.superficie),
       superficieAlta: c(superficieAlta, other.superficieAlta),
       textoPrincipal: c(textoPrincipal, other.textoPrincipal),
