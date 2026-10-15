@@ -342,7 +342,7 @@ class _SpendingTotals extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadii.pill),
                 child: LinearProgressIndicator(
                   minHeight: 6,
-                  value: totals.shareOf(ExpenseBehavior.values[i]),
+                  value: hidden ? 0 : totals.shareOf(ExpenseBehavior.values[i]),
                   backgroundColor: AppColors.border(brightness),
                 ),
               ),
