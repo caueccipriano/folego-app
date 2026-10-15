@@ -353,7 +353,7 @@ class HomeFinancialHero extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.darkBackground.withValues(alpha: .12),
+                  color: onPurple.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(AppRadii.pill),
                 ),
                 child: Text(
