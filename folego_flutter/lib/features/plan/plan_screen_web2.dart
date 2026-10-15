@@ -1171,7 +1171,9 @@ class _PlanScreenState extends State<PlanScreen> {
               child: InkWell(
                 key: ValueKey('plan-parent-${parent.categoryId}'),
                 onTap: children.isEmpty
-                    ? null
+                    ? parent.hasActivity
+                        ? () => _showCategorySpending(parent)
+                        : null
                     : () => _toggleCategory(parent.categoryId),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -1283,6 +1285,16 @@ class _PlanScreenState extends State<PlanScreen> {
                   ),
                 ),
               ),
+            if (parent.hasActivity && (expanded || children.isEmpty))
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: ValueKey('plan-view-postings-${parent.categoryId}'),
+                  onPressed: () => _showCategorySpending(parent),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                  label: const Text('ver lançamentos deste total'),
+                ),
+              ),
             if (children.isNotEmpty && expanded)
               Container(
                 key: ValueKey('plan-children-${parent.categoryId}'),
@@ -1332,6 +1344,22 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showCategorySpending(BudgetOverviewItem category) async {
+    final future = widget.repository.getBudgetImpactDetails(
+      spaceId: widget.spaceId,
+      periodMonth: _month,
+      categoryId: category.categoryId,
+    );
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _BudgetCategorySpendingSheet(
+        categoryName: category.categoryName,
+        entries: future,
       ),
     );
   }
@@ -1530,6 +1558,135 @@ class _PlanScreenState extends State<PlanScreen> {
       return 'você já consumiu boa parte do que planejou para o mês';
     }
     return 'gastos dentro dos limites somados; isso não é o saldo bancário';
+  }
+}
+
+class _BudgetCategorySpendingSheet extends StatelessWidget {
+  const _BudgetCategorySpendingSheet({
+    required this.categoryName,
+    required this.entries,
+  });
+
+  final String categoryName;
+  final Future<List<BudgetImpactDetail>> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .74,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'lançamentos de $categoryName',
+                style: AppTypography.section(context,
+                  fontSize: 19, color: primary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'valores que formam os gastos do Plano neste mês. '
+                'uma compra antiga pode aparecer pela parcela deste mês; '
+                'pagar a fatura não soma uma segunda vez.',
+                style: AppTypography.body(context,
+                  fontSize: 11, color: secondary),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<BudgetImpactDetail>>(
+                  future: entries,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'não foi possível conferir os lançamentos. '
+                          'tente novamente mais tarde.',
+                          style: AppTypography.body(context,
+                            fontSize: 12, color: secondary),
+                        ),
+                      );
+                    }
+                    final rows = snapshot.data ?? const <BudgetImpactDetail>[];
+                    if (rows.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'nenhum lançamento confirmado neste período',
+                          style: AppTypography.body(context,
+                            fontSize: 12, color: secondary),
+                        ),
+                      );
+                    }
+                    final total = rows.fold<double>(0,
+                        (sum, row) => sum + row.budgetAmount);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          '${rows.length} lançamento(s) · '
+                          'total: ${Formatters.money(total)}',
+                          style: AppTypography.label(context,
+                            fontSize: 13, color: primary,
+                            fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.separated(
+                            itemCount: rows.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final row = rows[index];
+                              final isCredit = row.budgetAmount < 0;
+                              final isOld = row.comesFromEarlierMonth;
+                              final installment = row.installmentNumber != null &&
+                                  row.totalInstallments != null
+                                  ? ' · parcela ${row.installmentNumber}/${row.totalInstallments}'
+                                  : '';
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                                title: Text(row.description,
+                                  style: AppTypography.body(context,
+                                    fontSize: 12, color: primary)),
+                                subtitle: Text(
+                                  '${row.categoryName} · '
+                                  '${Formatters.shortDate.format(row.effectiveDate)} '
+                                  'no Plano$installment'
+                                  '${isOld && row.purchaseDate != null ? " · compra de ${Formatters.shortDate.format(row.purchaseDate!)}" : ""}',
+                                  style: AppTypography.body(context,
+                                    fontSize: 10, color: secondary),
+                                ),
+                                trailing: Text(
+                                  '${isCredit ? "+" : ""}'
+                                  '${Formatters.money(row.budgetAmount.abs())}',
+                                  style: AppTypography.label(context,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: primary),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
