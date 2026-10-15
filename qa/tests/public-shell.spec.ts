@@ -11,7 +11,7 @@ test.describe('Fôlego public PWA shell', () => {
       }
     });
     await openFolego(page);
-    await enableFlutterAccessibility(page);
+    await enableFlutterAccessibility(page, Boolean(testInfo.project.use.hasTouch));
     await page.getByRole('button', { name: 'experimentar com dados fictícios', exact: true }).click();
     await expect(page.getByText('experimente à vontade', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'buscar nos exemplos', exact: true }).click();
