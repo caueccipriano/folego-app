@@ -33,6 +33,6 @@ jobs:
       - name: flutter analyze
         run: flutter analyze
       - name: test visual tokens
-        run: flutter test test/theme_palette_test.dart
+        run: flutter test test/theme_palette_test.dart test/theme_preference_test.dart
       - name: build web (sem deploy)
         run: flutter build web --release --base-href "/folego-app/"
