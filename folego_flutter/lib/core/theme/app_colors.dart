@@ -103,6 +103,15 @@ abstract final class AppColors {
   // HELPERS
   // ---------------------------------------------------------------------------
 
+  static Color action(Brightness brightness) =>
+      FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).acao;
+
+  static Color onAction(Brightness brightness) =>
+      FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).acaoSobre;
+
+  static Color onBrand(Brightness brightness) =>
+      FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).marcaSobre;
+
   static Color primaryPurple(Brightness brightness) {
     return FolegoColorTokens.fromId(AppColorSelection.selected.value, brightness).marca;
   }
