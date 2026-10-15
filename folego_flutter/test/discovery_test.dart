@@ -162,7 +162,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).at(0), 'livro');
     await tester.enterText(find.byType(TextFormField).at(1), '25,00');
-    await tester.tap(find.widgetWithText(FilledButton, 'simular gasto'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'simular gasto'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('2.425,00'), findsOneWidget);
     await tester.tap(find.byTooltip('testar modo escuro'));

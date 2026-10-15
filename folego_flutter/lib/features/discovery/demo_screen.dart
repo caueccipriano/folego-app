@@ -64,13 +64,13 @@ class _DemoScreenState extends State<DemoScreen> {
   Future<void> _explore(BuildContext context, bool pendingOnly) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (routeContext) => Theme(
+        builder: (_) => Theme(
           data: Theme.of(context),
           child: DiscoveryScreen(
             identity: 'demo',
             pendingOnly: pendingOnly,
             load: () async => _ledger.data,
-            onOpen: (entry) => _details(routeContext, entry),
+            onOpen: (entry) => _details(context, entry),
           ),
         ),
       ),
@@ -224,40 +224,43 @@ class _DemoExpenseDialogState extends State<_DemoExpenseDialog> {
     title: const Text('simular um gasto'),
     content: SizedBox(
       width: 400,
-      child: Form(
-        key: form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: description,
-              maxLength: 100,
-              decoration: const InputDecoration(labelText: 'descrição'),
-              validator: (value) =>
-                  (value ?? '').trim().isEmpty ? 'Dê um nome ao gasto.' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: amount,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+      child: SingleChildScrollView(
+        child: Form(
+          key: form,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: description,
+                maxLength: 100,
+                decoration: const InputDecoration(labelText: 'descrição'),
+                validator: (value) => (value ?? '').trim().isEmpty
+                    ? 'Dê um nome ao gasto.'
+                    : null,
               ),
-              decoration: const InputDecoration(
-                labelText: 'valor em reais',
-                hintText: '25,00',
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: amount,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'valor em reais',
+                  hintText: '25,00',
+                ),
+                validator: (value) {
+                  final parsed = Formatters.parseMoney(value ?? '').toDouble();
+                  return parsed.isFinite && parsed > 0 && parsed <= 999999
+                      ? null
+                      : 'Informe um valor entre 0,01 e 999.999.';
+                },
               ),
-              validator: (value) {
-                final parsed = Formatters.parseMoney(value ?? '').toDouble();
-                return parsed.isFinite && parsed > 0 && parsed <= 999999
-                    ? null
-                    : 'Informe um valor entre 0,01 e 999.999.';
-              },
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Somente nesta demonstração. Nada será salvo na sua conta.',
-            ),
-          ],
+              const SizedBox(height: 12),
+              const Text(
+                'Somente nesta demonstração. Nada será salvo na sua conta.',
+              ),
+            ],
+          ),
         ),
       ),
     ),

@@ -139,7 +139,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 Text(
                   pending
                       ? 'Agenda: últimos 30 dias e próximos 7. Até 500 categorias a revisar e uma amostra dos retornos recentes da planilha; confira antes de agir.'
-                      : 'Busque por descrição, categoria, conta, cartão ou compromisso deste espaço financeiro.',
+                      : 'Todo o histórico de lançamentos, contas e cartões deste espaço. Agenda: últimos 30 dias e próximos 30. Busque também por categoria.',
                 ),
                 const SizedBox(height: 20),
                 TextField(

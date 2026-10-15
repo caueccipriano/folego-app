@@ -1,7 +1,27 @@
 import { expect, test } from '@playwright/test';
-import { capture, openFolego } from './helpers';
+import { capture, enableFlutterAccessibility, openFolego } from './helpers';
 
 test.describe('Fôlego public PWA shell', () => {
+  test('opens a local demo without login or financial writes', async ({ page }, testInfo) => {
+    const financialWrites: string[] = [];
+    page.on('request', request => {
+      if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method()) &&
+          /supabase\.co\/(rest|functions)\/v1/.test(request.url())) {
+        financialWrites.push(request.url());
+      }
+    });
+    await openFolego(page);
+    await enableFlutterAccessibility(page);
+    await page.getByRole('button', { name: 'experimentar com dados fictícios', exact: true }).click();
+    await expect(page.getByText('experimente à vontade', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'buscar nos exemplos', exact: true }).click();
+    const field = page.getByRole('textbox').first();
+    await field.fill('mercado');
+    await expect(page.getByText('mercado da semana', { exact: true })).toBeVisible();
+    await capture(page, testInfo, 'demo-search');
+    expect(financialWrites).toEqual([]);
+  });
+
   test('boots cleanly without viewport overflow', async ({ page }, testInfo) => {
     const pageErrors = await openFolego(page);
     const geometry = await page.evaluate(() => ({

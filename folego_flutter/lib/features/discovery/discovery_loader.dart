@@ -85,7 +85,11 @@ Future<DiscoveryData> loadDiscovery(
           row.dueDate.month,
           row.dueDate.day,
         );
-        final days = due.difference(today).inDays;
+        final days = DateTime.utc(
+          due.year,
+          due.month,
+          due.day,
+        ).difference(DateTime.utc(today.year, today.month, today.day)).inDays;
         final timing = days < 0
             ? 'vencido há ${-days} dias'
             : days == 0
@@ -109,57 +113,59 @@ Future<DiscoveryData> loadDiscovery(
         if (days <= 7) pending.add(entry);
       }
     }),
-    source('categorias', () async {
-      final rows = await repository.listPendingTransactionClassifications(
-        spaceId,
-      );
-      for (final row in rows) {
-        final entry = DiscoveryEntry(
-          id: row.id,
-          kind: DiscoveryKind.classification,
-          title: row.description,
-          subtitle:
-              'conferir categoria · ${Formatters.fullDate.format(row.occurredAt)}',
-          amount: row.amount,
-          date: row.occurredAt,
-          priority: 3,
+    if (pendingOnly)
+      source('categorias', () async {
+        final rows = await repository.listPendingTransactionClassifications(
+          spaceId,
         );
-        pending.add(entry);
-      }
-    }),
-    source('planilha', () async {
-      final status = await repository.getSheetSyncStatus(spaceId);
-      if (!status.configured) return;
-      if (!status.enabled) {
-        pending.add(
-          const DiscoveryEntry(
-            id: 'disabled',
-            kind: DiscoveryKind.sync,
-            title: 'integração desativada',
-            subtitle: 'conferir conexão com a planilha',
-            priority: 4,
-          ),
-        );
-        return;
-      }
-      final rows = await repository.getSheetAuditItems(spaceId);
-      for (final row in rows) {
-        if (row.hidden || row.needsReview || row.sheetAppliedAt != null) {
-          continue;
-        }
-        pending.add(
-          DiscoveryEntry(
+        for (final row in rows) {
+          final entry = DiscoveryEntry(
             id: row.id,
-            kind: DiscoveryKind.sync,
+            kind: DiscoveryKind.classification,
             title: row.description,
             subtitle:
-                'sem confirmação de retorno · isso não comprova um conflito',
+                'conferir categoria · ${Formatters.fullDate.format(row.occurredAt)}',
+            amount: row.amount,
             date: row.occurredAt,
-            priority: 4,
-          ),
-        );
-      }
-    }),
+            priority: 3,
+          );
+          pending.add(entry);
+        }
+      }),
+    if (pendingOnly)
+      source('planilha', () async {
+        final status = await repository.getSheetSyncStatus(spaceId);
+        if (!status.configured) return;
+        if (!status.enabled) {
+          pending.add(
+            const DiscoveryEntry(
+              id: 'disabled',
+              kind: DiscoveryKind.sync,
+              title: 'integração desativada',
+              subtitle: 'conferir conexão com a planilha',
+              priority: 4,
+            ),
+          );
+          return;
+        }
+        final rows = await repository.getSheetAuditItems(spaceId);
+        for (final row in rows) {
+          if (row.hidden || row.needsReview || row.sheetAppliedAt != null) {
+            continue;
+          }
+          pending.add(
+            DiscoveryEntry(
+              id: row.id,
+              kind: DiscoveryKind.sync,
+              title: row.description,
+              subtitle:
+                  'sem confirmação de retorno · isso não comprova um conflito',
+              date: row.occurredAt,
+              priority: 4,
+            ),
+          );
+        }
+      }),
   ]);
   entries.sort(
     (a, b) => (b.date ?? DateTime(1900)).compareTo(a.date ?? DateTime(1900)),
