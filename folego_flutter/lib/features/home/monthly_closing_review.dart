@@ -137,8 +137,9 @@ class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
                 key: const ValueKey('monthly-close-done'),
                 onPressed: complete
                     ? () {
+                        final messenger = ScaffoldMessenger.maybeOf(context);
                         Navigator.of(context).pop();
-                        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        messenger?.showSnackBar(
                           const SnackBar(
                             content: Text('revisão conferida nesta sessão. '
                                 'nenhum dado financeiro foi alterado.'),
