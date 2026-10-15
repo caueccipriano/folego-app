@@ -173,7 +173,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: selectedIndex == index
                                   ? accent.withValues(alpha: .11)
-                                  : Colors.transparent,
+                                  : AppColors.transparent,
                               borderRadius: BorderRadius.circular(
                                 AppRadii.control,
                               ),
