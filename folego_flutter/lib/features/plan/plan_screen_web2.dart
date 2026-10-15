@@ -43,6 +43,7 @@ class PlanScreen extends StatefulWidget {
     this.refreshToken,
     this.loadOverride,
     this.saveOverride,
+    this.disableInsightsForTesting = false,
     this.onProjectionRequested,
     this.onPurchaseSimulationRequested,
     this.onSpendingBehaviorRequested,
@@ -67,6 +68,9 @@ class PlanScreen extends StatefulWidget {
 
   @visibleForTesting
   final PlanBudgetSaver? saveOverride;
+
+  @visibleForTesting
+  final bool disableInsightsForTesting;
 
   @override
   State<PlanScreen> createState() => _PlanScreenState();
@@ -198,7 +202,8 @@ class _PlanScreenState extends State<PlanScreen> {
 
       setState(() {
         _items = items;
-        _insightsFuture = widget.loadOverride == null
+        _insightsFuture = widget.loadOverride == null &&
+                !widget.disableInsightsForTesting
             ? widget.repository.getPlanInsights(
                 spaceId: widget.spaceId, periodMonth: _month)
             : null;
