@@ -75,7 +75,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
         ? await showDialog<CategoryItem>(
             context: context,
             builder: (_) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               child: SizedBox(
                 width: AppContentWidths.form,
                 height: MediaQuery.sizeOf(context).height * .8,
@@ -87,7 +87,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .84,
               child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense'),
@@ -253,8 +253,8 @@ class _BenefitExpenseEditSheetState extends State<BenefitExpenseEditSheet> {
   Future<void> _pickCategory() async {
     final dialog = AppBreakpoints.of(context) != AppLayoutSize.compact;
     final selected = dialog
-        ? await showDialog<CategoryItem>(context: context, builder: (_) => Dialog(backgroundColor: Colors.transparent, child: SizedBox(width: AppContentWidths.form, height: MediaQuery.sizeOf(context).height*.8, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense', dialogMode: true))))
-        : await showModalBottomSheet<CategoryItem>(context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: Colors.transparent, builder: (_) => FractionallySizedBox(heightFactor: .84, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense')));
+        ? await showDialog<CategoryItem>(context: context, builder: (_) => Dialog(backgroundColor: AppColors.transparent, child: SizedBox(width: AppContentWidths.form, height: MediaQuery.sizeOf(context).height*.8, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense', dialogMode: true))))
+        : await showModalBottomSheet<CategoryItem>(context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: AppColors.transparent, builder: (_) => FractionallySizedBox(heightFactor: .84, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense')));
     if (selected != null && mounted) setState(() => _categoryId = selected.id);
   }
 
