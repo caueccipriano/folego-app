@@ -266,7 +266,7 @@ class _MonthlyHeadlineTile extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         key: data.tapKey,
         onTap: data.onTap,

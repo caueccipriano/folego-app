@@ -284,6 +284,88 @@ class _SettingsRow extends StatelessWidget {
   }
 }
 
+// Separate destination: Perfil > Preferências > Tema do app.
+class _ThemeAppScreen extends StatelessWidget {
+  const _ThemeAppScreen();
+
+  Future<void> _saveMode(BuildContext context, ThemeMode mode) async {
+    try {
+      await AppPreferences.setThemeMode(mode);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('tema aplicado, mas não consegui salvar')),
+      );
+    }
+  }
+
+  Future<void> _savePalette(BuildContext context, String id) async {
+    try {
+      await AppPreferences.setPaletteId(id);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('cor aplicada, mas não consegui salvar')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = FolegoColorTokens.of(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('tema do app')),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 780),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
+              children: [
+                Text('seu Fôlego, sua identidade',
+                    style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 6),
+                Text(
+                  'Escolha uma paleta e como ela aparece. Cada opção tem '
+                  'uma versão clara e outra escura. Isso muda só o visual, '
+                  'não os valores nem as classificações.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textoSecundario,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ValueListenableBuilder<String>(
+                  valueListenable: AppThemeController.paletteId,
+                  builder: (context, paletteId, _) =>
+                      ValueListenableBuilder<ThemeMode>(
+                    valueListenable: AppThemeController.mode,
+                    builder: (context, mode, _) => _AppearanceCard(
+                      selected: mode,
+                      onSelected: (value) => _saveMode(context, value),
+                      paletteSelected: paletteId,
+                      onPaletteSelected: (id) => _savePalette(context, id),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const _ThemeLivePreview(),
+                const SizedBox(height: 12),
+                Text(
+                  'Verde, âmbar e vermelho continuam indicando os mesmos '
+                  'estados financeiros em todos os temas.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textoSecundario,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AppearanceCard extends StatelessWidget {
   const _AppearanceCard({
     required this.selected,
@@ -302,48 +384,56 @@ class _AppearanceCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text('modo de exibição',
+          style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
         _ChoiceSurface(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final layout = AppBreakpoints.fromWidth(constraints.maxWidth);
-          final gap = layout == AppLayoutSize.compact ? 6.0 : 8.0;
-          final optionWidth = (constraints.maxWidth - gap * 2) / 3;
-          return Wrap(
-            spacing: gap,
-            runSpacing: gap,
-            children: [
-              SizedBox(
-                width: optionWidth,
-                child: _AppearanceOption(
-                  label: 'sistema',
-                  icon: AppIcons.systemTheme,
-                  selected: selected == ThemeMode.system,
-                  onTap: () => onSelected(ThemeMode.system),
-                ),
-              ),
-              SizedBox(
-                width: optionWidth,
-                child: _AppearanceOption(
-                  label: 'claro',
-                  icon: AppIcons.lightTheme,
-                  selected: selected == ThemeMode.light,
-                  onTap: () => onSelected(ThemeMode.light),
-                ),
-              ),
-              SizedBox(
-                width: optionWidth,
-                child: _AppearanceOption(
-                  label: 'escuro',
-                  icon: AppIcons.darkTheme,
-                  selected: selected == ThemeMode.dark,
-                  onTap: () => onSelected(ThemeMode.dark),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final gap = constraints.maxWidth < 350 ? 6.0 : 8.0;
+              final optionWidth = (constraints.maxWidth - gap * 2) / 3;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  SizedBox(
+                    width: optionWidth,
+                    child: _AppearanceOption(
+                      label: 'sistema',
+                      icon: AppIcons.systemTheme,
+                      selected: selected == ThemeMode.system,
+                      onTap: () => onSelected(ThemeMode.system),
+                    ),
+                  ),
+                  SizedBox(
+                    width: optionWidth,
+                    child: _AppearanceOption(
+                      label: 'claro',
+                      icon: AppIcons.lightTheme,
+                      selected: selected == ThemeMode.light,
+                      onTap: () => onSelected(ThemeMode.light),
+                    ),
+                  ),
+                  SizedBox(
+                    width: optionWidth,
+                    child: _AppearanceOption(
+                      label: 'escuro',
+                      icon: AppIcons.darkTheme,
+                      selected: selected == ThemeMode.dark,
+                      onTap: () => onSelected(ThemeMode.dark),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
+        const SizedBox(height: 20),
+        Text('paletas de cores',
+          style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        Text('Toque para aplicar. Compare as versões clara e escura.',
+          style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 10),
         _PaletteGrid(selected: paletteSelected, onSelected: onPaletteSelected),
       ],
@@ -358,12 +448,12 @@ class _PaletteGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final surface = FolegoColorTokens.of(context);
+    final activeColors = FolegoColorTokens.of(context);
+    final scheme = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
-        const gap = 8.0;
-        final columns = constraints.maxWidth >= 360 ? 3 : 2;
+        const gap = 10.0;
+        final columns = constraints.maxWidth >= 650 ? 3 : 2;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
           spacing: gap,
@@ -374,25 +464,30 @@ class _PaletteGrid extends StatelessWidget {
                 width: width,
                 child: Builder(
                   builder: (context) {
-                    final colors = FolegoColorTokens.fromId(palette.id, brightness);
+                    final light = FolegoColorTokens.fromId(
+                      palette.id, Brightness.light);
+                    final dark = FolegoColorTokens.fromId(
+                      palette.id, Brightness.dark);
                     final active = selected == palette.id;
                     return Semantics(
                       button: true,
                       selected: active,
-                      label: 'tema ${palette.name}',
+                      label: 'tema ${palette.name}, ${palette.description}',
                       child: Material(
-                        color: surface.superficie,
+                        color: scheme.surface,
                         borderRadius: BorderRadius.circular(AppRadii.control),
                         child: InkWell(
                           onTap: () => onSelected(palette.id),
                           borderRadius: BorderRadius.circular(AppRadii.control),
                           child: Container(
-                            constraints: const BoxConstraints(minHeight: 74),
+                            key: ValueKey('theme-palette-${palette.id}'),
+                            constraints: const BoxConstraints(minHeight: 130),
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(AppRadii.control),
                               border: Border.all(
-                                color: active ? surface.marca : surface.borda,
+                                color: active
+                                    ? activeColors.marca : activeColors.borda,
                                 width: active ? 2 : 1,
                               ),
                             ),
@@ -401,23 +496,40 @@ class _PaletteGrid extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    Expanded(child: _PaletteSwatch(colors.fundo)),
-                                    const SizedBox(width: 3),
-                                    Expanded(child: _PaletteSwatch(colors.marca)),
-                                    const SizedBox(width: 3),
-                                    Expanded(child: _PaletteSwatch(colors.acao)),
+                                    Expanded(child: _PaletteMiniPreview(
+                                      colors: light, label: 'claro')),
+                                    const SizedBox(width: 4),
+                                    Expanded(child: _PaletteMiniPreview(
+                                      colors: dark, label: 'escuro')),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                Row(children: [
-                                  Expanded(child: Text(palette.name,
-                                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.label(context,
-                                      fontSize: 11, color: surface.textoPrincipal,
-                                      fontWeight: FontWeight.w700))),
-                                  if (active) Icon(Icons.check_circle_rounded,
-                                    color: surface.marca, size: 16),
-                                ]),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        palette.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme.labelLarge,
+                                      ),
+                                    ),
+                                    if (active)
+                                      Icon(Icons.check_circle_rounded,
+                                        color: activeColors.marca, size: 17),
+                                  ],
+                                ),
+                                Text(
+                                  palette.description,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme.bodySmall?.copyWith(
+                                    color: activeColors.textoSecundario,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -434,18 +546,120 @@ class _PaletteGrid extends StatelessWidget {
   }
 }
 
-class _PaletteSwatch extends StatelessWidget {
-  const _PaletteSwatch(this.color);
-  final Color color;
+class _PaletteMiniPreview extends StatelessWidget {
+  const _PaletteMiniPreview({required this.colors, required this.label});
+  final FolegoColorTokens colors;
+  final String label;
+
   @override
   Widget build(BuildContext context) => Container(
-    height: 23,
+    height: 53,
+    padding: const EdgeInsets.all(5),
     decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(5),
-      border: Border.all(color: FolegoColorTokens.of(context).borda),
+      color: colors.fundo,
+      borderRadius: BorderRadius.circular(7),
+      border: Border.all(color: colors.borda),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(
+          color: colors.textoSecundario,
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+        )),
+        const SizedBox(height: 4),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(child: Container(
+                decoration: BoxDecoration(
+                  color: colors.marcaHero,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              )),
+              const SizedBox(width: 3),
+              Expanded(child: Container(
+                decoration: BoxDecoration(
+                  color: colors.superficieAlta,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                alignment: Alignment.center,
+                child: Container(height: 5, width: 18,
+                  decoration: BoxDecoration(
+                    color: colors.acao,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              )),
+            ],
+          ),
+        ),
+      ],
     ),
   );
+}
+
+class _ThemeLivePreview extends StatelessWidget {
+  const _ThemeLivePreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = FolegoColorTokens.of(context);
+    return Container(
+      key: const ValueKey('theme-live-preview'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.superficie,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: colors.borda),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('prévia no app',
+            style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.marcaHero,
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('seu dinheiro disponível',
+                  style: TextStyle(color: colors.marcaHeroSobre, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(r'R$ 1.250,00',
+                  style: TextStyle(color: colors.marcaHeroSobre,
+                    fontSize: 26, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: colors.acao,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('simulação visual',
+                    style: TextStyle(color: colors.acaoSobre,
+                      fontSize: 11, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text('Valores ilustrativos — não são seus saldos.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.textoSecundario,
+            )),
+        ],
+      ),
+    );
+  }
 }
 
 class _AppearanceOption extends StatelessWidget {
