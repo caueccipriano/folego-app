@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,21 +13,7 @@ import 'data/repositories/folego_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Typography ships with the app; never swap to a network-loaded font later.
-  GoogleFonts.config.allowRuntimeFetching = false;
-  await GoogleFonts.pendingFonts([
-    for (final weight in [
-      FontWeight.w200,
-      FontWeight.w300,
-      FontWeight.w400,
-      FontWeight.w500,
-      FontWeight.w600,
-      FontWeight.w700,
-      FontWeight.w800,
-    ])
-      GoogleFonts.manrope(fontWeight: weight),
-    GoogleFonts.unbounded(fontWeight: FontWeight.w700),
-  ]);
+  // Fonts are declared in pubspec and loaded by Flutter from this PWA.
   LicenseRegistry.addLicense(() async* {
     for (final family in ['Manrope', 'Unbounded']) {
       yield LicenseEntryWithLineBreaks([
