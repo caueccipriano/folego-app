@@ -58,7 +58,9 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     final dark = brightness == Brightness.dark;
     final brand = p.id == 'folego'
         ? (dark ? const Color(0xFF967CF4) : p.brand)
-        : (dark ? Color.lerp(p.brand, const Color(0xFFFFFFFF), .32)! : p.brand);
+        : (dark
+            ? Color.lerp(p.brand, const Color(0xFFFFFFFF), .32)!
+            : (p.id == 'mare' ? const Color(0xFF0F797A) : p.brand));
     final onBrand = _onColor(brand);
     final action = p.action;
     final background = dark ? p.darkBackground : p.lightBackground;
