@@ -6,7 +6,7 @@ abstract final class AppColors {
   // ---------------------------------------------------------------------------
 
   static const purpleLight = Color(0xFF6C3CE9);
-  static const purpleDark = Color(0xFF8A6CF0);
+  static const purpleDark = Color(0xFF967CF4);
 
   static const lime = Color(0xFFC6F135);
 
