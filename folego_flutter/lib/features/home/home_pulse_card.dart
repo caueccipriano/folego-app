@@ -36,7 +36,7 @@ class HomePulseCard extends StatelessWidget {
     };
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         key: const ValueKey('home-pulse'),
         borderRadius: BorderRadius.circular(AppRadii.card),
