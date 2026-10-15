@@ -84,7 +84,10 @@ class DesktopNavigationSidebar extends StatelessWidget {
       ),
       _DesktopNavItem(icon: AppIcons.plan, label: l10n.plan.toLowerCase()),
       _DesktopNavItem(icon: AppIcons.wallet, label: l10n.wallet.toLowerCase()),
-      _DesktopNavItem(icon: AppIcons.profile, label: l10n.profile.toLowerCase()),
+      _DesktopNavItem(
+        icon: AppIcons.profile,
+        label: l10n.profile.toLowerCase(),
+      ),
     ];
 
     final brightness = Theme.of(context).brightness;
@@ -93,7 +96,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
-    final width = compact ? 204.0 : 232.0;
+    final width = compact ? 216.0 : 248.0;
     final motionDuration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : const Duration(milliseconds: 160);
@@ -117,12 +120,27 @@ class DesktopNavigationSidebar extends StatelessWidget {
                   'fôlego',
                   style: AppTypography.display(
                     context,
-                    fontSize: 22,
+                    fontSize: 26,
                     color: primaryText,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),
+                child: Container(
+                  height: 3,
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: .24,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: accent,
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -147,13 +165,18 @@ class DesktopNavigationSidebar extends StatelessWidget {
                           child: AnimatedContainer(
                             duration: motionDuration,
                             curve: Curves.easeOutCubic,
-                            constraints: const BoxConstraints(minHeight: 48),
-                            padding: const EdgeInsets.symmetric(horizontal: 13),
+                            constraints: const BoxConstraints(minHeight: 52),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 13,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: selectedIndex == index
                                   ? accent.withValues(alpha: .11)
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(AppRadii.control),
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.control,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -168,11 +191,11 @@ class DesktopNavigationSidebar extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     item.label,
-                                    maxLines: 1,
+                                    maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: AppTypography.body(
                                       context,
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: selectedIndex == index
                                           ? FontWeight.w700
                                           : FontWeight.w500,
@@ -194,10 +217,10 @@ class DesktopNavigationSidebar extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                 child: Text(
-                  compact ? 'web' : 'seu dinheiro, sem planilha',
+                  'seu dinheiro, com respiro',
                   style: AppTypography.label(
                     context,
-                    fontSize: 9,
+                    fontSize: 11,
                     color: secondaryText,
                   ),
                 ),

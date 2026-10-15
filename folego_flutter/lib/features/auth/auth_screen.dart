@@ -131,9 +131,7 @@ class _AuthScreenState extends State<AuthScreen> {
             email: email,
             password: _passwordController.text,
           );
-          await AppPreferences.setRememberedEmail(
-            _rememberMe ? email : null,
-          );
+          await AppPreferences.setRememberedEmail(_rememberMe ? email : null);
           TextInput.finishAutofillContext(shouldSave: _rememberMe);
           break;
         case _AuthView.signUp:
@@ -174,7 +172,8 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (error, stackTrace) {
       debugPrint('Auth action failed: $error\n$stackTrace');
       if (!mounted) return;
-      final emailNotConfirmed = error is AuthException &&
+      final emailNotConfirmed =
+          error is AuthException &&
           error.message.toLowerCase().contains('email not confirmed');
       if (_view == _AuthView.login && emailNotConfirmed) {
         setState(() {
@@ -232,8 +231,8 @@ class _AuthScreenState extends State<AuthScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final size = AppBreakpoints.fromWidth(constraints.maxWidth);
-            final desktop = size == AppLayoutSize.expanded ||
-                size == AppLayoutSize.wide;
+            final desktop =
+                size == AppLayoutSize.expanded || size == AppLayoutSize.wide;
             if (desktop) return _buildDesktop(context);
             return _buildCompact(context);
           },
@@ -286,15 +285,21 @@ class _AuthScreenState extends State<AuthScreen> {
               color: surface,
               border: Border(left: BorderSide(color: border)),
             ),
-            child: AppContentContainer.auth(
-              fillHeight: true,
-              alignment: Alignment.center,
-              verticalPadding: 32,
-              child: SingleChildScrollView(
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.only(bottom: bottomInset),
-                child: _buildAuthContent(context),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: AppContentContainer.auth(
+                    alignment: Alignment.center,
+                    verticalPadding: 48,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: bottomInset),
+                      child: _buildAuthContent(context),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -439,10 +444,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 autofillHints: _isSignUp
                     ? const [AutofillHints.newPassword]
                     : const [AutofillHints.password],
-                validator: (value) => AuthValidation.password(
-                  value,
-                  enforceMinimum: _isSignUp,
-                ),
+                validator: (value) =>
+                    AuthValidation.password(value, enforceMinimum: _isSignUp),
                 onFieldSubmitted: (_) {
                   if (_isSignUp) {
                     _confirmPasswordFocus.requestFocus();
@@ -451,9 +454,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   }
                 },
                 obscureText: _obscurePassword,
-                onToggleObscure: () => setState(
-                  () => _obscurePassword = !_obscurePassword,
-                ),
+                onToggleObscure: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
                 autocorrect: false,
                 enabled: !_loading,
               ),
@@ -562,9 +564,8 @@ class _AuthScreenState extends State<AuthScreen> {
               AuthModeSwitch(
                 isSignUp: _isSignUp,
                 enabled: !_loading,
-                onPressed: () => _changeView(
-                  _isSignUp ? _AuthView.login : _AuthView.signUp,
-                ),
+                onPressed: () =>
+                    _changeView(_isSignUp ? _AuthView.login : _AuthView.signUp),
               ),
           ],
         ),
@@ -652,21 +653,13 @@ class _CompactIntro extends StatelessWidget {
         Text(
           'Seu saldo não é o que você pode gastar.',
           textAlign: TextAlign.center,
-          style: AppTypography.section(
-            context,
-            fontSize: 19,
-            color: primary,
-          ),
+          style: AppTypography.section(context, fontSize: 19, color: primary),
         ),
         const SizedBox(height: 8),
         Text(
           'Um diário financeiro simples pra dar mais espaço às suas escolhas.',
           textAlign: TextAlign.center,
-          style: AppTypography.body(
-            context,
-            fontSize: 13,
-            color: secondary,
-          ),
+          style: AppTypography.body(context, fontSize: 13, color: secondary),
         ),
       ],
     );
@@ -692,11 +685,7 @@ class _DesktopBrandPanel extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
             'Seu saldo não é o que\nvocê pode gastar.',
-            style: AppTypography.display(
-              context,
-              fontSize: 42,
-              color: primary,
-            ),
+            style: AppTypography.display(context, fontSize: 42, color: primary),
           ),
         ),
         const SizedBox(height: 18),
@@ -704,11 +693,7 @@ class _DesktopBrandPanel extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 460),
           child: Text(
             'Um diário financeiro simples pra dar mais espaço às suas escolhas.',
-            style: AppTypography.body(
-              context,
-              fontSize: 16,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 16, color: secondary),
           ),
         ),
         const SizedBox(height: 34),
