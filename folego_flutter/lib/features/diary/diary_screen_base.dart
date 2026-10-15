@@ -117,7 +117,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             context: context,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .82,
               child: ReflectionFormSheet(
@@ -130,7 +130,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         : await showDialog<bool>(
             context: context,
             builder: (dialogContext) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               insetPadding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
