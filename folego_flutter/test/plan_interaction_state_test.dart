@@ -21,15 +21,25 @@ void main() {
     await _pumpPlan(tester, repository);
 
     final parent = find.byKey(const ValueKey('plan-parent-food'));
-    await tester.ensureVisible(parent);
+    await tester.scrollUntilVisible(
+      parent,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('plan-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(parent);
     await tester.pump();
 
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
   });
 
-  testWidgets('inactive subcategories stay accessible under show more',
-      (tester) async {
+  testWidgets('inactive subcategories stay accessible under show more', (
+    tester,
+  ) async {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
     final parent = find.byKey(const ValueKey('plan-parent-food'));
@@ -61,11 +71,7 @@ void main() {
   testWidgets('open category survives creating a limit', (tester) async {
     final repository = _FakePlanRepository(_fixture());
     final captured = <double>[];
-    await _pumpPlan(
-      tester,
-      repository,
-      saver: _captureSaver(captured),
-    );
+    await _pumpPlan(tester, repository, saver: _captureSaver(captured));
 
     await _openAndSave(tester, amount: '250,00');
 
@@ -76,11 +82,7 @@ void main() {
   testWidgets('open category survives editing a limit', (tester) async {
     final repository = _FakePlanRepository(_fixture(planned: 100));
     final captured = <double>[];
-    await _pumpPlan(
-      tester,
-      repository,
-      saver: _captureSaver(captured),
-    );
+    await _pumpPlan(tester, repository, saver: _captureSaver(captured));
 
     await _openAndSave(tester, amount: '180,00');
 
@@ -91,11 +93,7 @@ void main() {
   testWidgets('open category survives removing a limit', (tester) async {
     final repository = _FakePlanRepository(_fixture(planned: 100));
     final captured = <double>[];
-    await _pumpPlan(
-      tester,
-      repository,
-      saver: _captureSaver(captured),
-    );
+    await _pumpPlan(tester, repository, saver: _captureSaver(captured));
 
     await _openAndSave(tester, amount: '0');
 
@@ -149,7 +147,16 @@ void main() {
     await _flush(tester);
 
     final parent = find.byKey(const ValueKey('plan-parent-food'));
-    await tester.ensureVisible(parent);
+    await tester.scrollUntilVisible(
+      parent,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('plan-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(parent);
     await tester.pump();
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
@@ -193,11 +200,7 @@ void main() {
 
     final scroll = find.byKey(const ValueKey('plan-scroll'));
     final parent = find.byKey(const ValueKey('plan-parent-parent-7'));
-    await tester.dragUntilVisible(
-      parent,
-      scroll,
-      const Offset(0, -300),
-    );
+    await tester.dragUntilVisible(parent, scroll, const Offset(0, -300));
     await tester.pump();
     await tester.tap(parent);
     await tester.pump();
@@ -220,18 +223,17 @@ void main() {
     final after = _scrollPosition(tester, scroll).pixels;
     expect(after, greaterThan(0));
     expect(after, greaterThan(before * .50));
-    expect(find.byKey(const ValueKey('plan-children-parent-7')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('plan-children-parent-7')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('desktop keeps month summary visible while categories scroll', (
     tester,
   ) async {
     final repository = _FakePlanRepository(_longFixture());
-    await _pumpPlan(
-      tester,
-      repository,
-      size: const Size(1366, 820),
-    );
+    await _pumpPlan(tester, repository, size: const Size(1366, 820));
 
     expect(find.byKey(const ValueKey('plan-desktop-layout')), findsOneWidget);
     final summary = find.byKey(const ValueKey('plan-summary'));
@@ -302,10 +304,7 @@ plan.PlanBudgetSaver _captureSaver(List<double> captured) {
   };
 }
 
-Future<void> _openAndSave(
-  WidgetTester tester, {
-  required String amount,
-}) async {
+Future<void> _openAndSave(WidgetTester tester, {required String amount}) async {
   final parent = find.byKey(const ValueKey('plan-parent-food'));
   await tester.ensureVisible(parent);
   await tester.tap(parent);
@@ -332,12 +331,7 @@ Future<void> _openAndSave(
 
 List<BudgetOverviewItem> _fixture({double planned = 0, double actual = 0}) {
   return [
-    _item(
-      id: 'food',
-      name: 'Alimentação',
-      planned: planned,
-      actual: actual,
-    ),
+    _item(id: 'food', name: 'Alimentação', planned: planned, actual: actual),
     _item(
       id: 'market',
       name: 'Mercado',

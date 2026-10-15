@@ -43,5 +43,9 @@ begin
  perform public.unlink_recognized_payment(s,e);
  if (select status from public.card_invoices where id=inv)='paid' or exists(select 1 from public.card_payments where event_id=e) then raise exception 'invoice_unlink_failed'; end if;
  if (select sum(amount) from public.financial_impacts where event_id=e and dimension='cash')<>-100 then raise exception 'cash_changed_after_unlink'; end if;
+ -- Full synthetic space deletion must not be blocked by the new recognition history.
+ perform public.recognize_existing_payment(s,e,'invoice',inv);
+ delete from public.financial_spaces where id=s;
+ if exists(select 1 from public.payment_recognitions where space_id=s) then raise exception 'recognition_history_orphaned'; end if;
 end; $test$;
 rollback;
