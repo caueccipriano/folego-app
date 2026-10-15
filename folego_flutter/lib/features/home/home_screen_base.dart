@@ -423,8 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
-      onOpenClosing: _monthlyMoney == null
-          ? null
+      onOpenClosing: _monthlyMoney == null ? null
           : () => showMonthlyClosingReview(context, summary: _monthlyMoney!),
       onOpenEvolution: () => showClosedMonthEvolution(
         context,
