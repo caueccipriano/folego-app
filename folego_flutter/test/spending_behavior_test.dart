@@ -109,6 +109,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('conflicting edit reloads rather than overwrites', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var loadCount = 0;
+    var latest = List<SpendingBehaviorEntry>.from(sample);
+    await tester.pumpWidget(MaterialApp(
+      home: SpendingBehaviorScreen(
+        repository: _Repository(),
+        spaceId: 'space-a',
+        periodMonth: DateTime(2026, 10),
+        loadOverride: (id, month) async {
+          loadCount++;
+          return List<SpendingBehaviorEntry>.from(latest);
+        },
+        saveOverride: (id, entry, behavior) async {
+          latest = latest.map((item) => item.id == entry.id
+              ? item.withBehavior(ExpenseBehavior.fixed) : item).toList();
+          throw StateError('classificação alterada em outra sessão; recarregue');
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final item = find.byKey(const ValueKey('spending-entry-c'));
+    await tester.scrollUntilVisible(
+      item, 240, scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(item);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('spending-select-variable')));
+    await tester.pumpAndSettle();
+
+    expect(loadCount, greaterThanOrEqualTo(2));
+    expect(find.textContaining('outro dispositivo alterou este gasto'),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('repo routes classification through atomic CAS with no tag writes', () {
     final source = File('lib/data/repositories/folego_repository.dart')
         .readAsStringSync();
