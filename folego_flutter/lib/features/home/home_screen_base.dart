@@ -260,6 +260,8 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
         repository: widget.repository,
@@ -352,7 +354,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final layout = AppBreakpoints.of(context);
 
     final latest = _latestTransaction();
-    final showUpcoming = !_upcomingUnavailable &&
+    final showUpcoming =
+        !_upcomingUnavailable &&
         _upcomingEvents.any((event) => event.isPending);
     final showLatest = latest != null || _recentUnavailable;
 
@@ -372,28 +375,32 @@ class _HomeScreenState extends State<HomeScreen> {
     final optionalReview = Material(
       color: background,
       child: ExpansionTile(
-      key: const ValueKey('home-optional-review'),
-      tilePadding: const EdgeInsets.symmetric(horizontal: 2),
-      title: Text(
-        'revisar minhas finanças',
-        style: AppTypography.body(
-          context,
-          fontSize: 13,
-          color: primaryText,
-          fontWeight: FontWeight.w700,
+        key: const ValueKey('home-optional-review'),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+        title: Text(
+          'revisar minhas finanças',
+          style: AppTypography.body(
+            context,
+            fontSize: 13,
+            color: primaryText,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-      subtitle: Text(
-        'opcional · use quando quiser conferir seus registros',
-        style: AppTypography.body(context, fontSize: 11, color: secondaryText),
-      ),
-      children: [
-        DailyReviewCard(
-          refreshToken: _snapshot,
-          space: widget.space,
-          repository: widget.repository,
+        subtitle: Text(
+          'opcional · use quando quiser conferir seus registros',
+          style: AppTypography.body(
+            context,
+            fontSize: 11,
+            color: secondaryText,
+          ),
         ),
-      ],
+        children: [
+          DailyReviewCard(
+            refreshToken: _snapshot,
+            space: widget.space,
+            repository: widget.repository,
+          ),
+        ],
       ),
     );
     final smartCheckin = SmartCheckinCard(
@@ -416,9 +423,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
-      onOpenClosing: _monthlyMoney == null ? null : () => showMonthlyClosingReview(
-        context, summary: _monthlyMoney!,
-      ),
+      onOpenClosing: _monthlyMoney == null ? null
+          : () => showMonthlyClosingReview(context, summary: _monthlyMoney!),
       onOpenEvolution: () => showClosedMonthEvolution(
         context,
         repository: widget.repository,
@@ -471,40 +477,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   pulse,
                   const SizedBox(height: 10),
                   smartCheckin,
-                  if (showUpcoming) ...[
-                    const SizedBox(height: 13),
-                    upcoming,
-                  ],
+                  if (showUpcoming) ...[const SizedBox(height: 13), upcoming],
                   const SizedBox(height: 14),
                   Material(
                     color: background,
                     child: ExpansionTile(
-                    key: const ValueKey('home-monthly-details'),
-                    initiallyExpanded: false,
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 2),
-                    childrenPadding: const EdgeInsets.only(bottom: 4),
-                    title: Text(
-                      'seu mês em detalhes',
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 13,
-                        color: primaryText,
-                        fontWeight: FontWeight.w700,
+                      key: const ValueKey('home-monthly-details'),
+                      initiallyExpanded: false,
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+                      childrenPadding: const EdgeInsets.only(bottom: 4),
+                      title: Text(
+                        'seu mês em detalhes',
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 13,
+                          color: primaryText,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      'receitas, gastos e projeções',
-                      style: AppTypography.body(
-                        context,
-                        fontSize: 11,
-                        color: secondaryText,
+                      subtitle: Text(
+                        'receitas, gastos e projeções',
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: secondaryText,
+                        ),
                       ),
-                    ),
-                    children: [
-                      monthlyMoney,
-                      const SizedBox(height: 10),
-                      projectionInsight,
-                    ],
+                      children: [
+                        monthlyMoney,
+                        const SizedBox(height: 10),
+                        projectionInsight,
+                      ],
                     ),
                   ),
                   if (showLatest) ...[
@@ -548,18 +551,24 @@ class _HomeScreenState extends State<HomeScreen> {
                         flex: 7,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            hero,
-                          ],
+                          children: [hero],
                         ),
                       ),
                       const SizedBox(width: 28),
-                      Expanded(flex: 5, child: quickActions),
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            quickActions,
+                            const SizedBox(height: 16),
+                            pulse,
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  pulse,
-                  const SizedBox(height: 12),
                   smartCheckin,
                   const SizedBox(height: 24),
                   Row(

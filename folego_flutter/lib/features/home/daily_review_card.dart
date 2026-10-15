@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/layout/app_breakpoints.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/financial_space.dart';
@@ -14,7 +17,9 @@ import 'quick_register_sheet.dart';
 import 'upcoming_events_screen.dart';
 
 /// Injectable to exercise delayed network responses without touching real funds.
-typedef DailyReviewLoader = Future<Map<String, dynamic>> Function(String spaceId);
+typedef DailyReviewLoader = Future<Map<String, dynamic>> Function(
+  String spaceId,
+);
 typedef DailyReviewSaver = Future<void> Function({
   required String spaceId,
   required bool movementsChecked,
@@ -216,6 +221,9 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
+      showDragHandle: false,
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
         repository: widget.repository,
@@ -308,12 +316,20 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     children: [
                       Text(
                         _complete ? 'revisão concluída' : 'revisão opcional',
-                        style: AppTypography.section(context, fontSize: 20, color: primary),
+                        style: AppTypography.section(
+                          context,
+                          fontSize: 20,
+                          color: primary,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'revise quando quiser, sem precisar marcar presença',
-                        style: AppTypography.body(context, fontSize: 12, color: secondary),
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 12,
+                          color: secondary,
+                        ),
                       ),
                     ],
                   ),
@@ -348,12 +364,17 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: surface, border: Border.all(color: border),
+                        color: surface,
+                        border: Border.all(color: border),
                         borderRadius: BorderRadius.circular(AppRadii.card),
                       ),
                       child: Text(
                         'Tudo conferido. Você pode voltar quando quiser.',
-                        style: AppTypography.body(context, fontSize: 13, color: primary),
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 13,
+                          color: primary,
+                        ),
                       ),
                     )
                   else if (_state != null) ...[
@@ -362,7 +383,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                         Expanded(
                           child: Text(
                             'o essencial de hoje',
-                            style: AppTypography.section(context, fontSize: 15, color: primary),
+                            style: AppTypography.section(
+                              context,
+                              fontSize: 15,
+                              color: primary,
+                            ),
                           ),
                         ),
                         Text(
@@ -374,7 +399,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     const SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
-                        color: surface, border: Border.all(color: border),
+                        color: surface,
+                        border: Border.all(color: border),
                         borderRadius: BorderRadius.circular(AppRadii.card),
                       ),
                       child: Column(
@@ -402,21 +428,30 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                                   child: const Text('registrar gasto'),
                                 ),
                                 TextButton(
-                                  onPressed: _busy ? null : () {
-                                    _refreshUi(() {
-                                      _noMovements = true;
-                                      _movements = true;
-                                    });
-                                    _save();
-                                  },
+                                  onPressed: _busy
+                                      ? null
+                                      : () {
+                                          _refreshUi(() {
+                                            _noMovements = true;
+                                            _movements = true;
+                                          });
+                                          _save();
+                                        },
                                   child: Text(
-                                    _noMovements ? 'sem movimentos ✓' : 'não tive movimentos',
+                                    _noMovements
+                                        ? 'sem movimentos ✓'
+                                        : 'não tive movimentos',
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          Divider(height: 1, indent: 14, endIndent: 14, color: border),
+                          Divider(
+                            height: 1,
+                            indent: 14,
+                            endIndent: 14,
+                            color: border,
+                          ),
                           _ReviewTask(
                             checked: _commitments,
                             busy: _busy,
@@ -444,13 +479,19 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Icon(AppIcons.categoryUnclassified, color: purple, size: 19),
+                          Icon(
+                            AppIcons.categoryUnclassified,
+                            color: purple,
+                            size: 19,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '$_pending lançamentos para organizar',
                               style: AppTypography.body(
-                                context, fontSize: 12, color: primary,
+                                context,
+                                fontSize: 12,
+                                color: primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -463,7 +504,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                       ),
                       Text(
                         'resolva no seu ritmo; não precisa fazer tudo agora.',
-                        style: AppTypography.body(context, fontSize: 11, color: secondary),
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: secondary,
+                        ),
                       ),
                     ],
                     if (pace != null) ...[
@@ -476,7 +521,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                           Expanded(
                             child: Text(
                               dailyReviewPaceMessage(pace),
-                              style: AppTypography.body(context, fontSize: 12, color: secondary),
+                              style: AppTypography.body(
+                                context,
+                                fontSize: 12,
+                                color: secondary,
+                              ),
                             ),
                           ),
                         ],
@@ -486,7 +535,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                       const SizedBox(height: 12),
                       Text(
                         'domingo: confira também as contas da semana.',
-                        style: AppTypography.body(context, fontSize: 12, color: secondary),
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 12,
+                          color: secondary,
+                        ),
                       ),
                     ],
                   ],
@@ -569,9 +622,14 @@ String dailyReviewPaceMessage(Map pace) {
 
 class DailyReviewPrompt extends StatelessWidget {
   const DailyReviewPrompt({
-    super.key, required this.complete, required this.pending,
-    required this.days, required this.loading, required this.onTap,
-    this.pace, this.error,
+    super.key,
+    required this.complete,
+    required this.pending,
+    required this.days,
+    required this.loading,
+    required this.onTap,
+    this.pace,
+    this.error,
   });
 
   final bool complete;
@@ -587,7 +645,9 @@ class DailyReviewPrompt extends StatelessWidget {
     if (loading) return 'organizando seu dia…';
     if (complete) return 'concluída · volte quando quiser';
     if (pace?['status'] == 'at_risk') return 'se quiser, confira seu ritmo';
-    if (pending > 0) return 'conferência opcional · pendências ficam para depois';
+    if (pending > 0) {
+      return 'conferência opcional · pendências ficam para depois';
+    }
     return 'uma revisão rápida, só quando fizer sentido';
   }
 
@@ -601,63 +661,79 @@ class DailyReviewPrompt extends StatelessWidget {
     return InkWell(
       key: const ValueKey('home-daily-review-prompt'),
       onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.control),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: border))),
-          child: Row(
-            children: [
-              Container(
-                width: 36, height: 36,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: purple.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  complete ? AppIcons.check : AppIcons.calendar,
-                  color: purple, size: 18,
-                ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      complete ? 'revisão concluída' : 'revisão opcional',
-                      style: AppTypography.body(
-                        context, fontSize: 13, fontWeight: FontWeight.w700, color: primary,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(context, fontSize: 11, color: secondary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                complete ? 'ver' : 'abrir',
-                style: AppTypography.button(context, fontSize: 12, color: purple),
-              ),
-              const SizedBox(width: 4),
-              Icon(AppIcons.chevronRight, color: purple, size: 17),
-            ],
-          ),
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: border)),
         ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: purple.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                complete ? AppIcons.check : AppIcons.calendar,
+                color: purple,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    complete ? 'revisão concluída' : 'revisão opcional',
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 11,
+                      color: secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              complete ? 'ver' : 'abrir',
+              style: AppTypography.button(context, fontSize: 12, color: purple),
+            ),
+            const SizedBox(width: 4),
+            Icon(AppIcons.chevronRight, color: purple, size: 17),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _ReviewTask extends StatelessWidget {
   const _ReviewTask({
-    required this.checked, required this.busy,
-    required this.title, required this.subtitle, required this.onTap,
+    required this.checked,
+    required this.busy,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   });
 
   final bool checked;
@@ -674,7 +750,9 @@ class _ReviewTask extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     return Semantics(
-      button: true, checked: checked, label: title,
+      button: true,
+      checked: checked,
+      label: title,
       child: InkWell(
         onTap: busy ? null : onTap,
         child: Padding(
@@ -682,15 +760,23 @@ class _ReviewTask extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 28, height: 28,
+                width: 28,
+                height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: checked ? purple : Colors.transparent,
-                  border: Border.all(color: checked ? purple : border, width: 1.5),
+                  border: Border.all(
+                    color: checked ? purple : border,
+                    width: 1.5,
+                  ),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: checked
-                    ? const Icon(AppIcons.check, color: AppColors.iconOnPurpleLight, size: 17)
+                    ? const Icon(
+                        AppIcons.check,
+                        color: AppColors.iconOnPurpleLight,
+                        size: 17,
+                      )
                     : null,
               ),
               const SizedBox(width: 12),
@@ -701,13 +787,20 @@ class _ReviewTask extends StatelessWidget {
                     Text(
                       title,
                       style: AppTypography.body(
-                        context, fontSize: 12, color: primary, fontWeight: FontWeight.w700,
+                        context,
+                        fontSize: 12,
+                        color: primary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: AppTypography.body(context, fontSize: 11, color: secondary),
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondary,
+                      ),
                     ),
                   ],
                 ),

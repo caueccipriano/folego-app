@@ -27,20 +27,31 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/category_search_picker.dart';
 import 'quick_register_payment_state.dart';
 
+typedef QuickRegisterCatalog = ({
+  List<AccountItem> accounts,
+  List<AccountItem> benefits,
+  List<CreditCardItem> cards,
+  List<CategoryItem> categories,
+});
+
 class QuickRegisterSheet extends StatefulWidget {
   const QuickRegisterSheet({
     super.key,
     required this.space,
     required this.repository,
     this.initialType = 'expense',
+    this.loadCatalog,
   }) : assert(
-          initialType == 'expense' || initialType == 'income',
-          'initialType deve ser expense ou income',
-        );
+         initialType == 'expense' || initialType == 'income',
+         'initialType deve ser expense ou income',
+       );
 
   final FinancialSpace space;
   final FolegoRepository repository;
   final String initialType;
+
+  /// Isolated UI validation; production uses the repository and guarded APIs.
+  final Future<QuickRegisterCatalog> Function()? loadCatalog;
 
   @override
   State<QuickRegisterSheet> createState() => _QuickRegisterSheetState();
@@ -162,12 +173,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   String? _defaultCategoryId(List<CategoryItem> categories) {
-    if (_isExpense) {
-      for (final item in categories) {
-        if (item.isParent) return item.id;
-      }
-    }
-    return categories.isEmpty ? null : categories.first.id;
+    // A category must describe the user's purchase, not the catalog order.
+    return null;
   }
 
   Future<void> _refreshCategories() async {
@@ -176,13 +183,14 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       if (!mounted) return;
 
       final currentId = _categoryId;
-      final currentStillAvailable = currentId != null &&
+      final currentStillAvailable =
+          currentId != null &&
           selectable.any((category) => category.id == currentId);
       final nextId = currentStillAvailable
           ? currentId
           : currentId == null
-              ? _defaultCategoryId(selectable)
-              : null;
+          ? _defaultCategoryId(selectable)
+          : null;
 
       setState(() {
         _categories = selectable;
@@ -231,7 +239,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         if (current != null && items.any((item) => idOf(item) == current)) {
           return current;
         }
-        return items.isEmpty ? null : idOf(items.first);
+        return null;
       }
 
       setState(() {
@@ -250,11 +258,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             currentPayment.accountId,
             (item) => item.id,
           ),
-          cardId: nextId(
-            cards,
-            currentPayment.cardId,
-            (item) => item.id,
-          ),
+          cardId: nextId(cards, currentPayment.cardId, (item) => item.id),
           benefitAccountId: nextId(
             benefits,
             currentPayment.benefitAccountId,
@@ -270,6 +274,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   Future<void> _loadSuggestions() async {
+    if (widget.loadCatalog != null) return;
     try {
       final page = await _withTimeout(
         widget.repository.getTransactionsPage(widget.space.id, pageSize: 24),
@@ -319,6 +324,21 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     });
 
     try {
+      if (widget.loadCatalog != null) {
+        final catalog = await widget.loadCatalog!();
+        if (!mounted) return;
+        setState(() {
+          _paymentAccounts = catalog.accounts;
+          _benefitAccounts = catalog.benefits;
+          _creditCards = catalog.cards;
+          _categories = _selectableCategories(catalog.categories);
+          _categoryId = null;
+          _incomeAccountId = null;
+          _expensePayment = const QuickExpensePaymentState();
+          _loading = false;
+        });
+        return;
+      }
       final accountsFuture = _withTimeout(
         widget.repository.listPaymentAccounts(widget.space.id),
         'As contas demoraram demais para carregar.',
@@ -342,15 +362,20 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
       if (!mounted) return;
       final accounts = values[0] as List<AccountItem>;
-      final categories = (_isExpense ? values[3] : values[1]) as List<CategoryItem>;
+      final categories =
+          (_isExpense ? values[3] : values[1]) as List<CategoryItem>;
       final selectable = _selectableCategories(categories);
       final defaultCategoryId = _defaultCategoryId(selectable);
-      final accountId = accounts.isEmpty ? null : accounts.first.id;
+      const String? accountId = null;
 
       setState(() {
         _paymentAccounts = accounts;
-        _benefitAccounts = _isExpense ? values[1] as List<AccountItem> : const [];
-        _creditCards = _isExpense ? values[2] as List<CreditCardItem> : const [];
+        _benefitAccounts = _isExpense
+            ? values[1] as List<AccountItem>
+            : const [];
+        _creditCards = _isExpense
+            ? values[2] as List<CreditCardItem>
+            : const [];
         _categories = selectable;
         _categoryId = defaultCategoryId;
         _incomeAccountId = accountId;
@@ -380,7 +405,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             useRootNavigator: true,
             builder: (dialogContext) => Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
               child: SizedBox(
                 width: AppContentWidths.form,
                 height: MediaQuery.sizeOf(dialogContext).height * .82,
@@ -532,7 +560,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       QuickExpensePaymentType.creditCard =>
         _expensePayment.cardId == null ? 'selecione um cartão' : null,
       QuickExpensePaymentType.benefit =>
-        _expensePayment.benefitAccountId == null ? 'selecione um benefício' : null,
+        _expensePayment.benefitAccountId == null
+            ? 'selecione um benefício'
+            : null,
     };
   }
 
@@ -655,7 +685,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   Future<void> _registerRecurring(num amount, String description) async {
     if (_isExpense && !_expensePayment.supportsRecurring) {
-      throw StateError('Recorrência não disponível para este meio de pagamento.');
+      throw StateError(
+        'Recorrência não disponível para este meio de pagamento.',
+      );
     }
 
     final accountId = _isExpense
@@ -664,7 +696,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final cardId = _isExpense ? _expensePayment.recurringCardId : null;
 
     if (accountId == null && cardId == null) {
-      throw StateError(_isExpense ? 'Selecione uma conta ou cartão.' : 'Selecione uma conta.');
+      throw StateError(
+        _isExpense ? 'Selecione uma conta ou cartão.' : 'Selecione uma conta.',
+      );
     }
 
     final monthlyDays = _repeat == 'monthly'
@@ -682,7 +716,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       categoryId: _categoryId,
       dayOfMonth: _repeat == 'monthly'
           ? (monthlyDays!.isEmpty ? null : monthlyDays.first)
-          : _repeat == 'yearly' ? _dayOfMonth : null,
+          : _repeat == 'yearly'
+          ? _dayOfMonth
+          : null,
       monthlyDays: monthlyDays,
       monthlyLastDay: _repeat == 'monthly' ? _monthlyLastDay : false,
       weekday: _repeat == 'weekly' || _repeat == 'biweekly' ? _weekday : null,
@@ -699,9 +735,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
     return Align(
-      alignment: Alignment.bottomCenter,
+      alignment: compact ? Alignment.bottomCenter : Alignment.center,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: AppContentWidths.form, maxHeight: maxHeight),
+        constraints: BoxConstraints(
+          maxWidth: AppContentWidths.form,
+          maxHeight: maxHeight,
+        ),
         child: Material(
           color: AppColors.surface(brightness),
           borderRadius: BorderRadius.vertical(
@@ -717,7 +756,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                     child: Center(child: CircularProgressIndicator()),
                   )
                 : SingleChildScrollView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: EdgeInsets.fromLTRB(
                       20,
                       14,
@@ -725,9 +765,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                       media.viewInsets.bottom + 24,
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AppSheetHandle(),
+                        if (compact) const AppSheetHandle(),
                         const SizedBox(height: 12),
                         _header(brightness),
                         const SizedBox(height: 16),
@@ -771,14 +812,16 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : Text(
                                   _isRecurring
                                       ? 'salvar recorrência'
                                       : _isExpense
-                                          ? 'registrar gasto'
-                                          : 'registrar receita',
+                                      ? 'registrar gasto'
+                                      : 'registrar receita',
                                 ),
                         ),
                       ],
@@ -898,7 +941,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                 ],
               ),
             ),
-            Icon(AppIcons.chevronRight, color: AppColors.secondaryText(brightness)),
+            Icon(
+              AppIcons.chevronRight,
+              color: AppColors.secondaryText(brightness),
+            ),
           ],
         ),
       ),
@@ -911,7 +957,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         initialValue: _incomeAccountId,
         decoration: const InputDecoration(labelText: 'conta que recebeu'),
         items: _paymentAccounts
-            .map((item) => DropdownMenuItem(value: item.id, child: Text(item.name)))
+            .map(
+              (item) =>
+                  DropdownMenuItem(value: item.id, child: Text(item.name)),
+            )
             .toList(),
         onChanged: (value) => setState(() => _incomeAccountId = value),
       );
@@ -934,57 +983,86 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _paymentChip(QuickExpensePaymentType.account, 'conta', AppIcons.account),
-            _paymentChip(QuickExpensePaymentType.creditCard, 'cartão', AppIcons.creditCard),
-            _paymentChip(QuickExpensePaymentType.benefit, 'benefício', AppIcons.benefit),
+            _paymentChip(
+              QuickExpensePaymentType.account,
+              'conta',
+              AppIcons.account,
+            ),
+            _paymentChip(
+              QuickExpensePaymentType.creditCard,
+              'cartão',
+              AppIcons.creditCard,
+            ),
+            _paymentChip(
+              QuickExpensePaymentType.benefit,
+              'benefício',
+              AppIcons.benefit,
+            ),
           ],
         ),
         const SizedBox(height: 12),
         switch (_expensePayment.type) {
           QuickExpensePaymentType.account => DropdownButtonFormField<String>(
-              initialValue: _paymentAccounts.any((e) => e.id == _expensePayment.accountId)
-                  ? _expensePayment.accountId
-                  : null,
-              decoration: const InputDecoration(labelText: 'conta'),
-              items: _paymentAccounts
-                  .map((item) => DropdownMenuItem(value: item.id, child: Text(item.name)))
-                  .toList(),
-              onChanged: (value) => setState(
-                () => _expensePayment = _expensePayment.withAccountId(value),
-              ),
+            initialValue:
+                _paymentAccounts.any((e) => e.id == _expensePayment.accountId)
+                ? _expensePayment.accountId
+                : null,
+            decoration: const InputDecoration(labelText: 'conta'),
+            items: _paymentAccounts
+                .map(
+                  (item) =>
+                      DropdownMenuItem(value: item.id, child: Text(item.name)),
+                )
+                .toList(),
+            onChanged: (value) => setState(
+              () => _expensePayment = _expensePayment.withAccountId(value),
             ),
+          ),
           QuickExpensePaymentType.creditCard => DropdownButtonFormField<String>(
-              initialValue: _creditCards.any((e) => e.id == _expensePayment.cardId)
-                  ? _expensePayment.cardId
-                  : null,
-              decoration: const InputDecoration(labelText: 'cartão'),
-              items: _creditCards
-                  .map((item) => DropdownMenuItem(value: item.id, child: Text(item.name)))
-                  .toList(),
-              onChanged: (value) => setState(
-                () => _expensePayment = _expensePayment.withCardId(value),
-              ),
+            initialValue:
+                _creditCards.any((e) => e.id == _expensePayment.cardId)
+                ? _expensePayment.cardId
+                : null,
+            decoration: const InputDecoration(labelText: 'cartão'),
+            items: _creditCards
+                .map(
+                  (item) =>
+                      DropdownMenuItem(value: item.id, child: Text(item.name)),
+                )
+                .toList(),
+            onChanged: (value) => setState(
+              () => _expensePayment = _expensePayment.withCardId(value),
             ),
+          ),
           QuickExpensePaymentType.benefit => DropdownButtonFormField<String>(
-              initialValue: _benefitAccounts.any(
-                (e) => e.id == _expensePayment.benefitAccountId,
-              )
-                  ? _expensePayment.benefitAccountId
-                  : null,
-              decoration: const InputDecoration(labelText: 'benefício'),
-              items: _benefitAccounts
-                  .map((item) => DropdownMenuItem(value: item.id, child: Text(item.name)))
-                  .toList(),
-              onChanged: (value) => setState(
-                () => _expensePayment = _expensePayment.withBenefitAccountId(value),
-              ),
+            initialValue:
+                _benefitAccounts.any(
+                  (e) => e.id == _expensePayment.benefitAccountId,
+                )
+                ? _expensePayment.benefitAccountId
+                : null,
+            decoration: const InputDecoration(labelText: 'benefício'),
+            items: _benefitAccounts
+                .map(
+                  (item) =>
+                      DropdownMenuItem(value: item.id, child: Text(item.name)),
+                )
+                .toList(),
+            onChanged: (value) => setState(
+              () =>
+                  _expensePayment = _expensePayment.withBenefitAccountId(value),
             ),
+          ),
         },
       ],
     );
   }
 
-  Widget _paymentChip(QuickExpensePaymentType type, String label, IconData icon) {
+  Widget _paymentChip(
+    QuickExpensePaymentType type,
+    String label,
+    IconData icon,
+  ) {
     return ChoiceChip(
       selected: _expensePayment.type == type,
       avatar: Icon(icon, size: 17),
@@ -1022,7 +1100,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                       setState(() {
                         _description.text = suggestion.label;
                         if (suggestion.categoryId != null &&
-                            _categories.any((item) => item.id == suggestion.categoryId)) {
+                            _categories.any(
+                              (item) => item.id == suggestion.categoryId,
+                            )) {
                           _categoryId = suggestion.categoryId;
                         }
                         _error = null;
@@ -1133,13 +1213,14 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             Text('${_expensePayment.installmentsCount}x'),
             IconButton(
               onPressed:
-                  _expensePayment.installmentsCount >= cardPurchaseMaxInstallments
-                      ? null
-                      : () => setState(() {
-                          _expensePayment = _expensePayment.withInstallmentsCount(
-                            _expensePayment.installmentsCount + 1,
-                          );
-                        }),
+                  _expensePayment.installmentsCount >=
+                      cardPurchaseMaxInstallments
+                  ? null
+                  : () => setState(() {
+                      _expensePayment = _expensePayment.withInstallmentsCount(
+                        _expensePayment.installmentsCount + 1,
+                      );
+                    }),
               icon: const Icon(AppIcons.add, size: 18),
             ),
           ],
@@ -1193,7 +1274,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               final color = ReflectionVisuals.foreground(type, brightness);
               return ChoiceChip(
                 selected: selected,
-                avatar: Icon(ReflectionVisuals.icon(type), size: 15, color: color),
+                avatar: Icon(
+                  ReflectionVisuals.icon(type),
+                  size: 15,
+                  color: color,
+                ),
                 label: Text(type.label),
                 onSelected: (_) => setState(() {
                   _reflectionType = selected ? null : type;
@@ -1254,19 +1339,20 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         Wrap(
           spacing: 7,
           runSpacing: 7,
-          children: const <(String, String)>[
-            ('once', 'uma vez'),
-            ('weekly', 'semanal'),
-            ('biweekly', 'quinzenal'),
-            ('monthly', 'mensal'),
-            ('yearly', 'anual'),
-          ].map((item) {
-            return ChoiceChip(
-              selected: _repeat == item.$1,
-              label: Text(item.$2),
-              onSelected: (_) => _changeRepeat(item.$1),
-            );
-          }).toList(),
+          children:
+              const <(String, String)>[
+                ('once', 'uma vez'),
+                ('weekly', 'semanal'),
+                ('biweekly', 'quinzenal'),
+                ('monthly', 'mensal'),
+                ('yearly', 'anual'),
+              ].map((item) {
+                return ChoiceChip(
+                  selected: _repeat == item.$1,
+                  label: Text(item.$2),
+                  onSelected: (_) => _changeRepeat(item.$1),
+                );
+              }).toList(),
         ),
         if (_repeat == 'monthly') ...[
           const SizedBox(height: 12),
@@ -1325,4 +1411,3 @@ class _QuickSuggestion {
   final String label;
   final String? categoryId;
 }
-

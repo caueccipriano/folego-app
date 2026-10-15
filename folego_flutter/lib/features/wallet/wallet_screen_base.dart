@@ -107,7 +107,9 @@ class _WalletScreenState extends State<WalletScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('essa dívida não está mais disponível')),
+            const SnackBar(
+              content: Text('essa dívida não está mais disponível'),
+            ),
           );
         });
         return;
@@ -196,9 +198,8 @@ class _WalletScreenState extends State<WalletScreen> {
       card: card,
     );
     if (paid != true || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('fatura atualizada')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('fatura atualizada')));
     await _load();
   }
 
@@ -413,9 +414,11 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(reconciles
-                      ? 'contas fora do disponível'
-                      : 'diferença entre total e disponível'),
+                  title: Text(
+                    reconciles
+                        ? 'contas fora do disponível'
+                        : 'diferença entre total e disponível',
+                  ),
                   trailing: Text(Formatters.money(outsideAvailable)),
                 ),
                 const Divider(),
@@ -441,9 +444,11 @@ class _WalletScreenState extends State<WalletScreen> {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     title: Text(account.name),
-                    subtitle: Text(account.availableForSpending
-                        ? 'entra no disponível'
-                        : 'não entra no disponível'),
+                    subtitle: Text(
+                      account.availableForSpending
+                          ? 'entra no disponível'
+                          : 'não entra no disponível',
+                    ),
                     trailing: Text(Formatters.money(account.balance)),
                   ),
                 const SizedBox(height: 8),
@@ -600,8 +605,11 @@ class _WalletScreenState extends State<WalletScreen> {
           ? _WalletEmpty(
               icon: AppIcons.account,
               title: 'nenhuma conta por aqui',
-              description: 'adicione sua primeira conta para acompanhar o saldo',
-              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              description:
+                  'adicione sua primeira conta para acompanhar o saldo',
+              actionLabel: widget.onAddRequested == null
+                  ? null
+                  : 'adicionar à carteira',
               onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
@@ -627,7 +635,9 @@ class _WalletScreenState extends State<WalletScreen> {
               icon: AppIcons.creditCard,
               title: 'nenhum cartão por aqui',
               description: 'adicione um cartão para acompanhar fatura e limite',
-              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              actionLabel: widget.onAddRequested == null
+                  ? null
+                  : 'adicionar à carteira',
               onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
@@ -655,8 +665,11 @@ class _WalletScreenState extends State<WalletScreen> {
           ? _WalletEmpty(
               icon: AppIcons.benefit,
               title: 'nenhum benefício por aqui',
-              description: 'adicione vale ou benefício sem misturar com dinheiro',
-              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              description:
+                  'adicione vale ou benefício sem misturar com dinheiro',
+              actionLabel: widget.onAddRequested == null
+                  ? null
+                  : 'adicionar à carteira',
               onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
@@ -681,17 +694,18 @@ class _WalletScreenState extends State<WalletScreen> {
           ? _WalletEmpty(
               icon: AppIcons.debt,
               title: 'nenhuma dívida por aqui',
-              description: 'adicione uma dívida para acompanhar o que falta pagar',
-              actionLabel: widget.onAddRequested == null ? null : 'adicionar à carteira',
+              description:
+                  'adicione uma dívida para acompanhar o que falta pagar',
+              actionLabel: widget.onAddRequested == null
+                  ? null
+                  : 'adicionar à carteira',
               onAction: widget.onAddRequested,
             )
           : _ResponsiveWalletGrid(
               children: debts
                   .map(
-                    (debt) => _DebtCard(
-                      debt: debt,
-                      onTap: () => _openDebt(debt),
-                    ),
+                    (debt) =>
+                        _DebtCard(debt: debt, onTap: () => _openDebt(debt)),
                   )
                   .toList(growable: false),
             ),
@@ -708,7 +722,8 @@ class _WalletScreenState extends State<WalletScreen> {
         onRetry: _loadInstallments,
       );
     } else {
-      final items = _installmentPositions ?? const <WalletInstallmentPosition>[];
+      final items =
+          _installmentPositions ?? const <WalletInstallmentPosition>[];
       content = items.isEmpty
           ? const _WalletEmpty(
               icon: AppIcons.calendar,
@@ -910,11 +925,7 @@ class _PositionMetricCard extends StatelessWidget {
                   ),
                   if (metric.onTap != null) ...[
                     const SizedBox(width: 2),
-                    Icon(
-                      AppIcons.chevronRight,
-                      size: 14,
-                      color: secondary,
-                    ),
+                    Icon(AppIcons.chevronRight, size: 14, color: secondary),
                   ],
                 ],
               ),
@@ -985,10 +996,7 @@ class _WalletSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppSectionHeader(
-          title: title,
-          subtitle: description,
-        ),
+        AppSectionHeader(title: title, subtitle: description),
         const SizedBox(height: 10),
         child,
       ],
@@ -1273,11 +1281,7 @@ class _BenefitCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'separado do dinheiro das suas contas',
-            style: AppTypography.body(
-              context,
-              fontSize: 10,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 10, color: secondary),
           ),
         ],
       ),
@@ -1286,11 +1290,7 @@ class _BenefitCard extends StatelessWidget {
 }
 
 class _CreditCardCard extends StatelessWidget {
-  const _CreditCardCard({
-    required this.card,
-    required this.onTap,
-    this.onPay,
-  });
+  const _CreditCardCard({required this.card, required this.onTap, this.onPay});
 
   final WalletCard card;
   final VoidCallback onTap;
@@ -1368,7 +1368,9 @@ class _CreditCardCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _CardMetric(
-                  label: 'limite disponível',
+                  label: card.personalLimit != null
+                      ? 'disponível no teto pessoal'
+                      : 'disponível no limite cadastrado',
                   value: card.availableLimit == null
                       ? '—'
                       : Formatters.money(card.availableLimit),
@@ -1383,7 +1385,9 @@ class _CreditCardCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'uso do limite',
+                    card.personalLimit != null
+                        ? 'uso do teto pessoal'
+                        : 'uso do limite cadastrado',
                     style: AppTypography.body(
                       context,
                       fontSize: 9,
@@ -1701,8 +1705,9 @@ class _CardMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return Column(
-      crossAxisAlignment:
-          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignRight
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -1862,7 +1867,6 @@ class _WalletSectionLoading extends StatelessWidget {
     );
   }
 }
-
 
 class _WalletSectionError extends StatelessWidget {
   const _WalletSectionError({required this.message, required this.onRetry});

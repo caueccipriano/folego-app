@@ -73,7 +73,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _identity = ProfileIdentity(email: widget.client.auth.currentUser?.email ?? '');
+    _identity = ProfileIdentity(
+      email: widget.client.auth.currentUser?.email ?? '',
+    );
     _themeMode = AppThemeController.mode.value;
     _logoutAction = ProfileLogoutAction(() async {
       final notificationService = NotificationServiceRegistry.current;
@@ -112,7 +114,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadPremiumGrant() async {
     try {
       final grants = await widget.client.rpc('get_my_premium_grant');
-      final hasLifetimeGrant = grants is List &&
+      final hasLifetimeGrant =
+          grants is List &&
           grants.any(
             (grant) =>
                 grant is Map &&
@@ -139,17 +142,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _openFolegoAdmin() async {
     if (!_isFolegoAdmin) return;
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => FolegoAdminScreen(client: widget.client),
-    ));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => FolegoAdminScreen(client: widget.client),
+      ),
+    );
   }
 
   Future<void> _openHelpCenter() async {
-    await Navigator.of(context).push<void>(MaterialPageRoute<void>(
-      builder: (_) => FolegoHelpScreen(onContact: () {
-        _openFolegoFeedback();
-      }),
-    ));
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => FolegoHelpScreen(
+          onContact: () {
+            _openFolegoFeedback();
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _openFolegoFeedback() async {
@@ -195,7 +204,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('tema aplicado, mas não consegui salvar essa preferência'),
+          content: Text(
+            'tema aplicado, mas não consegui salvar essa preferência',
+          ),
         ),
       );
     }
@@ -465,9 +476,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
                 final nextConfirmationError =
                     AuthValidation.passwordConfirmation(
-                  confirmation.text,
-                  password.text,
-                );
+                      confirmation.text,
+                      password.text,
+                    );
                 if (nextPasswordError == null &&
                     nextConfirmationError == null) {
                   Navigator.of(dialogContext).pop(password.text);
@@ -492,9 +503,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await widget.client.auth.updateUser(UserAttributes(password: result));
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('senha atualizada')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('senha atualizada')));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -582,9 +592,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // O usuário já pode ter sido removido do Auth.
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('conta apagada')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('conta apagada')));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -650,139 +659,141 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _accountSection() => _ProfileSection(
-        title: 'conta',
-        subtitle: 'acesso e organização',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _AccountHeader(
-              identity: _identity,
-              loading: _loadingIdentity,
-              error: _identityError,
-              onRetry: _loadIdentity,
+    title: 'conta',
+    subtitle: 'acesso e organização',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AccountHeader(
+          identity: _identity,
+          loading: _loadingIdentity,
+          error: _identityError,
+          onRetry: _loadIdentity,
+        ),
+        if (_isLifetimePremium) ...[
+          const SizedBox(height: 10),
+          Container(
+            key: const ValueKey('profile-lifetime-premium-notice'),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(16),
             ),
-            if (_isLifetimePremium) ...[
-              const SizedBox(height: 10),
-              Container(
-                key: const ValueKey('profile-lifetime-premium-notice'),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.workspace_premium_rounded,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'premium vitalício ativado',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            'obrigado por fazer parte dos primeiros usuários do Fôlego! '
-                            'seu acesso Premium é uma cortesia permanente, sem mensalidade.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            _SettingsCard(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SettingsRow(
-                  icon: AppIcons.edit,
-                  title: 'alterar e-mail',
-                  subtitle: widget.client.auth.currentUser?.email ??
-                      _identity.email,
-                  enabled: !_accountActionRunning && !_deletingAccount,
-                  onTap: _changeEmail,
+                Icon(
+                  Icons.workspace_premium_rounded,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
-                _SettingsRow(
-                  icon: AppIcons.privacy,
-                  title: 'alterar senha',
-                  subtitle: 'troque sua senha de acesso ao Fôlego',
-                  enabled: !_accountActionRunning && !_deletingAccount,
-                  onTap: _changePassword,
-                ),
-                _SettingsRow(
-                  icon: AppIcons.categoryUnclassified,
-                  title: 'organização',
-                  subtitle: 'categorias e marcadores em um só lugar',
-                  onTap: _openFinancialOrganization,
-                ),
-                _SettingsRow(
-                  icon: Icons.help_outline_rounded,
-                  title: 'ajuda e perguntas frequentes',
-                  subtitle: 'entenda gastos, faturas, parcelas e importações',
-                  onTap: _openHelpCenter,
-                ),
-                _SettingsRow(
-                  icon: Icons.forum_outlined,
-                  title: 'enviar sugestão',
-                  subtitle: 'ajude a melhorar o Fôlego sem compartilhar seus saldos',
-                  onTap: _openFolegoFeedback,
-                ),
-                if (_isFolegoAdmin)
-                  _SettingsRow(
-                    icon: Icons.admin_panel_settings_outlined,
-                    title: 'painel administrativo',
-                    subtitle: 'usuários, acesso Premium e sugestões',
-                    onTap: _openFolegoAdmin,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'premium vitalício ativado',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'obrigado por fazer parte dos primeiros usuários do Fôlego! '
+                        'seu acesso Premium é uma cortesia permanente, sem mensalidade.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
               ],
             ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        _SettingsCard(
+          children: [
+            _SettingsRow(
+              icon: AppIcons.edit,
+              title: 'alterar e-mail',
+              subtitle:
+                  widget.client.auth.currentUser?.email ?? _identity.email,
+              enabled: !_accountActionRunning && !_deletingAccount,
+              onTap: _changeEmail,
+            ),
+            _SettingsRow(
+              icon: AppIcons.privacy,
+              title: 'alterar senha',
+              subtitle: 'troque sua senha de acesso ao Fôlego',
+              enabled: !_accountActionRunning && !_deletingAccount,
+              onTap: _changePassword,
+            ),
+            _SettingsRow(
+              icon: AppIcons.categoryUnclassified,
+              title: 'organização',
+              subtitle: 'categorias e marcadores em um só lugar',
+              onTap: _openFinancialOrganization,
+            ),
+            _SettingsRow(
+              icon: Icons.help_outline_rounded,
+              title: 'ajuda e perguntas frequentes',
+              subtitle: 'entenda gastos, faturas, parcelas e importações',
+              onTap: _openHelpCenter,
+            ),
+            _SettingsRow(
+              icon: Icons.forum_outlined,
+              title: 'enviar sugestão',
+              subtitle:
+                  'ajude a melhorar o Fôlego sem compartilhar seus saldos',
+              onTap: _openFolegoFeedback,
+            ),
+            if (_isFolegoAdmin)
+              _SettingsRow(
+                icon: Icons.admin_panel_settings_outlined,
+                title: 'painel administrativo',
+                subtitle: 'usuários, acesso Premium e sugestões',
+                onTap: _openFolegoAdmin,
+              ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _preferencesSection() => _ProfileSection(
-        title: 'preferências',
-        subtitle: 'aparência, notificações e automações',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    title: 'preferências',
+    subtitle: 'aparência, notificações e automações',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
+        const SizedBox(height: 8),
+        _SettingsCard(
           children: [
-            _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
-            const SizedBox(height: 8),
-            _SettingsCard(
-              children: [
-                _SettingsRow(
-                  icon: AppIcons.notifications,
-                  title: 'notificações',
-                  subtitle:
-                      'faturas, dívidas, recorrências, assinaturas e entradas previstas',
-                  onTap: _openNotificationSettings,
-                ),
-                _SettingsRow(
-                  icon: AppIcons.recurring,
-                  title: 'automações',
-                  subtitle:
-                      'quando algo parecido aparecer, sugerir ou preparar a classificação',
-                  onTap: _openAutomationRules,
-                ),
-              ],
+            _SettingsRow(
+              icon: AppIcons.notifications,
+              title: 'notificações',
+              subtitle: 'faturas, dívidas, recorrências, assinaturas e entradas previstas',
+              onTap: _openNotificationSettings,
             ),
-
+            _SettingsRow(
+              icon: AppIcons.recurring,
+              title: 'automações',
+              subtitle: 'quando algo parecido aparecer, sugerir ou preparar a classificação',
+              onTap: _openAutomationRules,
+            ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 
   Future<void> _showIphoneInstallHelp() async {
     await showDialog<void>(
@@ -796,15 +807,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text('No iPhone, abra o Fôlego pelo Safari.'),
             SizedBox(height: 9),
-            Text('1. Toque em Compartilhar e escolha Adicionar à Tela de Início.'),
+            Text(
+              '1. Toque em Compartilhar e escolha Adicionar à Tela de Início.',
+            ),
             SizedBox(height: 9),
             Text('2. Confirme o nome Fôlego e toque em Adicionar.'),
             SizedBox(height: 9),
-            Text('3. Se o atalho antigo estiver sem ícone, confira primeiro que seus dados recentes aparecem no app. Depois remova apenas o atalho e adicione-o novamente pelo Safari.'),
+            Text(
+              '3. Se o atalho antigo estiver sem ícone, confira primeiro que seus dados recentes aparecem no app. Depois remova apenas o atalho e adicione-o novamente pelo Safari.',
+            ),
             SizedBox(height: 12),
             SelectableText('https://caueccipriano.github.io/folego-app/'),
             SizedBox(height: 12),
-            Text('O iOS pode manter a imagem antiga no atalho já instalado. Atualizar o site não garante a troca imediata do ícone.'),
+            Text(
+              'O iOS pode manter a imagem antiga no atalho já instalado. Atualizar o site não garante a troca imediata do ícone.',
+            ),
           ],
         ),
         actions: [
@@ -818,80 +835,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _dataSection() => _ProfileSection(
-        title: 'dados e aplicativo',
-        subtitle: 'exportação, versão e informações',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    title: 'dados e aplicativo',
+    subtitle: 'exportação, versão e informações',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SettingsCard(
           children: [
-            _SettingsCard(
-              children: [
-                _SettingsRow(
-                  icon: Icons.fact_check_outlined,
-                  title: 'revisar lançamentos',
-                  subtitle: 'conferir categorias e pendências dos seus gastos',
-                  onTap: _openFinancialReview,
-                ),
-                Builder(
-                  builder: (exportContext) => _SettingsRow(
-                    icon: AppIcons.exportData,
-                    title: 'exportar dados',
-                    subtitle: 'CSV com lançamentos do espaço financeiro atual',
-                    trailing: _exporting
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : null,
-                    enabled: !_exporting,
-                    onTap: () => _exportData(exportContext),
-                  ),
-                ),
-                _SettingsRow(
-                  icon: Icons.add_to_home_screen_outlined,
-                  title: 'instalar no iPhone',
-                  subtitle: 'corrigir ícone ou recriar atalho na Tela de Início',
-                  onTap: _showIphoneInstallHelp,
-                ),
-              ],
+            _SettingsRow(
+              icon: Icons.fact_check_outlined,
+              title: 'revisar lançamentos',
+              subtitle: 'conferir categorias e pendências dos seus gastos',
+              onTap: _openFinancialReview,
             ),
-            const SizedBox(height: 10),
-            SheetSyncStatusCard(
-              key: ValueKey('sheet-sync-${widget.spaceId}'),
-              spaceId: widget.spaceId,
-              loadStatus: widget.repository.getSheetSyncStatus,
-              onOpenAudit: _openSheetAudit,
-              hideWhenUnconfigured: true,
+            Builder(
+              builder: (exportContext) => _SettingsRow(
+                icon: AppIcons.exportData,
+                title: 'exportar dados',
+                subtitle: 'CSV com lançamentos do espaço financeiro atual',
+                trailing: _exporting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+                enabled: !_exporting,
+                onTap: () => _exportData(exportContext),
+              ),
             ),
-            const SizedBox(height: 10),
-            _AboutCard(
-              versionInfo: _versionInfo,
-              loading: _loadingVersion,
-              error: _versionError,
-              onRetry: _loadVersion,
+            _SettingsRow(
+              icon: Icons.add_to_home_screen_outlined,
+              title: 'instalar no iPhone',
+              subtitle: 'corrigir ícone ou recriar atalho na Tela de Início',
+              onTap: _showIphoneInstallHelp,
             ),
           ],
         ),
-      );
+        const SizedBox(height: 10),
+        SheetSyncStatusCard(
+          key: ValueKey('sheet-sync-${widget.spaceId}'),
+          spaceId: widget.spaceId,
+          loadStatus: widget.repository.getSheetSyncStatus,
+          onOpenAudit: _openSheetAudit,
+          hideWhenUnconfigured: true,
+        ),
+        const SizedBox(height: 10),
+        _AboutCard(
+          versionInfo: _versionInfo,
+          loading: _loadingVersion,
+          error: _versionError,
+          onRetry: _loadVersion,
+        ),
+      ],
+    ),
+  );
 
   Widget _logoutSection() => _ProfileSection(
-        title: 'sessão',
-        subtitle: 'segurança e acesso neste dispositivo',
-        child: _SettingsCard(
+    title: 'sessão',
+    subtitle: 'segurança e acesso neste dispositivo',
+    child: _SettingsCard(
+      children: [
+        _SettingsRow(
+          icon: AppIcons.logout,
+          title: _signingOut ? 'saindo…' : 'sair do Fôlego',
+          subtitle:
+              'encerra o acesso neste dispositivo; seus dados ficam salvos',
+          destructive: false,
+          enabled: !_signingOut,
+          trailing: _signingOut
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          onTap: _confirmSignOut,
+        ),
+        const Divider(height: 24),
+        ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          title: Text(
+            'exclusão permanente',
+            style: AppTypography.body(context, fontWeight: FontWeight.w600),
+          ),
+          subtitle: const Text('ações que removem sua conta e seus dados'),
           children: [
-            _SettingsRow(
-              icon: AppIcons.logout,
-              title: _signingOut ? 'saindo…' : 'sair do Fôlego',
-              subtitle: 'seus dados e seu onboarding não são apagados',
-              destructive: true,
-              enabled: !_signingOut,
-              trailing: _signingOut
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : null,
-              onTap: _confirmSignOut,
-            ),
             _SettingsRow(
               icon: AppIcons.delete,
               title: _deletingAccount ? 'apagando conta…' : 'apagar conta',
@@ -908,7 +935,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -931,7 +960,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       color: background,
       child: SafeArea(
         child: AppContentContainer(
-          maxWidth: desktop ? AppContentWidths.dashboard : AppContentWidths.form,
+          maxWidth: desktop
+              ? AppContentWidths.dashboard
+              : AppContentWidths.form,
           fillHeight: true,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,

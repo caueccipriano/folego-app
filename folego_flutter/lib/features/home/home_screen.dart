@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
+
 import '../../core/layout/app_content_container.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
@@ -19,11 +21,7 @@ import 'home_expense_navigation_scope.dart';
 import 'home_screen_base.dart' as base;
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({
-    super.key,
-    required this.space,
-    required this.repository,
-  });
+  const HomeScreen({super.key, required this.space, required this.repository});
 
   final FinancialSpace space;
   final FolegoRepository repository;
@@ -33,11 +31,8 @@ class HomeScreen extends StatelessWidget {
     return RealtimeRefreshView(
       domain: AppRealtimeDomain.home,
       identity: space.id,
-      builder: (key) => _HomeContent(
-        key: key,
-        space: space,
-        repository: repository,
-      ),
+      builder: (key) =>
+          _HomeContent(key: key, space: space, repository: repository),
     );
   }
 }
@@ -96,7 +91,6 @@ class _HomeContentState extends State<_HomeContent> {
     }
   }
 
-
   Future<void> _addRecurringIncome() async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -120,6 +114,8 @@ class _HomeContentState extends State<_HomeContent> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
         repository: widget.repository,
@@ -288,7 +284,9 @@ class _FirstUseHome extends StatelessWidget {
                         icon: creatingAccount
                             ? const SizedBox.square(
                                 dimension: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(AppIcons.add),
                         label: const Text('adicionar onde seu dinheiro fica'),
@@ -299,7 +297,9 @@ class _FirstUseHome extends StatelessWidget {
                       key: const ValueKey('first-use-add-recurring-income'),
                       onPressed: onAddRecurringIncome,
                       icon: const Icon(AppIcons.income),
-                      label: const Text('cadastrar salário ou receita recorrente'),
+                      label: const Text(
+                        'cadastrar salário ou receita recorrente',
+                      ),
                     ),
                     const SizedBox(height: 9),
                     Row(
@@ -356,7 +356,9 @@ class _FirstUseHome extends StatelessWidget {
               style: AppTypography.label(context, color: secondary),
             ),
             const SizedBox(height: 4),
-            ExcludeSemantics(child: Divider(color: primary.withValues(alpha: .08))),
+            ExcludeSemantics(
+              child: Divider(color: primary.withValues(alpha: .08)),
+            ),
           ],
         ),
       ),

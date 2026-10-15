@@ -97,9 +97,8 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
     }
   }
 
-  List<UpcomingFinancialEvent> get _visibleEvents => _events
-      .where((event) => event.matches(_filter))
-      .toList(growable: false);
+  List<UpcomingFinancialEvent> get _visibleEvents =>
+      _events.where((event) => event.matches(_filter)).toList(growable: false);
 
   Future<void> _openEvent(UpcomingFinancialEvent event) async {
     if (event.isRecurring) {
@@ -178,7 +177,9 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(event.isIncome ? 'marcar como recebido?' : 'realizar agora?'),
+        title: Text(
+          event.isIncome ? 'confirmar recebimento?' : 'registrar pagamento?',
+        ),
         content: Text(
           '${event.title}\n${Formatters.money(event.amount)}\n\n'
           'a previsão será transformada no lançamento correspondente',
@@ -190,7 +191,9 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(event.isIncome ? 'recebi' : 'realizar'),
+            child: Text(
+              event.isIncome ? 'confirmar recebimento' : 'registrar pagamento',
+            ),
           ),
         ],
       ),
@@ -205,15 +208,14 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
         amount: event.amount,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${event.title} $verb.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${event.title} $verb.')));
       await _load();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('não consegui atualizar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('não consegui atualizar: $error')));
     } finally {
       if (mounted) setState(() => _realizingKey = null);
     }
@@ -292,17 +294,19 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: AgendaFilter.values.map((filter) {
-                final selected = _filter == filter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(agendaFilterLabel(filter)),
-                    selected: selected,
-                    onSelected: (_) => setState(() => _filter = filter),
-                  ),
-                );
-              }).toList(growable: false),
+              children: AgendaFilter.values
+                  .map((filter) {
+                    final selected = _filter == filter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(agendaFilterLabel(filter)),
+                        selected: selected,
+                        onSelected: (_) => setState(() => _filter = filter),
+                      ),
+                    );
+                  })
+                  .toList(growable: false),
             ),
           ),
           const SizedBox(height: 14),
@@ -335,15 +339,17 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
                 overdue: false,
               ),
               const SizedBox(height: 9),
-              ...monthly[month]!.map((event) => Padding(
-                padding: const EdgeInsets.only(bottom: 9),
-                child: _AgendaEventCard(
-                  event: event,
-                  realizing: _realizingKey == event.eventKey,
-                  onTap: () => _openEvent(event),
-                  onRealize: event.isRecurring ? () => _realize(event) : null,
+              ...monthly[month]!.map(
+                (event) => Padding(
+                  padding: const EdgeInsets.only(bottom: 9),
+                  child: _AgendaEventCard(
+                    event: event,
+                    realizing: _realizingKey == event.eventKey,
+                    onTap: () => _openEvent(event),
+                    onRealize: event.isRecurring ? () => _realize(event) : null,
+                  ),
                 ),
-              )),
+              ),
               const SizedBox(height: 13),
             ]
           else
@@ -362,7 +368,9 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
                       event: event,
                       realizing: _realizingKey == event.eventKey,
                       onTap: () => _openEvent(event),
-                      onRealize: event.isRecurring ? () => _realize(event) : null,
+                      onRealize: event.isRecurring
+                          ? () => _realize(event)
+                          : null,
                     ),
                   ),
                 ),
@@ -461,8 +469,17 @@ class _AgendaHeroMetric extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-              Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 11),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ],
@@ -638,7 +655,7 @@ class _AgendaEventCard extends StatelessWidget {
                         if (event.isInformational) ...[
                           const SizedBox(width: 8),
                           Text(
-                            'compromisso · não soma cash agora',
+                            'previsto no cartão · sem saída da conta agora',
                             style: AppTypography.label(
                               context,
                               fontSize: 10,
@@ -653,16 +670,22 @@ class _AgendaEventCard extends StatelessWidget {
               ),
               if (onRealize != null) ...[
                 const SizedBox(width: 6),
-                IconButton(
-                  tooltip: event.isIncome ? 'marcar recebido' : 'realizar',
-                  onPressed: realizing ? null : onRealize,
-                  icon: realizing
-                      ? const SizedBox(
-                          width: 17,
-                          height: 17,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(AppIcons.check, size: 18),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 112),
+                  child: TextButton(
+                    onPressed: realizing ? null : onRealize,
+                    child: realizing
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            event.isIncome
+                                ? 'confirmar recebimento'
+                                : 'registrar pagamento',
+                            textAlign: TextAlign.center,
+                          ),
+                  ),
                 ),
               ] else
                 Icon(AppIcons.chevronRight, size: 18, color: secondary),
@@ -674,7 +697,9 @@ class _AgendaEventCard extends StatelessWidget {
   }
 
   String _dateText(UpcomingFinancialEvent event) {
-    if (event.overdue) return 'atrasado · ${Formatters.shortDate.format(event.dueDate)}';
+    if (event.overdue) {
+      return 'atrasado · ${Formatters.shortDate.format(event.dueDate)}';
+    }
     if (event.dayOffset == 0) return 'hoje';
     if (event.dayOffset == 1) return 'amanhã';
     return Formatters.shortDate.format(event.dueDate);
@@ -689,8 +714,7 @@ class _AgendaEmpty extends StatelessWidget {
     return const AppEmptyState(
       icon: AppIcons.calendar,
       title: 'nada apertando por enquanto',
-      description:
-          'quando surgir uma recorrência, fatura ou parcela de dívida, ela aparece aqui',
+      description: 'quando surgir uma recorrência, fatura ou parcela de dívida, ela aparece aqui',
     );
   }
 }
