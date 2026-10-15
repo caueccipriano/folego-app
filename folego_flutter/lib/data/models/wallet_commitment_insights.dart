@@ -64,7 +64,9 @@ WalletEndingInstallmentsSummary summarizeEndingInstallments(
     final amount = item.installmentAmount;
     if (item.remainingInstallments != 1 || due == null ||
         amount == null || amount <= 0 ||
-        due.year != month.year || due.month != month.month) continue;
+        due.year != month.year || due.month != month.month) {
+      continue;
+    }
     count++;
     total += amount;
   }
