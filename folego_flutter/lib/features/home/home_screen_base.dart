@@ -33,6 +33,7 @@ import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
+import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
@@ -412,6 +413,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
+      onOpenClosing: _monthlyMoney == null ? null : () => showMonthlyClosingReview(
+        context, summary: _monthlyMoney!,
+      ),
       onOpenEvolution: () => showClosedMonthEvolution(
         context,
         repository: widget.repository,
