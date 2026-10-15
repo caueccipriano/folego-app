@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:folego/core/theme/app_colors.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/realtime/realtime_invalidation.dart';
@@ -220,7 +221,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => FractionallySizedBox(
           heightFactor: .94,
           child: ClipRRect(
