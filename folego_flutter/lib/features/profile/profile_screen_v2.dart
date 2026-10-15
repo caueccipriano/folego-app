@@ -11,6 +11,7 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/preferences/app_preferences.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_theme.dart';
@@ -59,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late ProfileIdentity _identity;
   AppVersionInfo? _versionInfo;
   ThemeMode _themeMode = ThemeMode.system;
+  String _paletteId = 'folego';
   bool _loadingIdentity = true;
   bool _loadingVersion = true;
   bool _exporting = false;
@@ -77,6 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       email: widget.client.auth.currentUser?.email ?? '',
     );
     _themeMode = AppThemeController.mode.value;
+    _paletteId = AppThemeController.paletteId.value;
     _logoutAction = ProfileLogoutAction(() async {
       final notificationService = NotificationServiceRegistry.current;
       if (notificationService != null) {
@@ -208,6 +211,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'tema aplicado, mas não consegui salvar essa preferência',
           ),
         ),
+      );
+    }
+  }
+
+  Future<void> _setPalette(String id) async {
+    if (_paletteId == id) return;
+    setState(() => _paletteId = id);
+    try {
+      await AppPreferences.setPaletteId(id);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('cor aplicada, mas não consegui salvar a escolha')),
       );
     }
   }
@@ -773,7 +789,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _AppearanceCard(selected: _themeMode, onSelected: _setTheme),
+        _AppearanceCard(
+          selected: _themeMode,
+          onSelected: _setTheme,
+          paletteSelected: _paletteId,
+          onPaletteSelected: _setPalette,
+        ),
         const SizedBox(height: 8),
         _SettingsCard(
           children: [
