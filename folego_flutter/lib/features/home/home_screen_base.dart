@@ -368,7 +368,9 @@ class _HomeScreenState extends State<HomeScreen> {
       onOpenUpcoming: _openUpcomingEvents,
       onOpenBudget: FlexibleBudgetNavigationScope.maybeOf(context)?.open,
     );
-    final optionalReview = ExpansionTile(
+    final optionalReview = Material(
+      color: background,
+      child: ExpansionTile(
       key: const ValueKey('home-optional-review'),
       tilePadding: const EdgeInsets.symmetric(horizontal: 2),
       title: Text(
@@ -391,6 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
           repository: widget.repository,
         ),
       ],
+      ),
     );
     final smartCheckin = SmartCheckinCard(
       spaceId: widget.space.id,
@@ -459,19 +462,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (layout == AppLayoutSize.compact) ...[
                   hero,
                   const SizedBox(height: 12),
+                  quickActions,
+                  const SizedBox(height: 12),
                   pulse,
                   const SizedBox(height: 10),
                   smartCheckin,
-                  const SizedBox(height: 12),
-                  quickActions,
                   if (showUpcoming) ...[
                     const SizedBox(height: 13),
                     upcoming,
                   ],
-                  const SizedBox(height: 10),
-                  monthlyMoney,
-                  const SizedBox(height: 10),
-                  projectionInsight,
+                  const SizedBox(height: 14),
+                  Material(
+                    color: background,
+                    child: ExpansionTile(
+                    key: const ValueKey('home-monthly-details'),
+                    initiallyExpanded: false,
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+                    childrenPadding: const EdgeInsets.only(bottom: 4),
+                    title: Text(
+                      'seu mês em detalhes',
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 13,
+                        color: primaryText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'receitas, gastos e projeções',
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: secondaryText,
+                      ),
+                    ),
+                    children: [
+                      monthlyMoney,
+                      const SizedBox(height: 10),
+                      projectionInsight,
+                    ],
+                    ),
+                  ),
                   if (showLatest) ...[
                     const SizedBox(height: 14),
                     latestSection,
