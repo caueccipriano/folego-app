@@ -33,6 +33,8 @@ import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
+import 'home_expense_navigation_scope.dart';
+import 'home_wallet_navigation_scope.dart';
 import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
@@ -423,6 +425,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
+      onOpenTransactions: HomeExpenseNavigationScope.maybeOf(context)
+                  ?.onOpenMonthlyTransactions ==
+              null
+          ? null
+          : (kind, periodMonth) {
+              // Keep the backend's monthly totals as the source of truth.
+              // The transaction screen is a read-only, filtered drilldown.
+              final types = kind == MonthlyMoneyTransactionKind.income
+                  ? const <String>{'income'}
+                  : const <String>{
+                      'expense',
+                      'card_purchase',
+                      'benefit_expense',
+                      'refund',
+                      'reimbursement',
+                    };
+              HomeExpenseNavigationScope.maybeOf(context)
+                  ?.onOpenMonthlyTransactions?.call(periodMonth, types);
+            },
       onOpenClosing: _monthlyMoney == null ? null
           : () => showMonthlyClosingReview(context, summary: _monthlyMoney!),
       onOpenEvolution: () => showClosedMonthEvolution(
@@ -470,14 +491,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
+                  // Priorities first: spendable money, attention, next obligation.
                   hero,
                   const SizedBox(height: 12),
-                  quickActions,
-                  const SizedBox(height: 12),
                   pulse,
-                  if (showUpcoming) ...[const SizedBox(height: 13), upcoming],
+                  if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
                   const SizedBox(height: 12),
                   smartCheckin,
+                  const SizedBox(height: 12),
+                  quickActions,
                   const SizedBox(height: 14),
                   Material(
                     color: background,
@@ -520,19 +542,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   hero,
                   const SizedBox(height: 16),
                   pulse,
-                  const SizedBox(height: 20),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 5, child: quickActions),
-                      if (showUpcoming) ...[
-                        const SizedBox(width: 20),
-                        Expanded(flex: 4, child: upcoming),
-                      ],
-                    ],
-                  ),
+                  if (showUpcoming) ...[
+                    const SizedBox(height: 16),
+                    upcoming,
+                  ],
                   const SizedBox(height: 16),
                   smartCheckin,
+                  const SizedBox(height: 16),
+                  quickActions,
                   const SizedBox(height: 22),
                   monthlyMoney,
                   const SizedBox(height: 14),
@@ -568,19 +585,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            quickActions,
-                            const SizedBox(height: 16),
                             pulse,
                             if (showUpcoming) ...[
                               const SizedBox(height: 16),
                               upcoming,
                             ],
+                            const SizedBox(height: 16),
+                            smartCheckin,
+                            const SizedBox(height: 16),
+                            quickActions,
                             if (showLatest) ...[
                               const SizedBox(height: 16),
                               latestSection,
                             ],
-                            const SizedBox(height: 16),
-                            smartCheckin,
                           ],
                         ),
                       ),
@@ -754,7 +771,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHero({required FolegoSnapshot snapshot}) {
-    return HomeFinancialHero(snapshot: snapshot);
+    final wallet = HomeWalletNavigationScope.maybeOf(context);
+    return HomeFinancialHero(
+      snapshot: snapshot,
+      onOpenAccounts: wallet == null ? null : () => wallet.onOpenSection(0),
+      onOpenInvoices: wallet == null ? null : () => wallet.onOpenSection(1),
+      onOpenCommitments: () { _openUpcomingEvents(); },
+    );
   }
 
   Widget _buildQuickActions({

@@ -66,7 +66,9 @@ class HomePulseCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'uma coisa para saber',
+                      insight.requiresAttention
+                          ? 'atenção agora'
+                          : 'próxima ação útil',
                       textAlign: TextAlign.end,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

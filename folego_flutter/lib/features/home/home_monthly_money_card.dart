@@ -9,12 +9,13 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/monthly_money_summary.dart';
 
 const monthlyCardSemanticsTooltip =
-    'Esta seção mostra movimentações do mês, não saldos disponíveis. '
-    'Gastos feitos consideram as compras na data em que aconteceram, '
-    'inclusive o valor total de compras no cartão. '
-    'O resultado econômico usa despesas por competência, '
-    'com compras parceladas reconhecidas parcela a parcela. '
-    'Pagamento de fatura não é uma nova despesa.';
+    'Aqui você vê o que recebeu e o que gastou neste mês, não o saldo do banco. '
+    'Transferir dinheiro entre suas contas não é receber uma nova receita. '
+    'Uma compra no cartão entra nos gastos na data da compra; pagar a fatura '
+    'não conta como outro gasto. O resultado do mês considera as parcelas '
+    'que pertencem a ele.';
+
+enum MonthlyMoneyTransactionKind { income, spending }
 
 class HomeMonthlyMoneyCard extends StatelessWidget {
   const HomeMonthlyMoneyCard({
@@ -23,12 +24,15 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     required this.unavailable,
     this.onOpenEvolution,
     this.onOpenClosing,
+    this.onOpenTransactions,
   });
 
   final MonthlyMoneySummary? summary;
   final bool unavailable;
   final VoidCallback? onOpenEvolution;
   final VoidCallback? onOpenClosing;
+  final void Function(MonthlyMoneyTransactionKind, DateTime)?
+      onOpenTransactions;
 
   @override
   Widget build(BuildContext context) {
@@ -108,19 +112,40 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
           _MonthlyHeadlineGrid(
             items: [
               _MonthlyHeadlineData(
-                label: 'dinheiro recebido no mês',
+                label: 'quanto entrou?',
                 icon: AppIcons.income,
                 value: Formatters.money(value.realIncome),
                 valueColor: AppColors.positiveText(brightness),
+                hint: 'receitas do mês · ver transações',
+                tapKey: const ValueKey('monthly-income-open-transactions'),
+                onTap: onOpenTransactions == null
+                    ? null
+                    : () => onOpenTransactions!(
+                          MonthlyMoneyTransactionKind.income,
+                          value.periodMonth,
+                        ),
               ),
               _MonthlyHeadlineData(
-                label: 'compras e gastos feitos',
+                label: 'quanto gastei?',
                 icon: AppIcons.expense,
                 value: Formatters.money(value.spendingMade),
                 valueColor: primary,
                 valueKey: const ValueKey('monthly-spending-net'),
+                hint: 'compras e gastos · ver transações',
+                tapKey: const ValueKey('monthly-spending-open-transactions'),
+                onTap: onOpenTransactions == null
+                    ? null
+                    : () => onOpenTransactions!(
+                          MonthlyMoneyTransactionKind.spending,
+                          value.periodMonth,
+                        ),
               ),
             ],
+          ),
+          const SizedBox(height: 7),
+          Text(
+            'Receitas não incluem transferências internas. Os gastos incluem compras no cartão, mesmo quando a fatura será paga depois.',
+            style: AppTypography.body(context, fontSize: 11, color: secondary),
           ),
           const SizedBox(height: 10),
           _EconomicResultTile(summary: value),
@@ -187,6 +212,9 @@ class _MonthlyHeadlineData {
     required this.value,
     required this.valueColor,
     this.valueKey,
+    this.tapKey,
+    this.onTap,
+    this.hint,
   });
 
   final String label;
@@ -194,6 +222,9 @@ class _MonthlyHeadlineData {
   final String value;
   final Color valueColor;
   final Key? valueKey;
+  final Key? tapKey;
+  final VoidCallback? onTap;
+  final String? hint;
 }
 
 class _MonthlyHeadlineGrid extends StatelessWidget {
@@ -240,8 +271,12 @@ class _MonthlyHeadlineTile extends StatelessWidget {
     final muted = AppColors.background(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return Container(
-      width: double.infinity,
+    return InkWell(
+      key: data.tapKey,
+      onTap: data.onTap,
+      borderRadius: BorderRadius.circular(AppRadii.compactCard),
+      child: Ink(
+        width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: muted,
@@ -283,7 +318,23 @@ class _MonthlyHeadlineTile extends StatelessWidget {
               ),
             ),
           ),
+          if (data.onTap != null) ...[
+            const SizedBox(height: 7),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    data.hint ?? 'ver transações',
+                    maxLines: 2,
+                    style: AppTypography.label(context, fontSize: 10, color: secondary),
+                  ),
+                ),
+                Icon(AppIcons.chevronRight, size: 15, color: secondary),
+              ],
+            ),
+          ],
         ],
+      ),
       ),
     );
   }
@@ -520,7 +571,7 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Cada bloco responde uma pergunta diferente. Eles não são somados entre si.',
+              'Cada bloco explica um jeito de olhar para o seu dinheiro. Não some os blocos: o mesmo pagamento pode aparecer em visões diferentes.',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -529,9 +580,9 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _CompositionSection(
-              title: 'gastos feitos',
+              title: 'o que comprei ou gastei',
               subtitle:
-                  'mostra o que você comprou ou gastou neste mês; cartão entra pelo valor total no dia da compra',
+                  'compras do mês, mesmo no cartão. A compra conta agora; o pagamento da fatura não conta de novo',
               rows: [
                 _CompositionRow(
                   'conta / PIX / débito',
@@ -556,9 +607,9 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _CompositionSection(
-              title: 'competência do mês',
+              title: 'despesas atribuídas a este mês',
               subtitle:
-                  'mostra o que pertence financeiramente a ${_monthName(summary.periodMonth.month)}; parceladas entram parcela a parcela',
+                  'para calcular o resultado do mês, uma compra parcelada entra conforme as parcelas que pertencem a ${_monthName(summary.periodMonth.month)}',
               rows: [
                 _CompositionRow(
                   'despesas diretas',
@@ -676,7 +727,7 @@ class _MonthlyMoneyComposition extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Caixa mostra entrada e saída de dinheiro. Não é sinônimo de receita ou despesa.',
+                    'Este bloco acompanha o dinheiro nas contas. Transferências e pagamentos de fatura movem dinheiro, mas não são receitas nem novos gastos.',
                     style: AppTypography.label(
                       context,
                       fontSize: 10,

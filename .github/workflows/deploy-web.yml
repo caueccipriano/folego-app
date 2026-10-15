@@ -62,6 +62,8 @@ jobs:
         run: |
           flutter test \
             test/discovery_test.dart \
+            test/home_monthly_cards_drilldown_test.dart \
+            test/home_financial_copy_test.dart \
             test/internal_polish_regression_test.dart \
             test/folego_admin_layout_test.dart \
             test/app_breakpoints_test.dart \

@@ -149,9 +149,18 @@ String homeFolegoVoiceLabel(FolegoSnapshot snapshot) {
 }
 
 class HomeFinancialHero extends StatelessWidget {
-  const HomeFinancialHero({super.key, required this.snapshot});
+  const HomeFinancialHero({
+    super.key,
+    required this.snapshot,
+    this.onOpenAccounts,
+    this.onOpenInvoices,
+    this.onOpenCommitments,
+  });
 
   final FolegoSnapshot snapshot;
+  final VoidCallback? onOpenAccounts;
+  final VoidCallback? onOpenInvoices;
+  final VoidCallback? onOpenCommitments;
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +187,7 @@ class HomeFinancialHero extends StatelessWidget {
         homeIsBudgetLimited(snapshot) &&
         budgetNavigation != null;
     final normalizedStatus = snapshot.status.trim().toLowerCase();
-    // Estado recebido da RPC; sem cálculo de elegibilidade no cliente.
+    // Apenas representação visual do status oficial do snapshot.
     final heroValueColor = spendable <= 0
         ? tokens.estouradoHero
         : (normalizedStatus == 'apertado' ||
@@ -449,6 +458,9 @@ class HomeFinancialHero extends StatelessWidget {
     final content = _FolegoExplanation(
       snapshot: snapshot,
       onOpenBudget: budgetNavigation?.onOpen,
+      onOpenAccounts: onOpenAccounts,
+      onOpenInvoices: onOpenInvoices,
+      onOpenCommitments: onOpenCommitments,
     );
     if (AppBreakpoints.of(context) == AppLayoutSize.compact) {
       await showModalBottomSheet<void>(
@@ -513,16 +525,30 @@ class _TimingPill extends StatelessWidget {
 }
 
 class _FolegoExplanation extends StatelessWidget {
-  const _FolegoExplanation({required this.snapshot, this.onOpenBudget});
+  const _FolegoExplanation({
+    required this.snapshot,
+    this.onOpenBudget,
+    this.onOpenAccounts,
+    this.onOpenInvoices,
+    this.onOpenCommitments,
+  });
 
   final FolegoSnapshot snapshot;
   final VoidCallback? onOpenBudget;
+  final VoidCallback? onOpenAccounts;
+  final VoidCallback? onOpenInvoices;
+  final VoidCallback? onOpenCommitments;
+
+  void _closeAndOpen(BuildContext context, VoidCallback? destination) {
+    if (destination == null) return;
+    Navigator.of(context).pop();
+    destination();
+  }
 
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final secondary = AppColors.secondaryText(brightness);
-    final tokens = FolegoColorTokens.of(context);
     final timing = homeIncomeTimingLabel(snapshot);
     final exceeded = homeFlexibleBudgetExceeded(snapshot);
 
@@ -559,34 +585,64 @@ class _FolegoExplanation extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             _ExplanationRow(
-              label: 'em contas',
+              key: const ValueKey('home-detail-open-accounts'),
+              label: 'saldo liberado nas contas',
               value: Formatters.money(snapshot.liquidBalance),
-              hint: 'Dinheiro disponível nas suas contas, sem confundir com limite para gastar.',
+              helper: 'É o saldo das contas disponíveis para usar, não seu limite até o próximo recebimento.',
+              onTap: onOpenAccounts == null ? null : () => _closeAndOpen(context, onOpenAccounts),
             ),
             if (snapshot.protectedBalance > 0)
               _ExplanationRow(
+                key: const ValueKey('home-detail-open-protected'),
                 label: 'dinheiro protegido',
                 value: Formatters.money(snapshot.protectedBalance),
-                hint: 'Reservas e valores que você separou para não gastar.',
+                helper: 'Reservas e valores separados para não gastar. Confira na Carteira.',
+                onTap: onOpenAccounts == null ? null : () => _closeAndOpen(context, onOpenAccounts),
               ),
             _ExplanationRow(
-              label: 'contas até receber',
+              key: const ValueKey('home-detail-open-commitments'),
+              label: 'compromissos até receber',
               value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome),
-              hint: 'Compromissos previstos antes do próximo recebimento.',
+              helper: 'Obrigações reservadas pelo cálculo até receber. A Agenda permite conferir previsões e vencimentos.',
+              onTap: onOpenCommitments == null ? null : () => _closeAndOpen(context, onOpenCommitments),
             ),
+            _ExplanationRow(
+              label: 'folga calculada pelo caixa',
+              value: Formatters.money(snapshot.cashHeadroom),
+            ),
+            if (snapshot.needsIncomeSetup ||
+                (snapshot.nextIncomeDate == null &&
+                 snapshot.daysUntilIncome == null)) ...[
+              const SizedBox(height: 7),
+              Text(
+                'previsão parcial: informe o próximo recebimento para '
+                'delimitar os compromissos do período. Este valor não '
+                'autoriza gastar o saldo bancário.',
+                key: const ValueKey('home-spending-incomplete-input'),
+                style: AppTypography.body(
+                  context, fontSize: 12, color: secondary,
+                ),
+              ),
+            ],
             if (snapshot.budgetConfigured) ...[
               _ExplanationRow(
+                key: const ValueKey('home-detail-open-budget'),
                 label: 'orçamento para gastos flexíveis',
                 value: Formatters.money(snapshot.monthlyBudgetPlanned),
+                helper: 'É o limite de gastos variáveis, não dinheiro extra na conta.',
+                onTap: onOpenBudget == null ? null : () => _closeAndOpen(context, onOpenBudget),
               ),
               _ExplanationRow(
                 label: 'gastos flexíveis no mês',
                 value: Formatters.money(snapshot.monthlyBudgetUsed),
+                helper: 'Parte do orçamento já utilizada. Veja limites por categoria.',
+                onTap: onOpenBudget == null ? null : () => _closeAndOpen(context, onOpenBudget),
               ),
               _ExplanationRow(
                 label: 'ainda disponível para gastos flexíveis',
                 value: Formatters.money(snapshot.economicHeadroom),
-                valueColor: snapshot.economicHeadroom < 0 ? tokens.estourado : null,
+                helper: 'Espaço restante no orçamento, diferente do saldo bancário.',
+                onTap: onOpenBudget == null ? null : () => _closeAndOpen(context, onOpenBudget),
               ),
               if (exceeded > 0)
                 _ExplanationRow(
@@ -595,6 +651,13 @@ class _FolegoExplanation extends StatelessWidget {
                   emphasized: true,
                 ),
             ],
+            _ExplanationRow(
+              key: const ValueKey('home-detail-open-invoices'),
+              label: 'faturas em aberto',
+              value: 'ver na carteira',
+              helper: 'Abra os cartões para conferir faturas, compras e vencimentos; pagar fatura não é um novo gasto.',
+              onTap: onOpenInvoices == null ? null : () => _closeAndOpen(context, onOpenInvoices),
+            ),
             _ExplanationRow(
               label: 'o que limita seu Fôlego agora',
               value: _limitingFactorLabel(snapshot.limitingFactor),
@@ -606,11 +669,20 @@ class _FolegoExplanation extends StatelessWidget {
                     ? '$timing · ${Formatters.money(snapshot.nextIncomeAmount)}'
                     : timing,
               ),
+            const SizedBox(height: 8),
+            Text(
+              'O menor limite aplicável entre caixa e planejamento '
+              'orienta o Fôlego; não some esses valores.',
+              style: AppTypography.body(
+                context, fontSize: 11, color: secondary,
+              ),
+            ),
             const Divider(height: 28),
             _ExplanationRow(
-              label: 'te sobra pra gastar',
+              label: 'quanto pode gastar até receber',
               value: Formatters.money(snapshot.spendablePool),
               emphasized: true,
+              helper: 'Resultado oficial do Fôlego: leva em conta obrigações e saldo, além do orçamento flexível quando configurado.',
             ),
             if (snapshot.dailyFolego != null && snapshot.dailyFolego! > 0)
               _ExplanationRow(
@@ -636,7 +708,9 @@ class _FolegoExplanation extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             Text(
-              'Reservas, investimentos protegidos e benefícios ficam separados do valor para gastar.',
+              'Reservas, investimentos protegidos e benefícios ficam separados '
+              'do valor para gastar. Faturas e parcelas são compromissos: '
+              'confira as datas e evite descontá-las duas vezes.',
               style: AppTypography.label(
                 context,
                 fontSize: 11,
@@ -652,57 +726,75 @@ class _FolegoExplanation extends StatelessWidget {
 
 class _ExplanationRow extends StatelessWidget {
   const _ExplanationRow({
+    super.key,
     required this.label,
     required this.value,
     this.emphasized = false,
-    this.hint,
-    this.valueColor,
+    this.helper,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final bool emphasized;
-  final String? hint;
-  final Color? valueColor;
+  final String? helper;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 7),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: AppTypography.body(context,
-                fontSize: 13, fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500)),
-              if (hint != null) ...[
-                const SizedBox(height: 3),
-                Text(hint!, style: AppTypography.body(context, fontSize: 12,
-                  color: FolegoColorTokens.of(context).textoSecundario)),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: emphasized
-                ? AppTypography.money(context, fontSize: 13, color: valueColor)
-                : AppTypography.body(
-                    context,
-                    fontSize: 12,
-                    color: valueColor,
-                    fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) {
+    final secondary = AppColors.secondaryText(Theme.of(context).brightness);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 12,
+                      fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
-          ),
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.end,
+                    style: emphasized
+                        ? AppTypography.money(context, fontSize: 13)
+                        : AppTypography.body(
+                            context, fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                  ),
+                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 5),
+                  Icon(AppIcons.chevronRight, size: 16, color: secondary),
+                ],
+              ],
+            ),
+            if (helper != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                helper!,
+                style: AppTypography.body(context, fontSize: 11, color: secondary),
+              ),
+            ],
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 String _limitingFactorLabel(String factor) =>
