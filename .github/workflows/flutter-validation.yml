@@ -52,7 +52,7 @@ jobs:
         run: flutter test test/home_data_freshness_test.dart test/home_load_guard_test.dart test/sheet_sync_status_test.dart test/financial_organization_space_isolation_test.dart test/transaction_pending_guard_test.dart test/classification_review_overview_test.dart test/sheet_reconciliation_audit_test.dart
 
       - name: Home and Wallet compact UX regressions
-        run: flutter test test/home_monthly_money_wiring_test.dart test/wallet_qa_mobile_stress_test.dart
+        run: flutter test test/home_monthly_money_wiring_test.dart test/home_monthly_cards_drilldown_test.dart test/wallet_qa_mobile_stress_test.dart
 
       - name: Admin dashboard synthetic UI and access-denied tests
         run: flutter test test/folego_admin_layout_test.dart

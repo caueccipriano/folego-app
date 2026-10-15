@@ -148,6 +148,25 @@ class _HomeContentState extends State<_HomeContent> {
     );
   }
 
+  void _openMonthlyTransactions(DateTime periodMonth, Set<String> eventTypes) {
+    final monthStart = DateTime(periodMonth.year, periodMonth.month);
+    final monthEnd = DateTime(periodMonth.year, periodMonth.month + 1, 0);
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionsScreen(
+          repository: widget.repository,
+          space: widget.space,
+          initialFilters: TransactionFilters(
+            startDate: monthStart,
+            endDate: monthEnd,
+            eventTypes: eventTypes,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final setup = _setup;
@@ -169,6 +188,7 @@ class _HomeContentState extends State<_HomeContent> {
     if (_loadingSetup) {
       return HomeExpenseNavigationScope(
         onOpenExpenses: _openExpenseTransactions,
+        onOpenMonthlyTransactions: _openMonthlyTransactions,
         child: base.HomeScreen(
           space: widget.space,
           repository: widget.repository,
@@ -178,6 +198,7 @@ class _HomeContentState extends State<_HomeContent> {
 
     return HomeExpenseNavigationScope(
       onOpenExpenses: _openExpenseTransactions,
+      onOpenMonthlyTransactions: _openMonthlyTransactions,
       child: base.HomeScreen(
         space: widget.space,
         repository: widget.repository,
