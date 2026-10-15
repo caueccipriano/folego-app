@@ -343,6 +343,7 @@ class _AppearanceCard extends StatelessWidget {
           );
         },
       ),
+        ),
         const SizedBox(height: 10),
         _PaletteGrid(selected: paletteSelected, onSelected: onPaletteSelected),
       ],
