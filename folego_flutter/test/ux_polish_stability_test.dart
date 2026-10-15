@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:intl/date_symbol_data_local.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,6 +23,7 @@ import 'package:folego/features/profile/notification_settings_data_source.dart';
 import 'package:folego/features/profile/notification_settings_screen.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting('pt_BR'));
   group('Financial Organization stability', () {
     testWidgets('categories render while markers are delayed', (tester) async {
       final markers = Completer<List<CategoryTag>>();

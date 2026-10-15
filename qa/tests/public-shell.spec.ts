@@ -4,7 +4,9 @@ import { capture, enableFlutterAccessibility, openFolego } from './helpers';
 test.describe('Fôlego public PWA shell', () => {
   test('opens a local demo without login or financial writes', async ({ page }, testInfo) => {
     const financialWrites: string[] = [];
+    const remoteFonts: string[] = [];
     page.on('request', request => {
+      if (/fonts\.(gstatic|googleapis)\.com/.test(request.url())) remoteFonts.push(request.url());
       if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method()) &&
           /supabase\.co\/(rest|functions)\/v1/.test(request.url())) {
         financialWrites.push(request.url());
@@ -20,6 +22,7 @@ test.describe('Fôlego public PWA shell', () => {
     await expect(page.getByRole('button', { name: /mercado da semana/i }).first()).toBeVisible();
     await capture(page, testInfo, 'demo-search');
     expect(financialWrites).toEqual([]);
+    expect(remoteFonts, 'Typography must be bundled in the PWA').toEqual([]);
   });
 
   test('boots cleanly without viewport overflow', async ({ page }, testInfo) => {

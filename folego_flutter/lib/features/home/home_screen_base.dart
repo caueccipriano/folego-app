@@ -23,6 +23,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../diary/diary_screen.dart';
+import '../onboarding/getting_started_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import '../discovery/discovery_navigation.dart';
@@ -485,21 +486,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 7),
                 HomeDataFreshness(
                   lastLoadedAt: _lastSuccessfulSnapshotAt,
+                  sourceFailures: [if(_monthlyMoneyUnavailable) 'resumo mensal',if(_projectionUnavailable) 'projeção',if(_recentUnavailable) 'lançamentos recentes',if(_upcomingUnavailable) 'agenda'],
                   failed: _error != null,
                   loading: _loading,
                   onRefresh: _load,
                 ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
-                  // Priorities first: spendable money, attention, next obligation.
+                  quickActions,
+                  const SizedBox(height: 12),
                   hero,
+                  if(showLatest) ...[const SizedBox(height:12),latestSection],
                   const SizedBox(height: 12),
                   pulse,
                   if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
                   const SizedBox(height: 12),
                   smartCheckin,
-                  const SizedBox(height: 12),
-                  quickActions,
                   const SizedBox(height: 14),
                   Material(
                     color: background,
@@ -532,14 +534,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  if (showLatest) ...[
-                    const SizedBox(height: 14),
-                    latestSection,
-                  ],
+
                   const SizedBox(height: 18),
                   optionalReview,
                 ] else if (layout == AppLayoutSize.medium) ...[
+                  quickActions,
+                  const SizedBox(height:12),
                   hero,
+                  if(showLatest) ...[const SizedBox(height:12),latestSection],
                   const SizedBox(height: 16),
                   pulse,
                   if (showUpcoming) ...[
@@ -548,19 +550,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                   const SizedBox(height: 16),
                   smartCheckin,
-                  const SizedBox(height: 16),
-                  quickActions,
                   const SizedBox(height: 22),
                   monthlyMoney,
                   const SizedBox(height: 14),
                   projectionInsight,
-                  if (showLatest) ...[
-                    const SizedBox(height: 24),
-                    latestSection,
-                  ],
+
                   const SizedBox(height: 20),
                   optionalReview,
                 ] else ...[
+                  quickActions,
+                  const SizedBox(height:16),
                   // Independent desktop columns: a tall card in one column
                   // must not create a blank strip above the other column.
                   Row(
@@ -572,6 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             hero,
+                            if(showLatest) ...[const SizedBox(height:16),latestSection],
                             const SizedBox(height: 16),
                             monthlyMoney,
                             const SizedBox(height: 16),
@@ -592,12 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                             const SizedBox(height: 16),
                             smartCheckin,
-                            const SizedBox(height: 16),
-                            quickActions,
-                            if (showLatest) ...[
-                              const SizedBox(height: 16),
-                              latestSection,
-                            ],
+
                           ],
                         ),
                       ),
@@ -766,6 +761,8 @@ class _HomeScreenState extends State<HomeScreen> {
         key: const ValueKey('home-pending-center'),
         onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository, pendingOnly: true),
         icon: const Icon(AppIcons.transactions, size: 18), label: const Text('pendências')),
+      if (_snapshot?.needsIncomeSetup == true)
+        OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GettingStartedScreen(repository:widget.repository,spaceId:widget.space.id))),icon:const Icon(Icons.route_outlined,size:18),label:const Text('começar do meu jeito')),
     ]),
     ]);
   }
@@ -879,10 +876,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Text(
                       'próximos movimentos',
-                      style: AppTypography.body(
+                      style: AppTypography.section(
                         context,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
                         color: primaryText,
                       ),
                     ),

@@ -12,6 +12,7 @@ import '../../data/models/debt_detail.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_debts.dart';
 import 'debt_form_sheet.dart';
+import 'existing_payment_picker.dart';
 
 Future<bool?> showDebtPaymentSheet({
   required BuildContext context,
@@ -187,6 +188,19 @@ class _DebtPaymentSheetState extends State<DebtPaymentSheet> {
               style: AppTypography.body(context, fontSize: 12, color: secondary),
             ),
             const SizedBox(height: 18),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : () async {
+                final linked = await showExistingPaymentPicker(context,
+                  repository: widget.repository, spaceId: widget.spaceId,
+                  targetKind: 'debt', targetId: widget.installment.id,
+                  targetName: '${widget.debt.name} · parcela ${widget.installment.installmentNumber}',
+                  outstanding: widget.installment.remainingAmount);
+                if (linked == true && context.mounted) Navigator.pop(context, true);
+              },
+              icon: const Icon(Icons.link),
+              label: const Text('já paguei: vincular lançamento'),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _amount,
               enabled: !_saving,
@@ -242,7 +256,7 @@ class _DebtPaymentSheetState extends State<DebtPaymentSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'o pagamento reduz cash da conta. economic e budget continuam zero para não contar a dívida duas vezes.',
+                      'O pagamento reduz o saldo da conta. O gasto não será contado novamente no orçamento. Se a saída já foi registrada, use a opção de vincular um lançamento.',
                       style: AppTypography.body(context, fontSize: 11, color: secondary),
                     ),
                   ),

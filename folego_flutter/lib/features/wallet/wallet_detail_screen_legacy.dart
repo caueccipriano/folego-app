@@ -527,6 +527,9 @@ class WalletInstallmentDetailScreen extends StatelessWidget {
               if (item.categoryName != null)
                 _Info('categoria', item.categoryName!),
               _Info('status', item.completed ? 'concluído' : 'em aberto'),
+              _Info('parcelas pagas', '${item.paidCount}'),
+              _Info('parcelas em aberto', '${item.remainingCount}'),
+              if(item.outstandingAmount != null) _Info('valor em faturas não quitadas',Formatters.money(item.outstandingAmount)),
               if (item.nextDueDate != null)
                 _Info(
                   'próxima fatura',

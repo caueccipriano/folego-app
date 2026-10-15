@@ -11,10 +11,12 @@ class OnboardingScreen extends StatefulWidget {
     super.key,
     required this.onCompleted,
     required this.onSignOut,
+    this.onChooseStart,
   });
 
   final Future<void> Function() onCompleted;
   final Future<void> Function() onSignOut;
+  final Future<void> Function()? onChooseStart;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -150,6 +152,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   );
                 }),
               ),
+              if (last && widget.onChooseStart != null) ...[
+                const SizedBox(height:12),
+                OutlinedButton.icon(onPressed:_finishing?null:widget.onChooseStart,
+                  icon:const Icon(Icons.route_outlined),label:const Text('manual, extrato ou planilha: escolher caminho')),
+              ],
               const SizedBox(height: 24),
               Expanded(
                 child: AnimatedSwitcher(

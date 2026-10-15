@@ -204,8 +204,8 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
               Expanded(
                 child: Text(
                   'conferência inteligente',
-                  style: AppTypography.body(context,
-                      fontSize: 13, fontWeight: FontWeight.w700,
+                  style: AppTypography.section(context,
+                      fontSize: 16,
                       color: primary),
                 ),
               ),

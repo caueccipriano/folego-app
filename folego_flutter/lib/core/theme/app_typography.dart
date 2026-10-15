@@ -1,24 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppTypography {
   // ---------------------------------------------------------------------------
   // DESIGN SYSTEM
   //
-  // Unbounded = personalidade, títulos importantes e valores.
-  // Manrope   = interface, corpo, labels e navegação.
+  // Unbounded = personalidade e títulos principais.
+  // Manrope   = títulos de cards, valores, corpo, labels e navegação.
   // ---------------------------------------------------------------------------
+
+  static TextStyle _font(
+    String family, {
+    TextStyle? textStyle,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? height,
+    double? letterSpacing,
+    Color? color,
+    FontStyle? fontStyle,
+    List<FontFeature>? fontFeatures,
+    TextDecoration? decoration,
+  }) => (textStyle ?? const TextStyle()).copyWith(
+    fontFamily: family,
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    height: height,
+    letterSpacing: letterSpacing,
+    color: color,
+    fontStyle: fontStyle,
+    fontFeatures: fontFeatures,
+    decoration: decoration,
+  );
+  static TextStyle _interface({
+    TextStyle? textStyle,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? height,
+    double? letterSpacing,
+    Color? color,
+    FontStyle? fontStyle,
+    List<FontFeature>? fontFeatures,
+    TextDecoration? decoration,
+  }) => _font(
+    'Manrope',
+    textStyle: textStyle,
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    height: height,
+    letterSpacing: letterSpacing,
+    color: color,
+    fontStyle: fontStyle,
+    fontFeatures: fontFeatures,
+    decoration: decoration,
+  );
+  static TextStyle _brand({
+    TextStyle? textStyle,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? height,
+    double? letterSpacing,
+    Color? color,
+  }) => _font(
+    'Unbounded',
+    textStyle: textStyle,
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    height: height,
+    letterSpacing: letterSpacing,
+    color: color,
+  );
 
   static TextTheme textTheme(
     TextTheme base, {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    final manrope = GoogleFonts.manropeTextTheme(base)
+    final manrope = base
+        .apply(fontFamily: 'Manrope')
         .apply(bodyColor: primaryText, displayColor: primaryText);
 
     return manrope.copyWith(
-      displayLarge: GoogleFonts.unbounded(
+      displayLarge: _brand(
         textStyle: manrope.displayLarge,
         fontSize: 44,
         fontWeight: FontWeight.w700,
@@ -26,7 +87,7 @@ abstract final class AppTypography {
         letterSpacing: -1.2,
         color: primaryText,
       ),
-      displayMedium: GoogleFonts.unbounded(
+      displayMedium: _brand(
         textStyle: manrope.displayMedium,
         fontSize: 38,
         fontWeight: FontWeight.w700,
@@ -34,7 +95,7 @@ abstract final class AppTypography {
         letterSpacing: -1.0,
         color: primaryText,
       ),
-      displaySmall: GoogleFonts.unbounded(
+      displaySmall: _brand(
         textStyle: manrope.displaySmall,
         fontSize: 34,
         fontWeight: FontWeight.w700,
@@ -42,7 +103,7 @@ abstract final class AppTypography {
         letterSpacing: -.8,
         color: primaryText,
       ),
-      headlineLarge: GoogleFonts.unbounded(
+      headlineLarge: _brand(
         textStyle: manrope.headlineLarge,
         fontSize: 26,
         fontWeight: FontWeight.w700,
@@ -50,7 +111,7 @@ abstract final class AppTypography {
         letterSpacing: -.5,
         color: primaryText,
       ),
-      headlineMedium: GoogleFonts.unbounded(
+      headlineMedium: _brand(
         textStyle: manrope.headlineMedium,
         fontSize: 22,
         fontWeight: FontWeight.w700,
@@ -58,7 +119,7 @@ abstract final class AppTypography {
         letterSpacing: -.4,
         color: primaryText,
       ),
-      headlineSmall: GoogleFonts.unbounded(
+      headlineSmall: _brand(
         textStyle: manrope.headlineSmall,
         fontSize: 18,
         fontWeight: FontWeight.w700,
@@ -66,64 +127,64 @@ abstract final class AppTypography {
         letterSpacing: -.25,
         color: primaryText,
       ),
-      titleLarge: GoogleFonts.unbounded(
+      titleLarge: _interface(
         textStyle: manrope.titleLarge,
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        height: 1.15,
-        letterSpacing: -.2,
+        height: 1.25,
+        letterSpacing: 0,
         color: primaryText,
       ),
-      titleMedium: GoogleFonts.manrope(
+      titleMedium: _interface(
         textStyle: manrope.titleMedium,
         fontSize: 15,
         fontWeight: FontWeight.w600,
         height: 1.25,
         color: primaryText,
       ),
-      titleSmall: GoogleFonts.manrope(
+      titleSmall: _interface(
         textStyle: manrope.titleSmall,
         fontSize: 13,
         fontWeight: FontWeight.w600,
         height: 1.25,
         color: primaryText,
       ),
-      bodyLarge: GoogleFonts.manrope(
+      bodyLarge: _interface(
         textStyle: manrope.bodyLarge,
         fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.45,
         color: primaryText,
       ),
-      bodyMedium: GoogleFonts.manrope(
+      bodyMedium: _interface(
         textStyle: manrope.bodyMedium,
         fontSize: 13,
         fontWeight: FontWeight.w400,
         height: 1.45,
         color: primaryText,
       ),
-      bodySmall: GoogleFonts.manrope(
+      bodySmall: _interface(
         textStyle: manrope.bodySmall,
         fontSize: 12,
         fontWeight: FontWeight.w400,
         height: 1.40,
         color: secondaryText,
       ),
-      labelLarge: GoogleFonts.manrope(
+      labelLarge: _interface(
         textStyle: manrope.labelLarge,
         fontSize: 13,
         fontWeight: FontWeight.w600,
         height: 1.20,
         color: primaryText,
       ),
-      labelMedium: GoogleFonts.manrope(
+      labelMedium: _interface(
         textStyle: manrope.labelMedium,
         fontSize: 11,
         fontWeight: FontWeight.w500,
         height: 1.20,
         color: secondaryText,
       ),
-      labelSmall: GoogleFonts.manrope(
+      labelSmall: _interface(
         textStyle: manrope.labelSmall,
         fontSize: 11,
         fontWeight: FontWeight.w500,
@@ -138,7 +199,7 @@ abstract final class AppTypography {
     double fontSize = 40,
     Color? color,
   }) {
-    return GoogleFonts.unbounded(
+    return _brand(
       textStyle: Theme.of(context).textTheme.displayLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
@@ -153,41 +214,29 @@ abstract final class AppTypography {
     double fontSize = 18,
     Color? color,
   }) {
-    return GoogleFonts.unbounded(
+    return _interface(
       textStyle: Theme.of(context).textTheme.titleLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      height: 1.10,
-      letterSpacing: -.25,
+      height: 1.25,
+      letterSpacing: 0,
       color: color,
     );
   }
 
+  /// One numeric face at every size keeps amounts comparable across cards.
   static TextStyle money(
     BuildContext context, {
     double fontSize = 52,
     Color? color,
   }) {
-    // Compact amounts need open counters and stable digit widths. Keep the
-    // expressive brand face for large hero values only.
-    if (fontSize < 24) {
-      return GoogleFonts.manrope(
-        textStyle: Theme.of(context).textTheme.bodyMedium,
-        fontSize: fontSize < 13 ? 13 : fontSize,
-        fontWeight: FontWeight.w700,
-        height: 1.3,
-        letterSpacing: 0,
-        fontFeatures: const [FontFeature.tabularFigures()],
-        decoration: TextDecoration.none,
-        color: color,
-      );
-    }
-    return GoogleFonts.unbounded(
-      textStyle: Theme.of(context).textTheme.displayLarge,
-      fontSize: fontSize,
+    return _interface(
+      textStyle: Theme.of(context).textTheme.bodyMedium,
+      fontSize: fontSize < 13 ? 13 : fontSize,
       fontWeight: FontWeight.w700,
-      height: 1.12,
-      letterSpacing: -.6,
+      height: 1.2,
+      letterSpacing: 0,
+      fontFeatures: const [FontFeature.tabularFigures()],
       decoration: TextDecoration.none,
       color: color,
     );
@@ -201,7 +250,7 @@ abstract final class AppTypography {
     Color? color,
   }) {
     final effectiveFontSize = fontSize < 11 ? 11.0 : fontSize;
-    return GoogleFonts.manrope(
+    return _interface(
       textStyle: Theme.of(context).textTheme.bodyMedium,
       fontSize: effectiveFontSize,
       fontWeight: fontWeight,
@@ -218,7 +267,7 @@ abstract final class AppTypography {
     Color? color,
   }) {
     final effectiveFontSize = fontSize < 11 ? 11.0 : fontSize;
-    return GoogleFonts.manrope(
+    return _interface(
       textStyle: Theme.of(context).textTheme.labelMedium,
       fontSize: effectiveFontSize,
       fontWeight: fontWeight,
@@ -232,7 +281,7 @@ abstract final class AppTypography {
     double fontSize = 13,
     Color? color,
   }) {
-    return GoogleFonts.manrope(
+    return _interface(
       textStyle: Theme.of(context).textTheme.labelLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w600,

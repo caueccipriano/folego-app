@@ -130,7 +130,7 @@ class _WalletScreenState extends State<WalletScreen> {
         return;
       }
 
-      if (_section != 3) setState(() => _section = 3);
+      if (_section != 2) setState(() => _section = 2);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         unawaited(_openDebt(debt!));
@@ -501,7 +501,7 @@ class _WalletScreenState extends State<WalletScreen> {
         label: 'benefícios',
         value: summary.totalBenefit,
         icon: AppIcons.benefit,
-        onTap: () => _selectSection(2),
+        onTap: () => _selectSection(3),
       ),
       _PositionMetric(
         label: 'faturas em aberto',
@@ -513,7 +513,7 @@ class _WalletScreenState extends State<WalletScreen> {
         label: 'dívidas restantes',
         value: summary.totalDebtRemaining,
         icon: AppIcons.debt,
-        onTap: () => _selectSection(3),
+        onTap: () => _selectSection(2),
       ),
     ];
 
@@ -558,8 +558,8 @@ class _WalletScreenState extends State<WalletScreen> {
     final sections = [
       ('contas', AppIcons.account, _overview!.paymentAccounts.length),
       ('cartões', AppIcons.creditCard, _overview!.cards.length),
-      ('benefícios', AppIcons.benefit, _overview!.benefits.length),
       ('dívidas', AppIcons.debt, _overview!.debts.length),
+      ('benefícios', AppIcons.benefit, _overview!.benefits.length),
       (
         'parcelas',
         AppIcons.calendar,
@@ -601,9 +601,9 @@ class _WalletScreenState extends State<WalletScreen> {
       case 1:
         return _buildCards();
       case 2:
-        return _buildBenefits();
-      case 3:
         return _buildDebts();
+      case 3:
+        return _buildBenefits();
       case 4:
         return _buildInstallments();
       default:
@@ -1755,6 +1755,12 @@ class _InstallmentCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Text('${item.paidCount} pagas · ${item.remainingCount} em aberto',
+              style: AppTypography.body(context,fontSize:11,color:secondary)),
+            if (item.outstandingAmount != null)
+              Text('valor em faturas ainda não quitadas: ${Formatters.money(item.outstandingAmount)}',
+                style: AppTypography.body(context,fontSize:11,color:secondary)),
             const SizedBox(height: 13),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),

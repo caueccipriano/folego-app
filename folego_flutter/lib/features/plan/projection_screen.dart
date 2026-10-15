@@ -22,6 +22,7 @@ import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../transactions/recurring_form_sheet.dart';
+import 'purchase_comparison.dart';
 
 class ProjectionScreen extends StatefulWidget {
   const ProjectionScreen({
@@ -270,11 +271,15 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
 
   Future<void> _ensureSimulationSources() async {
     if (_recurringItems != null && _expenseCategories != null) return;
+    final spaceId = widget.spaceId;
+    final repository = widget.repository;
     final values = await Future.wait<dynamic>([
-      widget.repository.listRecurringItems(widget.spaceId),
-      widget.repository.listExpenseCategories(widget.spaceId),
+      repository.listRecurringItems(spaceId),
+      repository.listExpenseCategories(spaceId),
     ]);
-    if (!mounted) return;
+    if (!mounted || widget.spaceId != spaceId || widget.repository != repository) {
+      throw StateError('O espaço financeiro mudou. Abra a simulação novamente.');
+    }
     _recurringItems = values[0] as List<RecurringItem>;
     _expenseCategories = values[1] as List<CategoryItem>;
   }
@@ -314,6 +319,9 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     }
     if (!mounted) return;
 
+    final requestedSpace = widget.spaceId;
+    final requestedRepository = widget.repository;
+    final disabledKeys = Set<String>.of(_disabledVariableIncomeKeys);
     final result = await showModalBottomSheet<List<ProjectionAdjustment>>(
       context: context,
       useSafeArea: true,
@@ -323,10 +331,12 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         recurringItems: _recurringItems ?? const [],
         categories: _expenseCategories ?? const [],
         initialTemplate: initialTemplate,
+        compareLoader: (changes) => requestedRepository.getProjection(spaceId:requestedSpace,horizonMonths:_horizon,adjustments:changes,disabledVariableIncomeKeys:disabledKeys),
+        horizonMonths: _horizon,
       ),
     );
 
-    if (result == null || result.isEmpty || !mounted) return;
+    if (result == null || result.isEmpty || !mounted || widget.spaceId != requestedSpace || widget.repository != requestedRepository) return;
     setState(() => _adjustments = result);
     await _load();
   }
@@ -1922,11 +1932,15 @@ class _ProjectionSimulationSheet extends StatefulWidget {
     required this.recurringItems,
     required this.categories,
     this.initialTemplate = _SimulationTemplate.free,
+    required this.compareLoader,
+    required this.horizonMonths,
   });
 
   final List<RecurringItem> recurringItems;
   final List<CategoryItem> categories;
   final _SimulationTemplate initialTemplate;
+  final Future<ProjectionResult> Function(List<ProjectionAdjustment>) compareLoader;
+  final int horizonMonths;
 
   @override
   State<_ProjectionSimulationSheet> createState() =>
@@ -1941,6 +1955,8 @@ class _ProjectionSimulationSheetState
   final _name = TextEditingController();
   final _amount = TextEditingController();
   final _purchasePayments = TextEditingController(text: '1');
+  final _cashPrice = TextEditingController();
+  final _delayMonths = TextEditingController(text:'1');
   final _entry = TextEditingController(text: '10000');
   final _installment = TextEditingController(text: '1200');
   final _months = TextEditingController(text: '36');
@@ -1975,6 +1991,8 @@ class _ProjectionSimulationSheetState
     _name.dispose();
     _amount.dispose();
     _purchasePayments.dispose();
+    _cashPrice.dispose();
+    _delayMonths.dispose();
     _entry.dispose();
     _installment.dispose();
     _months.dispose();
@@ -2023,6 +2041,19 @@ class _ProjectionSimulationSheetState
         }
       });
     }
+  }
+
+  Future<void> _comparePurchase() async {
+    final total=(_money(_amount.text)*100).round();
+    final cash=_cashPrice.text.trim().isEmpty?total:(_money(_cashPrice.text)*100).round();
+    final payments=int.tryParse(_purchasePayments.text)??0;
+    final delay=int.tryParse(_delayMonths.text)??0;
+    if(_name.text.trim().isEmpty||total<=0||cash<=0||payments<1||payments>120||total<payments||delay<1||delay>24){
+      _invalid('informe valores válidos, de 1 a 120 parcelas e adiamento de 1 a 24 meses');return;
+    }
+    final options=buildPurchaseOptions(name:_name.text,cashCents:cash,installmentCents:total,payments:payments,firstPayment:_startsOn,delayMonths:delay,categoryId:_category?.id,categoryName:_category?.name);
+    final chosen=await showDialog<List<ProjectionAdjustment>>(context:context,builder:(_)=>PurchaseComparisonDialog(options:options,load:widget.compareLoader,horizonMonths:widget.horizonMonths));
+    if(chosen!=null&&mounted)Navigator.pop(context,chosen);
   }
 
   void _submit() {
@@ -2306,6 +2337,11 @@ class _ProjectionSimulationSheetState
                     'começa em ${Formatters.fullDate.format(_startsOn)}',
                   ),
                 ),
+                if (_template == _SimulationTemplate.purchase) ...[
+                  const SizedBox(height:12),
+                  OutlinedButton.icon(key:const ValueKey('purchase-compare-options'),onPressed:_comparePurchase,
+                    icon:const Icon(Icons.compare_arrows),label:const Text('comparar à vista, parcelado e adiado')),
+                ],
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   key: const ValueKey('simulation-submit-impact'),
@@ -2359,6 +2395,11 @@ class _ProjectionSimulationSheetState
             ),
           ),
           const SizedBox(height: 10),
+          _moneyField(_cashPrice, 'preço à vista (opcional; usa o total acima)'),
+          const SizedBox(height:10),
+          TextField(controller:_delayMonths,keyboardType:TextInputType.number,
+            decoration:const InputDecoration(labelText:'adiar por quantos meses? (1 a 24)')),
+          const SizedBox(height:10),
           _categoryDropdown(optional: true),
           const Text(
             'Escolha abaixo a data do primeiro pagamento. A simulação distribui o valor informado; não cria compra nem calcula juros adicionais. Parcelas além do horizonte não aparecem no gráfico.',

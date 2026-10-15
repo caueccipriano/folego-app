@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/features/home/home_financial_hero.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting('pt_BR'));
   group('Fôlego contextual copy', () {
     test('explains budget when budget is the active constraint', () {
       expect(

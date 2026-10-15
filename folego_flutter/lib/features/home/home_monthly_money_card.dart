@@ -32,7 +32,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
   final VoidCallback? onOpenEvolution;
   final VoidCallback? onOpenClosing;
   final void Function(MonthlyMoneyTransactionKind, DateTime)?
-      onOpenTransactions;
+  onOpenTransactions;
 
   @override
   Widget build(BuildContext context) {
@@ -121,9 +121,9 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                 onTap: onOpenTransactions == null
                     ? null
                     : () => onOpenTransactions!(
-                          MonthlyMoneyTransactionKind.income,
-                          value.periodMonth,
-                        ),
+                        MonthlyMoneyTransactionKind.income,
+                        value.periodMonth,
+                      ),
               ),
               _MonthlyHeadlineData(
                 label: 'quanto gastei?',
@@ -136,9 +136,9 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                 onTap: onOpenTransactions == null
                     ? null
                     : () => onOpenTransactions!(
-                          MonthlyMoneyTransactionKind.spending,
-                          value.periodMonth,
-                        ),
+                        MonthlyMoneyTransactionKind.spending,
+                        value.periodMonth,
+                      ),
               ),
             ],
           ),
@@ -157,11 +157,7 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             'valores gastos no período, não saldos de contas ou cartões',
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 11, color: secondary),
           ),
           const SizedBox(height: 10),
           _SpendingSourceList(summary: value),
@@ -172,10 +168,8 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
             children: [
               TextButton.icon(
                 key: const ValueKey('monthly-money-composition'),
-                onPressed: () => showMonthlyMoneyComposition(
-                  context,
-                  summary: value,
-                ),
+                onPressed: () =>
+                    showMonthlyMoneyComposition(context, summary: value),
                 icon: const Icon(AppIcons.chevronRight, size: 17),
                 iconAlignment: IconAlignment.end,
                 label: const Text('entender os números'),
@@ -271,70 +265,77 @@ class _MonthlyHeadlineTile extends StatelessWidget {
     final muted = AppColors.background(brightness);
     final secondary = AppColors.secondaryText(brightness);
 
-    return InkWell(
-      key: data.tapKey,
-      onTap: data.onTap,
-      borderRadius: BorderRadius.circular(AppRadii.compactCard),
-      child: Ink(
-        width: double.infinity,
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: muted,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        key: data.tapKey,
+        onTap: data.onTap,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
-        border: null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: muted,
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
+            border: null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(data.icon, size: 15, color: secondary),
-              const SizedBox(width: 6),
-              Expanded(
+              Row(
+                children: [
+                  Icon(data.icon, size: 15, color: secondary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      data.label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 10,
+                        color: secondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
                 child: Text(
-                  data.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(
+                  data.value,
+                  key: data.valueKey,
+                  style: AppTypography.money(
                     context,
-                    fontSize: 10,
-                    color: secondary,
+                    fontSize: 17,
+                    color: data.valueColor,
                   ),
                 ),
               ),
+              if (data.onTap != null) ...[
+                const SizedBox(height: 7),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        data.hint ?? 'ver transações',
+                        maxLines: 2,
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 10,
+                          color: secondary,
+                        ),
+                      ),
+                    ),
+                    Icon(AppIcons.chevronRight, size: 15, color: secondary),
+                  ],
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              data.value,
-              key: data.valueKey,
-              style: AppTypography.money(
-                context,
-                fontSize: 17,
-                color: data.valueColor,
-              ),
-            ),
-          ),
-          if (data.onTap != null) ...[
-            const SizedBox(height: 7),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    data.hint ?? 'ver transações',
-                    maxLines: 2,
-                    style: AppTypography.label(context, fontSize: 10, color: secondary),
-                  ),
-                ),
-                Icon(AppIcons.chevronRight, size: 15, color: secondary),
-              ],
-            ),
-          ],
-        ],
-      ),
+        ),
       ),
     );
   }
@@ -370,7 +371,11 @@ class _EconomicResultTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   'resultado econômico · não é saldo disponível',
-                  style: AppTypography.label(context, fontSize: 11, color: secondary),
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 11,
+                    color: secondary,
+                  ),
                 ),
               ),
             ],
@@ -400,7 +405,11 @@ class _EconomicResultTile extends StatelessWidget {
               'em ${Formatters.money(difference.abs())}, pois seguem '
               'datas de reconhecimento diferentes (como parcelas).',
               key: const ValueKey('monthly-competence-difference'),
-              style: AppTypography.body(context, fontSize: 10, color: secondary),
+              style: AppTypography.body(
+                context,
+                fontSize: 10,
+                color: secondary,
+              ),
             ),
           ],
         ],
@@ -429,9 +438,21 @@ class _SpendingSourceList extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     final sources = <_SpendSource>[
-      _SpendSource('gastos pela conta / PIX', summary.accountSpending, AppIcons.account),
-      _SpendSource('compras no cartão', summary.cardPurchasesMade, AppIcons.creditCard),
-      _SpendSource('benefícios utilizados', summary.benefitSpending, AppIcons.benefit),
+      _SpendSource(
+        'gastos pela conta / PIX',
+        summary.accountSpending,
+        AppIcons.account,
+      ),
+      _SpendSource(
+        'compras no cartão',
+        summary.cardPurchasesMade,
+        AppIcons.creditCard,
+      ),
+      _SpendSource(
+        'benefícios utilizados',
+        summary.benefitSpending,
+        AppIcons.benefit,
+      ),
     ].where((item) => item.amount > 0).toList(growable: false);
     final gross = sources.fold<double>(0, (total, item) => total + item.amount);
 
@@ -456,13 +477,19 @@ class _SpendingSourceList extends StatelessWidget {
                   children: [
                     Text(
                       item.label,
-                      style: AppTypography.body(context, fontSize: 12, color: primary),
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 12,
+                        color: primary,
+                      ),
                     ),
                     const SizedBox(height: 5),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: LinearProgressIndicator(
-                        value: gross <= 0 ? 0 : (item.amount / gross).clamp(0.0, 1.0),
+                        value: gross <= 0
+                            ? 0
+                            : (item.amount / gross).clamp(0.0, 1.0),
                         minHeight: 5,
                         backgroundColor: AppColors.border(brightness),
                         color: purple,
@@ -479,7 +506,11 @@ class _SpendingSourceList extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     Formatters.money(item.amount),
-                    style: AppTypography.money(context, fontSize: 13, color: primary),
+                    style: AppTypography.money(
+                      context,
+                      fontSize: 13,
+                      color: primary,
+                    ),
                   ),
                 ),
               ),
@@ -495,12 +526,20 @@ class _SpendingSourceList extends StatelessWidget {
               Expanded(
                 child: Text(
                   'reembolsos abatidos dos gastos',
-                  style: AppTypography.body(context, fontSize: 11, color: secondary),
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: secondary,
+                  ),
                 ),
               ),
               Text(
                 '-${Formatters.money(summary.refunds)}',
-                style: AppTypography.money(context, fontSize: 12, color: primary),
+                style: AppTypography.money(
+                  context,
+                  fontSize: 12,
+                  color: primary,
+                ),
               ),
             ],
           ),
@@ -581,8 +620,7 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             const SizedBox(height: 20),
             _CompositionSection(
               title: 'o que comprei ou gastei',
-              subtitle:
-                  'compras do mês, mesmo no cartão. A compra conta agora; o pagamento da fatura não conta de novo',
+              subtitle: 'compras do mês, mesmo no cartão. A compra conta agora; o pagamento da fatura não conta de novo',
               rows: [
                 _CompositionRow(
                   'conta / PIX / débito',
@@ -592,15 +630,8 @@ class _MonthlyMoneyComposition extends StatelessWidget {
                   'cartões — compras feitas',
                   summary.cardPurchasesMade,
                 ),
-                _CompositionRow(
-                  'benefícios gastos',
-                  summary.benefitSpending,
-                ),
-                _CompositionRow(
-                  'reembolsos',
-                  summary.refunds,
-                  subtract: true,
-                ),
+                _CompositionRow('benefícios gastos', summary.benefitSpending),
+                _CompositionRow('reembolsos', summary.refunds, subtract: true),
               ],
               totalLabel: 'gastos feitos no mês',
               total: summary.spendingMade,
@@ -611,18 +642,12 @@ class _MonthlyMoneyComposition extends StatelessWidget {
               subtitle:
                   'para calcular o resultado do mês, uma compra parcelada entra conforme as parcelas que pertencem a ${_monthName(summary.periodMonth.month)}',
               rows: [
-                _CompositionRow(
-                  'despesas diretas',
-                  summary.competenceDirect,
-                ),
+                _CompositionRow('despesas diretas', summary.competenceDirect),
                 _CompositionRow(
                   'cartões na competência',
                   summary.cardCompetence,
                 ),
-                _CompositionRow(
-                  'outras despesas',
-                  summary.competenceBenefits,
-                ),
+                _CompositionRow('outras despesas', summary.competenceBenefits),
                 if (summary.competenceRefunds > 0)
                   _CompositionRow(
                     'reembolsos / ajustes econômicos',
@@ -647,10 +672,18 @@ class _MonthlyMoneyComposition extends StatelessWidget {
                 children: [
                   Text(
                     'como chegamos ao resultado econômico',
-                    style: AppTypography.body(context, fontSize: 15, fontWeight: FontWeight.w700, color: primary),
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
                   ),
                   const SizedBox(height: 10),
-                  _PlainRow(label: 'receitas do mês', value: Formatters.money(summary.realIncome)),
+                  _PlainRow(
+                    label: 'receitas do mês',
+                    value: Formatters.money(summary.realIncome),
+                  ),
                   const SizedBox(height: 8),
                   _PlainRow(
                     label: 'despesas por competência',
@@ -667,7 +700,11 @@ class _MonthlyMoneyComposition extends StatelessWidget {
                   Text(
                     'gastos feitos e despesas por competência podem ter valores '
                     'diferentes porque compras e parcelas pertencem a datas distintas.',
-                    style: AppTypography.label(context, fontSize: 10, color: secondary),
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 10,
+                      color: secondary,
+                    ),
                   ),
                 ],
               ),
@@ -675,13 +712,9 @@ class _MonthlyMoneyComposition extends StatelessWidget {
             const SizedBox(height: 14),
             _CompositionSection(
               title: 'movimentações que não são novos gastos',
-              subtitle:
-                  'podem reduzir ou mover caixa, mas não aumentam seus gastos feitos',
+              subtitle: 'podem reduzir ou mover caixa, mas não aumentam seus gastos feitos',
               rows: [
-                _CompositionRow(
-                  'pagamentos de fatura',
-                  summary.cardPayments,
-                ),
+                _CompositionRow('pagamentos de fatura', summary.cardPayments),
                 _CompositionRow(
                   'transferências / investimentos',
                   summary.transfersAndInvestments,
@@ -815,11 +848,7 @@ class _CompositionSection extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: AppTypography.label(
-              context,
-              fontSize: 10,
-              color: secondary,
-            ),
+            style: AppTypography.label(context, fontSize: 10, color: secondary),
           ),
           const SizedBox(height: 13),
           for (var i = 0; i < rows.length; i++) ...[

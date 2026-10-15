@@ -15,6 +15,9 @@ import '../../data/models/spending_behavior.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_detail.dart';
+import '../../data/repositories/folego_repository_payment_recognition.dart';
+import '../../core/realtime/realtime_session.dart';
+import '../../core/realtime/realtime_invalidation.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/financial_note_editor.dart';
 import '../../shared/widgets/app_loading_state.dart';
@@ -362,6 +365,24 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
     }
   }
 
+  Future<void> _unlink() async {
+    final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('desfazer o vínculo?'),
+      content: const Text('A saída original e o saldo da conta permanecem. A parcela ou fatura volta a ficar em aberto e a despesa recupera sua categoria e participação no orçamento.'),
+      actions: [TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('manter')),
+        FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('desvincular'))]));
+    if (confirmed != true || !mounted) return;
+    setState(()=>_working=true);
+    try {
+      await widget.repository.unlinkRecognizedPayment(spaceId:widget.space.id,eventId:widget.eventId);
+      _changed=true;
+      AppRealtimeRegistry.coordinator?.invalidateDomains({AppRealtimeDomain.home,AppRealtimeDomain.wallet,AppRealtimeDomain.transactions});
+      await _load();
+    } catch (_) {
+      if(mounted)setState(()=>_error='Não foi possível desfazer o vínculo. Confira se a fatura já teve saldo transportado para outro mês.');
+    } finally {if(mounted)setState(()=>_working=false);}
+  }
+
   Future<void> _reverse() async {
     final detail = _detail;
     if (detail == null || !detail.canReverse || _working) return;
@@ -672,6 +693,11 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
               color: AppColors.expenseText(brightness),
             ),
           ),
+        ],
+        if (detail.recognizedPayment) ...[
+          const SizedBox(height: 16),
+          const _Notice(text: 'Pagamento reconhecido a partir de uma saída existente. A conta não foi debitada novamente.'),
+          TextButton.icon(onPressed:_working?null:_unlink, icon:const Icon(Icons.link_off), label:const Text('desfazer vínculo do pagamento')),
         ],
         if (detail.canEdit || detail.canReverse) ...[
           const SizedBox(height: 22),

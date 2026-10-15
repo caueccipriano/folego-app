@@ -36,8 +36,11 @@ jobs:
       - name: Flutter analyze
         run: flutter analyze
 
+      - name: Typography themes and notification contracts
+        run: flutter test test/theme_palette_test.dart test/theme_preference_test.dart test/notification_models_test.dart test/notification_service_test.dart test/notification_runtime_test.dart test/notification_preferences_hardening_test.dart test/notification_history_account_isolation_test.dart
+
       - name: Discovery and isolated demo regression
-        run: flutter test test/discovery_test.dart test/statement_import_qa_mobile_stress_test.dart
+        run: flutter test test/financial_evolution_test.dart test/discovery_test.dart test/statement_import_qa_mobile_stress_test.dart
 
       - name: Safe reconciliation and home priority
         run: flutter test test/reconciliation_home_priority_test.dart

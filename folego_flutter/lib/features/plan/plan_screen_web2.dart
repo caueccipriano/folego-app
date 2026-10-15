@@ -11,6 +11,8 @@ import '../../core/ui/app_snackbars.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'budget_pace_context.dart';
+import '../home/upcoming_events_screen.dart';
+import '../goals/goals_screen.dart';
 import 'plan_insights_section.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
@@ -654,6 +656,15 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  Widget _planningPaths() => Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+    OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>UpcomingEventsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.event_note_outlined),label:const Text('1 · conferir compromissos')),
+    const SizedBox(height:8),
+    Text('2 · definir limites de gastos',style:Theme.of(context).textTheme.titleSmall),
+    const Text('Use o resumo e as categorias abaixo para distribuir seu orçamento.'),
+
+  ]);
+
+  Widget _goalButton() => OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GoalsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.flag_outlined),label:const Text('3 · planejar metas'));
   Widget _buildInsights() {
     return PlanInsightsSection(
       insights: _insightsFuture!,
@@ -695,6 +706,8 @@ class _PlanScreenState extends State<PlanScreen> {
             const LinearProgressIndicator(minHeight: 2),
           ],
           const SizedBox(height: 12),
+          _planningPaths(),
+          const SizedBox(height:12),
           _buildSummary(brightness),
           if (_insightsFuture != null) ...[
             const SizedBox(height: 12),
@@ -710,6 +723,8 @@ class _PlanScreenState extends State<PlanScreen> {
           ],
           const SizedBox(height: 10),
           _buildCategories(brightness),
+          const SizedBox(height:16),
+          _goalButton(),
         ],
       ),
     );
@@ -740,6 +755,8 @@ class _PlanScreenState extends State<PlanScreen> {
                   child: Column(
                     key: const ValueKey('plan-summary-column'),
                     children: [
+                      _planningPaths(),
+                      const SizedBox(height:12),
                       _buildSummary(brightness),
                       if (_insightsFuture != null) ...[
                         const SizedBox(height: 14),
@@ -753,6 +770,8 @@ class _PlanScreenState extends State<PlanScreen> {
                         const SizedBox(height: 16),
                         _buildNoPlan(brightness),
                       ],
+                      const SizedBox(height:16),
+                      _goalButton(),
                     ],
                   ),
                 ),

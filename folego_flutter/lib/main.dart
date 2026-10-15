@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +13,14 @@ import 'data/repositories/folego_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Fonts are declared in pubspec and loaded by Flutter from this PWA.
+  LicenseRegistry.addLicense(() async* {
+    for (final family in ['Manrope', 'Unbounded']) {
+      yield LicenseEntryWithLineBreaks([
+        family,
+      ], await rootBundle.loadString('assets/fonts/$family-OFL.txt'));
+    }
+  });
   AppThemeController.setSystem();
   await AppPreferences.initialize();
   await FinancialPrivacy.initialize();

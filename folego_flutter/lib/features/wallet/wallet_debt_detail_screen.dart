@@ -214,6 +214,9 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
           _DebtAmountCard(detail: detail),
           const SizedBox(height: 14),
           _DebtProgressCard(detail: detail),
+          const SizedBox(height: 12),
+          _InfoBox(text:'${paidInstallments.length} parcelas pagas · ${openInstallments.length} em aberto'
+            '${openInstallments.isEmpty ? '' : '\nPróxima: ${Formatters.fullDate.format((openInstallments..sort((a,b)=>a.dueDate.compareTo(b.dueDate))).first.dueDate)}'}'),
           const SizedBox(height: 18),
           Wrap(
             spacing: 8,
@@ -266,7 +269,7 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
           const SizedBox(height: 24),
           _SectionTitle(
             title: 'pagamentos',
-            subtitle: 'histórico ligado aos lançamentos de cash',
+            subtitle: 'saídas registradas e vinculadas a esta dívida',
           ),
           const SizedBox(height: 10),
           if (detail.payments.isEmpty)

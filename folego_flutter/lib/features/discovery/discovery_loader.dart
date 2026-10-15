@@ -1,4 +1,5 @@
 import '../../data/repositories/folego_repository.dart';
+import '../../data/repositories/folego_repository_agenda.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
 import '../../core/utils/formatters.dart';
 import 'discovery_model.dart';
@@ -16,11 +17,28 @@ Future<DiscoveryData> loadDiscovery(
   final entries = <DiscoveryEntry>[];
   final pending = <DiscoveryEntry>[];
   final unavailable = <String>[];
+  final sources = <DiscoverySourceStatus>[];
+  final sourceNotes = <String, String>{};
   Future<void> source(String label, Future<void> Function() read) async {
     try {
       await read();
+      sources.add(
+        DiscoverySourceStatus(
+          name: label,
+          note: sourceNotes[label],
+          confirmed: true,
+          checkedAt: DateTime.now(),
+        ),
+      );
     } catch (_) {
       unavailable.add(label);
+      sources.add(
+        DiscoverySourceStatus(
+          name: label,
+          confirmed: false,
+          checkedAt: DateTime.now(),
+        ),
+      );
     }
   }
 
@@ -35,8 +53,9 @@ Future<DiscoveryData> loadDiscovery(
               kind: DiscoveryKind.transaction,
               title: row.description,
               subtitle:
-                  '${row.categoryName ?? 'sem categoria'} · ${row.accountName ?? 'lançamento'} · ${Formatters.fullDate.format(row.occurredAt)}',
-              searchContext: row.source,
+                  '${row.categoryName ?? 'sem categoria'} · ${row.accountName ?? 'lançamento'} · ${Formatters.fullDate.format(row.occurredAt)} · ${discoveryOrigin(row.source)} · ${row.status == 'confirmed' ? 'confirmado' : row.status}',
+              searchContext:
+                  '${discoveryOrigin(row.source)} · ${row.status == 'confirmed' ? 'confirmado' : row.status}',
               amount: row.amount,
               date: row.occurredAt,
             ),
@@ -73,18 +92,28 @@ Future<DiscoveryData> loadDiscovery(
         }
       }),
     source('agenda', () async {
-      final rows = await repository.getUpcomingEvents(
+      final rows = await repository.getFinancialAgenda(
         spaceId,
-        from: today.subtract(const Duration(days: 30)),
-        days: 61,
+        startDate: today.subtract(const Duration(days: 30)),
+        endDate: today.add(Duration(days: pendingOnly ? 7 : 30)),
+        limit: 200,
       );
+      if (rows.length == 200) {
+        unavailable.add('agenda completa (limite de 200 itens nesta consulta)');
+      }
       for (final row in rows) {
-        if (!row.isPending) continue;
+        if (row.realized || row.status == 'paid' || row.status == 'cancelled') {
+          continue;
+        }
         final due = DateTime(
           row.dueDate.year,
           row.dueDate.month,
           row.dueDate.day,
         );
+        if (due.isBefore(today.subtract(const Duration(days: 30))) ||
+            due.isAfter(today.add(Duration(days: pendingOnly ? 7 : 30)))) {
+          continue;
+        }
         final days = DateTime.utc(
           due.year,
           due.month,
@@ -96,9 +125,10 @@ Future<DiscoveryData> loadDiscovery(
             ? 'hoje'
             : 'em $days dias';
         final entry = DiscoveryEntry(
-          id: '${row.source}:${row.id}:${due.toIso8601String()}',
+          id: row.eventKey,
+          targetId: row.sourceId,
           kind: DiscoveryKind.scheduled,
-          title: row.name,
+          title: row.title,
           subtitle:
               '${row.sourceLabel.toLowerCase()} · $timing · ${Formatters.fullDate.format(due)}',
           amount: row.amount,
@@ -135,6 +165,12 @@ Future<DiscoveryData> loadDiscovery(
     if (pendingOnly)
       source('planilha', () async {
         final status = await repository.getSheetSyncStatus(spaceId);
+        String communication(DateTime? at) => at == null
+            ? 'sem registro'
+            : '${Formatters.fullDate.format(at)} ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
+        sourceNotes['planilha'] = status.configured
+            ? '${status.headline}. Envio pela planilha: ${communication(status.lastPushAt)}. Consulta pela planilha: ${communication(status.lastPullAt)}. A comunicação não confirma a aplicação de todas as linhas.'
+            : 'Planilha não conectada. O app funciona sem essa integração.';
         if (!status.configured) return;
         if (!status.enabled) {
           pending.add(
@@ -174,5 +210,6 @@ Future<DiscoveryData> loadDiscovery(
     entries: entries,
     pending: prioritizeDiscovery(pending),
     unavailable: unavailable..sort(),
+    sources: sources..sort((a, b) => a.name.compareTo(b.name)),
   );
 }

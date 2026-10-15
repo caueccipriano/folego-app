@@ -28,10 +28,14 @@ class UpcomingEventsScreen extends StatelessWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.initialSourceId,
+    this.initialDate,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  final String? initialSourceId;
+  final DateTime? initialDate;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +46,8 @@ class UpcomingEventsScreen extends StatelessWidget {
         key: key,
         repository: repository,
         spaceId: spaceId,
+      initialSourceId: initialSourceId,
+      initialDate: initialDate,
       ),
     );
   }
@@ -52,10 +58,14 @@ class _FinancialAgendaBody extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.initialSourceId,
+    this.initialDate,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  final String? initialSourceId;
+  final DateTime? initialDate;
 
   @override
   State<_FinancialAgendaBody> createState() => _FinancialAgendaBodyState();
@@ -67,6 +77,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
   String? _realizingKey;
   AgendaFilter _filter = AgendaFilter.all;
   bool _groupByMonth = false;
+  bool _focused = true;
   List<UpcomingFinancialEvent> _events = const [];
 
   @override
@@ -83,7 +94,10 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
       });
     }
     try {
-      final events = await widget.repository.getFinancialAgenda(widget.spaceId);
+      final events = await widget.repository.getFinancialAgenda(widget.spaceId,
+        startDate: _focused ? widget.initialDate : null,
+        endDate: _focused ? widget.initialDate : null,
+      );
       if (!mounted) return;
       setState(() {
         _events = events;
@@ -99,7 +113,10 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
   }
 
   List<UpcomingFinancialEvent> get _visibleEvents =>
-      _events.where((event) => event.matches(_filter)).toList(growable: false);
+      _events.where((event) => event.matches(_filter) &&
+        (!_focused || widget.initialSourceId == null ||
+          event.sourceId == widget.initialSourceId || event.invoiceId == widget.initialSourceId))
+        .toList(growable: false);
 
   Future<void> _openEvent(UpcomingFinancialEvent event) async {
     if (event.isRecurring) {
@@ -285,6 +302,9 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(0, 12, 0, 48),
         children: [
+          if(_focused && widget.initialSourceId != null)
+            ListTile(title:const Text('compromisso selecionado'),subtitle:const Text('Você abriu este item pela busca ou central de pendências.'),
+              trailing:TextButton(onPressed:(){setState(()=>_focused=false);_load();},child:const Text('ver todos'))),
           _AgendaHero(summary: summary),
           const SizedBox(height: 22),
           const AppSectionHeader(
