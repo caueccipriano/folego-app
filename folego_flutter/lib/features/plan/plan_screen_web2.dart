@@ -128,6 +128,7 @@ class _PlanScreenState extends State<PlanScreen> {
   List<BudgetOverviewItem> get _parents {
     final parents = _items.where((item) => item.isParent).toList();
     parents.sort((a, b) {
+      if (a.isPending != b.isPending) return a.isPending ? -1 : 1;
       final aExceeded = a.hasBudget && a.remainingAmount < 0;
       final bExceeded = b.hasBudget && b.remainingAmount < 0;
       if (aExceeded != bExceeded) return aExceeded ? -1 : 1;
@@ -847,8 +848,8 @@ class _PlanScreenState extends State<PlanScreen> {
       usedAmount: summary.actualAmount,
     );
     final remainingLabel = summary.remainingAmount >= 0
-        ? 'ainda pode gastar'
-        : 'passou do planejado';
+        ? 'abaixo dos limites (não é saldo em conta)'
+        : 'acima da soma dos limites';
     final remainingColor = summary.remainingAmount < 0
         ? AppColors.expenseText(brightness)
         : primaryText;
@@ -908,7 +909,7 @@ class _PlanScreenState extends State<PlanScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _Metric(
-                  label: 'realizado',
+                  label: 'gastos do mês',
                   value: Formatters.money(summary.actualAmount),
                   brightness: brightness,
                 ),
@@ -975,6 +976,48 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
             ),
           ],
+          const SizedBox(height: 10),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              key: const ValueKey('plan-explain-budget'),
+              tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+              childrenPadding: const EdgeInsets.fromLTRB(10, 4, 10, 14),
+              title: Text(
+                'de onde vêm esses valores?',
+                style: AppTypography.label(context, fontSize: 13,
+                  fontWeight: FontWeight.w700, color: primaryText),
+              ),
+              subtitle: Text(
+                'veja a conta e o que entra no mês',
+                style: AppTypography.body(context, fontSize: 11, color: secondaryText),
+              ),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '1. planejado = soma dos limites das subcategorias: '
+                    '${Formatters.money(summary.plannedAmount)}.\n\n'
+                    '2. gasto do mês = compras, parcelas atribuídas ao mês, '
+                    'saídas da conta e benefícios utilizados: '
+                    '${Formatters.money(summary.actualAmount)}.\n\n'
+                    '3. diferença = planejado − gastos: '
+                    '${Formatters.money(summary.plannedAmount)} − '
+                    '${Formatters.money(summary.actualAmount)} = '
+                    '${summary.remainingAmount < 0 ? "−" : "+"}'
+                    '${Formatters.money(summary.remainingAmount.abs())}.\n\n'
+                    '4. despesas sem limite também contam no total. '
+                    'gastos em “a classificar” estão incluídos, mas '
+                    'a categoria ainda deve ser revisada.\n\n'
+                    '5. pagar fatura ou transferir dinheiro entre suas contas '
+                    'não deve contar como compra nova. '
+                    'este cálculo não é o saldo bancário.',
+                    style: AppTypography.body(context, fontSize: 12, color: primaryText),
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (widget.onSpendingBehaviorRequested != null) ...[
             const SizedBox(height: 10),
             Align(
@@ -1060,7 +1103,7 @@ class _PlanScreenState extends State<PlanScreen> {
       children: [
         const AppSectionHeader(
           title: 'categorias',
-          subtitle: 'categorias acima do planejado primeiro · abra para ver as subcategorias',
+          subtitle: 'revise as pendências e abra uma categoria para conferir sua soma',
         ),
         const SizedBox(height: 10),
         if (_parents.isEmpty)
@@ -1416,12 +1459,12 @@ class _PlanScreenState extends State<PlanScreen> {
 
   String _summaryCopy(BudgetMonthSummary summary) {
     if (summary.progressState == BudgetProgressState.exceeded) {
-      return 'o realizado passou do total planejado para o mês';
+      return 'gastos acima dos limites somados: confira categorias e valores a classificar';
     }
     if (summary.progressState == BudgetProgressState.attention) {
       return 'você já consumiu boa parte do que planejou para o mês';
     }
-    return 'seu realizado continua dentro do total planejado';
+    return 'gastos dentro dos limites somados; isso não é o saldo bancário';
   }
 }
 
