@@ -34,6 +34,7 @@ import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
 import 'home_expense_navigation_scope.dart';
+import 'home_wallet_navigation_scope.dart';
 import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
@@ -770,7 +771,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHero({required FolegoSnapshot snapshot}) {
-    return HomeFinancialHero(snapshot: snapshot);
+    final wallet = HomeWalletNavigationScope.maybeOf(context);
+    return HomeFinancialHero(
+      snapshot: snapshot,
+      onOpenAccounts: wallet == null ? null : () => wallet.onOpenSection(0),
+      onOpenInvoices: wallet == null ? null : () => wallet.onOpenSection(1),
+      onOpenCommitments: () { _openUpcomingEvents(); },
+    );
   }
 
   Widget _buildQuickActions({
