@@ -1542,7 +1542,7 @@ class _DebtCard extends StatelessWidget {
             Formatters.money(debt.remainingBalance),
             style: AppTypography.money(context, fontSize: 21, color: primary),
           ),
-          if (progress != null && debt.originalAmount != null) ...[
+          if (progress != null && debt.paidAmount != null) ...[
             const SizedBox(height: 13),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -1555,7 +1555,7 @@ class _DebtCard extends StatelessWidget {
             ),
             const SizedBox(height: 7),
             Text(
-              '${Formatters.money(debt.paidAmount)} de ${Formatters.money(debt.originalAmount)} pagos · ${(progress * 100).round()}%',
+              '${Formatters.money(debt.paidAmount)} de ${Formatters.money(debt.currentScheduleTotal)} pagos no cronograma vigente · ${(progress * 100).round()}%',
               style: AppTypography.body(
                 context,
                 fontSize: 10,
