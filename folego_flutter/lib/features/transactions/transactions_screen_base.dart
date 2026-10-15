@@ -1194,7 +1194,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                           textInputAction: TextInputAction.search,
                           onChanged: onSearchChanged,
                           decoration: InputDecoration(
-                            hintText: 'buscar lançamento',
+                            hintText: 'descrição ou comentário',
                             prefixIcon: const Icon(AppIcons.search, size: 19),
                             suffixIcon: value.text.isEmpty
                                 ? null
