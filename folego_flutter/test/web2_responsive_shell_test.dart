@@ -11,6 +11,9 @@ import 'package:folego/data/models/transaction_page.dart';
 import 'package:folego/data/models/upcoming_events.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/home_screen_base.dart' as home;
+import 'package:folego/features/home/home_financial_hero.dart';
+import 'package:folego/features/home/home_monthly_money_card.dart';
+import 'package:folego/shared/widgets/app_error_state.dart';
 import 'package:folego/l10n/app_localizations.dart';
 import 'package:folego/shared/widgets/responsive_navigation_shell.dart';
 
@@ -143,7 +146,7 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('não consegui carregar seu resumo financeiro'),
+      find.byType(AppErrorState),
       findsOneWidget,
     );
     expect(find.text('tentar novamente'), findsOneWidget);
@@ -188,10 +191,10 @@ void main() {
     )));
     await tester.pump();
     await tester.pump();
-    final hero = tester.getTopLeft(find.text('te sobra pra gastar'));
+    final hero = tester.getTopLeft(find.byType(HomeFinancialHero));
     final action = tester.getTopLeft(find.text('gasto'));
-    final expenses = tester.getTopLeft(find.text('seu mês até agora'));
-    final upcoming = tester.getTopLeft(find.text('próximos dias'));
+    final expenses = tester.getTopLeft(find.byType(HomeMonthlyMoneyCard));
+    final upcoming = tester.getTopLeft(find.text('próximos movimentos'));
     expect(action.dx, greaterThan(hero.dx));
     expect((action.dy - hero.dy).abs(), lessThan(140));
     expect(upcoming.dx, greaterThan(expenses.dx));

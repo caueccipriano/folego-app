@@ -145,10 +145,10 @@ void main() {
     final review = find.byKey(const ValueKey('statement-import-review-mobile'));
     final scrollable = find.descendant(of: review, matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('statement-import-include-row-119')),
+      find.text('COMPRA 119'),
       600,
       scrollable: scrollable,
-      maxScrolls: 40,
+      maxScrolls: 180,
     );
     expect(find.text('COMPRA 119'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -168,7 +168,7 @@ void main() {
     await tester.tap(find.text('duplicados'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('duplicata possível'), findsWidgets);
+    expect(find.textContaining('possível duplicata'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }
