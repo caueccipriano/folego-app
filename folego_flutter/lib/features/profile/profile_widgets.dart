@@ -379,7 +379,7 @@ class _PaletteGrid extends StatelessWidget {
                     return Semantics(
                       button: true,
                       selected: active,
-                      label: 'tema ' + palette.name,
+                      label: 'tema ${palette.name}',
                       child: Material(
                         color: surface.superficie,
                         borderRadius: BorderRadius.circular(AppRadii.control),
