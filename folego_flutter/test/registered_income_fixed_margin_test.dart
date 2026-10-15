@@ -110,7 +110,7 @@ void main() {
     FinancialPrivacy.hidden.value = true;
     await tester.pumpAndSettle();
     expect(find.textContaining('33% das'), findsNothing);
-    expect(find.textContaining('R\, findsNothing);
+    expect(find.textContaining('3.000,00'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
