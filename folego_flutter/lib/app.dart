@@ -17,7 +17,9 @@ class FolegoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppThemeController.paletteId,
+      builder: (context, paletteId, _) => ValueListenableBuilder<ThemeMode>(
       valueListenable: AppThemeController.mode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
@@ -42,6 +44,7 @@ class FolegoApp extends StatelessWidget {
           },
         );
       },
+      ),
     );
   }
 }
