@@ -58,6 +58,7 @@ class TransactionDetail {
     this.categoryName,
     this.categoryParentName,
     this.legacyException = false,
+    this.recognizedPayment = false,
     this.legacyKind,
     this.legacyTitle,
     this.legacyMessage,
@@ -108,6 +109,7 @@ class TransactionDetail {
   final List<TransactionDetailAccountImpact> impacts;
 
   final bool legacyException;
+  final bool recognizedPayment;
   final String? legacyKind;
   final String? legacyTitle;
   final String? legacyMessage;
@@ -203,7 +205,7 @@ class TransactionDetail {
   bool get hasBenefitBacking => benefitAccountId != null;
 
   bool get canEdit {
-    if (legacyException || status != 'confirmed') return false;
+    if (recognizedPayment || legacyException || status != 'confirmed') return false;
     if (isSimple) return true;
     if (isCardPurchase) return hasCardPurchaseBacking;
     if (isBenefitExpense) return hasBenefitBacking;
@@ -211,7 +213,7 @@ class TransactionDetail {
   }
 
   bool get canReverse {
-    if (legacyException || status != 'confirmed') return false;
+    if (recognizedPayment || legacyException || status != 'confirmed') return false;
     if (isSimple) return true;
     if (isCardPurchase) return hasCardPurchaseBacking && cardPurchaseReversible;
     if (isBenefitExpense) return hasBenefitBacking;

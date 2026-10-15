@@ -24,6 +24,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
+import '../onboarding/getting_started_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import '../discovery/discovery_navigation.dart';
@@ -465,6 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 7),
                 HomeDataFreshness(
                   lastLoadedAt: _lastSuccessfulSnapshotAt,
+                  sourceFailures: [if(_monthlyMoneyUnavailable) 'resumo mensal',if(_projectionUnavailable) 'projeção',if(_recentUnavailable) 'lançamentos recentes',if(_upcomingUnavailable) 'agenda'],
                   failed: _error != null,
                   loading: _loading,
                   onRefresh: _load,
@@ -475,8 +477,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
                   quickActions,
                   const SizedBox(height: 12),
+                  if (showUpcoming) ...[upcoming, const SizedBox(height: 13)],
                   pulse,
-                  if (showUpcoming) ...[const SizedBox(height: 13), upcoming],
                   const SizedBox(height: 12),
                   smartCheckin,
                   const SizedBox(height: 14),
@@ -764,6 +766,8 @@ class _HomeScreenState extends State<HomeScreen> {
         key: const ValueKey('home-pending-center'),
         onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository, pendingOnly: true),
         icon: const Icon(AppIcons.transactions, size: 18), label: const Text('pendências')),
+      if (_snapshot?.needsIncomeSetup == true)
+        OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GettingStartedScreen(repository:widget.repository,spaceId:widget.space.id))),icon:const Icon(Icons.route_outlined,size:18),label:const Text('começar do meu jeito')),
     ]),
     ]);
   }

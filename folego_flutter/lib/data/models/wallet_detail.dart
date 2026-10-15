@@ -158,7 +158,7 @@ class WalletDebtInstallment {
 }
 
 class WalletInstallmentPosition {
-  const WalletInstallmentPosition({required this.purchaseId, required this.description, required this.cardId, required this.cardName, required this.installmentAmount, required this.currentInstallment, required this.totalInstallments, required this.completed, this.merchant, this.categoryName, this.nextDueDate});
+  const WalletInstallmentPosition({required this.purchaseId, required this.description, required this.cardId, required this.cardName, required this.installmentAmount, required this.currentInstallment, required this.totalInstallments, required this.completed, this.merchant, this.categoryName, this.nextDueDate, this.confirmedPaidCount, this.outstandingCount, this.outstandingAmount});
   final String purchaseId;
   final String description;
   final String? merchant;
@@ -170,13 +170,18 @@ class WalletInstallmentPosition {
   final int totalInstallments;
   final DateTime? nextDueDate;
   final bool completed;
+  final int? confirmedPaidCount;
+  final int? outstandingCount;
+  final double? outstandingAmount;
+  int get paidCount => confirmedPaidCount ?? (completed ? totalInstallments : (currentInstallment-1).clamp(0,totalInstallments));
+  int get remainingCount => outstandingCount ?? (totalInstallments-paidCount).clamp(0,totalInstallments);
   String get displayName {
     final value = merchant?.trim();
     return value == null || value.isEmpty ? financialDisplayDescription(description) : value;
   }
   double get progress {
     if (totalInstallments <= 0) return 0;
-    final rawCompleted = currentInstallment - 1;
+    final rawCompleted = paidCount;
     final completedCount = completed ? totalInstallments : rawCompleted < 0 ? 0 : rawCompleted > totalInstallments ? totalInstallments : rawCompleted;
     return (completedCount / totalInstallments).clamp(0.0, 1.0).toDouble();
   }
@@ -211,6 +216,9 @@ class WalletInstallmentPosition {
       totalInstallments: total,
       nextDueDate: completed ? null : _date(invoice?['due_date']),
       completed: completed,
+      confirmedPaidCount: valid.length-outstanding.length,
+      outstandingCount: outstanding.length,
+      outstandingAmount: outstanding.fold<double>(0,(sum,item)=>sum+_number(item['amount'])),
     );
   }
 }

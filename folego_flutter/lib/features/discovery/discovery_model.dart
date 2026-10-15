@@ -17,6 +17,7 @@ class DiscoveryEntry {
     this.date,
     this.priority = 3,
     this.searchContext = '',
+    this.targetId,
   });
   final String id;
   final DiscoveryKind kind;
@@ -26,6 +27,7 @@ class DiscoveryEntry {
   final DateTime? date;
   final int priority;
   final String searchContext;
+  final String? targetId;
 
   String get kindLabel => switch (kind) {
     DiscoveryKind.transaction => 'lançamentos',
@@ -86,13 +88,33 @@ List<DiscoveryEntry> prioritizeDiscovery(Iterable<DiscoveryEntry> entries) {
   return result;
 }
 
+class DiscoverySourceStatus {
+  const DiscoverySourceStatus({
+    required this.name,
+    required this.confirmed,
+    required this.checkedAt,
+  });
+  final String name;
+  final bool confirmed;
+  final DateTime checkedAt;
+}
+
+String discoveryOrigin(String source) => switch (source) {
+  'sheet-sync' => 'planilha',
+  'statement-import' => 'extrato importado',
+  'app' || 'manual' => 'registro no Fôlego',
+  _ => 'origem: $source',
+};
+
 class DiscoveryData {
   const DiscoveryData({
     this.entries = const [],
     this.pending = const [],
     this.unavailable = const [],
+    this.sources = const [],
   });
   final List<DiscoveryEntry> entries;
   final List<DiscoveryEntry> pending;
   final List<String> unavailable;
+  final List<DiscoverySourceStatus> sources;
 }

@@ -16,11 +16,26 @@ Future<DiscoveryData> loadDiscovery(
   final entries = <DiscoveryEntry>[];
   final pending = <DiscoveryEntry>[];
   final unavailable = <String>[];
+  final sources = <DiscoverySourceStatus>[];
   Future<void> source(String label, Future<void> Function() read) async {
     try {
       await read();
+      sources.add(
+        DiscoverySourceStatus(
+          name: label,
+          confirmed: true,
+          checkedAt: DateTime.now(),
+        ),
+      );
     } catch (_) {
       unavailable.add(label);
+      sources.add(
+        DiscoverySourceStatus(
+          name: label,
+          confirmed: false,
+          checkedAt: DateTime.now(),
+        ),
+      );
     }
   }
 
@@ -35,8 +50,9 @@ Future<DiscoveryData> loadDiscovery(
               kind: DiscoveryKind.transaction,
               title: row.description,
               subtitle:
-                  '${row.categoryName ?? 'sem categoria'} · ${row.accountName ?? 'lançamento'} · ${Formatters.fullDate.format(row.occurredAt)}',
-              searchContext: row.source,
+                  '${row.categoryName ?? 'sem categoria'} · ${row.accountName ?? 'lançamento'} · ${Formatters.fullDate.format(row.occurredAt)} · ${discoveryOrigin(row.source)} · ${row.status == 'confirmed' ? 'confirmado' : row.status}',
+              searchContext:
+                  '${discoveryOrigin(row.source)} · ${row.status == 'confirmed' ? 'confirmado' : row.status}',
               amount: row.amount,
               date: row.occurredAt,
             ),
@@ -97,6 +113,7 @@ Future<DiscoveryData> loadDiscovery(
             : 'em $days dias';
         final entry = DiscoveryEntry(
           id: '${row.source}:${row.id}:${due.toIso8601String()}',
+          targetId: row.id,
           kind: DiscoveryKind.scheduled,
           title: row.name,
           subtitle:
@@ -174,5 +191,6 @@ Future<DiscoveryData> loadDiscovery(
     entries: entries,
     pending: prioritizeDiscovery(pending),
     unavailable: unavailable..sort(),
+    sources: sources..sort((a, b) => a.name.compareTo(b.name)),
   );
 }

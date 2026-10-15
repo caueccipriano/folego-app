@@ -16,6 +16,7 @@ import '../../data/repositories/folego_repository_card_payments.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../shared/widgets/app_sheet_handle.dart';
 import 'card_invoice_payment_state.dart';
+import 'existing_payment_picker.dart';
 
 Future<bool?> showCardInvoicePaymentSheet({
   required BuildContext context,
@@ -429,6 +430,17 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 18),
+                OutlinedButton.icon(
+                  onPressed: _saving || widget.card.invoiceId == null ? null : () async {
+                    final linked = await showExistingPaymentPicker(context,
+                      repository: widget.repository, spaceId: widget.spaceId,
+                      targetKind: 'invoice', targetId: widget.card.invoiceId!,
+                      targetName: 'fatura ${widget.card.name}', outstanding: widget.card.invoiceBalance);
+                    if (linked == true && mounted) Navigator.pop(context, true);
+                  },
+                  icon: const Icon(Icons.link), label: const Text('já paguei: vincular lançamento'),
                 ),
                 const SizedBox(height: 18),
                 Text(

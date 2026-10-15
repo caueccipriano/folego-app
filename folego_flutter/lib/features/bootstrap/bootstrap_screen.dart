@@ -9,6 +9,7 @@ import '../../data/models/financial_space.dart';
 import '../../data/models/onboarding_state.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../onboarding/getting_started_screen.dart';
 import '../shell/home_shell.dart';
 
 class BootstrapScreen extends StatefulWidget {
@@ -134,6 +135,10 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
     if (!_state!.onboardingCompleted && !_introSeen) {
       return OnboardingScreen(
         onCompleted: _completeIntro,
+        onChooseStart: () async {
+          await Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GettingStartedScreen(repository:widget.repository,spaceId:_space!.id)));
+          if(mounted)await _completeIntro();
+        },
         onSignOut: widget.client.auth.signOut,
       );
     }

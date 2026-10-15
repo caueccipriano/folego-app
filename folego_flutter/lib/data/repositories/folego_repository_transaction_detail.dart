@@ -281,6 +281,7 @@ extension FolegoRepositoryTransactionDetail on FolegoRepository {
       categoryParentName: parentName,
       impacts: impacts,
       legacyException: legacy,
+      recognizedPayment: metadata['recognized_payment'] == true,
       legacyKind: legacyKind,
       legacyTitle: legacyCopy.$1,
       legacyMessage: legacyCopy.$2,

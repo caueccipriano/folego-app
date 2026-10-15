@@ -141,6 +141,29 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       ? 'Agenda: últimos 30 dias e próximos 7. Até 500 categorias a revisar e uma amostra dos retornos recentes da planilha; confira antes de agir.'
                       : 'Todo o histórico de lançamentos, contas e cartões deste espaço. Agenda: últimos 30 dias e próximos 30. Busque também por categoria.',
                 ),
+                if (_data?.sources.isNotEmpty ?? false)
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('fontes e atualização'),
+                    subtitle: const Text(
+                      'Consulta ao Fôlego; não confirma saldo bancário em tempo real.',
+                    ),
+                    children: [
+                      for (final source in _data!.sources)
+                        ListTile(
+                          dense: true,
+                          leading: Icon(
+                            source.confirmed
+                                ? Icons.check_circle_outline
+                                : Icons.cloud_off_outlined,
+                          ),
+                          title: Text(source.name),
+                          subtitle: Text(
+                            '${source.confirmed ? 'consulta concluída' : 'consulta falhou'} · ${source.checkedAt.hour.toString().padLeft(2, '0')}:${source.checkedAt.minute.toString().padLeft(2, '0')}',
+                          ),
+                        ),
+                    ],
+                  ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: _query,
@@ -230,7 +253,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 if (!_loading && !_failed) ...[
                   const SizedBox(height: 12),
                   Text(
-                    '${results.length} ${pending ? 'itens para conferir' : 'resultados'}',
+                    '${results.length} ${pending ? (results.length == 1 ? 'item para conferir' : 'itens para conferir') : (results.length == 1 ? 'resultado' : 'resultados')}',
                   ),
                   if (results.isEmpty)
                     Padding(

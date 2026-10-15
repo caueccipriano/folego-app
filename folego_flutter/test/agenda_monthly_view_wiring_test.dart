@@ -9,7 +9,7 @@ void main() {
     expect(source, contains("ValueKey('agenda-view-urgency')"));
     expect(source, contains('DateTime(event.dueDate.year, event.dueDate.month)'));
     expect(source, contains('Formatters.monthYear.format(month)'));
-    expect(source, contains('await widget.repository.getFinancialAgenda(widget.spaceId)'));
+    expect(source, contains('await widget.repository.getFinancialAgenda(widget.spaceId,'));
     expect(source, contains('onRealize: event.isRecurring ? () => _realize(event) : null'));
   });
 }

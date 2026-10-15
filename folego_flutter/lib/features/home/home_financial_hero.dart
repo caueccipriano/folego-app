@@ -520,7 +520,7 @@ class _FolegoExplanation extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Aqui você vê os valores que já vieram do seu resumo financeiro. O app não refaz a conta nesta tela.',
+              'Seu Fôlego considera o dinheiro livre após compromissos e reservas. Se houver orçamento flexível, vale o menor limite disponível. Entradas futuras não são saldo de hoje.',
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -529,7 +529,16 @@ class _FolegoExplanation extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             _ExplanationRow(
-              label: 'dinheiro disponível',
+              label: 'data de referência',
+              value: Formatters.fullDate.format(snapshot.asOfDate),
+            ),
+            _ExplanationRow(
+              label: 'período considerado',
+              value: snapshot.nextIncomeDate == null ? 'próxima entrada ainda não definida'
+                : 'até ${Formatters.fullDate.format(snapshot.nextIncomeDate!)}',
+            ),
+            _ExplanationRow(
+              label: 'saldo líquido registrado',
               value: Formatters.money(snapshot.liquidBalance),
             ),
             if (snapshot.protectedBalance > 0)
@@ -540,6 +549,10 @@ class _FolegoExplanation extends StatelessWidget {
             _ExplanationRow(
               label: 'compromissos até receber',
               value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome),
+            ),
+            _ExplanationRow(
+              label: 'margem de caixa após compromissos',
+              value: Formatters.money(snapshot.cashHeadroom),
             ),
             if (snapshot.budgetConfigured) ...[
               _ExplanationRow(
