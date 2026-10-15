@@ -1126,6 +1126,11 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     final icon = CategoryVisuals.iconFor(category: parent.categoryName);
     final percentage = (parent.usageRatio * 100).round();
+    final sumOfChildren = children.fold<double>(
+      0, (sum, child) => sum + child.actualAmount,
+    );
+    final amountWithoutSubcategory =
+        (parent.actualAmount - sumOfChildren).clamp(0.0, double.infinity);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -1175,14 +1180,16 @@ class _PlanScreenState extends State<PlanScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              parent.hasBudget
+                              parent.isPending
+                                  ? '${Formatters.money(parent.actualAmount)} aguardando categoria · já entra no total'
+                                  : parent.hasBudget
                                   ? parent.remainingAmount >= 0
                                         ? '${Formatters.money(parent.remainingAmount)} ainda disponíveis'
                                         : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
                                   : parent.hasActivity
                                   ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
                                   : 'sem limites nas subcategorias',
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.label(
                                 context,
@@ -1194,6 +1201,15 @@ class _PlanScreenState extends State<PlanScreen> {
                                     : secondaryText,
                               ),
                             ),
+                            if (parent.hasBudget) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                '${Formatters.money(parent.actualAmount)} gastos / '
+                                '${Formatters.money(parent.plannedAmount)} de limite',
+                                style: AppTypography.body(
+                                  context, fontSize: 11, color: secondaryText),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1253,16 +1269,42 @@ class _PlanScreenState extends State<PlanScreen> {
                   border: Border(top: BorderSide(color: border)),
                 ),
                 child: Column(
-                  children: children
-                      .map(
-                        (child) => _buildChildCard(
-                          parent,
-                          child,
-                          familyColor,
-                          brightness,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 3, 5, 12),
+                      child: Text(
+                        amountWithoutSubcategory > .009
+                            ? 'soma: ${Formatters.money(sumOfChildren)} '
+                                'nas subcategorias + '
+                                '${Formatters.money(amountWithoutSubcategory)} '
+                                'sem subcategoria = '
+                                '${Formatters.money(parent.actualAmount)}'
+                            : 'total da categoria: '
+                                '${Formatters.money(parent.actualAmount)} '
+                                '(soma dos gastos das subcategorias)',
+                        style: AppTypography.body(
+                          context, fontSize: 11, color: secondaryText),
+                      ),
+                    ),
+                    ...children.map(
+                      (child) => _buildChildCard(
+                        parent, child, familyColor, brightness),
+                    ),
+                    if (amountWithoutSubcategory > .009)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(7, 5, 7, 9),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'sem subcategoria: '
+                            '${Formatters.money(amountWithoutSubcategory)} '
+                            '— os lançamentos precisam ser detalhados',
+                            style: AppTypography.body(
+                              context, fontSize: 11, color: secondaryText),
+                          ),
                         ),
-                      )
-                      .toList(growable: false),
+                      ),
+                  ],
                 ),
               ),
           ],
@@ -1399,7 +1441,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       Expanded(
                         child: Text(
                           child.hasActivity
-                              ? '${Formatters.money(child.actualAmount)} realizado · sem limite'
+                              ? '${Formatters.money(child.actualAmount)} em gastos · sem limite, mas incluído no total'
                               : 'nenhum gasto neste mês · sem limite',
                           style: AppTypography.body(
                             context,
