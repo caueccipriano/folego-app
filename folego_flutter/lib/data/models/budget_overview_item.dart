@@ -160,6 +160,10 @@ class BudgetOverviewItem {
 
   bool get isParent => parentId == null;
 
+  /// Confirmed spending waiting for an economic category. Count it in the
+  /// monthly total, but never offer a budget limit for this technical bucket.
+  bool get isPending => budgetSource == 'pending';
+
   bool get isSubcategory => parentId != null;
 
   bool get hasBudget => plannedAmount > 0;
