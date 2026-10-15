@@ -8,6 +8,7 @@ import '../models/folego_snapshot.dart';
 import '../models/sheet_sync_status.dart';
 import '../models/sheet_reconciliation_audit.dart';
 import '../models/monthly_money_summary.dart';
+import '../models/spending_behavior.dart';
 import '../models/projection_model.dart';
 import '../models/onboarding_state.dart';
 import '../models/recurring_item.dart';
@@ -20,6 +21,91 @@ class FolegoRepository {
   FolegoRepository(this._client);
 
   final SupabaseClient _client;
+
+
+  /// Confirmed expenses by purchase date, rather than card installment month.
+  /// Excludes payment of the invoice, transfers and refunds to avoid counting
+  /// them as additional purchases. A missing classification stays unknown.
+  Future<List<SpendingBehaviorEntry>> getSpendingBehaviorEntries({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    const pageSize = 200;
+    const maxRows = 12000;
+    final start = DateTime(periodMonth.year, periodMonth.month);
+    final end = DateTime(periodMonth.year, periodMonth.month + 1);
+    final entries = <SpendingBehaviorEntry>[];
+
+    for (var offset = 0; offset < maxRows; offset += pageSize) {
+      final response = await _client
+          .from('financial_events')
+          .select(
+            'id,description,amount,occurred_at,event_type,'
+            'behavior_class,necessity_class,frequency_class',
+          )
+          .eq('space_id', spaceId)
+          .eq('status', 'confirmed')
+          .inFilter(
+            'event_type',
+            const ['expense', 'card_purchase', 'benefit_expense'],
+          )
+          .gte('occurred_at', start.toUtc().toIso8601String())
+          .lt('occurred_at', end.toUtc().toIso8601String())
+          .order('occurred_at', ascending: false)
+          .order('id', ascending: false)
+          .range(offset, offset + pageSize - 1);
+
+      final rows = List<Map<String, dynamic>>.from(response);
+      entries.addAll(rows.map(SpendingBehaviorEntry.fromJson));
+      if (rows.length < pageSize) return entries;
+    }
+    // Never silently display an incomplete total.
+    throw StateError('muitos lançamentos para resumir com segurança');
+  }
+
+  /// Changes only the spending-behavior annotation. The current necessity,
+  /// frequency and all user tags MUST be passed through unmodified because
+  /// the existing RPC replaces all annotation fields and tag associations.
+  Future<void> setSpendingBehavior({
+    required String spaceId,
+    required SpendingBehaviorEntry entry,
+    required ExpenseBehavior behavior,
+  }) async {
+    final current = await _client
+        .from('financial_events')
+        .select('necessity_class,behavior_class,frequency_class')
+        .eq('space_id', spaceId)
+        .eq('id', entry.id)
+        .maybeSingle();
+    if (current == null) throw StateError('lançamento indisponível');
+
+    final currentBehavior = ExpenseBehavior.fromDatabase(
+      current['behavior_class'] as String?,
+    );
+    if (currentBehavior != entry.behavior) {
+      throw StateError('classificação atualizada em outra sessão; recarregue');
+    }
+    final tagResponse = await _client
+        .from('financial_event_tags')
+        .select('tag_id')
+        .eq('space_id', spaceId)
+        .eq('event_id', entry.id);
+    final tags = List<Map<String, dynamic>>.from(tagResponse)
+        .map((row) => row['tag_id'])
+        .whereType<String>()
+        .toList(growable: false);
+
+    await _client.rpc('set_event_annotations', params: {
+      'p_space_id': spaceId,
+      'p_event_id': entry.id,
+      'p_behavior_class': behavior == ExpenseBehavior.unclassified
+          ? null
+          : behavior.databaseValue,
+      'p_necessity_class': current['necessity_class'],
+      'p_frequency_class': current['frequency_class'],
+      'p_tag_ids': tags,
+    });
+  }
 
   // ---------------------------------------------------------------------------
   // ESPAÇO / PERFIL
