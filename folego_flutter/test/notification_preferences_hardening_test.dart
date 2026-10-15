@@ -71,7 +71,8 @@ void main() {
         fallbackSpaceId: 'space-1',
       );
 
-      expect(preferences.dailySummaryHour, 9);
+      // O resumo diário usa 19h como padrão, inclusive para horário inválido.
+      expect(preferences.dailySummaryHour, 19);
       expect(preferences.dailySummaryMinute, 0);
       expect(preferences.quietStartHour, 22);
       expect(preferences.quietStartMinute, 0);
