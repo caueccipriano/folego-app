@@ -1601,7 +1601,7 @@ class _ProjectionMonthDetail extends StatelessWidget {
               signed: true,
             ),
             _DetailLine(
-              label: 'dívidas / financiamentos',
+              label: 'parcelas de dívidas previstas',
               value: -month.debts,
               signed: true,
             ),
@@ -1610,6 +1610,20 @@ class _ProjectionMonthDetail extends StatelessWidget {
               value: -month.reserveTransfers,
               signed: true,
             ),
+            if (month.debts > 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                'o valor de dívidas aqui é a soma das parcelas previstas no mês, '
+                'não o saldo devedor para quitação. se uma parcela já é '
+                'descontada do salário líquido, não a registre novamente como '
+                'saída da conta.',
+                style: AppTypography.body(
+                  context,
+                  fontSize: 11,
+                  color: secondary,
+                ),
+              ),
+            ],
             _DetailLine(
               label: 'investimentos planejados',
               value: -month.investments,
