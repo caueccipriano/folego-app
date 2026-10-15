@@ -121,6 +121,8 @@ abstract final class AppTheme {
 
           secondary: tokens.acao,
           onSecondary: tokens.acaoSobre,
+          tertiary: tokens.acao,
+          onTertiary: tokens.acaoSobre,
 
           surface: tokens.superficie,
           onSurface: tokens.textoPrincipal,
@@ -165,6 +167,8 @@ abstract final class AppTheme {
 
           secondary: tokens.acao,
           onSecondary: tokens.acaoSobre,
+          tertiary: tokens.acao,
+          onTertiary: tokens.acaoSobre,
 
           surface: tokens.superficie,
           onSurface: tokens.textoPrincipal,
@@ -391,7 +395,7 @@ abstract final class AppTheme {
           }
           if (states.contains(WidgetState.selected)) {
             return brightness == Brightness.dark
-                ? AppColors.darkPrimaryText
+                ? tokens.textoPrincipal
                 : tokens.marcaSobre;
           }
           return secondaryText;
