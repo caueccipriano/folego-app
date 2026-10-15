@@ -1543,12 +1543,6 @@ class _DebtCard extends StatelessWidget {
             style: AppTypography.money(context, fontSize: 21, color: primary),
           ),
           if (progress != null && debt.originalAmount != null) ...[
-            const SizedBox(height: 8),
-            Text('${item.paidCount} pagas · ${item.remainingCount} em aberto',
-              style: AppTypography.body(context,fontSize:11,color:secondary)),
-            if (item.outstandingAmount != null)
-              Text('saldo das parcelas em aberto: ${Formatters.money(item.outstandingAmount)}',
-                style: AppTypography.body(context,fontSize:11,color:secondary)),
             const SizedBox(height: 13),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -1667,6 +1661,12 @@ class _InstallmentCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Text('${item.paidCount} pagas · ${item.remainingCount} em aberto',
+              style: AppTypography.body(context,fontSize:11,color:secondary)),
+            if (item.outstandingAmount != null)
+              Text('valor em faturas ainda não quitadas: ${Formatters.money(item.outstandingAmount)}',
+                style: AppTypography.body(context,fontSize:11,color:secondary)),
             const SizedBox(height: 13),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),

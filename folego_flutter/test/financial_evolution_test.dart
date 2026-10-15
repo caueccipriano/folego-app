@@ -76,7 +76,7 @@ void main() {
     'horizon_months': 12,
     'summary': {'minimum_balance': 1000, 'ending_balance': 1500},
   });
-  for (final width in [320.0, 768.0, 1440.0])
+  for (final width in [320.0, 768.0, 1440.0]) {
     for (final brightness in Brightness.values) {
       testWidgets(
         'comparison at $width $brightness chooses simulation without writes',
@@ -125,4 +125,5 @@ void main() {
         },
       );
     }
+  }
 }

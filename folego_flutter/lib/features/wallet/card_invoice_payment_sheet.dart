@@ -438,7 +438,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                       repository: widget.repository, spaceId: widget.spaceId,
                       targetKind: 'invoice', targetId: widget.card.invoiceId!,
                       targetName: 'fatura ${widget.card.name}', outstanding: widget.card.invoiceBalance);
-                    if (linked == true && mounted) Navigator.pop(context, true);
+                    if (linked == true && context.mounted) Navigator.pop(context, true);
                   },
                   icon: const Icon(Icons.link), label: const Text('já paguei: vincular lançamento'),
                 ),

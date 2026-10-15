@@ -195,7 +195,7 @@ class _DebtPaymentSheetState extends State<DebtPaymentSheet> {
                   targetKind: 'debt', targetId: widget.installment.id,
                   targetName: '${widget.debt.name} · parcela ${widget.installment.installmentNumber}',
                   outstanding: widget.installment.remainingAmount);
-                if (linked == true && mounted) Navigator.pop(context, true);
+                if (linked == true && context.mounted) Navigator.pop(context, true);
               },
               icon: const Icon(Icons.link),
               label: const Text('já paguei: vincular lançamento'),

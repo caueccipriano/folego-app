@@ -98,11 +98,12 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
       });
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _saving = false;
           _error = 'Não foi possível vincular. O lançamento pode já ter sido usado ou o saldo do compromisso mudou. Atualize e confira novamente.';
         });
+      }
     }
   }
 
@@ -134,7 +135,7 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
             child: FutureBuilder<List<TransactionItem>>(
               future: _rows,
               builder: (context, snapshot) {
-                if (snapshot.hasError)
+                if (snapshot.hasError) {
                   return Column(
                     children: [
                       const Text('Não foi possível consultar as saídas.'),
@@ -149,8 +150,10 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
                       ),
                     ],
                   );
-                if (!snapshot.hasData)
+                }
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
                 final rows = snapshot.data!
                     .where(
                       (r) => '${r.description} ${r.accountName}'
@@ -158,12 +161,13 @@ class _ExistingPaymentPickerState extends State<_ExistingPaymentPicker> {
                           .contains(_query),
                     )
                     .toList();
-                if (rows.isEmpty)
+                if (rows.isEmpty) {
                   return const Center(
                     child: Text(
                       'Nenhuma saída elegível. Você pode voltar e registrar um novo pagamento.',
                     ),
                   );
+                }
                 return ValueListenableBuilder<bool>(
                   valueListenable: FinancialPrivacy.hidden,
                   builder: (context, hidden, _) => ListView.builder(

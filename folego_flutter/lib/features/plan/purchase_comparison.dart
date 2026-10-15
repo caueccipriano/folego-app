@@ -109,7 +109,7 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
         child: FutureBuilder<List<ProjectionResult>>(
           future: _results,
           builder: (context, snapshot) {
-            if (snapshot.hasError)
+            if (snapshot.hasError) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -122,11 +122,13 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
                   ),
                 ],
               );
-            if (!snapshot.hasData)
+            }
+            if (!snapshot.hasData) {
               return const Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(child: CircularProgressIndicator()),
               );
+            }
             final base = snapshot.data!.first;
             return Column(
               mainAxisSize: MainAxisSize.min,
