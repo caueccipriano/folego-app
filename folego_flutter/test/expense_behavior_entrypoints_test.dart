@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/transaction_detail.dart';
-import 'package:folego_flutter/features/transactions/transaction_detail_sheet_v2.dart';
+import 'package:folego/data/models/transaction_detail.dart';
+import 'package:folego/features/transactions/transaction_detail_sheet_v2.dart';
 
 TransactionDetail expenseFixture(String type, {String status = 'confirmed'}) {
   return TransactionDetail(
