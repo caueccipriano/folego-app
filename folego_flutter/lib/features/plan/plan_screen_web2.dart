@@ -10,6 +10,7 @@ import '../../core/theme/category_visuals.dart';
 import '../../core/ui/app_snackbars.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
+import 'budget_pace_context.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
@@ -833,6 +834,12 @@ class _PlanScreenState extends State<PlanScreen> {
     final border = AppColors.border(brightness);
     final progressColor = _progressColor(summary.progressState, brightness);
     final percentage = (summary.usageRatio * 100).round();
+    final pace = currentMonthBudgetPace(
+      periodMonth: _month,
+      today: DateTime.now(),
+      plannedAmount: summary.plannedAmount,
+      usedAmount: summary.actualAmount,
+    );
     final remainingLabel = summary.remainingAmount >= 0
         ? 'ainda pode gastar'
         : 'passou do planejado';
@@ -939,6 +946,25 @@ class _PlanScreenState extends State<PlanScreen> {
                 color: secondaryText,
               ),
             ),
+          if (pace != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              '${pace.elapsedPercent}% do mês · ${pace.usedPercent}% do orçamento utilizado',
+              key: const ValueKey('plan-budget-pace-context'),
+              style: AppTypography.body(
+                context, fontSize: 12, color: primaryText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'comparação simples com o calendário, não é previsão: '
+              'contas e compras não acontecem em ritmo uniforme.',
+              style: AppTypography.body(
+                context, fontSize: 11, color: secondaryText,
+              ),
+            ),
+          ],
           if (widget.onFlexibleBudgetRequested != null) ...[
             const SizedBox(height: 10),
             Align(
