@@ -246,7 +246,7 @@ abstract final class AppTheme {
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         foregroundColor: primaryText,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(color: primaryText),
@@ -260,7 +260,7 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         elevation: 0,
         color: surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
           side: BorderSide(color: border),
@@ -392,7 +392,7 @@ abstract final class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return brightness == Brightness.dark
                 ? AppColors.darkPrimaryText
-                : Colors.white;
+                : tokens.marcaSobre;
           }
           return secondaryText;
         }),
@@ -469,7 +469,7 @@ abstract final class AppTheme {
       // -----------------------------------------------------------------------
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
 
         titleTextStyle: textTheme.titleLarge?.copyWith(color: primaryText),
 
@@ -488,7 +488,7 @@ abstract final class AppTheme {
         backgroundColor: surface,
         modalBackgroundColor: surface,
 
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
 
         showDragHandle: true,
 
@@ -512,7 +512,7 @@ abstract final class AppTheme {
       // NAVIGATION
       // -----------------------------------------------------------------------
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
 
         elevation: 0,
 
@@ -552,13 +552,13 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
 
         backgroundColor: brightness == Brightness.dark
-            ? AppColors.darkSurface
-            : AppColors.lightPrimaryText,
+            ? tokens.superficieAlta
+            : tokens.textoPrincipal,
 
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: brightness == Brightness.dark
-              ? AppColors.darkPrimaryText
-              : Colors.white,
+              ? tokens.textoPrincipal
+              : tokens.fundo,
         ),
 
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control)),
