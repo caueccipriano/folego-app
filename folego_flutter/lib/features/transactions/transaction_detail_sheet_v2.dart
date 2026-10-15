@@ -159,7 +159,7 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
     return showDialog<bool>(
       context: context,
       // Dim the detail behind the editor to avoid competing modal layers.
-      barrierColor: Colors.black.withValues(alpha: .72),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: .72),
       builder: (dialogContext) => Dialog(
         backgroundColor: AppColors.surface(Theme.of(dialogContext).brightness),
         shape: RoundedRectangleBorder(
