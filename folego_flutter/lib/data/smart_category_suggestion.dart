@@ -113,7 +113,7 @@ SmartCategorySuggestion? suggestSmartCategory({
   for (final category in catalog.values) {
     final phrases = <String>{category.name, ...category.searchAliases}
         .map(_normalizeCategoryText)
-        .where((part) => part.length >= 5 &&
+        .where((part) => part.length >= 4 &&
             !_genericDescriptions.contains(part) &&
             !const <String>{'outros', 'geral', 'diversos', 'receitas', 'despesas'}
                 .contains(part));
