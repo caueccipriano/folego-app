@@ -182,11 +182,18 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('tipo de gasto salvo.')));
-    } catch (_) {
+    } catch (error) {
+      final concurrent = error is StateError &&
+          error.message.toString().contains('classificação alterada');
+      if (concurrent) {
+        await _load();
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(
-            'não foi possível salvar. atualize e tente novamente.')));
+          SnackBar(content: Text(concurrent
+              ? 'outro dispositivo alterou este gasto. a lista foi atualizada.'
+              : 'não foi possível salvar. atualize e tente novamente.')),
+        );
       }
     } finally {
       if (mounted) setState(() => _savingId = null);
