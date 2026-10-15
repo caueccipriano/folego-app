@@ -218,3 +218,80 @@ abstract final class AppColorSelection {
     selected.value = FolegoColorTokens.palette(id).id;
   }
 }
+
+/// Compatibilidade cromática de categorias e gráficos: valores imutáveis
+/// centralizados aqui, fora dos widgets. Migração sem mudança visual.
+abstract final class FolegoLegacyColors {
+  static const transparent = Color(0x00000000);
+  static const hexFF6C3CE9 = Color(0xFF6C3CE9);
+  static const hexFF967CF4 = Color(0xFF967CF4);
+  static const hexFFC6F135 = Color(0xFFC6F135);
+  static const hexFFF5F1E8 = Color(0xFFF5F1E8);
+  static const hexFFFFFFFF = Color(0xFFFFFFFF);
+  static const hexFFE4DFD2 = Color(0xFFE4DFD2);
+  static const hexFF16150F = Color(0xFF16150F);
+  static const hexFF6B6656 = Color(0xFF6B6656);
+  static const hexFF101014 = Color(0xFF101014);
+  static const hexFF1D1D24 = Color(0xFF1D1D24);
+  static const hexFF2E2E38 = Color(0xFF2E2E38);
+  static const hexFFF0EFEA = Color(0xFFF0EFEA);
+  static const hexFF9B98A8 = Color(0xFF9B98A8);
+  static const hexFF3B6D11 = Color(0xFF3B6D11);
+  static const hexFFEAF3DE = Color(0xFFEAF3DE);
+  static const hexFFA9DB6B = Color(0xFFA9DB6B);
+  static const hexFF712B13 = Color(0xFF712B13);
+  static const hexFFFAECE7 = Color(0xFFFAECE7);
+  static const hexFFF0A98A = Color(0xFFF0A98A);
+  static const hexFFB39CF5 = Color(0xFFB39CF5);
+  static const hexFFD4457A = Color(0xFFD4457A);
+  static const hexFFF096B8 = Color(0xFFF096B8);
+  static const hexFF993C1D = Color(0xFF993C1D);
+  static const hexFFE8A87C = Color(0xFFE8A87C);
+  static const hexFFFBEAF0 = Color(0xFFFBEAF0);
+  static const hexFF993556 = Color(0xFF993556);
+  static const hexFF3A2530 = Color(0xFF3A2530);
+  static const hexFF22301A = Color(0xFF22301A);
+  static const hexFF58A8A0 = Color(0xFF58A8A0);
+  static const hexFF5969C9 = Color(0xFF5969C9);
+  static const hexFFF0ECE2 = Color(0xFFF0ECE2);
+  static const hexFF25252D = Color(0xFF25252D);
+  static const hexFF9B7BFF = Color(0xFF9B7BFF);
+  static const hexFF53B9FF = Color(0xFF53B9FF);
+  static const hexFF1774B8 = Color(0xFF1774B8);
+  static const hexFFFF62B0 = Color(0xFFFF62B0);
+  static const hexFFFFD84D = Color(0xFFFFD84D);
+  static const hexFF9A6A00 = Color(0xFF9A6A00);
+  static const hexFFFF9F43 = Color(0xFFFF9F43);
+  static const hexFFB35A00 = Color(0xFFB35A00);
+  static const hexFFFF6B6B = Color(0xFFFF6B6B);
+  static const hexFFB33A3A = Color(0xFFB33A3A);
+  static const hexFF7C8CFF = Color(0xFF7C8CFF);
+  static const hexFF4A57C8 = Color(0xFF4A57C8);
+  static const hexFF4DE1C1 = Color(0xFF4DE1C1);
+  static const hexFF16816D = Color(0xFF16816D);
+  static const hexFFC96BFF = Color(0xFFC96BFF);
+  static const hexFF8242B5 = Color(0xFF8242B5);
+  static const hexFF6FE7A1 = Color(0xFF6FE7A1);
+  static const hexFF2C8B55 = Color(0xFF2C8B55);
+  static const hexFFFF8A70 = Color(0xFFFF8A70);
+  static const hexFFB84F3B = Color(0xFFB84F3B);
+  static const hexFFFF7A9C = Color(0xFFFF7A9C);
+  static const hexFFB93E66 = Color(0xFFB93E66);
+  static const hexFF5E7F14 = Color(0xFF5E7F14);
+  static const hexFF5DDCFF = Color(0xFF5DDCFF);
+  static const hexFF247B95 = Color(0xFF247B95);
+  static const hexFF4FEAFF = Color(0xFF4FEAFF);
+  static const hexFF167D91 = Color(0xFF167D91);
+  static const hexFFB79CFF = Color(0xFFB79CFF);
+  static const hexFF7054B8 = Color(0xFF7054B8);
+  static const hexFFB5B2C0 = Color(0xFFB5B2C0);
+  static const hexFF706B7A = Color(0xFF706B7A);
+  static const hexFF8A6CF0 = Color(0xFF8A6CF0);
+  static const hexFF35D6FF = Color(0xFF35D6FF);
+  static const hexFFFF6B7A = Color(0xFFFF6B7A);
+  static const hexFFFF69C9 = Color(0xFFFF69C9);
+  static const hexFF45E0B7 = Color(0xFF45E0B7);
+  static const hexFFB78CFF = Color(0xFFB78CFF);
+  static const hexFF8B8A94 = Color(0xFF8B8A94);
+  static const hexFFA8A7B2 = Color(0xFFA8A7B2);
+}
