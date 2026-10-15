@@ -1,9 +1,7 @@
--- REVIEW-ONLY CHANGESET. NOT AN APPLIED MIGRATION.
--- Release sequence:
--- (1) create a real migration with `supabase migration new atomic_spending_behavior`
--- (2) copy this statement into that migration and deploy DB first on staging
--- (3) verify permissions, 2-session CAS and read-only roles
--- (4) only then deploy Flutter client from the related PR.
+-- Archived pre-release SQL review copy; not executed by CI.
+-- Applied on Fôlego Dev using Supabase migration version 20261015091421.
+-- Canonical recorded file: supabase/migrations/20261015091421_folego_atomic_spending_behavior_cas.sql
+-- The function has been verified with a rolled-back, synthetic 5-case suite.
 --
 -- This function purposefully updates ONE annotation on an existing expense.
 -- No tags, necessity_class, frequency_class, value, card, or category changes.
