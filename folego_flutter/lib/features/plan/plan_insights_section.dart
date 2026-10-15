@@ -150,7 +150,7 @@ class PlanInsightsSection extends StatelessWidget {
                     Text(
                       'estimativas: média dos meses com movimento, mais 10% '
                       'de margem, arredondada para R\$ 10. apenas categorias '
-                      'com dados em pelo menos dois meses completos. '
+                      'com movimentações em pelo menos dois meses anteriores. '
                       'não considera sua capacidade de pagamento. '
                       'nenhum limite muda sem você confirmar.',
                       style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11),
