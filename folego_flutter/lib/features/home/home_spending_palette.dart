@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_color_tokens.dart';
 
 /// Paleta exclusiva do gráfico de gastos da Home.
 ///
@@ -7,18 +8,18 @@ import 'package:flutter/material.dart';
 /// identidade visual entre rebuilds e sessões.
 abstract final class HomeSpendingPalette {
   static const List<Color> colors = <Color>[
-    Color(0xFF8A6CF0), // purple
-    Color(0xFFC6F135), // lime
-    Color(0xFF35D6FF), // electric cyan
-    Color(0xFFFF6B7A), // coral
-    Color(0xFFFF69C9), // hot pink
-    Color(0xFFFF9F43), // tangerine
-    Color(0xFF45E0B7), // mint
-    Color(0xFFB78CFF), // lavender
+    FolegoLegacyColors.hexFF8A6CF0, // purple
+    FolegoLegacyColors.hexFFC6F135, // lime
+    FolegoLegacyColors.hexFF35D6FF, // electric cyan
+    FolegoLegacyColors.hexFFFF6B7A, // coral
+    FolegoLegacyColors.hexFFFF69C9, // hot pink
+    FolegoLegacyColors.hexFFFF9F43, // tangerine
+    FolegoLegacyColors.hexFF45E0B7, // mint
+    FolegoLegacyColors.hexFFB78CFF, // lavender
   ];
 
-  static const Color otherLight = Color(0xFF8B8A94);
-  static const Color otherDark = Color(0xFFA8A7B2);
+  static const Color otherLight = FolegoLegacyColors.hexFF8B8A94;
+  static const Color otherDark = FolegoLegacyColors.hexFFA8A7B2;
 
   static Color colorFor({
     required String category,
