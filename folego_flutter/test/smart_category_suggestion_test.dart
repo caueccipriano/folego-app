@@ -73,6 +73,55 @@ void main() {
     ), isNull);
   });
 
+  test('three unanimous similar merchant descriptions suggest a category', () {
+    final suggestion = suggestSmartCategory(
+      description: 'Uber passeio diferente',
+      eventType: 'card_purchase',
+      categories: [category('ride', 'Transporte')],
+      history: [
+        event('Uber casa trabalho', 'ride'),
+        event('Uber centro', 'ride'),
+        event('Uber aeroporto', 'ride'),
+      ],
+    );
+    expect(suggestion?.category.id, 'ride');
+    expect(suggestion?.evidenceCount, 3);
+    expect(suggestion?.reason, contains('semelhante'));
+  });
+
+  test('merchant similarity abstains on conflict or inadequate evidence', () {
+    final categories = [
+      category('ride', 'Transporte'),
+      category('food', 'Restaurante'),
+    ];
+    expect(suggestSmartCategory(
+      description: 'Uber aeroporto', eventType: 'expense',
+      categories: categories,
+      history: [
+        event('Uber casa trabalho', 'ride'),
+        event('Uber centro', 'ride'),
+        event('Uber restaurante', 'food'),
+      ],
+    ), isNull);
+    expect(suggestSmartCategory(
+      description: 'Amazon brinquedo', eventType: 'expense',
+      categories: categories,
+      history: [
+        event('Amazon brinquedo 1', 'ride'),
+        event('Amazon brinquedo 2', 'ride'),
+      ],
+    ), isNull);
+    expect(suggestSmartCategory(
+      description: 'Mercado novo', eventType: 'expense',
+      categories: categories,
+      history: [
+        event('Mercado teste 1', 'food'),
+        event('Mercado teste 2', 'food'),
+        event('Mercado teste 3', 'food'),
+      ],
+    ), isNull);
+  });
+
   test('generic descriptions, conflicting aliases, and wrong kind abstain', () {
     final categories = [
       category('pix', 'Transporte', aliases: ['pix enviado']),
