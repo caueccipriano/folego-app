@@ -5,21 +5,25 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/spending_behavior.dart';
+import '../../data/models/registered_spending_margin.dart';
 import '../../data/repositories/folego_repository.dart';
 
 typedef SpendingLoader = Future<List<SpendingBehaviorEntry>> Function(String, DateTime);
 typedef SpendingSaver = Future<void> Function(String, SpendingBehaviorEntry, ExpenseBehavior);
+typedef RegisteredIncomeLoader = Future<double> Function(String, DateTime);
 
 class SpendingBehaviorScreen extends StatefulWidget {
   const SpendingBehaviorScreen({
     super.key, required this.repository, required this.spaceId,
     required this.periodMonth, this.loadOverride, this.saveOverride,
+    this.incomeOverride,
   });
   final FolegoRepository repository;
   final String spaceId;
   final DateTime periodMonth;
   final SpendingLoader? loadOverride;
   final SpendingSaver? saveOverride;
+  final RegisteredIncomeLoader? incomeOverride;
 
   @override
   State<SpendingBehaviorScreen> createState() => _SpendingBehaviorScreenState();
@@ -30,6 +34,7 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
   bool _loading = true;
   String? _error;
   String? _savingId;
+  double? _registeredIncome;
   int _generation = 0;
 
   @override
@@ -46,6 +51,7 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
         oldWidget.periodMonth.month != widget.periodMonth.month) {
       _generation++;
       _entries = const [];
+      _registeredIncome = null;
       _error = null;
       _savingId = null;
       _load();
@@ -70,19 +76,41 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
           ? await widget.repository.getSpendingBehaviorEntries(
               spaceId: spaceId, periodMonth: month)
           : await widget.loadOverride!(spaceId, month);
+      double? income;
+      try {
+        // Synthetic expense-only tests do not query a real backend.
+        if (widget.incomeOverride != null) {
+          income = await widget.incomeOverride!(spaceId, month);
+        } else if (widget.loadOverride == null) {
+          income = await widget.repository.getRegisteredIncomeForMonth(
+            spaceId: spaceId, periodMonth: month,
+          );
+        }
+        if (income != null && (!income.isFinite || income < 0)) {
+          income = null;
+        }
+      } catch (_) {
+        // Expenses remain usable without claiming a zero-income balance.
+        income = null;
+      }
       if (!mounted || request != _generation ||
           spaceId != widget.spaceId ||
           month.year != widget.periodMonth.year ||
           month.month != widget.periodMonth.month) {
         return;
       }
-      setState(() { _entries = result; _loading = false; });
+      setState(() {
+        _entries = result;
+        _registeredIncome = income;
+        _loading = false;
+      });
     } catch (_) {
       if (!mounted || request != _generation) {
         return;
       }
       setState(() {
         _entries = const [];
+        _registeredIncome = null;
         _error = 'não foi possível consultar os tipos de gastos.';
         _loading = false;
       });
@@ -227,6 +255,20 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
                               valueListenable: FinancialPrivacy.hidden,
                               builder: (context, hidden, child) =>
                                   _SpendingTotals(totals: totals, hidden: hidden),
+                            ),
+                            const SizedBox(height: 14),
+                            ValueListenableBuilder<bool>(
+                              valueListenable: FinancialPrivacy.hidden,
+                              builder: (context, hidden, child) =>
+                                  _RegisteredMarginCard(
+                                    margin: _registeredIncome == null
+                                        ? null
+                                        : buildRegisteredSpendingMargin(
+                                            registeredIncome: _registeredIncome!,
+                                            expenses: totals,
+                                          ),
+                                    hidden: hidden,
+                                  ),
                             ),
                             const SizedBox(height: 12),
                             Text(totals.count == 0
