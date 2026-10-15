@@ -56,12 +56,9 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   static FolegoColorTokens fromId(String id, Brightness brightness) {
     final p = palette(id);
     final dark = brightness == Brightness.dark;
-    final brand = p.id == 'folego'
+    final originalBrand = p.id == 'folego'
         ? (dark ? const Color(0xFF967CF4) : p.brand)
-        : (dark
-            ? Color.lerp(p.brand, const Color(0xFFFFFFFF), .32)!
-            : (p.id == 'mare' ? const Color(0xFF0F797A) : p.brand));
-    final onBrand = _onColor(brand);
+        : (dark ? Color.lerp(p.brand, const Color(0xFFFFFFFF), .32)! : p.brand);
     final action = p.action;
     final background = dark ? p.darkBackground : p.lightBackground;
     final surface = p.id == 'folego'
@@ -69,6 +66,8 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
         : dark
             ? Color.lerp(background, const Color(0xFFFFFFFF), .075)!
             : Color.lerp(background, const Color(0xFFFFFFFF), .74)!;
+    final brand = _ensureTextContrast(originalBrand, surface, background, dark);
+    final onBrand = _onColor(brand);
     final high = p.id == 'folego'
         ? (dark ? const Color(0xFF25252D) : const Color(0xFFF0ECE2))
         : dark
@@ -122,6 +121,29 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
       apertadoHero: const Color(0xFFFFD18C),
       estouradoHero: const Color(0xFFFFB6B0),
     );
+  }
+
+  /// Marca usada como texto/ícone precisa alcançar 4.5:1 nas superfícies.
+  /// A cor de referência e a cor do card principal permanecem independentes.
+  static Color _ensureTextContrast(
+    Color initial,
+    Color surface,
+    Color background,
+    bool dark,
+  ) {
+    if (contrastRatio(initial, surface) >= 4.5 &&
+        contrastRatio(initial, background) >= 4.5) {
+      return initial;
+    }
+    final target = dark ? const Color(0xFFFFFFFF) : const Color(0xFF17151D);
+    for (var step = 1; step <= 20; step++) {
+      final candidate = Color.lerp(initial, target, step / 20)!;
+      if (contrastRatio(candidate, surface) >= 4.5 &&
+          contrastRatio(candidate, background) >= 4.5) {
+        return candidate;
+      }
+    }
+    return target;
   }
 
   static Color _onColor(Color background) =>
