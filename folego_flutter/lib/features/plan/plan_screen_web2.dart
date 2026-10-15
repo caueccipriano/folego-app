@@ -1641,7 +1641,7 @@ class _BudgetCategorySpendingSheet extends StatelessWidget {
                         Expanded(
                           child: ListView.separated(
                             itemCount: rows.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final row = rows[index];
