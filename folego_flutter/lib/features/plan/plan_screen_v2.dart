@@ -426,8 +426,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             );
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.lime,
-                            foregroundColor: AppColors.iconOnLime,
+                            backgroundColor: AppColors.action(Theme.of(context).brightness),
+                            foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                             minimumSize: const Size.fromHeight(48),
                           ),
                           child: const Text('salvar limite'),
