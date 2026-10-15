@@ -353,7 +353,11 @@ class _HomeRepository implements FolegoRepository {
   @override
   Future<List<CategoryItem>> listIncomeCategories(String spaceId) async => [];
   @override
-  Future<List<UpcomingEvent>> getUpcomingEvents(String spaceId, {DateTime? from, int days = 30}) async => [];
+  Future<List<UpcomingEvent>> getUpcomingEvents(String spaceId, {DateTime? from, int days = 30}) async => [
+    UpcomingEvent(id: 'synthetic-rent', source: 'recurring', name: 'Aluguel teste',
+      dueDate: DateTime.now().add(const Duration(days: 2)), amount: 900,
+      direction: 'expense', status: 'pending'),
+  ];
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

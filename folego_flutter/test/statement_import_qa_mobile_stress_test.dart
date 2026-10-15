@@ -165,9 +165,15 @@ void main() {
 
     await tester.enterText(search, '');
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('duplicados'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('duplicados'));
     await tester.pumpAndSettle();
 
+    final review = find.byKey(const ValueKey('statement-import-review-mobile'));
+    final scrollable = find.descendant(of: review, matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.textContaining('possível duplicata').first,
+      300, scrollable: scrollable, maxScrolls: 10);
     expect(find.textContaining('possível duplicata'), findsWidgets);
     expect(tester.takeException(), isNull);
   });

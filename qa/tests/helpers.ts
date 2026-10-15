@@ -17,10 +17,11 @@ export async function enableFlutterAccessibility(page: Page, hasTouch = false) {
   if (await button.count()) {
     // Chromium mobile listens for touch activation on Flutter's semantics
     // placeholder. A DOM .click() does not produce that touch sequence.
-    if (hasTouch) {
+    const isAndroid = /Android/i.test(await page.evaluate(() => navigator.userAgent));
+    if (hasTouch && isAndroid) {
       await button.first().tap({ force: true });
     } else {
-      await button.first().click({ force: true });
+      await button.first().evaluate(element => (element as HTMLElement).click());
     }
     await page.waitForTimeout(250);
   }
