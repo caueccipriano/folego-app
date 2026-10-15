@@ -103,48 +103,43 @@ class FolegoRepository {
     throw StateError('muitas receitas para totalizar com segurança');
   }
 
-  /// Changes only the spending-behavior annotation. The current necessity,
-  /// frequency and all user tags MUST be passed through unmodified because
-  /// the existing RPC replaces all annotation fields and tag associations.
+  /// Atomic behavior-only update. The server uses SELECT ... FOR UPDATE and
+  /// compares the previous behavior under the row lock. If it has changed,
+  /// fail closed rather than overwriting another device's decision.
+  ///
+  /// This RPC MUST be deployed on the target Supabase project before
+  /// publishing the client; otherwise the app shows an error and writes nothing.
   Future<void> setSpendingBehavior({
     required String spaceId,
     required SpendingBehaviorEntry entry,
     required ExpenseBehavior behavior,
   }) async {
-    final current = await _client
-        .from('financial_events')
-        .select('necessity_class,behavior_class,frequency_class')
-        .eq('space_id', spaceId)
-        .eq('id', entry.id)
-        .maybeSingle();
-    if (current == null) throw StateError('lançamento indisponível');
-
-    final currentBehavior = ExpenseBehavior.fromDatabase(
-      current['behavior_class'] as String?,
-    );
-    if (currentBehavior != entry.behavior) {
-      throw StateError('classificação atualizada em outra sessão; recarregue');
+    if (entry.eventType != 'expense' &&
+        entry.eventType != 'card_purchase' &&
+        entry.eventType != 'benefit_expense') {
+      throw StateError('este lançamento não permite classificação de gasto');
     }
-    final tagResponse = await _client
-        .from('financial_event_tags')
-        .select('tag_id')
-        .eq('space_id', spaceId)
-        .eq('event_id', entry.id);
-    final tags = List<Map<String, dynamic>>.from(tagResponse)
-        .map((row) => row['tag_id'])
-        .whereType<String>()
-        .toList(growable: false);
 
-    await _client.rpc('set_event_annotations', params: {
-      'p_space_id': spaceId,
-      'p_event_id': entry.id,
-      'p_behavior_class': behavior == ExpenseBehavior.unclassified
-          ? null
-          : behavior.databaseValue,
-      'p_necessity_class': current['necessity_class'],
-      'p_frequency_class': current['frequency_class'],
-      'p_tag_ids': tags,
-    });
+    final expected = entry.behavior == ExpenseBehavior.unclassified
+        ? null
+        : entry.behavior.databaseValue;
+    final next = behavior == ExpenseBehavior.unclassified
+        ? null
+        : behavior.databaseValue;
+
+    try {
+      await _client.rpc('set_event_behavior_class', params: {
+        'p_space_id': spaceId,
+        'p_event_id': entry.id,
+        'p_expected_behavior_class': expected,
+        'p_behavior_class': next,
+      });
+    } on PostgrestException catch (error) {
+      if (error.message.contains('annotation_conflict')) {
+        throw StateError('classificação alterada em outra sessão; recarregue');
+      }
+      rethrow;
+    }
   }
 
   // ---------------------------------------------------------------------------
