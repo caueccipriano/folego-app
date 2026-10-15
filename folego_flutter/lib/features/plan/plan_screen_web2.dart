@@ -44,6 +44,7 @@ class PlanScreen extends StatefulWidget {
     this.loadOverride,
     this.saveOverride,
     this.onProjectionRequested,
+    this.onPurchaseSimulationRequested,
     this.onFlexibleBudgetRequested,
   });
 
@@ -56,6 +57,7 @@ class PlanScreen extends StatefulWidget {
   final Object? refreshToken;
 
   final VoidCallback? onProjectionRequested;
+  final VoidCallback? onPurchaseSimulationRequested;
   final VoidCallback? onFlexibleBudgetRequested;
 
   @visibleForTesting
@@ -628,6 +630,13 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  Widget _purchaseSimulationButton() => OutlinedButton.icon(
+    key: const ValueKey('plan-can-i-buy'),
+    onPressed: widget.onPurchaseSimulationRequested,
+    icon: const Icon(Icons.shopping_bag_outlined),
+    label: const Text('posso comprar? simular impacto'),
+  );
+
   Widget _buildMobileLayout(Brightness brightness, AppLayoutSize layout) {
     return RefreshIndicator(
       onRefresh: _load,
@@ -645,6 +654,10 @@ class _PlanScreenState extends State<PlanScreen> {
           ],
           const SizedBox(height: 12),
           _buildSummary(brightness),
+          if (widget.onPurchaseSimulationRequested != null) ...[
+            const SizedBox(height: 12),
+            _purchaseSimulationButton(),
+          ],
           if (_budgetedCount == 0) ...[
             const SizedBox(height: 12),
             _buildNoPlan(brightness),
@@ -682,6 +695,10 @@ class _PlanScreenState extends State<PlanScreen> {
                     key: const ValueKey('plan-summary-column'),
                     children: [
                       _buildSummary(brightness),
+                      if (widget.onPurchaseSimulationRequested != null) ...[
+                        const SizedBox(height: 12),
+                        _purchaseSimulationButton(),
+                      ],
                       if (_budgetedCount == 0) ...[
                         const SizedBox(height: 16),
                         _buildNoPlan(brightness),
