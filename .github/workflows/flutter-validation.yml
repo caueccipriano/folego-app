@@ -37,7 +37,7 @@ jobs:
         run: flutter analyze
 
       - name: Discovery and isolated demo regression
-        run: flutter test test/discovery_test.dart
+        run: flutter test test/discovery_test.dart test/statement_import_qa_mobile_stress_test.dart
 
       - name: Home data freshness safety regression
         run: flutter test test/home_data_freshness_test.dart test/home_load_guard_test.dart test/sheet_sync_status_test.dart test/financial_organization_space_isolation_test.dart test/transaction_pending_guard_test.dart test/classification_review_overview_test.dart test/sheet_reconciliation_audit_test.dart

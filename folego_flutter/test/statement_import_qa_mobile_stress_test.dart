@@ -172,7 +172,7 @@ void main() {
 
     final review = find.byKey(const ValueKey('statement-import-review-mobile'));
     final scrollable = find.descendant(of: review, matching: find.byType(Scrollable)).first;
-    await tester.scrollUntilVisible(find.textContaining('possível duplicata').first,
+    await tester.scrollUntilVisible(find.text('TRANSFERENCIA ENTRE CONTAS 0'),
       300, scrollable: scrollable, maxScrolls: 10);
     expect(find.textContaining('possível duplicata'), findsWidgets);
     expect(tester.takeException(), isNull);
