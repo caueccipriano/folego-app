@@ -110,6 +110,10 @@ Future<DiscoveryData> loadDiscovery(
           row.dueDate.month,
           row.dueDate.day,
         );
+        if (due.isBefore(today.subtract(const Duration(days: 30))) ||
+            due.isAfter(today.add(Duration(days: pendingOnly ? 7 : 30)))) {
+          continue;
+        }
         final days = DateTime.utc(
           due.year,
           due.month,

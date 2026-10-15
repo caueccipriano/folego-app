@@ -501,7 +501,7 @@ class _WalletScreenState extends State<WalletScreen> {
         label: 'benefícios',
         value: summary.totalBenefit,
         icon: AppIcons.benefit,
-        onTap: () => _selectSection(2),
+        onTap: () => _selectSection(3),
       ),
       _PositionMetric(
         label: 'faturas em aberto',
@@ -513,7 +513,7 @@ class _WalletScreenState extends State<WalletScreen> {
         label: 'dívidas restantes',
         value: summary.totalDebtRemaining,
         icon: AppIcons.debt,
-        onTap: () => _selectSection(3),
+        onTap: () => _selectSection(2),
       ),
     ];
 
