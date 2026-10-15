@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/theme/app_color_tokens.dart';
 
 void main() {
-  test('6 temas com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 6);
+  test('9 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 9);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -32,6 +32,32 @@ void main() {
             greaterThanOrEqualTo(3.0), reason: '$context estado no hero');
         }
       }
+    }
+  });
+
+  test('cada paleta tem sua própria base clara e escura', () {
+    final lightBackgrounds = <Color>{};
+    final darkBackgrounds = <Color>{};
+    for (final palette in FolegoColorTokens.catalog) {
+      final light = FolegoColorTokens.fromId(palette.id, Brightness.light);
+      final dark = FolegoColorTokens.fromId(palette.id, Brightness.dark);
+      expect(light.fundo, isNot(dark.fundo), reason: palette.name);
+      expect(light.superficie, isNot(dark.superficie), reason: palette.name);
+      expect(light.marcaHero, isNot(dark.marcaHero), reason: palette.name);
+      expect(palette.description, isNotEmpty);
+      expect(lightBackgrounds.add(light.fundo), isTrue,
+        reason: 'fundo claro repetido: ${palette.name}');
+      expect(darkBackgrounds.add(dark.fundo), isTrue,
+        reason: 'fundo escuro repetido: ${palette.name}');
+    }
+    // Preferências antigas permanecem estáveis ao ampliar o catálogo.
+    for (final id in [
+      'folego', 'mare', 'salvia', 'chiclete', 'tangerina', 'neon'
+    ]) {
+      expect(FolegoColorTokens.palette(id).id, id);
+    }
+    for (final id in ['safira', 'mochi', 'cacau']) {
+      expect(FolegoColorTokens.palette(id).id, id);
     }
   });
 
