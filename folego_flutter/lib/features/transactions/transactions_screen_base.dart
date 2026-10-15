@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
+
 import '../../core/layout/app_content_container.dart';
 import '../../core/navigation/push_route.dart';
 import '../../core/realtime/realtime_invalidation.dart';
@@ -49,8 +51,8 @@ typedef TransactionPageLoader = Future<TransactionPage> Function({
   required int pageSize,
 });
 
-typedef TransactionFilterOptionsLoader = Future<TransactionFilterOptions>
-    Function(String spaceId);
+typedef TransactionFilterOptionsLoader =
+    Future<TransactionFilterOptions> Function(String spaceId);
 
 class TransactionsScreenV3 extends StatefulWidget {
   const TransactionsScreenV3({
@@ -308,9 +310,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     } catch (error) {
       if (!mounted || generation != _transactionLoadGeneration) return;
       setState(() => _loadingTransactions = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -417,10 +418,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     _applyFilters(result, syncSearchField: true);
   }
 
-  void _applyFilters(
-    TransactionFilters next, {
-    required bool syncSearchField,
-  }) {
+  void _applyFilters(TransactionFilters next, {required bool syncSearchField}) {
     _searchTimer?.cancel();
     if (syncSearchField && _searchController.text != next.search) {
       _searchController.text = next.search;
@@ -474,6 +472,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: space,
         repository: widget.repository,
@@ -493,10 +493,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      builder: (_) => RecurringFormSheet(
-        space: space,
-        repository: widget.repository,
-      ),
+      builder: (_) =>
+          RecurringFormSheet(space: space, repository: widget.repository),
     );
     if (saved == true && mounted) {
       await _refresh();
@@ -521,9 +519,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     if (saved == true && mounted) {
       await _refreshTransactions(clearVisible: false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('lançamento atualizado')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('lançamento atualizado')));
     }
   }
 
@@ -565,14 +562,12 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       if (!mounted) return;
       await _refreshTransactions(clearVisible: false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('lançamento excluído')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('lançamento excluído')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -613,9 +608,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -644,9 +638,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -661,14 +654,13 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       );
       await _refreshRecurring();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('acompanhamento encerrado')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('acompanhamento encerrado')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -707,14 +699,12 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       );
       await _refresh();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('recorrência excluída')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('recorrência excluída')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -801,9 +791,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -837,7 +826,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                     AppPageHeader(
                       title: 'lançamentos',
                       subtitle: 'movimentações, assinaturas e recorrências',
-                      trailing: widget.onImportRequested == null &&
+                      trailing:
+                          widget.onImportRequested == null &&
                               widget.onClassificationRequested == null
                           ? null
                           : Row(
@@ -870,12 +860,14 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                       'transaction-classification-inbox',
                                     ),
                                     tooltip: pendingClassificationTooltip(
-                                      loading: widget.pendingClassificationLoading,
-                                      unavailable: widget.pendingClassificationUnavailable,
-                                      pendingCount: widget.pendingClassificationCount,
+                                      loading:
+                                          widget.pendingClassificationLoading,
+                                      unavailable: widget
+                                          .pendingClassificationUnavailable,
+                                      pendingCount:
+                                          widget.pendingClassificationCount,
                                     ),
-                                    onPressed:
-                                        widget.onClassificationRequested,
+                                    onPressed: widget.onClassificationRequested,
                                     style: IconButton.styleFrom(
                                       minimumSize: const Size(42, 42),
                                       backgroundColor: surface,
@@ -884,18 +876,22 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                     ),
                                     icon: Badge(
                                       isLabelVisible:
-                                          !widget.pendingClassificationLoading &&
-                                              !widget.pendingClassificationUnavailable &&
-                                              widget.pendingClassificationCount > 0,
+                                          !widget
+                                              .pendingClassificationLoading &&
+                                          !widget
+                                              .pendingClassificationUnavailable &&
+                                          widget.pendingClassificationCount > 0,
                                       label: Text(
                                         '${widget.pendingClassificationCount}',
                                       ),
                                       child: Icon(
                                         widget.pendingClassificationUnavailable
                                             ? AppIcons.warning
-                                            : widget.pendingClassificationLoading
+                                            : widget
+                                                  .pendingClassificationLoading
                                             ? AppIcons.refresh
-                                            : widget.pendingClassificationCount > 0
+                                            : widget.pendingClassificationCount >
+                                                  0
                                             ? AppIcons.categoryUnclassified
                                             : AppIcons.check,
                                         size: 19,
@@ -910,7 +906,9 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius: BorderRadius.circular(AppRadii.compactCard),
+                        borderRadius: BorderRadius.circular(
+                          AppRadii.compactCard,
+                        ),
                         border: Border.all(color: border),
                       ),
                       child: TabBar(
@@ -918,9 +916,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                         dividerColor: Colors.transparent,
                         indicatorSize: TabBarIndicatorSize.tab,
                         indicator: BoxDecoration(
-                          color: accent.withValues(
-                            alpha: isDark ? .18 : .10,
-                          ),
+                          color: accent.withValues(alpha: isDark ? .18 : .10),
                           borderRadius: BorderRadius.circular(AppRadii.control),
                         ),
                         labelColor: primary,
@@ -952,70 +948,62 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
               child: _loading
                   ? const AppLoadingState(label: 'organizando seus lançamentos')
                   : _error != null
-                      ? _ErrorState(
-                          message: _error!,
-                          onRetry: _retryInitialLoad,
-                        )
-                      : TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _TransactionsTabV3(
-                              transactions: _transactions,
-                              categoryById: _categoryById,
-                              filters: _filters,
-                              filterOptions: _filterOptions,
-                              searchController: _searchController,
-                              loading: _loadingTransactions,
-                              loadingMore: _loadingMore,
-                              hasMore: _hasMoreTransactions,
-                              loadMoreError: _loadMoreError,
-                              onSearchChanged: _onSearchChanged,
-                              onClearSearch: _clearSearch,
-                              onOpenFilters: _openFilters,
-                              onClearFilters: _clearAllFilters,
-                              onRemovePeriod: _removePeriodFilter,
-                              onRemoveTypes: _removeTypeFilter,
-                              onFiltersChanged: (filters) => _applyFilters(
-                                filters,
-                                syncSearchField: false,
-                              ),
-                              onRefresh: _refresh,
-                              onLoadMore: _loadMoreTransactions,
-                              onOpen: _openTransactionDetail,
-                              onEdit: _editTransaction,
-                              onDelete: _deleteTransaction,
-                              onRegisterExpense: () => _openQuickRegister('expense'),
-                              onRegisterIncome: () => _openQuickRegister('income'),
-                            ),
-                            SubscriptionsTab(
-                              items: subscriptions,
-                              recurringCandidates: regularRecurring,
-                              cardNames: _recurringCardNames,
-                              onRefresh: _refreshRecurring,
-                              onEdit: _editRecurring,
-                              onEnd: _endSubscription,
-                              onClassify: (item) => _setSubscriptionKind(
-                                item,
-                                subscription: true,
-                              ),
-                              onMoveToRecurring: (item) => _setSubscriptionKind(
-                                item,
-                                subscription: false,
-                              ),
-                            ),
-                            _RecurringTab(
-                              items: regularRecurring,
-                              categories: _categories,
-                              isDark: isDark,
-                              onRefresh: _refresh,
-                              onEdit: _editRecurring,
-                              onRealize: _realizeRecurring,
-                              onToggle: _toggleRecurring,
-                              onDelete: _deleteRecurring,
-                              onAdd: _addRecurring,
-                            ),
-                          ],
+                  ? _ErrorState(message: _error!, onRetry: _retryInitialLoad)
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _TransactionsTabV3(
+                          transactions: _transactions,
+                          categoryById: _categoryById,
+                          filters: _filters,
+                          filterOptions: _filterOptions,
+                          searchController: _searchController,
+                          loading: _loadingTransactions,
+                          loadingMore: _loadingMore,
+                          hasMore: _hasMoreTransactions,
+                          loadMoreError: _loadMoreError,
+                          onSearchChanged: _onSearchChanged,
+                          onClearSearch: _clearSearch,
+                          onOpenFilters: _openFilters,
+                          onClearFilters: _clearAllFilters,
+                          onRemovePeriod: _removePeriodFilter,
+                          onRemoveTypes: _removeTypeFilter,
+                          onFiltersChanged: (filters) =>
+                              _applyFilters(filters, syncSearchField: false),
+                          onRefresh: _refresh,
+                          onLoadMore: _loadMoreTransactions,
+                          onOpen: _openTransactionDetail,
+                          onEdit: _editTransaction,
+                          onDelete: _deleteTransaction,
+                          onRegisterExpense: () =>
+                              _openQuickRegister('expense'),
+                          onRegisterIncome: () => _openQuickRegister('income'),
                         ),
+                        SubscriptionsTab(
+                          items: subscriptions,
+                          recurringCandidates: regularRecurring,
+                          cardNames: _recurringCardNames,
+                          onRefresh: _refreshRecurring,
+                          onEdit: _editRecurring,
+                          onEnd: _endSubscription,
+                          onClassify: (item) =>
+                              _setSubscriptionKind(item, subscription: true),
+                          onMoveToRecurring: (item) =>
+                              _setSubscriptionKind(item, subscription: false),
+                        ),
+                        _RecurringTab(
+                          items: regularRecurring,
+                          categories: _categories,
+                          isDark: isDark,
+                          onRefresh: _refresh,
+                          onEdit: _editRecurring,
+                          onRealize: _realizeRecurring,
+                          onToggle: _toggleRecurring,
+                          onDelete: _deleteRecurring,
+                          onAdd: _addRecurring,
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -1177,9 +1165,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                       onPressed: onOpenFilters,
                       icon: const Icon(AppIcons.filter, size: 18),
                       label: Text(
-                        filterCount == 0
-                            ? 'filtros'
-                            : 'filtros · $filterCount',
+                        filterCount == 0 ? 'filtros' : 'filtros · $filterCount',
                       ),
                     );
 
@@ -1394,12 +1380,7 @@ class _TransactionsTabV3 extends StatelessWidget {
               children: [
                 if (showGroup) ...[
                   Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      2,
-                      index == 0 ? 2 : 8,
-                      2,
-                      6,
-                    ),
+                    padding: EdgeInsets.fromLTRB(2, index == 0 ? 2 : 8, 2, 6),
                     child: Text(
                       group,
                       style: AppTypography.label(
@@ -1459,7 +1440,9 @@ class _TransactionsTabV3 extends StatelessWidget {
       onSelected: (_) => onTap(),
       selectedColor: accent.withValues(alpha: .12),
       side: BorderSide(
-        color: selected ? accent.withValues(alpha: .5) : AppColors.border(brightness),
+        color: selected
+            ? accent.withValues(alpha: .5)
+            : AppColors.border(brightness),
       ),
       labelStyle: AppTypography.label(
         context,
@@ -1481,8 +1464,18 @@ class _TransactionsTabV3 extends StatelessWidget {
     if (diff > 1 && diff < 7) return 'esta semana';
 
     const months = [
-      'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-      'jul', 'ago', 'set', 'out', 'nov', 'dez',
+      'jan',
+      'fev',
+      'mar',
+      'abr',
+      'mai',
+      'jun',
+      'jul',
+      'ago',
+      'set',
+      'out',
+      'nov',
+      'dez',
     ];
     return '${value.day.toString().padLeft(2, '0')} ${months[value.month - 1]}';
   }
@@ -1490,12 +1483,7 @@ class _TransactionsTabV3 extends StatelessWidget {
   List<_ActiveFilterChip> _activeChips() {
     final chips = <_ActiveFilterChip>[];
     if (filters.hasPeriod) {
-      chips.add(
-        _ActiveFilterChip(
-          _periodChipLabel(filters),
-          onRemovePeriod,
-        ),
-      );
+      chips.add(_ActiveFilterChip(_periodChipLabel(filters), onRemovePeriod));
     }
     if (filters.eventTypes.isNotEmpty) {
       final label = filters.eventTypes.length == 1
@@ -1637,8 +1625,8 @@ class _TransactionCardV3 extends StatelessWidget {
     final amountColor = item.isIncome
         ? AppColors.positiveText(brightness)
         : item.isExpense
-            ? AppColors.expenseText(brightness)
-            : primary;
+        ? AppColors.expenseText(brightness)
+        : primary;
     final categoryLabel = item.categoryName?.trim().isNotEmpty == true
         ? item.categoryName!.trim()
         : transactionEventTypeLabel(item.eventType);
@@ -1707,7 +1695,11 @@ class _TransactionCardV3 extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${item.isIncome ? '+' : item.isExpense ? '−' : ''}${Formatters.money(item.amount.abs())}',
+                  '${item.isIncome
+                      ? '+'
+                      : item.isExpense
+                      ? '−'
+                      : ''}${Formatters.money(item.amount.abs())}',
                   style: AppTypography.money(
                     context,
                     fontSize: 13,

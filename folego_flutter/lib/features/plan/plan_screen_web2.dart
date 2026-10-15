@@ -21,20 +21,18 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_sheet_handle.dart';
 
-typedef PlanBudgetLoader =
-    Future<List<BudgetOverviewItem>> Function({
-      required String spaceId,
-      required DateTime periodMonth,
-    });
+typedef PlanBudgetLoader = Future<List<BudgetOverviewItem>> Function({
+  required String spaceId,
+  required DateTime periodMonth,
+});
 
-typedef PlanBudgetSaver =
-    Future<void> Function({
-      required String spaceId,
-      required DateTime periodMonth,
-      required String categoryId,
-      required num plannedAmount,
-      required BudgetLimitScope scope,
-    });
+typedef PlanBudgetSaver = Future<void> Function({
+  required String spaceId,
+  required DateTime periodMonth,
+  required String categoryId,
+  required num plannedAmount,
+  required BudgetLimitScope scope,
+});
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({
@@ -129,9 +127,16 @@ class _PlanScreenState extends State<PlanScreen> {
 
   List<BudgetOverviewItem> get _parents {
     final parents = _items.where((item) => item.isParent).toList();
-    parents.sort(
-      (a, b) => _sortKey(a.categoryName).compareTo(_sortKey(b.categoryName)),
-    );
+    parents.sort((a, b) {
+      final aExceeded = a.hasBudget && a.remainingAmount < 0;
+      final bExceeded = b.hasBudget && b.remainingAmount < 0;
+      if (aExceeded != bExceeded) return aExceeded ? -1 : 1;
+      if (aExceeded && bExceeded) {
+        final byExcess = a.remainingAmount.compareTo(b.remainingAmount);
+        if (byExcess != 0) return byExcess;
+      }
+      return _sortKey(a.categoryName).compareTo(_sortKey(b.categoryName));
+    });
     return parents;
   }
 
@@ -147,9 +152,8 @@ class _PlanScreenState extends State<PlanScreen> {
 
   BudgetMonthSummary get _summary => BudgetMonthSummary.fromItems(_items);
 
-  int get _budgetedCount => _items
-      .where((item) => item.isSubcategory && item.hasBudget)
-      .length;
+  int get _budgetedCount =>
+      _items.where((item) => item.isSubcategory && item.hasBudget).length;
 
   bool get _isPastMonth {
     final now = DateTime.now();
@@ -277,9 +281,10 @@ class _PlanScreenState extends State<PlanScreen> {
           'limite mensal encerrado a partir de ${_monthLabel(_month)}',
         BudgetLimitScope.fromMonth =>
           '${item.categoryName}: ${Formatters.money(result.amount)} todo mês',
-        BudgetLimitScope.month => result.amount == 0
-            ? 'limite de ${item.categoryName.toLowerCase()} removido neste mês'
-            : '${item.categoryName}: ${Formatters.money(result.amount)} neste mês',
+        BudgetLimitScope.month =>
+          result.amount == 0
+              ? 'limite de ${item.categoryName.toLowerCase()} removido neste mês'
+              : '${item.categoryName}: ${Formatters.money(result.amount)} neste mês',
       };
 
       AppSnackbars.show(context, text);
@@ -478,7 +483,9 @@ class _PlanScreenState extends State<PlanScreen> {
                             padding: const EdgeInsets.all(13),
                             decoration: BoxDecoration(
                               color: familyColor.withValues(alpha: .08),
-                              borderRadius: BorderRadius.circular(AppRadii.control),
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.control,
+                              ),
                               border: Border.all(
                                 color: familyColor.withValues(alpha: .20),
                               ),
@@ -507,8 +514,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             if (scope == BudgetLimitScope.fromMonth &&
                                 amount <= 0) {
                               setSheetState(() {
-                                validationError =
-                                    'para todo mês, use um valor maior que zero';
+                                validationError = 'para todo mês, use um valor maior que zero';
                               });
                               return;
                             }
@@ -526,10 +532,8 @@ class _PlanScreenState extends State<PlanScreen> {
                         if (item.isRecurring) ...[
                           const SizedBox(height: 8),
                           TextButton.icon(
-                            onPressed: () => _confirmCancelRecurring(
-                              context,
-                              item,
-                            ),
+                            onPressed: () =>
+                                _confirmCancelRecurring(context, item),
                             icon: Icon(
                               AppIcons.recurring,
                               size: 18,
@@ -954,7 +958,9 @@ class _PlanScreenState extends State<PlanScreen> {
               '${pace.elapsedPercent}% do mês · ${pace.usedPercent}% do orçamento utilizado',
               key: const ValueKey('plan-budget-pace-context'),
               style: AppTypography.body(
-                context, fontSize: 12, color: primaryText,
+                context,
+                fontSize: 12,
+                color: primaryText,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -963,7 +969,9 @@ class _PlanScreenState extends State<PlanScreen> {
               'comparação simples com o calendário, não é previsão: '
               'contas e compras não acontecem em ritmo uniforme.',
               style: AppTypography.body(
-                context, fontSize: 11, color: secondaryText,
+                context,
+                fontSize: 11,
+                color: secondaryText,
               ),
             ),
           ],
@@ -1052,23 +1060,18 @@ class _PlanScreenState extends State<PlanScreen> {
       children: [
         const AppSectionHeader(
           title: 'categorias',
-          subtitle: 'toque para ver quanto ainda cabe em cada subcategoria',
+          subtitle: 'categorias acima do planejado primeiro · abra para ver as subcategorias',
         ),
         const SizedBox(height: 10),
         if (_parents.isEmpty)
           _buildCategoriesEmpty(brightness)
         else
-          ..._parents.map(
-            (parent) => _buildParentCard(parent, brightness),
-          ),
+          ..._parents.map((parent) => _buildParentCard(parent, brightness)),
       ],
     );
   }
 
-  Widget _buildParentCard(
-    BudgetOverviewItem parent,
-    Brightness brightness,
-  ) {
+  Widget _buildParentCard(BudgetOverviewItem parent, Brightness brightness) {
     final children = _childrenOf(parent);
     final expanded = _expandedCategoryIds.contains(parent.categoryId);
     final primaryText = AppColors.primaryText(brightness);
@@ -1131,17 +1134,18 @@ class _PlanScreenState extends State<PlanScreen> {
                             Text(
                               parent.hasBudget
                                   ? parent.remainingAmount >= 0
-                                      ? '${Formatters.money(parent.remainingAmount)} ainda disponíveis'
-                                      : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
+                                        ? '${Formatters.money(parent.remainingAmount)} ainda disponíveis'
+                                        : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
                                   : parent.hasActivity
-                                      ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
-                                      : 'sem limites nas subcategorias',
+                                  ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
+                                  : 'sem limites nas subcategorias',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.label(
                                 context,
                                 fontSize: 10,
-                                color: parent.hasBudget &&
+                                color:
+                                    parent.hasBudget &&
                                         parent.remainingAmount < 0
                                     ? AppColors.expenseText(brightness)
                                     : secondaryText,
@@ -1385,7 +1389,8 @@ class _PlanScreenState extends State<PlanScreen> {
     return AppEmptyState(
       icon: AppIcons.categoryUnclassified,
       title: 'nenhuma categoria disponível para planejamento',
-      description: 'ative ou crie categorias para começar a definir seus limites',
+      description:
+          'ative ou crie categorias para começar a definir seus limites',
       accentColor: AppColors.primaryPurple(brightness),
     );
   }
@@ -1509,9 +1514,7 @@ class _ScopeChoice extends StatelessWidget {
               Icon(
                 icon,
                 size: 19,
-                color: selected
-                    ? accent
-                    : AppColors.secondaryText(brightness),
+                color: selected ? accent : AppColors.secondaryText(brightness),
               ),
               const SizedBox(width: 9),
               Expanded(
@@ -1668,12 +1671,8 @@ String _message(Object error) {
   return error.toString().replaceFirst('Exception: ', '');
 }
 
-
 class _PlanModeToggle extends StatelessWidget {
-  const _PlanModeToggle({
-    required this.projection,
-    this.onProjection,
-  });
+  const _PlanModeToggle({required this.projection, this.onProjection});
 
   final bool projection;
   final VoidCallback? onProjection;
@@ -1726,11 +1725,7 @@ class _PlanModeToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          item(
-            label: 'resumo',
-            selected: !projection,
-            onTap: null,
-          ),
+          item(label: 'resumo', selected: !projection, onTap: null),
           item(
             label: 'projeção',
             selected: projection,

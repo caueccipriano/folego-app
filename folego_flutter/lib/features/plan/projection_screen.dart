@@ -117,8 +117,10 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
 
       final values = await Future.wait<dynamic>([baseFuture, simulatedFuture]);
 
-      if (!mounted || requestId != _loadGeneration ||
-          widget.spaceId != spaceId || widget.repository != repository) {
+      if (!mounted ||
+          requestId != _loadGeneration ||
+          widget.spaceId != spaceId ||
+          widget.repository != repository) {
         return;
       }
       final base = values[0] as ProjectionResult;
@@ -141,8 +143,10 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         });
       }
     } catch (error) {
-      if (!mounted || requestId != _loadGeneration ||
-          widget.spaceId != spaceId || widget.repository != repository) {
+      if (!mounted ||
+          requestId != _loadGeneration ||
+          widget.spaceId != spaceId ||
+          widget.repository != repository) {
         return;
       }
       setState(() {
@@ -865,9 +869,22 @@ class _ProjectionChartCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
     final alert = AppColors.expenseText(brightness);
+    final values = <double>[
+      ...base.months.map((month) => month.closingBalance),
+      ...?simulated?.months.map((month) => month.closingBalance),
+      0,
+    ];
+    var minimum = values.reduce(math.min);
+    var maximum = values.reduce(math.max);
+    if ((maximum - minimum).abs() < 1) {
+      maximum += 1;
+      minimum -= 1;
+    }
+    final axisValues = [maximum, (maximum + minimum) / 2, minimum];
 
     return Container(
-      height: 198,
+      height:
+          238 + (MediaQuery.textScalerOf(context).scale(12) - 12).clamp(0, 36),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
       decoration: BoxDecoration(
         color: surface,
@@ -877,21 +894,56 @@ class _ProjectionChartCard extends StatelessWidget {
       child: Column(
         children: [
           Expanded(
-            child: CustomPaint(
-              painter: _ProjectionLinePainter(
-                baseValues: base.months
-                    .map((month) => month.closingBalance)
-                    .toList(growable: false),
-                simulatedValues: simulated?.months
-                    .map((month) => month.closingBalance)
-                    .toList(growable: false),
-                baseColor: simulated == null ? accent : secondary,
-                simulatedColor: accent,
-                gridColor: border,
-                alertColor: alert,
-              ),
-              child: const SizedBox.expand(),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 88,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final value in axisValues)
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              Formatters.money(value),
+                              style: AppTypography.label(
+                                context,
+                                color: secondary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CustomPaint(
+                    painter: _ProjectionLinePainter(
+                      baseValues: base.months
+                          .map((month) => month.closingBalance)
+                          .toList(growable: false),
+                      simulatedValues: simulated?.months
+                          .map((month) => month.closingBalance)
+                          .toList(growable: false),
+                      baseColor: simulated == null ? accent : secondary,
+                      simulatedColor: accent,
+                      gridColor: border,
+                      alertColor: alert,
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'linha de referência: R\$ 0,00',
+            style: AppTypography.label(context, color: secondary),
           ),
           if (simulated != null) ...[
             const SizedBox(height: 8),
@@ -2096,12 +2148,14 @@ class _ProjectionSimulationSheetState
           _invalid('informe qual dívida e o valor extra do pagamento');
           return;
         }
-        result = [buildExtraDebtPaymentSimulation(
-          id: '$idBase-debt-extra',
-          debtName: _debtName.text,
-          amount: amount,
-          paymentDate: _startsOn,
-        )];
+        result = [
+          buildExtraDebtPaymentSimulation(
+            id: '$idBase-debt-extra',
+            debtName: _debtName.text,
+            amount: amount,
+            paymentDate: _startsOn,
+          ),
+        ];
       case _SimulationTemplate.reduceCategory:
         final category = _category;
         final amount = _money(_reduction.text);
@@ -2211,9 +2265,18 @@ class _ProjectionSimulationSheetState
                     _templateChip('livre', _SimulationTemplate.free),
                     _templateChip('novo carro', _SimulationTemplate.car),
                     _templateChip('novo salário', _SimulationTemplate.salary),
-                    _templateChip('cancelar assinatura', _SimulationTemplate.cancelSubscription),
-                    _templateChip('amortizar dívida', _SimulationTemplate.extraDebtPayment),
-                    _templateChip('reduzir categoria', _SimulationTemplate.reduceCategory),
+                    _templateChip(
+                      'cancelar assinatura',
+                      _SimulationTemplate.cancelSubscription,
+                    ),
+                    _templateChip(
+                      'amortizar dívida',
+                      _SimulationTemplate.extraDebtPayment,
+                    ),
+                    _templateChip(
+                      'reduzir categoria',
+                      _SimulationTemplate.reduceCategory,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 18),

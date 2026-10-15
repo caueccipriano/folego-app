@@ -67,7 +67,10 @@ void main() {
 
       expect(find.text('mercado'), findsOneWidget);
       await _switchOrganizationTab(tester, 'Marcadores');
-      expect(find.text('não consegui carregar seus marcadores'), findsOneWidget);
+      expect(
+        find.text('não consegui carregar seus marcadores'),
+        findsOneWidget,
+      );
       expect(find.text('tentar novamente'), findsOneWidget);
     });
 
@@ -81,7 +84,10 @@ void main() {
       await tester.pumpWidget(_organizationApp(source));
       await _drainAsync(tester);
 
-      expect(find.text('não consegui carregar suas categorias'), findsOneWidget);
+      expect(
+        find.text('não consegui carregar suas categorias'),
+        findsOneWidget,
+      );
       await _switchOrganizationTab(tester, 'Marcadores');
       expect(find.text('viagem'), findsOneWidget);
     });
@@ -107,7 +113,9 @@ void main() {
       expect(source.categoryLoads, 1);
     });
 
-    testWidgets('tab switching does not refetch either section', (tester) async {
+    testWidgets('tab switching does not refetch either section', (
+      tester,
+    ) async {
       final source = _OrganizationFake();
 
       await tester.pumpWidget(_organizationApp(source));
@@ -183,87 +191,107 @@ void main() {
         find.text('${Formatters.money(47)} por dia até o próximo recebimento'),
         findsOneWidget,
       );
-      expect(find.textContaining('${Formatters.money(60)} por dia'), findsNothing);
+      expect(
+        find.textContaining('${Formatters.money(60)} por dia'),
+        findsNothing,
+      );
       expect(find.text('recebe em 10 dias · 27 set'), findsOneWidget);
     });
 
-    test('income timing carries context for today tomorrow N days and no income', () {
-      expect(
-        homeIncomeTimingLabel(
-          _snapshot(daysUntilIncome: 0, nextIncomeDate: DateTime(2026, 9, 17)),
-        ),
-        'recebimento previsto hoje',
-      );
-      expect(
-        homeIncomeTimingLabel(
-          _snapshot(daysUntilIncome: 1, nextIncomeDate: DateTime(2026, 9, 18)),
-        ),
-        'recebe amanhã · 18 set',
-      );
-      expect(
-        homeIncomeTimingLabel(
-          _snapshot(daysUntilIncome: 13, nextIncomeDate: DateTime(2026, 9, 30)),
-        ),
-        'recebe em 13 dias · 30 set',
-      );
-      expect(
-        homeIncomeTimingLabel(
-          _snapshot(daysUntilIncome: null, nextIncomeDate: null),
-        ),
-        isNull,
-      );
-    });
-
-    testWidgets('zero spendable state is explanatory and keeps benefit context', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _heroApp(
-          _snapshot(
-            spendablePool: 0,
-            dailyFolego: 0,
-            daysUntilIncome: 10,
-            nextIncomeDate: DateTime(2026, 9, 27),
+    test(
+      'income timing carries context for today tomorrow N days and no income',
+      () {
+        expect(
+          homeIncomeTimingLabel(
+            _snapshot(
+              daysUntilIncome: 0,
+              nextIncomeDate: DateTime(2026, 9, 17),
+            ),
           ),
-        ),
-      );
-
-      expect(
-        find.text(
-          'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento',
-        ),
-        findsOneWidget,
-      );
-      expect(find.textContaining('${Formatters.money(0)} por dia'), findsNothing);
-      expect(find.textContaining('benefícios'), findsOneWidget);
-    });
-
-    testWidgets('explainer displays snapshot values without deriving new ones', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _heroApp(
-          _snapshot(
-            spendablePool: 600,
-            dailyFolego: 47,
-            liquidBalance: 1250,
-            mandatoryOutflows: 650,
-            budgetConfigured: true,
-            monthlyBudgetPlanned: 1800,
-            monthlyBudgetUsed: 700,
-            economicHeadroom: 1100,
+          'recebimento previsto hoje',
+        );
+        expect(
+          homeIncomeTimingLabel(
+            _snapshot(
+              daysUntilIncome: 1,
+              nextIncomeDate: DateTime(2026, 9, 18),
+            ),
           ),
-        ),
-      );
+          'recebe amanhã · 18 set',
+        );
+        expect(
+          homeIncomeTimingLabel(
+            _snapshot(
+              daysUntilIncome: 13,
+              nextIncomeDate: DateTime(2026, 9, 30),
+            ),
+          ),
+          'recebe em 13 dias · 30 set',
+        );
+        expect(
+          homeIncomeTimingLabel(
+            _snapshot(daysUntilIncome: null, nextIncomeDate: null),
+          ),
+          isNull,
+        );
+      },
+    );
 
-      await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'zero spendable state is explanatory and keeps benefit context',
+      (tester) async {
+        await tester.pumpWidget(
+          _heroApp(
+            _snapshot(
+              spendablePool: 0,
+              dailyFolego: 0,
+              daysUntilIncome: 10,
+              nextIncomeDate: DateTime(2026, 9, 27),
+            ),
+          ),
+        );
 
-      expect(find.text(Formatters.money(1250)), findsOneWidget);
-      expect(find.text(Formatters.money(650)), findsOneWidget);
-      expect(find.text(Formatters.money(600)), findsWidgets);
-      expect(find.text(Formatters.money(47)), findsOneWidget);
-    });
+        expect(
+          find.text(
+            'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('${Formatters.money(0)} por dia'),
+          findsNothing,
+        );
+        expect(find.textContaining('benefícios'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'explainer displays snapshot values without deriving new ones',
+      (tester) async {
+        await tester.pumpWidget(
+          _heroApp(
+            _snapshot(
+              spendablePool: 600,
+              dailyFolego: 47,
+              liquidBalance: 1250,
+              mandatoryOutflows: 650,
+              budgetConfigured: true,
+              monthlyBudgetPlanned: 1800,
+              monthlyBudgetUsed: 700,
+              economicHeadroom: 1100,
+            ),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
+        await tester.pumpAndSettle();
+
+        expect(find.text(Formatters.money(1250)), findsOneWidget);
+        expect(find.text(Formatters.money(650)), findsOneWidget);
+        expect(find.text(Formatters.money(600)), findsWidgets);
+        expect(find.text(Formatters.money(47)), findsOneWidget);
+      },
+    );
 
     test('spending palette is deterministic and benefit stays excluded', () {
       final first = HomeSpendingPalette.colorFor(
@@ -302,7 +330,9 @@ void main() {
       );
     });
 
-    testWidgets('hero lays out across required responsive widths', (tester) async {
+    testWidgets('hero lays out across required responsive widths', (
+      tester,
+    ) async {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       for (final width in const <double>[
         320,
@@ -319,7 +349,10 @@ void main() {
         await tester.pumpWidget(_heroApp(_snapshot()));
         await tester.pump();
         expect(tester.takeException(), isNull, reason: 'width $width');
-        expect(find.byKey(const ValueKey('home-spendable-pool')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('home-spendable-pool')),
+          findsOneWidget,
+        );
       }
     });
   });
@@ -340,7 +373,12 @@ void main() {
         find.text('seus lembretes podem ser configurados agora'),
         findsOneWidget,
       );
-      expect(find.text('notificações no celular: em breve'), findsOneWidget);
+      expect(
+        find.text(
+          'a entrega de notificações não está disponível neste dispositivo ou navegador.',
+        ),
+        findsOneWidget,
+      );
       for (final forbidden in ['adapter', 'backend', 'build', 'no-op']) {
         expect(find.textContaining(forbidden), findsNothing);
       }
@@ -356,7 +394,9 @@ void main() {
 
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('notifications-master-toggle')));
+      await tester.tap(
+        find.byKey(const ValueKey('notifications-master-toggle')),
+      );
       await tester.pumpAndSettle();
 
       expect(adapter.requestCalls, 0);
@@ -377,7 +417,9 @@ void main() {
 
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('notification-toggle-invoices')));
+      await tester.tap(
+        find.byKey(const ValueKey('notification-toggle-invoices')),
+      );
       await tester.pumpAndSettle();
 
       expect(data.current.invoicesEnabled, isFalse);
@@ -423,7 +465,9 @@ void main() {
 
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('notifications-master-toggle')));
+      await tester.tap(
+        find.byKey(const ValueKey('notifications-master-toggle')),
+      );
       await tester.pumpAndSettle();
 
       expect(adapter.requestCalls, 1);
@@ -447,7 +491,9 @@ void main() {
 
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('notifications-master-toggle')));
+      await tester.tap(
+        find.byKey(const ValueKey('notifications-master-toggle')),
+      );
       await tester.pumpAndSettle();
 
       expect(adapter.requestCalls, 1);
@@ -481,25 +527,25 @@ Future<void> _scrollNotifications(WidgetTester tester, double dy) async {
 }
 
 Widget _organizationApp(FinancialOrganizationDataSource source) => MaterialApp(
-      home: FinancialOrganizationScreen(
-        repository: _TestRepositoryHolder.repository,
-        spaceId: 'space-1',
-        dataSource: source,
-      ),
-    );
+  home: FinancialOrganizationScreen(
+    repository: _TestRepositoryHolder.repository,
+    spaceId: 'space-1',
+    dataSource: source,
+  ),
+);
 
 Widget _heroApp(FolegoSnapshot snapshot) => MaterialApp(
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: HomeFinancialHero(snapshot: snapshot),
-          ),
-        ),
+  theme: ThemeData.light(),
+  darkTheme: ThemeData.dark(),
+  home: Scaffold(
+    body: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: HomeFinancialHero(snapshot: snapshot),
       ),
-    );
+    ),
+  ),
+);
 
 Widget _notificationApp(
   _NotificationDataFake data,
@@ -543,28 +589,28 @@ FolegoSnapshot _snapshot({
   double monthlyBudgetPlanned = 0,
   double monthlyBudgetUsed = 0,
   double economicHeadroom = 999,
-}) =>
-    FolegoSnapshot(
-      asOfDate: DateTime(2026, 9, 17),
-      nextIncomeDate: nextIncomeDate ??
-          (daysUntilIncome == null ? null : DateTime(2026, 9, 27)),
-      nextIncomeAmount: 6000,
-      daysUntilIncome: daysUntilIncome,
-      liquidBalance: liquidBalance,
-      protectedBalance: 0,
-      mandatoryOutflowsUntilIncome: mandatoryOutflows,
-      cashHeadroom: liquidBalance - mandatoryOutflows,
-      monthlyBudgetPlanned: monthlyBudgetPlanned,
-      monthlyBudgetUsed: monthlyBudgetUsed,
-      economicHeadroom: economicHeadroom,
-      spendablePool: spendablePool,
-      dailyFolego: dailyFolego,
-      shortfall: 0,
-      limitingFactor: 'cash',
-      status: 'ok',
-      budgetConfigured: budgetConfigured,
-      needsIncomeSetup: daysUntilIncome == null,
-    );
+}) => FolegoSnapshot(
+  asOfDate: DateTime(2026, 9, 17),
+  nextIncomeDate:
+      nextIncomeDate ??
+      (daysUntilIncome == null ? null : DateTime(2026, 9, 27)),
+  nextIncomeAmount: 6000,
+  daysUntilIncome: daysUntilIncome,
+  liquidBalance: liquidBalance,
+  protectedBalance: 0,
+  mandatoryOutflowsUntilIncome: mandatoryOutflows,
+  cashHeadroom: liquidBalance - mandatoryOutflows,
+  monthlyBudgetPlanned: monthlyBudgetPlanned,
+  monthlyBudgetUsed: monthlyBudgetUsed,
+  economicHeadroom: economicHeadroom,
+  spendablePool: spendablePool,
+  dailyFolego: dailyFolego,
+  shortfall: 0,
+  limitingFactor: 'cash',
+  status: 'ok',
+  budgetConfigured: budgetConfigured,
+  needsIncomeSetup: daysUntilIncome == null,
+);
 
 class _OrganizationFake implements FinancialOrganizationDataSource {
   _OrganizationFake({this.categoriesLoader, this.markersLoader});
@@ -670,7 +716,7 @@ class _OrganizationFake implements FinancialOrganizationDataSource {
 
 class _NotificationDataFake implements NotificationSettingsDataSource {
   _NotificationDataFake({NotificationPreferences? initial})
-      : current = initial ?? const NotificationPreferences(spaceId: 'space-1');
+    : current = initial ?? const NotificationPreferences(spaceId: 'space-1');
 
   NotificationPreferences current;
   int saveCalls = 0;
@@ -709,8 +755,9 @@ class _NotificationAdapterFake implements NotificationSchedulerAdapter {
   }
 
   @override
-  Future<List<FinancialNotificationIntent>> pendingForSpace(String spaceId) async =>
-      const <FinancialNotificationIntent>[];
+  Future<List<FinancialNotificationIntent>> pendingForSpace(
+    String spaceId,
+  ) async => const <FinancialNotificationIntent>[];
 
   @override
   Future<void> schedule(FinancialNotificationIntent intent) async {}

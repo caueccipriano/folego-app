@@ -10,14 +10,25 @@ import '../../data/models/folego_snapshot.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 
 String? homeIncomeTimingLabel(FolegoSnapshot snapshot) {
-  final days = snapshot.daysUntilIncome;
   final date = snapshot.nextIncomeDate;
+  final reference = snapshot.asOfDate;
+  // Derive calendar timing from the actual dates rather than a rounded server
+  // interval, which can say tomorrow for an event due today.
+  final days = date == null
+      ? snapshot.daysUntilIncome
+      : DateTime.utc(date.year, date.month, date.day)
+            .difference(
+              DateTime.utc(reference.year, reference.month, reference.day),
+            )
+            .inDays;
 
   if (days == null && date == null) return null;
 
   if (days == 0) return 'recebimento previsto hoje';
   if (days == 1) {
-    return date == null ? 'recebe amanhã' : 'recebe amanhã · ${_shortDate(date)}';
+    return date == null
+        ? 'recebe amanhã'
+        : 'recebe amanhã · ${_shortDate(date)}';
   }
   if (days != null && days > 1) {
     final base = 'recebe em $days dias';
@@ -28,8 +39,7 @@ String? homeIncomeTimingLabel(FolegoSnapshot snapshot) {
 }
 
 double homeFlexibleBudgetExceeded(FolegoSnapshot snapshot) {
-  final difference =
-      snapshot.monthlyBudgetUsed - snapshot.monthlyBudgetPlanned;
+  final difference = snapshot.monthlyBudgetUsed - snapshot.monthlyBudgetPlanned;
   return difference > 0 ? difference.toDouble() : 0;
 }
 
@@ -51,14 +61,15 @@ String homeFolegoContextLabel(FolegoSnapshot snapshot) {
 
   if (spendable <= 0) {
     return switch (snapshot.limitingFactor.trim().toLowerCase()) {
-      'budget' || 'economic' => exceeded > 0
-          ? 'seu orçamento flexível passou ${Formatters.money(exceeded)} · ${Formatters.money(snapshot.liquidBalance)} ainda estão em conta'
-          : 'o espaço do seu orçamento para gastos flexíveis já foi usado',
-      'both' || 'cash_and_budget' =>
-        'seu dinheiro disponível e o orçamento para gastos flexíveis chegaram ao limite',
-      _ => hasIncomeTiming
-          ? 'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento'
-          : 'seus compromissos já ocupam o dinheiro disponível',
+      'budget' || 'economic' =>
+        exceeded > 0
+            ? 'seu orçamento flexível passou ${Formatters.money(exceeded)} · ${Formatters.money(snapshot.liquidBalance)} ainda estão em conta'
+            : 'o espaço do seu orçamento para gastos flexíveis já foi usado',
+      'both' || 'cash_and_budget' => 'seu dinheiro disponível e o orçamento para gastos flexíveis chegaram ao limite',
+      _ =>
+        hasIncomeTiming
+            ? 'seus compromissos já ocupam o dinheiro disponível até o próximo recebimento'
+            : 'seus compromissos já ocupam o dinheiro disponível',
     };
   }
 
@@ -73,7 +84,6 @@ String homeFolegoContextLabel(FolegoSnapshot snapshot) {
   return 'valor disponível até o próximo recebimento';
 }
 
-
 /// Facts from the server snapshot, not a second calculation of available cash.
 /// Displayed only when the spending allowance has reached zero.
 List<String> homeZeroBalanceFacts(FolegoSnapshot snapshot) {
@@ -86,9 +96,11 @@ List<String> homeZeroBalanceFacts(FolegoSnapshot snapshot) {
   }
   if (homeIsBudgetLimited(snapshot)) {
     final exceeded = homeFlexibleBudgetExceeded(snapshot);
-    facts.add(exceeded > 0
-        ? 'limite flexível excedido: ${Formatters.money(exceeded)}'
-        : 'limite flexível livre: ${Formatters.money(snapshot.economicHeadroom)}');
+    facts.add(
+      exceeded > 0
+          ? 'limite flexível excedido: ${Formatters.money(exceeded)}'
+          : 'limite flexível livre: ${Formatters.money(snapshot.economicHeadroom)}',
+    );
   } else if (snapshot.mandatoryOutflowsUntilIncome > 0) {
     facts.add(
       'contas até receber: ${Formatters.money(snapshot.mandatoryOutflowsUntilIncome)}',
@@ -163,13 +175,17 @@ class HomeFinancialHero extends StatelessWidget {
     final nextStep = homeNextStep(snapshot);
     final budgetNavigation = FlexibleBudgetNavigationScope.maybeOf(context);
     final showBudgetAction =
-        spendable <= 0 && homeIsBudgetLimited(snapshot) && budgetNavigation != null;
+        spendable <= 0 &&
+        homeIsBudgetLimited(snapshot) &&
+        budgetNavigation != null;
     final normalizedStatus = snapshot.status.trim().toLowerCase();
-    final showVoice = spendable > 0 && (!compact ||
-        snapshot.shortfall > 0 ||
-        normalizedStatus == 'atencao' ||
-        normalizedStatus == 'atenção' ||
-        normalizedStatus == 'sem_folga');
+    final showVoice =
+        spendable > 0 &&
+        (!compact ||
+            snapshot.shortfall > 0 ||
+            normalizedStatus == 'atencao' ||
+            normalizedStatus == 'atenção' ||
+            normalizedStatus == 'sem_folga');
 
     return Semantics(
       container: true,
@@ -186,7 +202,9 @@ class HomeFinancialHero extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: primaryPurple,
-          borderRadius: BorderRadius.circular(compact ? AppRadii.feature : AppRadii.sheet),
+          borderRadius: BorderRadius.circular(
+            compact ? AppRadii.feature : AppRadii.sheet,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +229,10 @@ class HomeFinancialHero extends StatelessWidget {
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: ScaleTransition(
-                    scale: Tween<double>(begin: .985, end: 1).animate(animation),
+                    scale: Tween<double>(
+                      begin: .985,
+                      end: 1,
+                    ).animate(animation),
                     child: child,
                   ),
                 ),
@@ -241,7 +262,10 @@ class HomeFinancialHero extends StatelessWidget {
               const SizedBox(height: 11),
               Container(
                 key: const ValueKey('home-folego-zero-breakdown'),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.darkBackground.withValues(alpha: .13),
                   borderRadius: BorderRadius.circular(AppRadii.control),
@@ -294,22 +318,25 @@ class HomeFinancialHero extends StatelessWidget {
             if (showVoice) ...[
               SizedBox(height: compact ? 9 : 10),
               Container(
-              key: const ValueKey('home-folego-voice'),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: AppColors.darkBackground.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(AppRadii.pill),
-              ),
-              child: Text(
-                homeFolegoVoiceLabel(snapshot),
-                style: AppTypography.label(
-                  context,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: onPurple.withValues(alpha: .90),
+                key: const ValueKey('home-folego-voice'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.darkBackground.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                ),
+                child: Text(
+                  homeFolegoVoiceLabel(snapshot),
+                  style: AppTypography.label(
+                    context,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: onPurple.withValues(alpha: .90),
+                  ),
                 ),
               ),
-            ),
             ],
             if (showBudgetAction) ...[
               const SizedBox(height: 4),
@@ -343,7 +370,11 @@ class HomeFinancialHero extends StatelessWidget {
                   ),
                   onPressed: () => _showExplanation(context),
                   icon: const Icon(AppIcons.info, size: 16),
-                  label: Text(spendable <= 0 ? 'ver cálculo completo' : 'entenda o cálculo'),
+                  label: Text(
+                    spendable <= 0
+                        ? 'ver cálculo completo'
+                        : 'entenda o cálculo',
+                  ),
                 ),
               )
             else
@@ -421,42 +452,39 @@ class _TimingPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        key: const ValueKey('home-income-timing'),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: AppColors.darkBackground.withValues(alpha: .14),
-          borderRadius: BorderRadius.circular(AppRadii.control),
+    key: const ValueKey('home-income-timing'),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: BoxDecoration(
+      color: AppColors.darkBackground.withValues(alpha: .14),
+      borderRadius: BorderRadius.circular(AppRadii.control),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          AppIcons.calendar,
+          size: 17,
+          color: foreground.withValues(alpha: .88),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              AppIcons.calendar,
-              size: 17,
-              color: foreground.withValues(alpha: .88),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            label,
+            style: AppTypography.body(
+              context,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: foreground.withValues(alpha: .90),
             ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                style: AppTypography.body(
-                  context,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: foreground.withValues(alpha: .90),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _FolegoExplanation extends StatelessWidget {
-  const _FolegoExplanation({
-    required this.snapshot,
-    this.onOpenBudget,
-  });
+  const _FolegoExplanation({required this.snapshot, this.onOpenBudget});
 
   final FolegoSnapshot snapshot;
   final VoidCallback? onOpenBudget;
@@ -493,7 +521,11 @@ class _FolegoExplanation extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Aqui você vê os valores que já vieram do seu resumo financeiro. O app não refaz a conta nesta tela.',
-              style: AppTypography.body(context, fontSize: 12, color: secondary),
+              style: AppTypography.body(
+                context,
+                fontSize: 12,
+                color: secondary,
+              ),
             ),
             const SizedBox(height: 18),
             _ExplanationRow(
@@ -561,9 +593,11 @@ class _FolegoExplanation extends StatelessWidget {
                   onOpenBudget!();
                 },
                 icon: const Icon(AppIcons.plan, size: 18),
-                label: Text(exceeded > 0
-                    ? 'ver onde passei do limite'
-                    : 'abrir orçamento flexível'),
+                label: Text(
+                  exceeded > 0
+                      ? 'ver onde passei do limite'
+                      : 'abrir orçamento flexível',
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -595,40 +629,41 @@ class _ExplanationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: AppTypography.body(
-                  context,
-                  fontSize: 12,
-                  fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
+    padding: const EdgeInsets.symmetric(vertical: 7),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AppTypography.body(
+              context,
+              fontSize: 12,
+              fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500,
             ),
-            const SizedBox(width: 16),
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.end,
-                style: emphasized
-                    ? AppTypography.money(context, fontSize: 13)
-                    : AppTypography.body(
-                        context,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-              ),
-            ),
-          ],
+          ),
         ),
-      );
+        const SizedBox(width: 16),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: emphasized
+                ? AppTypography.money(context, fontSize: 13)
+                : AppTypography.body(
+                    context,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
-String _limitingFactorLabel(String factor) => switch (factor.trim().toLowerCase()) {
+String _limitingFactorLabel(String factor) =>
+    switch (factor.trim().toLowerCase()) {
       'budget' || 'economic' => 'orçamento para gastos flexíveis',
       'cash' => 'dinheiro disponível',
       'both' || 'cash_and_budget' =>

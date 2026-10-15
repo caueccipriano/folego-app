@@ -14,9 +14,8 @@ abstract final class AppTypography {
     required Color primaryText,
     required Color secondaryText,
   }) {
-    final manrope = GoogleFonts.manropeTextTheme(
-      base,
-    ).apply(bodyColor: primaryText, displayColor: primaryText);
+    final manrope = GoogleFonts.manropeTextTheme(base)
+        .apply(bodyColor: primaryText, displayColor: primaryText);
 
     return manrope.copyWith(
       displayLarge: GoogleFonts.unbounded(
@@ -169,12 +168,27 @@ abstract final class AppTypography {
     double fontSize = 52,
     Color? color,
   }) {
+    // Compact amounts need open counters and stable digit widths. Keep the
+    // expressive brand face for large hero values only.
+    if (fontSize < 24) {
+      return GoogleFonts.manrope(
+        textStyle: Theme.of(context).textTheme.bodyMedium,
+        fontSize: fontSize < 13 ? 13 : fontSize,
+        fontWeight: FontWeight.w700,
+        height: 1.3,
+        letterSpacing: 0,
+        fontFeatures: const [FontFeature.tabularFigures()],
+        decoration: TextDecoration.none,
+        color: color,
+      );
+    }
     return GoogleFonts.unbounded(
       textStyle: Theme.of(context).textTheme.displayLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      height: .98,
-      letterSpacing: -1.4,
+      height: 1.12,
+      letterSpacing: -.6,
+      decoration: TextDecoration.none,
       color: color,
     );
   }

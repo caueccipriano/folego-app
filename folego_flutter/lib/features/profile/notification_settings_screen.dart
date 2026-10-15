@@ -548,115 +548,118 @@ class _NotificationSettingsScreenState
     ),
   );
 
-  Widget _dailySummarySection(NotificationPreferences prefs) =>
-      _SettingsSection(
-        title: 'revisão e hábito',
-        subtitle: 'uma revisão curta para manter suas finanças em dia',
-        child: Column(
-          children: [
-            _toggle(
-              keyName: 'daily-summary',
-              icon: AppIcons.calendar,
-              title: 'Seu Fôlego de hoje',
-              subtitle: 'pendências, gastos do dia e próximas contas',
-              value: prefs.dailySummaryEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(dailySummaryEnabled: value),
-                key: 'daily-summary',
-                label: 'o resumo diário',
-              ),
-            ),
-            DropdownButtonFormField<String>(
-              key: ValueKey('reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset'),
-              initialValue: prefs.reminderStyle,
-              decoration: const InputDecoration(labelText: 'tom dos avisos'),
-              items: const [
-                DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
-                DropdownMenuItem(value: 'normal', child: Text('Normal')),
-                DropdownMenuItem(value: 'firm', child: Text('Firme')),
-                DropdownMenuItem(
-                  value: 'aggressive',
-                  child: Text('Agressivo · com palavrões'),
-                ),
-              ],
-              onChanged: _saving
-                  ? null
-                  : (value) async {
-                      if (value == null) return;
-                      if (value == 'aggressive') {
-                        final accepted = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Ativar tom agressivo?'),
-                            content: const Text(
-                              'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text('Cancelar'),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text('Ativar'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (accepted != true) {
-                          if (mounted) setState(() => _reminderStylePickerReset++);
-                          return;
-                        }
-                      }
-                      await _save(
-                        prefs.copyWith(reminderStyle: value),
-                        key: 'reminder-style',
-                        label: 'o tom dos avisos',
-                      );
-                    },
-            ),
-            _toggle(
-              keyName: 'commitment',
-              icon: AppIcons.notifications,
-              title: 'Modo compromisso',
-              subtitle: 'Segunda chamada após 90 minutos, só se a revisão não foi concluída',
-              value: prefs.commitmentEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(commitmentEnabled: value),
-                key: 'commitment',
-                label: 'o modo compromisso',
-              ),
-            ),
-            _toggle(
-              keyName: 'weekly-review',
-              icon: AppIcons.calendar,
-              title: 'Revisão de domingo',
-              subtitle:
-                  'A revisão diária lembra também das contas da próxima semana',
-              value: prefs.weeklyReviewEnabled,
-              onChanged: (value) => _save(
-                prefs.copyWith(weeklyReviewEnabled: value),
-                key: 'weekly-review',
-                label: 'a revisão semanal',
-              ),
-            ),
-            ListTile(
-              key: const ValueKey('daily-summary-time'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(AppIcons.calendar),
-              title: const Text('horário do resumo'),
-              subtitle: Text(
-                _clock(prefs.dailySummaryHour, prefs.dailySummaryMinute),
-              ),
-              trailing: const Icon(AppIcons.chevronRight),
-              enabled: prefs.dailySummaryEnabled && !_savingThis('daily-time'),
-              onTap: !prefs.dailySummaryEnabled || _savingThis('daily-time')
-                  ? null
-                  : _pickDailySummaryTime,
+  Widget _dailySummarySection(
+    NotificationPreferences prefs,
+  ) => _SettingsSection(
+    title: 'revisão e hábito',
+    subtitle: 'uma revisão curta para manter suas finanças em dia',
+    child: Column(
+      children: [
+        _toggle(
+          keyName: 'daily-summary',
+          icon: AppIcons.calendar,
+          title: 'Seu Fôlego de hoje',
+          subtitle: 'pendências, gastos do dia e próximas contas',
+          value: prefs.dailySummaryEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(dailySummaryEnabled: value),
+            key: 'daily-summary',
+            label: 'o resumo diário',
+          ),
+        ),
+        DropdownButtonFormField<String>(
+          key: ValueKey(
+            'reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset',
+          ),
+          initialValue: prefs.reminderStyle,
+          decoration: const InputDecoration(labelText: 'tom dos avisos'),
+          items: const [
+            DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
+            DropdownMenuItem(value: 'normal', child: Text('Normal')),
+            DropdownMenuItem(value: 'firm', child: Text('Firme')),
+            DropdownMenuItem(
+              value: 'aggressive',
+              child: Text('Agressivo · com palavrões'),
             ),
           ],
+          onChanged: _saving
+              ? null
+              : (value) async {
+                  if (value == null) return;
+                  if (value == 'aggressive') {
+                    final accepted = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Ativar tom agressivo?'),
+                        content: const Text(
+                          'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Ativar'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (accepted != true) {
+                      if (mounted) setState(() => _reminderStylePickerReset++);
+                      return;
+                    }
+                  }
+                  await _save(
+                    prefs.copyWith(reminderStyle: value),
+                    key: 'reminder-style',
+                    label: 'o tom dos avisos',
+                  );
+                },
         ),
-      );
+        _toggle(
+          keyName: 'commitment',
+          icon: AppIcons.notifications,
+          title: 'Modo compromisso',
+          subtitle: 'Segunda chamada após 90 minutos, só se a revisão não foi concluída',
+          value: prefs.commitmentEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(commitmentEnabled: value),
+            key: 'commitment',
+            label: 'o modo compromisso',
+          ),
+        ),
+        _toggle(
+          keyName: 'weekly-review',
+          icon: AppIcons.calendar,
+          title: 'Revisão de domingo',
+          subtitle:
+              'A revisão diária lembra também das contas da próxima semana',
+          value: prefs.weeklyReviewEnabled,
+          onChanged: (value) => _save(
+            prefs.copyWith(weeklyReviewEnabled: value),
+            key: 'weekly-review',
+            label: 'a revisão semanal',
+          ),
+        ),
+        ListTile(
+          key: const ValueKey('daily-summary-time'),
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(AppIcons.calendar),
+          title: const Text('horário do resumo'),
+          subtitle: Text(
+            _clock(prefs.dailySummaryHour, prefs.dailySummaryMinute),
+          ),
+          trailing: const Icon(AppIcons.chevronRight),
+          enabled: prefs.dailySummaryEnabled && !_savingThis('daily-time'),
+          onTap: !prefs.dailySummaryEnabled || _savingThis('daily-time')
+              ? null
+              : _pickDailySummaryTime,
+        ),
+      ],
+    ),
+  );
 
   Widget _timingSection(NotificationPreferences prefs) => _SettingsSection(
     title: 'quando avisar',
@@ -792,12 +795,12 @@ class _NotificationSettingsScreenState
     final String body;
     if (unsupported) {
       title = 'seus lembretes podem ser configurados agora';
-      body = 'notificações no celular: em breve';
+      body = 'a entrega de notificações não está disponível neste dispositivo ou navegador.';
     } else if (denied) {
-      title = 'notificações no celular estão bloqueadas';
+      title = 'notificações bloqueadas neste dispositivo';
       body = 'suas escolhas continuam salvas. permita notificações nas configurações do dispositivo.';
     } else if (granted) {
-      title = 'notificações no celular prontas';
+      title = 'notificações permitidas neste dispositivo';
       body = 'alertas, resumo diário e não perturbe são processados mesmo com o Fôlego fechado.';
     } else {
       title = 'escolha seus lembretes';
