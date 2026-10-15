@@ -572,7 +572,7 @@ class _AgendaEventCard extends StatelessWidget {
         : '';
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
