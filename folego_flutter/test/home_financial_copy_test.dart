@@ -73,6 +73,43 @@ void main() {
       expect(find.text('limite de orçamento do mês'), findsNothing);
       expect(find.text('já usado no orçamento'), findsNothing);
     });
+    testWidgets('account, commitments and invoice details open their destinations', (tester) async {
+      var accounts = 0;
+      var invoices = 0;
+      var commitments = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HomeFinancialHero(
+                snapshot: _snapshot(limitingFactor: 'cash'),
+                onOpenAccounts: () => accounts++,
+                onOpenInvoices: () => invoices++,
+                onOpenCommitments: () => commitments++,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      Future<void> openAndTap(String key) async {
+        await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
+        await tester.pumpAndSettle();
+        final row = find.byKey(ValueKey(key));
+        await tester.ensureVisible(row);
+        await tester.pumpAndSettle();
+        await tester.tap(row);
+        await tester.pumpAndSettle();
+      }
+
+      await openAndTap('home-detail-open-accounts');
+      expect(accounts, 1);
+      await openAndTap('home-detail-open-commitments');
+      expect(commitments, 1);
+      await openAndTap('home-detail-open-invoices');
+      expect(invoices, 1);
+    });
+
   });
 }
 
