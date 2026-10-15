@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/data/models/wallet_overview.dart';
@@ -76,7 +79,12 @@ class _WalletQaRepository implements FolegoRepository {
 }
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('pt_BR');
+  });
+
   setUp(() {
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     FinancialPrivacy.hidden.value = false;
   });
 
@@ -166,7 +174,7 @@ void main() {
     expect(find.text('de onde vem seu disponível'), findsOneWidget);
     expect(find.text('como cada conta entra no cálculo'), findsOneWidget);
     expect(find.text('diferença entre total e disponível'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('de onde vem seu disponível'))).pop();
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
@@ -181,6 +189,38 @@ void main() {
     expect(find.byTooltip('ocultar valores'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('compact financial rows navigate to matching Wallet sections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WalletScreen(
+          repository: _WalletQaRepository(),
+          spaceId: 'space-qa',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('wallet-summary-benefits')), findsOneWidget);
+    expect(find.byKey(const ValueKey('wallet-summary-invoices')), findsOneWidget);
+    expect(find.byKey(const ValueKey('wallet-summary-debts')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-summary-invoices')));
+    await tester.pumpAndSettle();
+    expect(find.text('seus cartões'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-summary-debts')));
+    await tester.pumpAndSettle();
+    expect(find.text('suas dívidas'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('wallet mobile hierarchy keeps debt readable and bank identified', (
     tester,
   ) async {
@@ -214,7 +254,7 @@ void main() {
       expect(debts, findsOneWidget);
 
       expect(tester.getSize(debts).width,
-          greaterThan(tester.getSize(invoices).width + 40));
+          closeTo(tester.getSize(invoices).width, 2));
       expect(tester.getSize(benefits).width,
           closeTo(tester.getSize(invoices).width, 2));
       expect(find.text(
