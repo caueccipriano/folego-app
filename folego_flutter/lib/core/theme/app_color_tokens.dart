@@ -62,17 +62,27 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     final onBrand = _onColor(brand);
     final action = p.action;
     final background = dark ? p.darkBackground : p.lightBackground;
-    final surface = dark
-        ? Color.lerp(background, const Color(0xFFFFFFFF), .075)!
-        : Color.lerp(background, const Color(0xFFFFFFFF), .74)!;
-    final high = dark
-        ? Color.lerp(background, const Color(0xFFFFFFFF), .14)!
-        : Color.lerp(background, p.brand, .035)!;
-    final primaryText = dark ? const Color(0xFFF4F2F5) : const Color(0xFF17151D);
-    final secondaryText = dark ? const Color(0xFFC4BEC9) : const Color(0xFF605A66);
-    final border = dark
-        ? Color.lerp(background, const Color(0xFFFFFFFF), .22)!
-        : Color.lerp(background, const Color(0xFF17151D), .16)!;
+    final surface = p.id == 'folego'
+        ? (dark ? const Color(0xFF1D1D24) : const Color(0xFFFFFFFF))
+        : dark
+            ? Color.lerp(background, const Color(0xFFFFFFFF), .075)!
+            : Color.lerp(background, const Color(0xFFFFFFFF), .74)!;
+    final high = p.id == 'folego'
+        ? (dark ? const Color(0xFF25252D) : const Color(0xFFF0ECE2))
+        : dark
+            ? Color.lerp(background, const Color(0xFFFFFFFF), .14)!
+            : Color.lerp(background, p.brand, .035)!;
+    final primaryText = p.id == 'folego'
+        ? (dark ? const Color(0xFFF0EFEA) : const Color(0xFF16150F))
+        : (dark ? const Color(0xFFF4F2F5) : const Color(0xFF17151D));
+    final secondaryText = p.id == 'folego'
+        ? (dark ? const Color(0xFFB8B3C3) : const Color(0xFF6B6656))
+        : (dark ? const Color(0xFFC4BEC9) : const Color(0xFF605A66));
+    final border = p.id == 'folego'
+        ? (dark ? const Color(0xFF2E2E38) : const Color(0xFFE4DFD2))
+        : dark
+            ? Color.lerp(background, const Color(0xFFFFFFFF), .22)!
+            : Color.lerp(background, const Color(0xFF17151D), .16)!;
     // A marca de interface é acessível sobre o fundo, mas o hero usa uma
     // superfície de marca mais profunda para manter legíveis os estados suaves.
     final hero = p.id == 'folego'
