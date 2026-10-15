@@ -653,8 +653,8 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                         : _submit,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
-                      backgroundColor: AppColors.lime,
-                      foregroundColor: AppColors.iconOnLime,
+                      backgroundColor: AppColors.action(Theme.of(context).brightness),
+                      foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                     ),
                     child: _saving
                         ? const SizedBox(
@@ -668,7 +668,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                                 : 'pagar fatura',
                             style: AppTypography.button(
                               context,
-                              color: AppColors.iconOnLime,
+                              color: AppColors.onAction(Theme.of(context).brightness),
                             ),
                           ),
                   ),
