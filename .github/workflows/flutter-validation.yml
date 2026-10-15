@@ -57,6 +57,18 @@ jobs:
       - name: Safe current month budget pacing
         run: flutter test test/budget_pace_context_test.dart
 
+      - name: Monthly review read-only checklist regression
+        run: flutter test test/monthly_close_review_test.dart
+
+      - name: Help center regression
+        run: flutter test test/folego_help_center_test.dart
+
+      - name: Fixed and variable spending classification and privacy
+        run: flutter test test/spending_behavior_test.dart
+
+      - name: Registered income and fixed expenses safety
+        run: flutter test test/registered_spending_margin_safety_test.dart
+
       - name: Flutter test
         run: |
           set +e
