@@ -1,5 +1,5 @@
-import '../models/category_item.dart';
-import '../models/transaction_item.dart';
+import 'models/category_item.dart';
+import 'models/transaction_item.dart';
 
 /// Read-only local recommendations from this financial space's own history
 /// and selectable category aliases. Never auto-save or infer from amounts.
