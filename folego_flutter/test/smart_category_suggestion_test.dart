@@ -171,5 +171,9 @@ void main() {
     expect(inbox, contains('classification-smart-suggestion:'));
     expect(quick, contains('onChanged: (_) => setState(() {})'));
     expect(inbox, contains('selected = suggestion.category'));
+    expect(inbox, contains('classification-filter-suggested'));
+    expect(inbox, contains('classification-accept-suggestion:'));
+    expect(inbox, contains('showOffers: false'));
+    expect(inbox, contains('classifyFinancialEvent('));
   });
 }
