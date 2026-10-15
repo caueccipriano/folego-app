@@ -11,6 +11,7 @@ import '../../core/ui/app_snackbars.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'budget_pace_context.dart';
+import 'plan_insights_section.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
@@ -78,6 +79,7 @@ class _PlanScreenState extends State<PlanScreen> {
   final Set<String> _expandedCategoryIds = <String>{};
   final Set<String> _showIdleCategoryIds = <String>{};
   List<BudgetOverviewItem> _items = const [];
+  Future<PlanInsights>? _insightsFuture;
 
   bool _loading = true;
   bool _refreshing = false;
@@ -103,6 +105,7 @@ class _PlanScreenState extends State<PlanScreen> {
       final now = DateTime.now();
       _month = DateTime(now.year, now.month);
       _items = const [];
+      _insightsFuture = null;
       _expandedCategoryIds.clear();
       _showIdleCategoryIds.clear();
       _hasLoadedOnce = false;
@@ -195,6 +198,10 @@ class _PlanScreenState extends State<PlanScreen> {
 
       setState(() {
         _items = items;
+        _insightsFuture = widget.loadOverride == null
+            ? widget.repository.getPlanInsights(
+                spaceId: widget.spaceId, periodMonth: _month)
+            : null;
         _loading = false;
         _refreshing = false;
         _hasLoadedOnce = true;
@@ -260,7 +267,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Future<void> _editBudget(BudgetOverviewItem item) async {
+  Future<void> _editBudget(BudgetOverviewItem item, {double? suggestedAmount}) async {
     if (_saving) return;
 
     if (_isPastMonth) {
@@ -271,7 +278,7 @@ class _PlanScreenState extends State<PlanScreen> {
       return;
     }
 
-    final result = await _showBudgetSheet(item);
+    final result = await _showBudgetSheet(item, initialAmount: suggestedAmount);
     if (result == null || !mounted) return;
 
     setState(() => _saving = true);
@@ -300,9 +307,11 @@ class _PlanScreenState extends State<PlanScreen> {
     }
   }
 
-  Future<_BudgetEditResult?> _showBudgetSheet(BudgetOverviewItem item) {
+  Future<_BudgetEditResult?> _showBudgetSheet(BudgetOverviewItem item, {double? initialAmount}) {
     final controller = TextEditingController(
-      text: item.hasBudget
+      text: initialAmount != null
+          ? initialAmount.toStringAsFixed(2).replaceAll('.', ',')
+          : item.hasBudget
           ? item.plannedAmount.toStringAsFixed(2).replaceAll('.', ',')
           : '',
     );
