@@ -37,18 +37,128 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
 
   static const catalog = <FolegoPalette>[
     FolegoPalette('folego', 'Fôlego', Color(0xFF6C3CE9),
-        Color(0xFFC6F135), Color(0xFFF5F1E8), Color(0xFF101014)),
+        Color(0xFFC6F135), Color(0xFFF5F1E8), Color(0xFF101014),
+        description: 'Roxo + lima · original'),
     FolegoPalette('mare', 'Maré', Color(0xFF0F8B8D),
-        Color(0xFFFF7A59), Color(0xFFF1F7F6), Color(0xFF0B1B1C)),
+        Color(0xFFFF7A59), Color(0xFFEDF8F8), Color(0xFF091A1C),
+        description: 'Turquesa + coral'),
     FolegoPalette('salvia', 'Sálvia', Color(0xFF5F8F6B),
-        Color(0xFFFFB88A), Color(0xFFF4F6F1), Color(0xFF121A14)),
+        Color(0xFFFFB88A), Color(0xFFF4F8F0), Color(0xFF121E16),
+        description: 'Verde + damasco'),
     FolegoPalette('chiclete', 'Chiclete', Color(0xFFE0488F),
-        Color(0xFF7CD7FF), Color(0xFFFFF3F8), Color(0xFF1D0F18)),
+        Color(0xFF7CD7FF), Color(0xFFFFF1F8), Color(0xFF1B0D18),
+        description: 'Rosa + azul-gelo'),
     FolegoPalette('tangerina', 'Tangerina', Color(0xFFF26B1D),
-        Color(0xFFFFD23F), Color(0xFFFFF6EE), Color(0xFF1C120B)),
+        Color(0xFFFFD23F), Color(0xFFFFF6E9), Color(0xFF21150C),
+        description: 'Laranja + mel'),
     FolegoPalette('neon', 'Neon', Color(0xFF2B3040),
-        Color(0xFF19E0F0), Color(0xFFF3F5F8), Color(0xFF0A0C10)),
+        Color(0xFF19E0F0), Color(0xFFF1F6FA), Color(0xFF080F18),
+        description: 'Grafite + ciano'),
+    FolegoPalette('safira', 'Safira', Color(0xFF234EC4),
+        Color(0xFF71EDC3), Color(0xFFF2F5FF), Color(0xFF0D1427),
+        description: 'Azul + menta'),
+    FolegoPalette('mochi', 'Mochi', Color(0xFF7649A4),
+        Color(0xFFFFB68A), Color(0xFFFBF3FF), Color(0xFF1C1225),
+        description: 'Lavanda + pêssego'),
+    FolegoPalette('cacau', 'Cacau', Color(0xFF76533B),
+        Color(0xFFC5F18C), Color(0xFFFAF5ED), Color(0xFF201A16),
+        description: 'Café + pistache'),
   ];
+
+  // Cada paleta tem cores próprias para claro e escuro. Não interpolar
+  // superfícies com branco/preto nem misturar tons de duas paletas.
+  static const _colorways = <String, List<FolegoColorWay>>{
+    'folego': [
+      FolegoColorWay(brand: Color(0xFF6C3CE9), background: Color(0xFFF5F1E8),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFF0ECE2),
+        foreground: Color(0xFF16150F), muted: Color(0xFF6B6656),
+        border: Color(0xFFE4DFD2), hero: Color(0xFF6C3CE9)),
+      FolegoColorWay(brand: Color(0xFF967CF4), background: Color(0xFF101014),
+        surface: Color(0xFF1D1D24), elevated: Color(0xFF25252D),
+        foreground: Color(0xFFF0EFEA), muted: Color(0xFFB8B3C3),
+        border: Color(0xFF2E2E38), hero: Color(0xFF54309F)),
+    ],
+    'mare': [
+      FolegoColorWay(brand: Color(0xFF086A6D), background: Color(0xFFEDF8F8),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFDFF0EF),
+        foreground: Color(0xFF142B2C), muted: Color(0xFF536C70),
+        border: Color(0xFFCBE5E4), hero: Color(0xFF0F6465)),
+      FolegoColorWay(brand: Color(0xFF63D4CE), background: Color(0xFF091A1C),
+        surface: Color(0xFF14282A), elevated: Color(0xFF1C3537),
+        foreground: Color(0xFFE6F6F5), muted: Color(0xFFA7CBCA),
+        border: Color(0xFF2C4B4D), hero: Color(0xFF104143)),
+    ],
+    'salvia': [
+      FolegoColorWay(brand: Color(0xFF3F6E49), background: Color(0xFFF4F8F0),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFE8F0E1),
+        foreground: Color(0xFF1B2C22), muted: Color(0xFF526B5A),
+        border: Color(0xFFD9E4D3), hero: Color(0xFF345B3D)),
+      FolegoColorWay(brand: Color(0xFFA3D6A8), background: Color(0xFF121E16),
+        surface: Color(0xFF1B2C21), elevated: Color(0xFF28392B),
+        foreground: Color(0xFFEBF5E9), muted: Color(0xFFB5CDBA),
+        border: Color(0xFF344D3A), hero: Color(0xFF2A5136)),
+    ],
+    'chiclete': [
+      FolegoColorWay(brand: Color(0xFFB62C73), background: Color(0xFFFFF1F8),
+        surface: Color(0xFFFFF9FC), elevated: Color(0xFFFFE3F2),
+        foreground: Color(0xFF361628), muted: Color(0xFF7E4B68),
+        border: Color(0xFFF2CADF), hero: Color(0xFF9A1F63)),
+      FolegoColorWay(brand: Color(0xFFFF92C7), background: Color(0xFF1B0D18),
+        surface: Color(0xFF2D1627), elevated: Color(0xFF412039),
+        foreground: Color(0xFFFBEAF4), muted: Color(0xFFDBA6C4),
+        border: Color(0xFF65314F), hero: Color(0xFF6D1748)),
+    ],
+    'tangerina': [
+      FolegoColorWay(brand: Color(0xFFAC4B0A), background: Color(0xFFFFF6E9),
+        surface: Color(0xFFFFFCF5), elevated: Color(0xFFFFEDD2),
+        foreground: Color(0xFF392210), muted: Color(0xFF846342),
+        border: Color(0xFFF0D8B8), hero: Color(0xFF87410E)),
+      FolegoColorWay(brand: Color(0xFFFFAC74), background: Color(0xFF21150C),
+        surface: Color(0xFF36231A), elevated: Color(0xFF493024),
+        foreground: Color(0xFFFFF1E0), muted: Color(0xFFDABCA3),
+        border: Color(0xFF6A4B36), hero: Color(0xFF743015)),
+    ],
+    'neon': [
+      FolegoColorWay(brand: Color(0xFF2A4567), background: Color(0xFFF1F6FA),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFE4EBF2),
+        foreground: Color(0xFF132137), muted: Color(0xFF526778),
+        border: Color(0xFFCBD8E4), hero: Color(0xFF18384A)),
+      FolegoColorWay(brand: Color(0xFF77CBF2), background: Color(0xFF080F18),
+        surface: Color(0xFF141E2A), elevated: Color(0xFF1F2E3A),
+        foreground: Color(0xFFEEF9FB), muted: Color(0xFFB1C5D0),
+        border: Color(0xFF31434F), hero: Color(0xFF0D3341)),
+    ],
+    'safira': [
+      FolegoColorWay(brand: Color(0xFF234EC4), background: Color(0xFFF2F5FF),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFE7EDFF),
+        foreground: Color(0xFF17264A), muted: Color(0xFF5A6688),
+        border: Color(0xFFCFD9F3), hero: Color(0xFF173B94)),
+      FolegoColorWay(brand: Color(0xFF9BB9FF), background: Color(0xFF0D1427),
+        surface: Color(0xFF18213A), elevated: Color(0xFF242F4B),
+        foreground: Color(0xFFF1F5FF), muted: Color(0xFFB8C6EA),
+        border: Color(0xFF37476C), hero: Color(0xFF213C86)),
+    ],
+    'mochi': [
+      FolegoColorWay(brand: Color(0xFF7649A4), background: Color(0xFFFBF3FF),
+        surface: Color(0xFFFFFBFF), elevated: Color(0xFFF1E6F8),
+        foreground: Color(0xFF2D1A3B), muted: Color(0xFF796080),
+        border: Color(0xFFE8D6EC), hero: Color(0xFF593277)),
+      FolegoColorWay(brand: Color(0xFFCCA7FF), background: Color(0xFF1C1225),
+        surface: Color(0xFF2B1D34), elevated: Color(0xFF3A2B44),
+        foreground: Color(0xFFF9EFFF), muted: Color(0xFFCEB9DA),
+        border: Color(0xFF554360), hero: Color(0xFF442553)),
+    ],
+    'cacau': [
+      FolegoColorWay(brand: Color(0xFF76533B), background: Color(0xFFFAF5ED),
+        surface: Color(0xFFFFFDF7), elevated: Color(0xFFEEE4D5),
+        foreground: Color(0xFF32291E), muted: Color(0xFF71624F),
+        border: Color(0xFFDFD3BF), hero: Color(0xFF583B2A)),
+      FolegoColorWay(brand: Color(0xFFDDB78C), background: Color(0xFF201A16),
+        surface: Color(0xFF30251E), elevated: Color(0xFF403226),
+        foreground: Color(0xFFF8EFE2), muted: Color(0xFFCEBAA1),
+        border: Color(0xFF61513F), hero: Color(0xFF4A2F22)),
+    ],
+  };
 
   static FolegoPalette palette(String id) =>
       catalog.firstWhere((item) => item.id == id, orElse: () => catalog.first);
@@ -56,39 +166,12 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   static FolegoColorTokens fromId(String id, Brightness brightness) {
     final p = palette(id);
     final dark = brightness == Brightness.dark;
-    final originalBrand = p.id == 'folego'
-        ? (dark ? const Color(0xFF967CF4) : p.brand)
-        : (dark ? Color.lerp(p.brand, const Color(0xFFFFFFFF), .32)! : p.brand);
-    final action = p.action;
-    final background = dark ? p.darkBackground : p.lightBackground;
-    final surface = p.id == 'folego'
-        ? (dark ? const Color(0xFF1D1D24) : const Color(0xFFFFFFFF))
-        : dark
-            ? Color.lerp(background, const Color(0xFFFFFFFF), .075)!
-            : Color.lerp(background, const Color(0xFFFFFFFF), .74)!;
-    final brand = _ensureTextContrast(originalBrand, surface, background, dark);
-    final onBrand = _onColor(brand);
-    final high = p.id == 'folego'
-        ? (dark ? const Color(0xFF25252D) : const Color(0xFFF0ECE2))
-        : dark
-            ? Color.lerp(background, const Color(0xFFFFFFFF), .14)!
-            : Color.lerp(background, p.brand, .035)!;
-    final primaryText = p.id == 'folego'
-        ? (dark ? const Color(0xFFF0EFEA) : const Color(0xFF16150F))
-        : (dark ? const Color(0xFFF4F2F5) : const Color(0xFF17151D));
-    final secondaryText = p.id == 'folego'
-        ? (dark ? const Color(0xFFB8B3C3) : const Color(0xFF6B6656))
-        : (dark ? const Color(0xFFC4BEC9) : const Color(0xFF605A66));
-    final border = p.id == 'folego'
-        ? (dark ? const Color(0xFF2E2E38) : const Color(0xFFE4DFD2))
-        : dark
-            ? Color.lerp(background, const Color(0xFFFFFFFF), .22)!
-            : Color.lerp(background, const Color(0xFF17151D), .16)!;
-    // A marca de interface é acessível sobre o fundo, mas o hero usa uma
-    // superfície de marca mais profunda para manter legíveis os estados suaves.
-    final hero = p.id == 'folego'
-        ? (dark ? const Color(0xFF54309F) : const Color(0xFF6C3CE9))
-        : Color.lerp(p.brand, const Color(0xFF17101F), dark ? .62 : .49)!;
+    final way = _colorways[p.id]![dark ? 1 : 0];
+    final brand = _ensureTextContrast(
+      way.brand, way.surface, way.background, dark,
+    );
+    // Cores financeiras semânticas NÃO seguem a paleta: o mesmo estado
+    // (folga, atenção e déficit) precisa ter o mesmo significado em todas.
     const stateFolgaLight = Color(0xFF356516);
     const stateFolgaDark = Color(0xFFB4EC87);
     const stateApertadoLight = Color(0xFF915514);
@@ -98,23 +181,23 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
 
     return FolegoColorTokens(
       marca: brand,
-      marcaSobre: onBrand,
-      marcaHero: hero,
-      marcaHeroSobre: _onColor(hero),
-      acao: action,
-      acaoSobre: _onColor(action),
-      fundo: background,
-      superficie: surface,
-      superficieAlta: high,
-      textoPrincipal: primaryText,
-      textoSecundario: secondaryText,
-      borda: border,
+      marcaSobre: _onColor(brand),
+      marcaHero: way.hero,
+      marcaHeroSobre: _onColor(way.hero),
+      acao: p.action,
+      acaoSobre: _onColor(p.action),
+      fundo: way.background,
+      superficie: way.surface,
+      superficieAlta: way.elevated,
+      textoPrincipal: way.foreground,
+      textoSecundario: way.muted,
+      borda: way.border,
       folga: dark ? stateFolgaDark : stateFolgaLight,
-      folgaSobre: dark ? background : const Color(0xFFFFFFFF),
+      folgaSobre: dark ? way.background : const Color(0xFFFFFFFF),
       apertado: dark ? stateApertadoDark : stateApertadoLight,
-      apertadoSobre: dark ? background : const Color(0xFFFFFFFF),
+      apertadoSobre: dark ? way.background : const Color(0xFFFFFFFF),
       estourado: dark ? stateEstouradoDark : stateEstouradoLight,
-      estouradoSobre: dark ? background : const Color(0xFFFFFFFF),
+      estouradoSobre: dark ? way.background : const Color(0xFFFFFFFF),
       folgaHero: p.id == 'folego'
           ? const Color(0xFFC6F135)
           : const Color(0xFFBAF095),
@@ -227,9 +310,28 @@ class FolegoPalette {
   const FolegoPalette(
     this.id, this.name, this.brand, this.action,
     this.lightBackground, this.darkBackground,
+    {this.description = ''},
   );
   final String id, name;
   final Color brand, action, lightBackground, darkBackground;
+  final String description;
+}
+
+@immutable
+class FolegoColorWay {
+  const FolegoColorWay({
+    required this.brand,
+    required this.background,
+    required this.surface,
+    required this.elevated,
+    required this.foreground,
+    required this.muted,
+    required this.border,
+    required this.hero,
+  });
+
+  final Color brand, background, surface, elevated;
+  final Color foreground, muted, border, hero;
 }
 
 /// Seleção local, compartilhada pela ThemeExtension e por widgets legados.
