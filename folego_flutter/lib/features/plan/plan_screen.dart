@@ -6,6 +6,7 @@ import '../../data/repositories/folego_repository.dart';
 import 'flexible_budget_screen.dart';
 import 'plan_screen_web2.dart' as base;
 import 'projection_screen.dart';
+import 'spending_behavior_screen.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({
@@ -58,6 +59,16 @@ class _PlanScreenState extends State<PlanScreen> {
     });
   }
 
+  void _openSpendingBehavior(DateTime month) {
+    Navigator.of(context).push<void>(MaterialPageRoute<void>(
+      builder: (_) => SpendingBehaviorScreen(
+        repository: widget.repository,
+        spaceId: widget.spaceId,
+        periodMonth: month,
+      ),
+    ));
+  }
+
   void _openSummary() {
     if (!_projection) return;
     setState(() {
@@ -86,6 +97,7 @@ class _PlanScreenState extends State<PlanScreen> {
         refreshToken: refreshToken,
         onProjectionRequested: _openProjection,
         onPurchaseSimulationRequested: _openPurchaseProjection,
+        onSpendingBehaviorRequested: _openSpendingBehavior,
         onFlexibleBudgetRequested: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => FlexibleBudgetScreen(
