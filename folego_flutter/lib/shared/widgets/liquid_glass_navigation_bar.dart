@@ -135,7 +135,7 @@ class _Destination extends StatelessWidget {
       button: true,
       label: item.label,
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: onTap,
           mouseCursor: SystemMouseCursors.click,
@@ -155,7 +155,7 @@ class _Destination extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected
                   ? activePurple.withValues(alpha: isDark ? .14 : .10)
-                  : Colors.transparent,
+                  : AppColors.transparent,
               borderRadius: BorderRadius.circular(AppRadii.feature),
             ),
             child: Column(
