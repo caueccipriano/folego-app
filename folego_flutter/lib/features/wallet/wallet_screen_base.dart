@@ -59,7 +59,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
-    _section = widget.requestedSection.clamp(0, 4);
+    _section = widget.requestedSection == 1 ? 1 : 0;
     _load();
   }
 
@@ -68,7 +68,7 @@ class _WalletScreenState extends State<WalletScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sectionOpenToken != widget.sectionOpenToken ||
         oldWidget.spaceId != widget.spaceId) {
-      _section = widget.requestedSection.clamp(0, 4);
+      _section = widget.requestedSection == 1 ? 1 : 0;
     }
   }
 
