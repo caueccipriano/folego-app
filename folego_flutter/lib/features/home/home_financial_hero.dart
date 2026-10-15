@@ -565,7 +565,7 @@ class _FolegoExplanation extends StatelessWidget {
             ),
             if (snapshot.protectedBalance > 0)
               _ExplanationRow(
-                label: 'protegido',
+                label: 'dinheiro protegido',
                 value: Formatters.money(snapshot.protectedBalance),
                 hint: 'Reservas e valores que você separou para não gastar.',
               ),
