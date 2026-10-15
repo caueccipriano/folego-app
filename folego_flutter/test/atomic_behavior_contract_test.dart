@@ -17,7 +17,7 @@ void main() {
     expect(sql, contains('REVOKE ALL ON FUNCTION'));
     expect(sql, contains('FROM PUBLIC, anon'));
     expect(sql, contains('TO authenticated'));
-    expect(sql, contains("e.space_id = p_space_id"));
+    expect(sql, contains('e.space_id = p_space_id'));
     expect(sql, contains("e.status = 'confirmed'"));
     expect(sql, contains("e.event_type IN ('expense', 'card_purchase', 'benefit_expense')"));
   });
