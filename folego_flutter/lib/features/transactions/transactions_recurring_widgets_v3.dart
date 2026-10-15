@@ -353,7 +353,7 @@ class _RecurringCard extends StatelessWidget {
       context: context,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _FolegoActionSheet(title: item.name, actions: actions),
     );
     if (action == 'realize') onRealize();
