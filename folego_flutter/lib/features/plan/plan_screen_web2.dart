@@ -1129,8 +1129,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final sumOfChildren = children.fold<double>(
       0, (sum, child) => sum + child.actualAmount,
     );
-    final amountWithoutSubcategory =
-        (parent.actualAmount - sumOfChildren).clamp(0.0, double.infinity);
+    final amountWithoutSubcategory = parent.withoutSubcategory(children);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
