@@ -52,13 +52,13 @@ void main() {
     );
 
     expect(find.text('seu mês até agora'), findsOneWidget);
-    expect(find.text('compras e gastos feitos'), findsOneWidget);
+    expect(find.text('quanto gastei?'), findsOneWidget);
     expect(find.text(Formatters.money(4731.89)), findsOneWidget);
     expect(find.text('gastos pela conta / PIX'), findsOneWidget);
     expect(find.text('compras no cartão'), findsOneWidget);
     expect(find.text('benefícios utilizados'), findsOneWidget);
     expect(find.text('reembolsos abatidos dos gastos'), findsOneWidget);
-    expect(find.text('dinheiro recebido no mês'), findsOneWidget);
+    expect(find.text('quanto entrou?'), findsOneWidget);
     expect(find.text('resultado econômico · não é saldo disponível'), findsOneWidget);
     expect(find.text('pagamentos de fatura'), findsNothing);
   });
@@ -87,7 +87,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('competência do mês'), findsOneWidget);
+    expect(find.text('despesas atribuídas a este mês'), findsOneWidget);
     expect(find.text('cartões na competência'), findsOneWidget);
     expect(find.text('despesa por competência'), findsOneWidget);
     expect(find.text('movimentações que não são novos gastos'), findsOneWidget);
@@ -133,8 +133,8 @@ void main() {
       ),
     );
 
-    expect(find.text('dinheiro recebido no mês'), findsOneWidget);
-    expect(find.text('compras e gastos feitos'), findsOneWidget);
+    expect(find.text('quanto entrou?'), findsOneWidget);
+    expect(find.text('quanto gastei?'), findsOneWidget);
     expect(find.text('resultado econômico · não é saldo disponível'), findsOneWidget);
     expect(find.text('-${Formatters.money(october.economicResult.abs())}'), findsOneWidget);
     expect(find.textContaining(Formatters.money(october.competenceExpenses)), findsOneWidget);
