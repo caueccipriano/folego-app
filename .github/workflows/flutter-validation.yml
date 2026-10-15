@@ -67,7 +67,7 @@ jobs:
         run: flutter test test/folego_help_center_test.dart
 
       - name: Fixed and variable spending classification and privacy
-        run: flutter test test/spending_behavior_test.dart
+        run: flutter test test/spending_behavior_test.dart test/expense_behavior_entrypoints_test.dart
 
       - name: Registered income and fixed expenses safety
         run: flutter test test/registered_spending_margin_safety_test.dart
