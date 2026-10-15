@@ -30,12 +30,16 @@ class WalletScreen extends StatefulWidget {
     required this.spaceId,
     this.initialPushRoute,
     this.onAddRequested,
+    this.requestedSection = 0,
+    this.sectionOpenToken = 0,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final String? initialPushRoute;
   final VoidCallback? onAddRequested;
+  final int requestedSection;
+  final int sectionOpenToken;
 
   @override
   State<WalletScreen> createState() => _WalletScreenState();
@@ -55,7 +59,17 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
+    _section = widget.requestedSection.clamp(0, 4);
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant WalletScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sectionOpenToken != widget.sectionOpenToken ||
+        oldWidget.spaceId != widget.spaceId) {
+      _section = widget.requestedSection.clamp(0, 4);
+    }
   }
 
   Future<void> _load() async {
