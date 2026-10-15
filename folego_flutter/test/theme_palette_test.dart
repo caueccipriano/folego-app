@@ -4,8 +4,8 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
-  test('9 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 9);
+  test('15 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 15);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -57,7 +57,10 @@ void main() {
     ]) {
       expect(FolegoColorTokens.palette(id).id, id);
     }
-    for (final id in ['safira', 'mochi', 'cacau']) {
+    for (final id in [
+      'safira', 'mochi', 'cacau',
+      'matcha', 'pixel', 'cherry', 'butter', 'orbit', 'disco',
+    ]) {
       expect(FolegoColorTokens.palette(id).id, id);
     }
   });
