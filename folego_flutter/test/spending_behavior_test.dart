@@ -109,16 +109,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('repo passes through current necessity/frequency/tags when saving', () {
-    final repository = File('lib/data/repositories/folego_repository.dart')
+  test('repo routes classification through atomic CAS with no tag writes', () {
+    final source = File('lib/data/repositories/folego_repository.dart')
         .readAsStringSync();
+    final method = source.split('Future<void> setSpendingBehavior({').last
+        .split('  // ESPAÇO / PERFIL').first;
     final plan = File('lib/features/plan/plan_screen_web2.dart')
         .readAsStringSync();
-    expect(repository, contains("'p_necessity_class': current['necessity_class']"));
-    expect(repository, contains("'p_frequency_class': current['frequency_class']"));
-    expect(repository, contains("'p_tag_ids': tags"));
-    expect(repository, contains("'p_event_id': entry.id"));
-    expect(repository, contains("'status', 'confirmed'"));
+
+    expect(method, contains("'set_event_behavior_class'"));
+    expect(method, contains("'p_expected_behavior_class': expected"));
+    expect(method, contains("'p_behavior_class': next"));
+    expect(method, contains("'p_event_id': entry.id"));
+    expect(method, contains("'p_space_id': spaceId"));
+    expect(method, isNot(contains("'p_tag_ids'")));
+    expect(method, isNot(contains("'p_necessity_class'")));
+    expect(method, isNot(contains("'p_frequency_class'")));
+    expect(method, isNot(contains("'set_event_annotations'")));
     expect(plan, contains("ValueKey('plan-open-spending-behavior')"));
   });
 }
