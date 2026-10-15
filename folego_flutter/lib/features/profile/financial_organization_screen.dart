@@ -261,14 +261,14 @@ class _FinancialOrganizationScreenState
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => FractionallySizedBox(heightFactor: .82, child: child),
       );
     }
     return showDialog<T>(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         insetPadding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 720),
@@ -420,7 +420,7 @@ class _FinancialOrganizationScreenState
                           border: Border.all(color: border),
                         ),
                         child: TabBar(
-                          dividerColor: Colors.transparent,
+                          dividerColor: AppColors.transparent,
                           indicatorSize: TabBarIndicatorSize.tab,
                           indicator: BoxDecoration(
                             color: accent.withValues(alpha: isDark ? .18 : .10),
