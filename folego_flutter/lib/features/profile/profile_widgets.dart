@@ -633,7 +633,7 @@ class _ThemeLivePreview extends StatelessWidget {
                 Text('seu dinheiro disponível',
                   style: TextStyle(color: colors.marcaHeroSobre, fontSize: 12)),
                 const SizedBox(height: 6),
-                Text('R$ 1.250,00',
+                Text(r'R$ 1.250,00',
                   style: TextStyle(color: colors.marcaHeroSobre,
                     fontSize: 26, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
