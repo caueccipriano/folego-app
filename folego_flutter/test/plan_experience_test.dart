@@ -227,7 +227,7 @@ void main() {
         item(id: 'food', name: 'Alimentação', planned: 950, actual: 1299.99),
         item(id: 'shop', name: 'Compras', planned: 200, actual: 483.34),
         item(id: 'edu', name: 'Educação', planned: 200, actual: 655.74),
-        item(id: 'debts', name: 'Dívidas', planned: 1500, actual: 81.84),
+        item(id: 'debts', name: 'Dívidas', planned: 1500, actual: 1558.35),
         item(id: 'subscriptions', name: 'Assinaturas', planned: 142.80, actual: 78.80),
         item(id: 'beauty', name: 'Beleza', planned: 140, actual: 0),
         item(id: 'other', name: 'Outras categorias', actual: 555.64),
@@ -236,13 +236,14 @@ void main() {
       final summary = BudgetMonthSummary.fromItems(parents);
       final diag = BudgetMonthDiagnostics.fromItems(parents);
       expect(summary.plannedAmount, closeTo(3132.80, 0.001));
-      expect(summary.actualAmount, closeTo(3313.04, 0.001));
-      expect(diag.categoriesOverLimit, 3);
-      expect(diag.exceededInLimitedCategories, closeTo(1089.07, 0.001));
-      expect(diag.remainingInLimitedCategories, closeTo(1622.16, 0.001));
+      expect(summary.actualAmount, closeTo(4789.55, 0.001));
+      expect(diag.categoriesOverLimit, 4);
+      expect(diag.exceededInLimitedCategories, closeTo(1147.42, 0.001));
+      expect(diag.remainingInLimitedCategories, closeTo(204.00, 0.001));
       expect(diag.spendingWithoutLimit, closeTo(713.33, 0.001));
       expect(diag.pendingClassification, closeTo(157.69, 0.001));
       expect(diag.netRemaining, closeTo(summary.remainingAmount, 0.001));
+      expect(summary.remainingAmount, closeTo(-1656.75, .001));
     });
 
     test('empty month stays a valid zero summary', () {
