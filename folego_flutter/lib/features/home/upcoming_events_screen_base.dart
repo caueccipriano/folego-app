@@ -4,6 +4,7 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -389,11 +390,9 @@ class _AgendaHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final purple = AppColors.primaryPurple(brightness);
-    final onPurple = brightness == Brightness.dark
-        ? AppColors.iconOnPurpleDark
-        : AppColors.iconOnPurpleLight;
+    final tokens = FolegoColorTokens.of(context);
+    final purple = tokens.marcaHero;
+    final onPurple = tokens.marcaHeroSobre;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -455,28 +454,29 @@ class _AgendaHeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onHero = FolegoColorTokens.of(context).marcaHeroSobre;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .12),
+        color: onHero.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(AppRadii.control),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: Colors.white),
+          Icon(icon, size: 17, color: onHero),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                style: TextStyle(color: onHero.withValues(alpha: .84), fontSize: 11),
               ),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: onHero,
                   fontWeight: FontWeight.w800,
                 ),
               ),
