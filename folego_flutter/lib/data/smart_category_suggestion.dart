@@ -107,6 +107,50 @@ SmartCategorySuggestion? suggestSmartCategory({
     );
   }
 
+  // Similar merchant descriptions (e.g. "Uber corrida 123" / "Uber viagem
+  // 456") require 3 confirmed examples, different descriptions and zero
+  // conflicting categories. A shared generic word never becomes a rule.
+  if (direction == 'expense') {
+    String? merchantPrefix(String value) {
+      final normalized = _normalizeCategoryText(value);
+      if (!_specificDescription(normalized)) return null;
+      final first = normalized.split(' ').first;
+      if (first.length < 4 || const <String>{
+        'compra', 'pagamento', 'transferencia', 'enviado', 'recebido',
+        'parcela', 'fatura', 'cartao', 'credito', 'debito', 'supermercado',
+        'mercado', 'restaurante', 'loja', 'posto', 'pix', 'saque',
+      }.contains(first)) {
+        return null;
+      }
+      return first;
+    }
+
+    final prefix = merchantPrefix(query);
+    if (prefix != null) {
+      final similar = <String, int>{};
+      final evidenceDescriptions = <String>{};
+      for (final item in history) {
+        if (item.status != 'confirmed' ||
+            _direction(item.eventType) != direction ||
+            !catalog.containsKey(item.categoryId) ||
+            merchantPrefix(item.description) != prefix) {
+          continue;
+        }
+        similar.update(item.categoryId!, (n) => n + 1, ifAbsent: () => 1);
+        evidenceDescriptions.add(_normalizeCategoryText(item.description));
+      }
+      if (similar.length == 1 && similar.values.single >= 3 &&
+          evidenceDescriptions.length >= 2) {
+        final entry = similar.entries.single;
+        return SmartCategorySuggestion(
+          category: catalog[entry.key]!,
+          reason: 'estabelecimento semelhante · ${entry.value} exemplos',
+          evidenceCount: entry.value,
+        );
+      }
+    }
+  }
+
   // A category name or explicit alias must be a complete token/phrase,
   // never an arbitrary substring. Ambiguous matches are intentionally hidden.
   final matches = <CategoryItem>[];
