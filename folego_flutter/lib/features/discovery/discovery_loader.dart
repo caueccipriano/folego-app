@@ -144,8 +144,9 @@ Future<DiscoveryData> loadDiscovery(
       }
       final rows = await repository.getSheetAuditItems(spaceId);
       for (final row in rows) {
-        if (row.hidden || row.needsReview || row.sheetAppliedAt != null)
+        if (row.hidden || row.needsReview || row.sheetAppliedAt != null) {
           continue;
+        }
         pending.add(
           DiscoveryEntry(
             id: row.id,

@@ -86,12 +86,13 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     try {
       await widget.onOpen(entry);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Não foi possível abrir. Tente novamente.'),
           ),
         );
+      }
     } finally {
       if (mounted) {
         setState(() => _opening = false);
@@ -156,7 +157,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                               _query.clear();
                               _visible = 40;
                             }),
-                            icon: const Icon(Icons.close),
+                            icon: const Icon(AppIcons.close),
                           ),
                   ),
                   onChanged: (_) => setState(() => _visible = 40),

@@ -736,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> {
           key: const ValueKey('home-pending-center'),
           tooltip: 'central de pendências',
           onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository, pendingOnly: true),
-          icon: const Icon(AppIcons.check, size: 19),
+          icon: const Icon(AppIcons.warning, size: 19),
         ),
         const SizedBox(width: 6),
         IconButton(

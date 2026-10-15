@@ -45,6 +45,24 @@ Future<void> openDiscovery(
               spaceId: space.id,
             );
           case DiscoveryKind.sync:
+            if (entry.id == 'disabled') {
+              await showDialog<void>(
+                context: routeContext,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('integração desativada'),
+                  content: const Text(
+                    'Abra perfil → planilha para conferir a conexão. Nenhum dado foi sincronizado por esta ação.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('entendi'),
+                    ),
+                  ],
+                ),
+              );
+              return;
+            }
             destination = SheetAuditScreen(
               spaceId: space.id,
               loadItems: repository.getSheetAuditItems,

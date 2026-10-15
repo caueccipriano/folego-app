@@ -18,78 +18,13 @@ class _DemoScreenState extends State<DemoScreen> {
   final _ledger = DemoLedger();
   bool? _dark;
   Future<void> _addExpense(BuildContext context) async {
-    final description = TextEditingController();
-    final amount = TextEditingController();
-    final form = GlobalKey<FormState>();
     final result = await showDialog<(String, double)>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('simular um gasto'),
-        content: SizedBox(
-          width: 400,
-          child: Form(
-            key: form,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: description,
-                  maxLength: 100,
-                  decoration: const InputDecoration(labelText: 'descrição'),
-                  validator: (value) => (value ?? '').trim().isEmpty
-                      ? 'Dê um nome ao gasto.'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: amount,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'valor em reais',
-                    hintText: '25,00',
-                  ),
-                  validator: (value) {
-                    final parsed = Formatters.parseMoney(value ?? '')
-                        .toDouble();
-                    return parsed.isFinite && parsed > 0 && parsed <= 999999
-                        ? null
-                        : 'Informe um valor entre 0,01 e 999.999.';
-                  },
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Somente nesta demonstração. Nada será salvo na sua conta.',
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('cancelar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!form.currentState!.validate()) return;
-              Navigator.pop(dialogContext, (
-                description.text,
-                Formatters.parseMoney(amount.text).toDouble(),
-              ));
-            },
-            child: const Text('simular gasto'),
-          ),
-        ],
-      ),
+      builder: (_) => const _DemoExpenseDialog(),
     );
-    if (mounted && result != null)
+    if (mounted && result != null) {
       setState(() => _ledger.addExpense(result.$1, result.$2));
-    // Controllers remain alive until the dialog's exit animation completes.
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    description.dispose();
-    amount.dispose();
+    }
   }
 
   Future<void> _details(BuildContext context, DiscoveryEntry entry) async {
@@ -129,11 +64,14 @@ class _DemoScreenState extends State<DemoScreen> {
   Future<void> _explore(BuildContext context, bool pendingOnly) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (routeContext) => DiscoveryScreen(
-          identity: 'demo',
-          pendingOnly: pendingOnly,
-          load: () async => _ledger.data,
-          onOpen: (entry) => _details(routeContext, entry),
+        builder: (routeContext) => Theme(
+          data: Theme.of(context),
+          child: DiscoveryScreen(
+            identity: 'demo',
+            pendingOnly: pendingOnly,
+            load: () async => _ledger.data,
+            onOpen: (entry) => _details(routeContext, entry),
+          ),
         ),
       ),
     );
@@ -262,4 +200,82 @@ class _DemoScreenState extends State<DemoScreen> {
       ),
     );
   }
+}
+
+class _DemoExpenseDialog extends StatefulWidget {
+  const _DemoExpenseDialog();
+  @override
+  State<_DemoExpenseDialog> createState() => _DemoExpenseDialogState();
+}
+
+class _DemoExpenseDialogState extends State<_DemoExpenseDialog> {
+  final description = TextEditingController();
+  final amount = TextEditingController();
+  final form = GlobalKey<FormState>();
+  @override
+  void dispose() {
+    description.dispose();
+    amount.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('simular um gasto'),
+    content: SizedBox(
+      width: 400,
+      child: Form(
+        key: form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: description,
+              maxLength: 100,
+              decoration: const InputDecoration(labelText: 'descrição'),
+              validator: (value) =>
+                  (value ?? '').trim().isEmpty ? 'Dê um nome ao gasto.' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: amount,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'valor em reais',
+                hintText: '25,00',
+              ),
+              validator: (value) {
+                final parsed = Formatters.parseMoney(value ?? '').toDouble();
+                return parsed.isFinite && parsed > 0 && parsed <= 999999
+                    ? null
+                    : 'Informe um valor entre 0,01 e 999.999.';
+              },
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Somente nesta demonstração. Nada será salvo na sua conta.',
+            ),
+          ],
+        ),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('cancelar'),
+      ),
+      FilledButton(
+        onPressed: () {
+          if (!form.currentState!.validate()) return;
+          Navigator.pop(context, (
+            description.text,
+            Formatters.parseMoney(amount.text).toDouble(),
+          ));
+        },
+        child: const Text('simular gasto'),
+      ),
+    ],
+  );
 }
