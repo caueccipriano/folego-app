@@ -141,6 +141,7 @@ void main() {
           body: realtime_plan.PlanScreen(
             repository: repository,
             spaceId: 'space',
+            disableInsightsForTesting: true,
           ),
         ),
       ),
@@ -259,6 +260,7 @@ Future<void> _pumpPlan(
         body: plan.PlanScreen(
           repository: repository,
           spaceId: 'space',
+          disableInsightsForTesting: true,
           saveOverride: saver,
         ),
       ),
