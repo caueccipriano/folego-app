@@ -44,6 +44,7 @@ class PlanScreen extends StatefulWidget {
     this.loadOverride,
     this.saveOverride,
     this.onProjectionRequested,
+    this.onSpendingBehaviorRequested,
     this.onFlexibleBudgetRequested,
   });
 
@@ -56,6 +57,7 @@ class PlanScreen extends StatefulWidget {
   final Object? refreshToken;
 
   final VoidCallback? onProjectionRequested;
+  final ValueChanged<DateTime>? onSpendingBehaviorRequested;
   final VoidCallback? onFlexibleBudgetRequested;
 
   @visibleForTesting
@@ -922,6 +924,18 @@ class _PlanScreenState extends State<PlanScreen> {
                 color: secondaryText,
               ),
             ),
+          if (widget.onSpendingBehaviorRequested != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const ValueKey('plan-open-spending-behavior'),
+                onPressed: () => widget.onSpendingBehaviorRequested!(_month),
+                icon: const Icon(Icons.pie_chart_outline_rounded),
+                label: const Text('gastos fixos x variáveis'),
+              ),
+            ),
+          ],
           if (widget.onFlexibleBudgetRequested != null) ...[
             const SizedBox(height: 10),
             Align(
