@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
+import '../home/home_wallet_navigation_scope.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import '../plan/flexible_budget_screen.dart';
 import '../plan/plan_screen.dart';
@@ -54,6 +55,8 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 0;
   int _projectionRequestToken = 0;
+  int _walletRequestToken = 0;
+  int _walletSelectedSection = 0;
   late final RealtimeInvalidationCoordinator _realtimeCoordinator;
   late final RealtimeSessionController _realtimeSession;
   late final NotificationService _notificationService;
@@ -138,6 +141,15 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     });
   }
 
+  void _openWalletSection(int section) {
+    // Keep all account and invoice data in the existing Wallet backend.
+    setState(() {
+      _walletSelectedSection = section == 1 ? 1 : 0;
+      _walletRequestToken += 1;
+      _index = 3;
+    });
+  }
+
   Future<void> _openFlexibleBudget() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -187,6 +199,8 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             repository: widget.repository,
             spaceId: widget.space.id,
             initialPushRoute: pushRoute,
+            requestedSection: _walletSelectedSection,
+            sectionOpenToken: _walletRequestToken,
           ),
           ProfileScreen(
             client: Supabase.instance.client,
@@ -195,7 +209,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           ),
         ];
 
-        return ProjectionNavigationScope(
+        return HomeWalletNavigationScope(
+          onOpenSection: _openWalletSection,
+          child: ProjectionNavigationScope(
           onOpen: _openProjection,
           child: FlexibleBudgetNavigationScope(
             onOpen: () => unawaited(_openFlexibleBudget()),
@@ -207,6 +223,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
               },
               pages: pages,
             ),
+          ),
           ),
         );
       },
