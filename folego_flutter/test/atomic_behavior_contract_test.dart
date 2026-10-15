@@ -32,7 +32,99 @@ void main() {
 
   test('DB mutation never changes category, tags, amount or necessity', () {
     final procedure = sql
-        .split('AS $folego_atomic_behavior$')[1]
+        .split(r'AS $folego_atomic_behavior[1]
+        .split(r'$folego_atomic_behavior[0];
+    final update = procedure
+        .split('UPDATE public.financial_events')[1]
+        .split('END IF;')[0];
+    expect(update, contains('SET behavior_class = p_behavior_class'));
+    expect(update, isNot(contains('necessity_class =')));
+    expect(update, isNot(contains('frequency_class =')));
+    expect(update, isNot(contains('category_id =')));
+    expect(update, isNot(contains('amount =')));
+    expect(procedure, isNot(contains('UPDATE public.financial_event_tags')));
+    expect(procedure, isNot(contains('DELETE FROM public.financial_event_tags')));
+    expect(procedure, isNot(contains('INSERT INTO public.financial_event_tags')));
+  });
+
+  test('client calls only atomic server function, not legacy overwrite RPC', () {
+    final method = repository
+        .split('Future<void> setSpendingBehavior({')[1]
+        .split('// ESPAÇO / PERFIL')[0];
+    expect(method, contains("'set_event_behavior_class'"));
+    expect(method, contains("'p_expected_behavior_class': expected"));
+    expect(method, contains("'p_behavior_class': next"));
+    expect(method, contains("'p_event_id': entry.id"));
+    expect(method, contains("'p_space_id': spaceId"));
+    expect(method, isNot(contains('set_event_annotations')));
+    expect(method, isNot(contains('financial_event_tags')));
+    expect(method, isNot(contains('p_tag_ids')));
+    expect(method, isNot(contains('necessity_class')));
+    expect(method, isNot(contains('frequency_class')));
+  });
+}
+)[1]
+        .split('$folego_atomic_behavior$')[0];
+    final update = procedure
+        .split('UPDATE public.financial_events')[1]
+        .split('END IF;')[0];
+    expect(update, contains('SET behavior_class = p_behavior_class'));
+    expect(update, isNot(contains('necessity_class =')));
+    expect(update, isNot(contains('frequency_class =')));
+    expect(update, isNot(contains('category_id =')));
+    expect(update, isNot(contains('amount =')));
+    expect(procedure, isNot(contains('UPDATE public.financial_event_tags')));
+    expect(procedure, isNot(contains('DELETE FROM public.financial_event_tags')));
+    expect(procedure, isNot(contains('INSERT INTO public.financial_event_tags')));
+  });
+
+  test('client calls only atomic server function, not legacy overwrite RPC', () {
+    final method = repository
+        .split('Future<void> setSpendingBehavior({')[1]
+        .split('// ESPAÇO / PERFIL')[0];
+    expect(method, contains("'set_event_behavior_class'"));
+    expect(method, contains("'p_expected_behavior_class': expected"));
+    expect(method, contains("'p_behavior_class': next"));
+    expect(method, contains("'p_event_id': entry.id"));
+    expect(method, contains("'p_space_id': spaceId"));
+    expect(method, isNot(contains('set_event_annotations')));
+    expect(method, isNot(contains('financial_event_tags')));
+    expect(method, isNot(contains('p_tag_ids')));
+    expect(method, isNot(contains('necessity_class')));
+    expect(method, isNot(contains('frequency_class')));
+  });
+}
+)[0];
+    final update = procedure
+        .split('UPDATE public.financial_events')[1]
+        .split('END IF;')[0];
+    expect(update, contains('SET behavior_class = p_behavior_class'));
+    expect(update, isNot(contains('necessity_class =')));
+    expect(update, isNot(contains('frequency_class =')));
+    expect(update, isNot(contains('category_id =')));
+    expect(update, isNot(contains('amount =')));
+    expect(procedure, isNot(contains('UPDATE public.financial_event_tags')));
+    expect(procedure, isNot(contains('DELETE FROM public.financial_event_tags')));
+    expect(procedure, isNot(contains('INSERT INTO public.financial_event_tags')));
+  });
+
+  test('client calls only atomic server function, not legacy overwrite RPC', () {
+    final method = repository
+        .split('Future<void> setSpendingBehavior({')[1]
+        .split('// ESPAÇO / PERFIL')[0];
+    expect(method, contains("'set_event_behavior_class'"));
+    expect(method, contains("'p_expected_behavior_class': expected"));
+    expect(method, contains("'p_behavior_class': next"));
+    expect(method, contains("'p_event_id': entry.id"));
+    expect(method, contains("'p_space_id': spaceId"));
+    expect(method, isNot(contains('set_event_annotations')));
+    expect(method, isNot(contains('financial_event_tags')));
+    expect(method, isNot(contains('p_tag_ids')));
+    expect(method, isNot(contains('necessity_class')));
+    expect(method, isNot(contains('frequency_class')));
+  });
+}
+)[1]
         .split('$folego_atomic_behavior$')[0];
     final update = procedure
         .split('UPDATE public.financial_events')[1]
