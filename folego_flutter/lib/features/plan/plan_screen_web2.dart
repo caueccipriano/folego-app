@@ -649,6 +649,24 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  Widget _buildInsights() {
+    return PlanInsightsSection(
+      insights: _insightsFuture!,
+      allowEditing: !_isPastMonth,
+      onReviewSuggestion: (suggestion) {
+        final candidates = _items.where((item) =>
+            item.categoryId == suggestion.categoryId &&
+            item.isSubcategory && !item.isPending).toList();
+        if (candidates.isEmpty) {
+          AppSnackbars.show(context, 'categoria indisponível neste mês');
+          return;
+        }
+        // Suggestions never save: the existing edit modal requires approval.
+        _editBudget(candidates.single, suggestedAmount: suggestion.suggestedLimit);
+      },
+    );
+  }
+
   Widget _purchaseSimulationButton() => OutlinedButton.icon(
     key: const ValueKey('plan-can-i-buy'),
     onPressed: widget.onPurchaseSimulationRequested,
@@ -673,6 +691,10 @@ class _PlanScreenState extends State<PlanScreen> {
           ],
           const SizedBox(height: 12),
           _buildSummary(brightness),
+          if (_insightsFuture != null) ...[
+            const SizedBox(height: 12),
+            _buildInsights(),
+          ],
           if (widget.onPurchaseSimulationRequested != null) ...[
             const SizedBox(height: 12),
             _purchaseSimulationButton(),
@@ -714,6 +736,10 @@ class _PlanScreenState extends State<PlanScreen> {
                     key: const ValueKey('plan-summary-column'),
                     children: [
                       _buildSummary(brightness),
+                      if (_insightsFuture != null) ...[
+                        const SizedBox(height: 14),
+                        _buildInsights(),
+                      ],
                       if (widget.onPurchaseSimulationRequested != null) ...[
                         const SizedBox(height: 12),
                         _purchaseSimulationButton(),
