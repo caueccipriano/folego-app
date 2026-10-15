@@ -8,6 +8,7 @@ import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/quick_register_sheet.dart';
 import 'package:folego/core/theme/app_typography.dart';
+import 'package:folego/core/theme/app_colors.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/features/home/home_financial_hero.dart';
 
@@ -71,6 +72,22 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  test('small text and purple actions keep contrast on both theme surfaces', () {
+    double contrast(Color a, Color b) {
+      final first = a.computeLuminance();
+      final second = b.computeLuminance();
+      return first > second ? (first + .05) / (second + .05)
+          : (second + .05) / (first + .05);
+    }
+    for (final brightness in Brightness.values) {
+      final surface = AppColors.surface(brightness);
+      expect(contrast(AppColors.primaryPurple(brightness), surface),
+        greaterThanOrEqualTo(4.5));
+      expect(contrast(AppColors.secondaryText(brightness), surface),
+        greaterThanOrEqualTo(4.5));
+    }
+  });
+
   for (final width in [320.0, 390.0, 768.0, 1440.0]) {
     for (final brightness in Brightness.values) {
       testWidgets(
