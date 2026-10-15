@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -164,10 +165,9 @@ class HomeFinancialHero extends StatelessWidget {
 
   Widget _buildHero(BuildContext context, {required bool compact}) {
     final brightness = Theme.of(context).brightness;
-    final primaryPurple = AppColors.primaryPurple(brightness);
-    final onPurple = brightness == Brightness.dark
-        ? AppColors.iconOnPurpleDark
-        : AppColors.iconOnPurpleLight;
+    final tokens = FolegoColorTokens.of(context);
+    final primaryPurple = tokens.marcaHero;
+    final onPurple = tokens.marcaHeroSobre;
     final timing = homeIncomeTimingLabel(snapshot);
     final spendable = snapshot.spendablePool;
     final contextCopy = homeFolegoContextLabel(snapshot);
@@ -179,6 +179,15 @@ class HomeFinancialHero extends StatelessWidget {
         homeIsBudgetLimited(snapshot) &&
         budgetNavigation != null;
     final normalizedStatus = snapshot.status.trim().toLowerCase();
+    // Estado recebido da RPC; sem cálculo de elegibilidade no cliente.
+    final heroValueColor = spendable <= 0
+        ? tokens.estouradoHero
+        : (normalizedStatus == 'apertado' ||
+                normalizedStatus == 'atencao' ||
+                normalizedStatus == 'atenção' ||
+                normalizedStatus == 'segure_gastos')
+            ? tokens.apertadoHero
+            : tokens.folgaHero;
     final showVoice =
         spendable > 0 &&
         (!compact ||
@@ -267,36 +276,57 @@ class HomeFinancialHero extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.darkBackground.withValues(alpha: .13),
+                  color: onPurple.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(AppRadii.control),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'por que zerou?',
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.lime,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    for (final fact in zeroFacts)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          fact,
-                          style: AppTypography.body(
-                            context,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: onPurple,
-                          ),
+                child: Semantics(
+                  button: true,
+                  label: 'por que zerou? abrir explicação dos valores',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadii.control),
+                      onTap: () => _showExplanation(context),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'por que zerou?',
+                                    style: AppTypography.label(
+                                      context,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: onPurple,
+                                    ),
+                                  ),
+                                ),
+                                Icon(AppIcons.chevronRight, size: 18, color: onPurple),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            for (final fact in zeroFacts)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 3),
+                                child: Text(
+                                  fact,
+                                  style: AppTypography.body(
+                                    context,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: onPurple,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                  ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -455,7 +485,7 @@ class _TimingPill extends StatelessWidget {
     key: const ValueKey('home-income-timing'),
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
     decoration: BoxDecoration(
-      color: AppColors.darkBackground.withValues(alpha: .14),
+      color: FolegoColorTokens.of(context).marcaHeroSobre.withValues(alpha: .12),
       borderRadius: BorderRadius.circular(AppRadii.control),
     ),
     child: Row(
@@ -493,6 +523,7 @@ class _FolegoExplanation extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final secondary = AppColors.secondaryText(brightness);
+    final tokens = FolegoColorTokens.of(context);
     final timing = homeIncomeTimingLabel(snapshot);
     final exceeded = homeFlexibleBudgetExceeded(snapshot);
 
@@ -529,17 +560,20 @@ class _FolegoExplanation extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             _ExplanationRow(
-              label: 'dinheiro disponível',
+              label: 'em contas',
               value: Formatters.money(snapshot.liquidBalance),
+              hint: 'Dinheiro disponível nas suas contas, sem confundir com limite para gastar.',
             ),
             if (snapshot.protectedBalance > 0)
               _ExplanationRow(
-                label: 'dinheiro protegido',
+                label: 'protegido',
                 value: Formatters.money(snapshot.protectedBalance),
+                hint: 'Reservas e valores que você separou para não gastar.',
               ),
             _ExplanationRow(
-              label: 'compromissos até receber',
+              label: 'contas até receber',
               value: Formatters.money(snapshot.mandatoryOutflowsUntilIncome),
+              hint: 'Compromissos previstos antes do próximo recebimento.',
             ),
             if (snapshot.budgetConfigured) ...[
               _ExplanationRow(
@@ -553,6 +587,7 @@ class _FolegoExplanation extends StatelessWidget {
               _ExplanationRow(
                 label: 'ainda disponível para gastos flexíveis',
                 value: Formatters.money(snapshot.economicHeadroom),
+                valueColor: snapshot.economicHeadroom < 0 ? tokens.estourado : null,
               ),
               if (exceeded > 0)
                 _ExplanationRow(
@@ -621,11 +656,15 @@ class _ExplanationRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.emphasized = false,
+    this.hint,
+    this.valueColor,
   });
 
   final String label;
   final String value;
   final bool emphasized;
+  final String? hint;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -634,13 +673,17 @@ class _ExplanationRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            label,
-            style: AppTypography.body(
-              context,
-              fontSize: 12,
-              fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: AppTypography.body(context,
+                fontSize: 13, fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500)),
+              if (hint != null) ...[
+                const SizedBox(height: 3),
+                Text(hint!, style: AppTypography.body(context, fontSize: 12,
+                  color: FolegoColorTokens.of(context).textoSecundario)),
+              ],
+            ],
           ),
         ),
         const SizedBox(width: 16),
@@ -649,10 +692,11 @@ class _ExplanationRow extends StatelessWidget {
             value,
             textAlign: TextAlign.end,
             style: emphasized
-                ? AppTypography.money(context, fontSize: 13)
+                ? AppTypography.money(context, fontSize: 13, color: valueColor)
                 : AppTypography.body(
                     context,
                     fontSize: 12,
+                    color: valueColor,
                     fontWeight: FontWeight.w600,
                   ),
           ),
