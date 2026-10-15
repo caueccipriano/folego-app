@@ -470,14 +470,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
+                  // Priorities first: spendable money, attention, next obligation.
                   hero,
                   const SizedBox(height: 12),
-                  quickActions,
-                  const SizedBox(height: 12),
                   pulse,
-                  if (showUpcoming) ...[const SizedBox(height: 13), upcoming],
+                  if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
                   const SizedBox(height: 12),
                   smartCheckin,
+                  const SizedBox(height: 12),
+                  quickActions,
                   const SizedBox(height: 14),
                   Material(
                     color: background,
@@ -520,19 +521,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   hero,
                   const SizedBox(height: 16),
                   pulse,
-                  const SizedBox(height: 20),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 5, child: quickActions),
-                      if (showUpcoming) ...[
-                        const SizedBox(width: 20),
-                        Expanded(flex: 4, child: upcoming),
-                      ],
-                    ],
-                  ),
+                  if (showUpcoming) ...[
+                    const SizedBox(height: 16),
+                    upcoming,
+                  ],
                   const SizedBox(height: 16),
                   smartCheckin,
+                  const SizedBox(height: 16),
+                  quickActions,
                   const SizedBox(height: 22),
                   monthlyMoney,
                   const SizedBox(height: 14),
@@ -568,19 +564,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            quickActions,
-                            const SizedBox(height: 16),
                             pulse,
                             if (showUpcoming) ...[
                               const SizedBox(height: 16),
                               upcoming,
                             ],
+                            const SizedBox(height: 16),
+                            smartCheckin,
+                            const SizedBox(height: 16),
+                            quickActions,
                             if (showLatest) ...[
                               const SizedBox(height: 16),
                               latestSection,
                             ],
-                            const SizedBox(height: 16),
-                            smartCheckin,
                           ],
                         ),
                       ),
