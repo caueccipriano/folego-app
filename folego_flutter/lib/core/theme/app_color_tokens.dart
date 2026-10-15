@@ -308,10 +308,14 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
 @immutable
 class FolegoPalette {
   const FolegoPalette(
-    this.id, this.name, this.brand, this.action,
-    this.lightBackground, this.darkBackground,
-    {this.description = ''},
-  );
+    this.id,
+    this.name,
+    this.brand,
+    this.action,
+    this.lightBackground,
+    this.darkBackground, {
+    this.description = '',
+  });
   final String id, name;
   final Color brand, action, lightBackground, darkBackground;
   final String description;
