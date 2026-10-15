@@ -260,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
@@ -829,7 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final visible = sorted.take(3).toList(growable: false);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),
