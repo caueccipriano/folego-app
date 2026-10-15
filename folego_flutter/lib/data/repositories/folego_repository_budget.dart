@@ -4,6 +4,22 @@ import '../models/budget_overview_item.dart';
 import 'folego_repository.dart';
 
 extension FolegoRepositoryBudget on FolegoRepository {
+  /// Read-only. RPC enforces financial-space membership server-side.
+  /// Neither this call nor the resulting suggestions ever save a limit.
+  Future<PlanInsights> getPlanInsights({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    final response = await Supabase.instance.client.rpc(
+      'get_plan_insights',
+      params: {
+        'p_space_id': spaceId,
+        'p_period_month': _date(DateTime(periodMonth.year, periodMonth.month)),
+      },
+    );
+    return PlanInsights.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
   Future<FlexibleBudgetOverview> getFlexibleBudgetOverview({
     required String spaceId,
     required DateTime periodMonth,
