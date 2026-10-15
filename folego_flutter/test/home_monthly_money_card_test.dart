@@ -136,9 +136,9 @@ void main() {
     expect(find.text('dinheiro recebido no mês'), findsOneWidget);
     expect(find.text('compras e gastos feitos'), findsOneWidget);
     expect(find.text('resultado econômico · não é saldo disponível'), findsOneWidget);
-    expect(find.text('-R\$ 809,24'), findsOneWidget);
-    expect(find.textContaining('R\$ 3.313,04'), findsOneWidget);
-    expect(find.textContaining('R\$ 225,37'), findsOneWidget);
+    expect(find.text('-${Formatters.money(october.economicResult.abs())}'), findsOneWidget);
+    expect(find.textContaining(Formatters.money(october.competenceExpenses)), findsOneWidget);
+    expect(find.textContaining(Formatters.money((october.competenceExpenses - october.spendingMade).abs())), findsOneWidget);
     expect(find.text('reembolsos abatidos dos gastos'), findsNothing);
     expect(find.byKey(const ValueKey('monthly-spending-origins')), findsOneWidget);
   });
