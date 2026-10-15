@@ -417,7 +417,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             context: context,
             useRootNavigator: true,
             builder: (dialogContext) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               insetPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 24,
@@ -439,7 +439,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             useRootNavigator: true,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .86,
               child: CategorySearchPicker(
@@ -821,8 +821,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         FilledButton(
                           onPressed: _saving ? null : _save,
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.lime,
-                            foregroundColor: AppColors.iconOnLime,
+                            backgroundColor: AppColors.action(Theme.of(context).brightness),
+                            foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                             minimumSize: const Size.fromHeight(50),
                           ),
                           child: _saving

@@ -474,7 +474,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: space,
@@ -927,7 +927,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                       ),
                       child: TabBar(
                         controller: _tabController,
-                        dividerColor: Colors.transparent,
+                        dividerColor: AppColors.transparent,
                         indicatorSize: TabBarIndicatorSize.tab,
                         indicator: BoxDecoration(
                           color: accent.withValues(alpha: isDark ? .18 : .10),

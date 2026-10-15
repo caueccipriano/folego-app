@@ -916,7 +916,7 @@ class _TransactionClassificationInboxState
       return showDialog<CategoryItem>(
         context: context,
         builder: (_) => Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           child: SizedBox(
             width: 520,
             height: MediaQuery.sizeOf(context).height * .8,
@@ -935,7 +935,7 @@ class _TransactionClassificationInboxState
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: .86,
         child: CategorySearchPicker(
@@ -1256,7 +1256,7 @@ class _ClassificationCard extends StatelessWidget {
         : AppColors.expenseText(brightness);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: saving ? null : onTap,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),

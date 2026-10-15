@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:folego/core/theme/app_colors.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_icons.dart';
@@ -42,7 +43,7 @@ class CategorySearchField extends StatelessWidget {
             context: context,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             builder: (_) => FractionallySizedBox(
               heightFactor: .84,
               child: CategorySearchPicker(
@@ -55,7 +56,7 @@ class CategorySearchField extends StatelessWidget {
         : await showDialog<CategoryItem>(
             context: context,
             builder: (dialogContext) => Dialog(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.transparent,
               insetPadding: const EdgeInsets.all(24),
               child: SizedBox(
                 width: 620,

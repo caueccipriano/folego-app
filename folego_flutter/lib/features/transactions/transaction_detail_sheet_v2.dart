@@ -34,7 +34,7 @@ Future<bool?> showTransactionDetail({
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: .94,
         child: TransactionDetailPanel(
@@ -49,7 +49,7 @@ Future<bool?> showTransactionDetail({
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -152,14 +152,14 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => child,
       );
     }
     return showDialog<bool>(
       context: context,
       // Dim the detail behind the editor to avoid competing modal layers.
-      barrierColor: Colors.black.withValues(alpha: .72),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: .72),
       builder: (dialogContext) => Dialog(
         backgroundColor: AppColors.surface(Theme.of(dialogContext).brightness),
         shape: RoundedRectangleBorder(

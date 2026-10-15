@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:folego/core/theme/app_colors.dart';
 
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
@@ -93,7 +94,7 @@ class PlanInsightsSection extends StatelessWidget {
               ),
               const SizedBox(height: 9),
               Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
                 child: ExpansionTile(
                   key: const ValueKey('plan-insights-audit'),
                   tilePadding: EdgeInsets.zero,
@@ -137,7 +138,7 @@ class PlanInsightsSection extends StatelessWidget {
                 ),
               ),
               Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
                 child: ExpansionTile(
                   key: const ValueKey('plan-insights-suggestions'),
                   tilePadding: EdgeInsets.zero,

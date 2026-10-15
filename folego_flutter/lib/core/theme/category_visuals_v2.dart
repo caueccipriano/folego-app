@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_color_tokens.dart';
 import 'app_icons.dart';
 
 class CategoryVisualData {
@@ -386,61 +387,61 @@ abstract final class CategoryVisuals {
     final isDark = brightness == Brightness.dark;
     switch (c) {
       case 'alimentacao':
-        return isDark ? const Color(0xFF9B7BFF) : const Color(0xFF6C3CE9);
+        return isDark ? FolegoLegacyColors.hexFF9B7BFF : FolegoLegacyColors.hexFF6C3CE9;
       case 'assinaturas':
       case 'assinaturas e servicos':
-        return isDark ? const Color(0xFF53B9FF) : const Color(0xFF1774B8);
+        return isDark ? FolegoLegacyColors.hexFF53B9FF : FolegoLegacyColors.hexFF1774B8;
       case 'beleza':
       case 'beleza e cuidados':
       case 'beleza & cuidados':
-        return isDark ? const Color(0xFFFF62B0) : const Color(0xFFD4457A);
+        return isDark ? FolegoLegacyColors.hexFFFF62B0 : FolegoLegacyColors.hexFFD4457A;
       case 'compras':
-        return isDark ? const Color(0xFFFFD84D) : const Color(0xFF9A6A00);
+        return isDark ? FolegoLegacyColors.hexFFFFD84D : FolegoLegacyColors.hexFF9A6A00;
       case 'contas da casa':
-        return isDark ? const Color(0xFFFF9F43) : const Color(0xFFB35A00);
+        return isDark ? FolegoLegacyColors.hexFFFF9F43 : FolegoLegacyColors.hexFFB35A00;
       case 'dividas':
       case 'dividas e emprestimos':
       case 'dividas & financiamentos':
       case 'emprestimos':
-        return isDark ? const Color(0xFFFF6B6B) : const Color(0xFFB33A3A);
+        return isDark ? FolegoLegacyColors.hexFFFF6B6B : FolegoLegacyColors.hexFFB33A3A;
       case 'educacao':
-        return isDark ? const Color(0xFF7C8CFF) : const Color(0xFF4A57C8);
+        return isDark ? FolegoLegacyColors.hexFF7C8CFF : FolegoLegacyColors.hexFF4A57C8;
       case 'financeiro':
       case 'financeiro & impostos':
       case 'familia & dependentes':
-        return isDark ? const Color(0xFF4DE1C1) : const Color(0xFF16816D);
+        return isDark ? FolegoLegacyColors.hexFF4DE1C1 : FolegoLegacyColors.hexFF16816D;
       case 'lazer':
       case 'lazer & entretenimento':
-        return isDark ? const Color(0xFFC96BFF) : const Color(0xFF8242B5);
+        return isDark ? FolegoLegacyColors.hexFFC96BFF : FolegoLegacyColors.hexFF8242B5;
       case 'moradia':
       case 'casa':
-        return isDark ? const Color(0xFF6FE7A1) : const Color(0xFF2C8B55);
+        return isDark ? FolegoLegacyColors.hexFF6FE7A1 : FolegoLegacyColors.hexFF2C8B55;
       case 'presentes':
       case 'presentes & doacoes':
-        return isDark ? const Color(0xFFFF8A70) : const Color(0xFFB84F3B);
+        return isDark ? FolegoLegacyColors.hexFFFF8A70 : FolegoLegacyColors.hexFFB84F3B;
       case 'saude':
       case 'saude & bem-estar':
-        return isDark ? const Color(0xFFFF7A9C) : const Color(0xFFB93E66);
+        return isDark ? FolegoLegacyColors.hexFFFF7A9C : FolegoLegacyColors.hexFFB93E66;
       case 'transporte':
-        return isDark ? const Color(0xFFC6F135) : const Color(0xFF5E7F14);
+        return isDark ? FolegoLegacyColors.hexFFC6F135 : FolegoLegacyColors.hexFF5E7F14;
       case 'vestuario':
       case 'pets':
-        return isDark ? const Color(0xFF5DDCFF) : const Color(0xFF247B95);
+        return isDark ? FolegoLegacyColors.hexFF5DDCFF : FolegoLegacyColors.hexFF247B95;
       case 'viagens':
-        return isDark ? const Color(0xFF4FEAFF) : const Color(0xFF167D91);
+        return isDark ? FolegoLegacyColors.hexFF4FEAFF : FolegoLegacyColors.hexFF167D91;
       case 'seguros':
-        return isDark ? const Color(0xFFB79CFF) : const Color(0xFF7054B8);
+        return isDark ? FolegoLegacyColors.hexFFB79CFF : FolegoLegacyColors.hexFF7054B8;
       case 'outros':
       case 'outros gastos':
-        return isDark ? const Color(0xFFB5B2C0) : const Color(0xFF706B7A);
+        return isDark ? FolegoLegacyColors.hexFFB5B2C0 : FolegoLegacyColors.hexFF706B7A;
       case 'transferencia':
       case 'transferencias':
-        return isDark ? const Color(0xFF4FEAFF) : const Color(0xFF167D91);
+        return isDark ? FolegoLegacyColors.hexFF4FEAFF : FolegoLegacyColors.hexFF167D91;
       case 'saldo inicial':
       case 'ajustes':
-        return isDark ? const Color(0xFFB79CFF) : const Color(0xFF7054B8);
+        return isDark ? FolegoLegacyColors.hexFFB79CFF : FolegoLegacyColors.hexFF7054B8;
       default:
-        return isDark ? const Color(0xFF9B98A8) : const Color(0xFF6B6656);
+        return isDark ? FolegoLegacyColors.hexFF9B98A8 : FolegoLegacyColors.hexFF6B6656;
     }
   }
 

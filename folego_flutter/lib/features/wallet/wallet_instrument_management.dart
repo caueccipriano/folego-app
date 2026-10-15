@@ -143,7 +143,7 @@ Future<T?> _showWalletAdaptive<T>({
       useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) {
         return Padding(
           padding: EdgeInsets.only(
@@ -159,7 +159,7 @@ Future<T?> _showWalletAdaptive<T>({
     context: context,
     useRootNavigator: true,
     builder: (dialogContext) => Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
         constraints: BoxConstraints(

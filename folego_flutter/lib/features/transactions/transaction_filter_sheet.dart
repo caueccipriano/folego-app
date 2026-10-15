@@ -40,7 +40,7 @@ Future<TransactionFilters?> showTransactionFilters({
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: .9,
         child: TransactionFilterSheet(initial: initial, options: options),
@@ -51,7 +51,7 @@ Future<TransactionFilters?> showTransactionFilters({
   return showDialog<TransactionFilters>(
     context: context,
     builder: (_) => Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
@@ -120,7 +120,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (sheetContext) => FractionallySizedBox(
           heightFactor: .86,
           child: CategorySearchPicker(
@@ -138,7 +138,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
       choice = await showDialog<_TransactionsCategoryChoice>(
         context: context,
         builder: (dialogContext) => Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           insetPadding: const EdgeInsets.all(24),
           child: SizedBox(
             width: 620,
@@ -190,7 +190,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
     final secondary = AppColors.secondaryText(brightness);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: Container(
         decoration: BoxDecoration(
           color: surface,

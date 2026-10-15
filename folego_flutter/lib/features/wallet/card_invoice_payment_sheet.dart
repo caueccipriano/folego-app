@@ -42,7 +42,7 @@ Future<bool?> showCardInvoicePaymentSheet({
       useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       showDragHandle: false,
       builder: (sheetContext) {
         final viewInsets = MediaQuery.of(sheetContext).viewInsets;
@@ -61,7 +61,7 @@ Future<bool?> showCardInvoicePaymentSheet({
     barrierDismissible: true,
     builder: (dialogContext) {
       return Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         insetPadding: EdgeInsets.symmetric(
           horizontal: AppResponsiveSpacing.horizontal(dialogContext),
           vertical: 24,
@@ -292,7 +292,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
     final purple = AppColors.primaryPurple(brightness);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: Container(
         constraints: const BoxConstraints(maxHeight: 720),
         decoration: BoxDecoration(
@@ -587,7 +587,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                 ),
                 const SizedBox(height: 8),
                 Material(
-                  color: Colors.transparent,
+                  color: AppColors.transparent,
                   child: InkWell(
                     onTap: _saving ? null : _pickDate,
                     borderRadius: BorderRadius.circular(AppRadii.control),
@@ -653,8 +653,8 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                         : _submit,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
-                      backgroundColor: AppColors.lime,
-                      foregroundColor: AppColors.iconOnLime,
+                      backgroundColor: AppColors.action(Theme.of(context).brightness),
+                      foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                     ),
                     child: _saving
                         ? const SizedBox(
@@ -668,7 +668,7 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                                 : 'pagar fatura',
                             style: AppTypography.button(
                               context,
-                              color: AppColors.iconOnLime,
+                              color: AppColors.onAction(Theme.of(context).brightness),
                             ),
                           ),
                   ),
@@ -702,7 +702,7 @@ class _PaymentTypeChip extends StatelessWidget {
     final primaryText = AppColors.primaryText(brightness);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.pill),

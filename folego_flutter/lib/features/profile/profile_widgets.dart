@@ -288,14 +288,21 @@ class _AppearanceCard extends StatelessWidget {
   const _AppearanceCard({
     required this.selected,
     required this.onSelected,
+    required this.paletteSelected,
+    required this.onPaletteSelected,
   });
 
   final ThemeMode selected;
   final ValueChanged<ThemeMode> onSelected;
+  final String paletteSelected;
+  final ValueChanged<String> onPaletteSelected;
 
   @override
   Widget build(BuildContext context) {
-    return _ChoiceSurface(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ChoiceSurface(
       child: LayoutBuilder(
         builder: (context, constraints) {
           final layout = AppBreakpoints.fromWidth(constraints.maxWidth);
@@ -336,8 +343,109 @@ class _AppearanceCard extends StatelessWidget {
           );
         },
       ),
+        ),
+        const SizedBox(height: 10),
+        _PaletteGrid(selected: paletteSelected, onSelected: onPaletteSelected),
+      ],
     );
   }
+}
+
+class _PaletteGrid extends StatelessWidget {
+  const _PaletteGrid({required this.selected, required this.onSelected});
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final surface = FolegoColorTokens.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 8.0;
+        final columns = constraints.maxWidth >= 360 ? 3 : 2;
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final palette in FolegoColorTokens.catalog)
+              SizedBox(
+                width: width,
+                child: Builder(
+                  builder: (context) {
+                    final colors = FolegoColorTokens.fromId(palette.id, brightness);
+                    final active = selected == palette.id;
+                    return Semantics(
+                      button: true,
+                      selected: active,
+                      label: 'tema ${palette.name}',
+                      child: Material(
+                        color: surface.superficie,
+                        borderRadius: BorderRadius.circular(AppRadii.control),
+                        child: InkWell(
+                          onTap: () => onSelected(palette.id),
+                          borderRadius: BorderRadius.circular(AppRadii.control),
+                          child: Container(
+                            constraints: const BoxConstraints(minHeight: 74),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadii.control),
+                              border: Border.all(
+                                color: active ? surface.marca : surface.borda,
+                                width: active ? 2 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(child: _PaletteSwatch(colors.fundo)),
+                                    const SizedBox(width: 3),
+                                    Expanded(child: _PaletteSwatch(colors.marca)),
+                                    const SizedBox(width: 3),
+                                    Expanded(child: _PaletteSwatch(colors.acao)),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(children: [
+                                  Expanded(child: Text(palette.name,
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.label(context,
+                                      fontSize: 11, color: surface.textoPrincipal,
+                                      fontWeight: FontWeight.w700))),
+                                  if (active) Icon(Icons.check_circle_rounded,
+                                    color: surface.marca, size: 16),
+                                ]),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PaletteSwatch extends StatelessWidget {
+  const _PaletteSwatch(this.color);
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 23,
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(5),
+      border: Border.all(color: FolegoColorTokens.of(context).borda),
+    ),
+  );
 }
 
 class _AppearanceOption extends StatelessWidget {

@@ -329,7 +329,7 @@ class _PlanScreenState extends State<PlanScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) {
         var scope = BudgetLimitScope.month;
         String? validationError;
@@ -540,8 +540,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             );
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.lime,
-                            foregroundColor: AppColors.iconOnLime,
+                            backgroundColor: AppColors.action(Theme.of(context).brightness),
+                            foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                             minimumSize: const Size.fromHeight(48),
                           ),
                           child: const Text('salvar limite'),
@@ -1038,7 +1038,7 @@ class _PlanScreenState extends State<PlanScreen> {
           Material(
             type: MaterialType.transparency,
             child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
               child: ExpansionTile(
               key: const ValueKey('plan-explain-budget'),
               tilePadding: const EdgeInsets.symmetric(horizontal: 2),
@@ -1227,7 +1227,7 @@ class _PlanScreenState extends State<PlanScreen> {
         child: Column(
           children: [
             Material(
-              color: Colors.transparent,
+              color: AppColors.transparent,
               child: InkWell(
                 key: ValueKey('plan-parent-${parent.categoryId}'),
                 onTap: children.isEmpty
@@ -1838,7 +1838,7 @@ class _ScopeChoice extends StatelessWidget {
     final accent = AppColors.primaryPurple(brightness);
     final border = selected ? accent : AppColors.border(brightness);
     return Material(
-      color: selected ? accent.withValues(alpha: .08) : Colors.transparent,
+      color: selected ? accent.withValues(alpha: .08) : AppColors.transparent,
       borderRadius: BorderRadius.circular(AppRadii.control),
       child: InkWell(
         onTap: onTap,
@@ -2032,7 +2032,7 @@ class _PlanModeToggle extends StatelessWidget {
     }) {
       return Expanded(
         child: Material(
-          color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
+          color: selected ? accent.withValues(alpha: .13) : AppColors.transparent,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             onTap: onTap,

@@ -449,7 +449,7 @@ class _ExpenseLegendRow extends StatelessWidget {
           child: Material(
             color: highlighted
                 ? color.withValues(alpha: .08)
-                : Colors.transparent,
+                : AppColors.transparent,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: onTap,

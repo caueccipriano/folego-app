@@ -39,7 +39,7 @@ class HomeProjectionInsightCard extends StatelessWidget {
         : next.closingProjected - current.closingProjected;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         key: const ValueKey('home-projection-insight'),
         onTap: onOpen,

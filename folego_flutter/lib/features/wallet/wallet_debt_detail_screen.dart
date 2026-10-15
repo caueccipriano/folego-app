@@ -4,6 +4,7 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -322,28 +323,27 @@ class _DebtAmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.primaryPurple(brightness),
+        color: FolegoColorTokens.of(context).marcaHero,
         borderRadius: BorderRadius.circular(AppRadii.feature),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(detail.debt.debtType == 'loan' ? 'saldo devedor informado' : 'saldo restante', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(detail.debt.debtType == 'loan' ? 'saldo devedor informado' : 'saldo restante', style: TextStyle(color: FolegoColorTokens.of(context).marcaHeroSobre, fontSize: 12)),
           const SizedBox(height: 5),
           Text(
             Formatters.money(detail.debt.remainingBalance),
-            style: AppTypography.money(context, fontSize: 34, color: AppColors.lime),
+            style: AppTypography.money(context, fontSize: 34, color: FolegoColorTokens.of(context).estouradoHero),
           ),
           const SizedBox(height: 7),
           Text(
             detail.debt.originalAmountKnown
                 ? 'de ${Formatters.money(detail.debt.originalAmount)} originalmente'
                 : 'valor original do contrato não cadastrado',
-            style: const TextStyle(color: Colors.white70, fontSize: 11),
+            style: TextStyle(color: FolegoColorTokens.of(context).marcaHeroSobre, fontSize: 11),
           ),
         ],
       ),

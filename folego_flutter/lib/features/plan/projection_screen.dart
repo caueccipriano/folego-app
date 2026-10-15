@@ -6,6 +6,7 @@ import '../../core/layout/app_breakpoints.dart';
 
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -317,7 +318,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _ProjectionSimulationSheet(
         recurringItems: _recurringItems ?? const [],
         categories: _expenseCategories ?? const [],
@@ -553,9 +554,7 @@ class _ProjectionSimulateButton extends StatelessWidget {
       onPressed: onPressed,
       style: FilledButton.styleFrom(
         backgroundColor: accent,
-        foregroundColor: brightness == Brightness.dark
-            ? AppColors.darkPrimaryText
-            : Colors.white,
+        foregroundColor: FolegoColorTokens.of(context).marcaSobre,
         minimumSize: const Size(0, 44),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         shape: const StadiumBorder(),
@@ -933,6 +932,7 @@ class _ProjectionChartCard extends StatelessWidget {
                       simulatedColor: accent,
                       gridColor: border,
                       alertColor: alert,
+                      pointCenterColor: Theme.of(context).colorScheme.surface,
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -969,6 +969,7 @@ class _ProjectionLinePainter extends CustomPainter {
     required this.simulatedColor,
     required this.gridColor,
     required this.alertColor,
+    required this.pointCenterColor,
     this.simulatedValues,
   });
 
@@ -978,6 +979,7 @@ class _ProjectionLinePainter extends CustomPainter {
   final Color simulatedColor;
   final Color gridColor;
   final Color alertColor;
+  final Color pointCenterColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1070,7 +1072,7 @@ class _ProjectionLinePainter extends CustomPainter {
       canvas.drawCircle(
         p,
         2,
-        Paint()..color = Colors.white.withValues(alpha: .85),
+        Paint()..color = pointCenterColor.withValues(alpha: .85),
       );
     }
   }
@@ -1096,7 +1098,8 @@ class _ProjectionLinePainter extends CustomPainter {
     return oldDelegate.baseValues != baseValues ||
         oldDelegate.simulatedValues != simulatedValues ||
         oldDelegate.baseColor != baseColor ||
-        oldDelegate.simulatedColor != simulatedColor;
+        oldDelegate.simulatedColor != simulatedColor ||
+        oldDelegate.pointCenterColor != pointCenterColor;
   }
 }
 
@@ -1165,7 +1168,7 @@ class _MonthCarousel extends StatelessWidget {
               onPressed: () => onTap(index),
               backgroundColor: selected
                   ? accent.withValues(alpha: .14)
-                  : Colors.transparent,
+                  : AppColors.transparent,
               side: BorderSide(
                 color: selected ? accent.withValues(alpha: .45) : border,
               ),
@@ -1248,7 +1251,7 @@ class _SegmentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
+      color: selected ? accent.withValues(alpha: .13) : AppColors.transparent,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,

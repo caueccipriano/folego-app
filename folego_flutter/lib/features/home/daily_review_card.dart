@@ -221,7 +221,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       showDragHandle: false,
       builder: (_) => QuickRegisterSheet(
@@ -764,7 +764,7 @@ class _ReviewTask extends StatelessWidget {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: checked ? purple : Colors.transparent,
+                  color: checked ? purple : AppColors.transparent,
                   border: Border.all(
                     color: checked ? purple : border,
                     width: 1.5,

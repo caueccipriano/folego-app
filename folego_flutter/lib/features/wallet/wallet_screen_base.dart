@@ -985,7 +985,7 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: metric.onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -2056,7 +2056,7 @@ class _WalletSectionChip extends StatelessWidget {
       button: true,
       label: '$label, $count',
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -2067,7 +2067,7 @@ class _WalletSectionChip extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected
                   ? purple.withValues(alpha: .12)
-                  : Colors.transparent,
+                  : AppColors.transparent,
               borderRadius: BorderRadius.circular(AppRadii.pill),
               border: Border.all(
                 color: selected

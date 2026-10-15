@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       constraints: const BoxConstraints(maxWidth: AppContentWidths.form),
       builder: (_) => QuickRegisterSheet(
         space: widget.space,
@@ -795,8 +795,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'gasto',
             semanticLabel: 'registrar gasto',
             icon: AppIcons.expense,
-            background: AppColors.lime,
-            foreground: AppColors.iconOnLime,
+            background: AppColors.action(Theme.of(context).brightness),
+            foreground: AppColors.onAction(Theme.of(context).brightness),
             onTap: () => _openRegister('expense'),
           ),
         ),
@@ -852,7 +852,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final visible = sorted.take(3).toList(growable: false);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: _openUpcomingEvents,
         borderRadius: BorderRadius.circular(AppRadii.card),

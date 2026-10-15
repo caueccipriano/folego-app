@@ -208,7 +208,7 @@ class _PlanScreenState extends State<PlanScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) {
         var scope = BudgetLimitScope.month;
         String? validationError;
@@ -426,8 +426,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             );
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.lime,
-                            foregroundColor: AppColors.iconOnLime,
+                            backgroundColor: AppColors.action(Theme.of(context).brightness),
+                            foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                             minimumSize: const Size.fromHeight(48),
                           ),
                           child: const Text('salvar limite'),
@@ -913,7 +913,7 @@ class _PlanScreenState extends State<PlanScreen> {
         child: Column(
           children: [
             Material(
-              color: Colors.transparent,
+              color: AppColors.transparent,
               child: InkWell(
                 onTap: children.isEmpty
                     ? null
