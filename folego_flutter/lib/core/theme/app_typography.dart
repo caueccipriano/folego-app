@@ -70,8 +70,8 @@ abstract final class AppTypography {
         textStyle: manrope.titleLarge,
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        height: 1.15,
-        letterSpacing: -.2,
+        height: 1.25,
+        letterSpacing: 0,
         color: primaryText,
       ),
       titleMedium: GoogleFonts.manrope(

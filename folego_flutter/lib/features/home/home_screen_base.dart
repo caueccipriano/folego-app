@@ -496,6 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   quickActions,
                   const SizedBox(height: 12),
                   hero,
+                  if(showLatest) ...[const SizedBox(height:12),latestSection],
                   const SizedBox(height: 12),
                   pulse,
                   if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
@@ -533,16 +534,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  if (showLatest) ...[
-                    const SizedBox(height: 14),
-                    latestSection,
-                  ],
+
                   const SizedBox(height: 18),
                   optionalReview,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   quickActions,
                   const SizedBox(height:12),
                   hero,
+                  if(showLatest) ...[const SizedBox(height:12),latestSection],
                   const SizedBox(height: 16),
                   pulse,
                   if (showUpcoming) ...[
@@ -555,13 +554,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   monthlyMoney,
                   const SizedBox(height: 14),
                   projectionInsight,
-                  if (showLatest) ...[
-                    const SizedBox(height: 24),
-                    latestSection,
-                  ],
+
                   const SizedBox(height: 20),
                   optionalReview,
                 ] else ...[
+                  quickActions,
+                  const SizedBox(height:16),
                   // Independent desktop columns: a tall card in one column
                   // must not create a blank strip above the other column.
                   Row(
@@ -573,6 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             hero,
+                            if(showLatest) ...[const SizedBox(height:16),latestSection],
                             const SizedBox(height: 16),
                             monthlyMoney,
                             const SizedBox(height: 16),
@@ -593,10 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                             const SizedBox(height: 16),
                             smartCheckin,
-                            if (showLatest) ...[
-                              const SizedBox(height: 16),
-                              latestSection,
-                            ],
+
                           ],
                         ),
                       ),
@@ -880,10 +876,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Text(
                       'próximos movimentos',
-                      style: AppTypography.body(
+                      style: AppTypography.section(
                         context,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
                         color: primaryText,
                       ),
                     ),
