@@ -166,6 +166,15 @@ class BudgetOverviewItem {
 
   bool get isSubcategory => parentId != null;
 
+  /// Direct charges recorded on a parent category without a subcategory.
+  /// Child figures must not be counted twice in the family total.
+  double withoutSubcategory(Iterable<BudgetOverviewItem> children) {
+    final inChildren = children.fold<double>(
+      0.0, (sum, child) => sum + child.actualAmount,
+    );
+    return (actualAmount - inChildren).clamp(0.0, double.infinity).toDouble();
+  }
+
   bool get hasBudget => plannedAmount > 0;
 
   bool get hasActivity => actualAmount > 0;
