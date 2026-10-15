@@ -1,3 +1,48 @@
+/// One confirmed economic posting contributing to the month's Plan.
+/// A card purchase from a previous month may have an installment in this one.
+class BudgetImpactDetail {
+  const BudgetImpactDetail({
+    required this.impactId,
+    required this.description,
+    required this.categoryName,
+    required this.eventType,
+    required this.effectiveDate,
+    required this.budgetAmount,
+    this.purchaseDate,
+    this.installmentNumber,
+    this.totalInstallments,
+  });
+
+  final String impactId;
+  final String description;
+  final String categoryName;
+  final String eventType;
+  final DateTime effectiveDate;
+  final DateTime? purchaseDate;
+  final double budgetAmount;
+  final int? installmentNumber;
+  final int? totalInstallments;
+
+  bool get comesFromEarlierMonth =>
+      eventType == 'card_purchase' && purchaseDate != null &&
+      (purchaseDate!.month != effectiveDate.month ||
+        purchaseDate!.year != effectiveDate.year);
+
+  factory BudgetImpactDetail.fromJson(Map<String, dynamic> json) =>
+      BudgetImpactDetail(
+        impactId: json['impact_id'] as String,
+        description: json['description'] as String? ?? 'Lançamento',
+        categoryName: json['category_name'] as String? ?? 'Sem categoria',
+        eventType: json['event_type'] as String? ?? 'expense',
+        effectiveDate: DateTime.parse(json['effective_date'] as String),
+        purchaseDate: json['purchase_date'] == null
+            ? null : DateTime.parse(json['purchase_date'] as String),
+        budgetAmount: _budgetDouble(json['budget_amount']),
+        installmentNumber: (json['installment_number'] as num?)?.toInt(),
+        totalInstallments: (json['total_installments'] as num?)?.toInt(),
+      );
+}
+
 enum BudgetLimitScope {
   month,
   fromMonth,
