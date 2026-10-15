@@ -6,6 +6,12 @@ on:
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/theme-palettes-qa.yml'
+  pull_request:
+    branches:
+      - feat/transactions-recurring
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/theme-palettes-qa.yml'
   workflow_dispatch:
 
 permissions:
