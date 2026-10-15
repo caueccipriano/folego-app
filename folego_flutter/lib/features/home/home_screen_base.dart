@@ -33,6 +33,7 @@ import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import 'home_monthly_money_card.dart';
+import 'home_expense_navigation_scope.dart';
 import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
@@ -423,6 +424,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthlyMoney = HomeMonthlyMoneyCard(
       summary: _monthlyMoney,
       unavailable: _monthlyMoneyUnavailable,
+      onOpenTransactions: HomeExpenseNavigationScope.maybeOf(context)
+                  ?.onOpenMonthlyTransactions ==
+              null
+          ? null
+          : (kind, periodMonth) {
+              // Keep the backend's monthly totals as the source of truth.
+              // The transaction screen is a read-only, filtered drilldown.
+              final types = kind == MonthlyMoneyTransactionKind.income
+                  ? const <String>{'income'}
+                  : const <String>{
+                      'expense',
+                      'card_purchase',
+                      'benefit_expense',
+                      'refund',
+                      'reimbursement',
+                    };
+              HomeExpenseNavigationScope.maybeOf(context)
+                  ?.onOpenMonthlyTransactions?.call(periodMonth, types);
+            },
       onOpenClosing: _monthlyMoney == null ? null
           : () => showMonthlyClosingReview(context, summary: _monthlyMoney!),
       onOpenEvolution: () => showClosedMonthEvolution(
