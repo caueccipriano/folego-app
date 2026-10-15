@@ -19,7 +19,11 @@ void main() {
     expect(find.textContaining('pagar a fatura movimenta o saldo'), findsOneWidget);
 
     final contact = find.byKey(const ValueKey('help-contact'));
-    await tester.ensureVisible(contact);
+    await tester.scrollUntilVisible(
+      contact,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(contact);
     expect(contacted, isTrue);
