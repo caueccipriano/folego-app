@@ -109,6 +109,59 @@ class BudgetMonthSummary {
   }
 }
 
+/// Explains why some categories exceed their limits even when the month
+/// as a whole is close to budget. Only parent totals count, never children
+/// again. Expenses without a limit are still real expenses.
+class BudgetMonthDiagnostics {
+  const BudgetMonthDiagnostics({
+    required this.exceededInLimitedCategories,
+    required this.remainingInLimitedCategories,
+    required this.spendingWithoutLimit,
+    required this.pendingClassification,
+    required this.categoriesOverLimit,
+  });
+
+  final double exceededInLimitedCategories;
+  final double remainingInLimitedCategories;
+  final double spendingWithoutLimit;
+  final double pendingClassification;
+  final int categoriesOverLimit;
+
+  /// Must reconcile to "planned minus actual" in BudgetMonthSummary.
+  double get netRemaining =>
+      remainingInLimitedCategories - exceededInLimitedCategories
+        - spendingWithoutLimit;
+
+  factory BudgetMonthDiagnostics.fromItems(
+    Iterable<BudgetOverviewItem> items,
+  ) {
+    double exceeded = 0;
+    double remaining = 0;
+    double withoutLimit = 0;
+    double pending = 0;
+    int exceededCategories = 0;
+    for (final item in items) {
+      if (!item.isParent) continue;
+      if (item.isPending) pending += item.actualAmount;
+      if (!item.hasBudget) {
+        withoutLimit += item.actualAmount;
+      } else if (item.remainingAmount < 0) {
+        exceeded -= item.remainingAmount;
+        exceededCategories++;
+      } else {
+        remaining += item.remainingAmount;
+      }
+    }
+    return BudgetMonthDiagnostics(
+      exceededInLimitedCategories: exceeded,
+      remainingInLimitedCategories: remaining,
+      spendingWithoutLimit: withoutLimit,
+      pendingClassification: pending,
+      categoriesOverLimit: exceededCategories,
+    );
+  }
+}
+
 class BudgetOverviewItem {
   const BudgetOverviewItem({
     required this.categoryId,
