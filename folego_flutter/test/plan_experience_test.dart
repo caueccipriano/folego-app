@@ -182,6 +182,46 @@ void main() {
       expect(summary.remainingAmount, 500);
     });
 
+    test('confirmed expenses awaiting classification are not omitted', () {
+      final limits = item(
+        id: 'education', name: 'Educação', planned: 200, actual: 655.74,
+      );
+      final pending = item(
+        id: 'pending', name: 'A classificar',
+        actual: 157.69, source: 'pending',
+      );
+      final summary = BudgetMonthSummary.fromItems([limits, pending]);
+      expect(pending.isPending, isTrue);
+      expect(summary.actualAmount, closeTo(813.43, 0.001));
+      expect(summary.remainingAmount, closeTo(-613.43, 0.001));
+    });
+
+    test('parent actual includes both child expenses and direct charges', () {
+      final education = item(
+        id: 'education', name: 'Educação', planned: 200, actual: 655.74,
+      );
+      final school = item(
+        id: 'school', name: 'Escola / Faculdade',
+        parentId: 'education', planned: 200, actual: 487.98,
+      );
+      final courses = item(
+        id: 'courses', name: 'Cursos', parentId: 'education', actual: 167.76,
+      );
+      expect(education.withoutSubcategory([school, courses]),
+        closeTo(0, .001));
+
+      final subscriptions = item(
+        id: 'subscriptions', name: 'Assinaturas',
+        actual: 78.80,
+      );
+      final music = item(
+        id: 'music', name: 'Música',
+        parentId: 'subscriptions', actual: 25.90,
+      );
+      expect(subscriptions.withoutSubcategory([music]),
+        closeTo(52.90, .001));
+    });
+
     test('empty month stays a valid zero summary', () {
       final summary = BudgetMonthSummary.fromItems(const []);
       expect(summary.plannedAmount, 0);
