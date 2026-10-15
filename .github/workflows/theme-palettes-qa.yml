@@ -30,6 +30,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: verificar cores centralizadas
+        run: python3 scripts/audit_widget_colors.py
       - name: flutter analyze
         run: flutter analyze
       - name: test visual tokens
