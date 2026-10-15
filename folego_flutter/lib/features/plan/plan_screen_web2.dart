@@ -76,6 +76,7 @@ class _PlanScreenState extends State<PlanScreen> {
   late final ScrollController _scrollController;
 
   final Set<String> _expandedCategoryIds = <String>{};
+  final Set<String> _showIdleCategoryIds = <String>{};
   List<BudgetOverviewItem> _items = const [];
 
   bool _loading = true;
@@ -103,6 +104,7 @@ class _PlanScreenState extends State<PlanScreen> {
       _month = DateTime(now.year, now.month);
       _items = const [];
       _expandedCategoryIds.clear();
+      _showIdleCategoryIds.clear();
       _hasLoadedOnce = false;
       _loading = true;
       _error = null;
@@ -1147,6 +1149,11 @@ class _PlanScreenState extends State<PlanScreen> {
 
   Widget _buildParentCard(BudgetOverviewItem parent, Brightness brightness) {
     final children = _childrenOf(parent);
+    final inactiveChildren = children
+        .where((child) => !child.hasActivity && !child.hasBudget).toList();
+    final showingIdle = _showIdleCategoryIds.contains(parent.categoryId);
+    final visibleChildren = showingIdle ? children :
+        children.where((child) => child.hasActivity || child.hasBudget).toList();
     final expanded = _expandedCategoryIds.contains(parent.categoryId);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -1328,10 +1335,25 @@ class _PlanScreenState extends State<PlanScreen> {
                           context, fontSize: 11, color: secondaryText),
                       ),
                     ),
-                    ...children.map(
+                    ...visibleChildren.map(
                       (child) => _buildChildCard(
                         parent, child, familyColor, brightness),
                     ),
+                    if (inactiveChildren.isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          key: ValueKey('plan-toggle-unused-${parent.categoryId}'),
+                          onPressed: () => setState(() {
+                            if (!_showIdleCategoryIds.add(parent.categoryId)) {
+                              _showIdleCategoryIds.remove(parent.categoryId);
+                            }
+                          }),
+                          child: Text(showingIdle
+                              ? 'ocultar ${inactiveChildren.length} sem gasto nem limite'
+                              : 'mostrar ${inactiveChildren.length} sem gasto nem limite'),
+                        ),
+                      ),
                     if (amountWithoutSubcategory > .009)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(7, 5, 7, 9),
