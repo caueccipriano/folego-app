@@ -323,7 +323,6 @@ class _DebtAmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
