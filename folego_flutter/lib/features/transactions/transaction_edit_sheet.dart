@@ -376,8 +376,8 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                     FilledButton(
                       onPressed: _saving ? null : _save,
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.lime,
-                        foregroundColor: AppColors.iconOnLime,
+                        backgroundColor: AppColors.action(Theme.of(context).brightness),
+                        foregroundColor: AppColors.onAction(Theme.of(context).brightness),
                       ),
                       child: _saving
                           ? const SizedBox(
