@@ -480,6 +480,7 @@ class _PaletteGrid extends StatelessWidget {
                           onTap: () => onSelected(palette.id),
                           borderRadius: BorderRadius.circular(AppRadii.control),
                           child: Container(
+                            key: ValueKey('theme-palette-${palette.id}'),
                             constraints: const BoxConstraints(minHeight: 130),
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -606,6 +607,7 @@ class _ThemeLivePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
     return Container(
+      key: const ValueKey('theme-live-preview'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.superficie,
