@@ -59,8 +59,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileLogoutAction _logoutAction;
   late ProfileIdentity _identity;
   AppVersionInfo? _versionInfo;
-  ThemeMode _themeMode = ThemeMode.system;
-  String _paletteId = 'folego';
   bool _loadingIdentity = true;
   bool _loadingVersion = true;
   bool _exporting = false;
@@ -78,8 +76,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _identity = ProfileIdentity(
       email: widget.client.auth.currentUser?.email ?? '',
     );
-    _themeMode = AppThemeController.mode.value;
-    _paletteId = AppThemeController.paletteId.value;
     _logoutAction = ProfileLogoutAction(() async {
       final notificationService = NotificationServiceRegistry.current;
       if (notificationService != null) {
@@ -198,46 +194,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _setTheme(ThemeMode mode) async {
-    if (_themeMode == mode) return;
-    setState(() => _themeMode = mode);
-    try {
-      await AppPreferences.setThemeMode(mode);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'tema aplicado, mas não consegui salvar essa preferência',
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _setPalette(String id) async {
-    if (_paletteId == id) return;
-    setState(() => _paletteId = id);
-    try {
-      await AppPreferences.setPaletteId(id);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('cor aplicada, mas não consegui salvar a escolha')),
-      );
-    }
-  }
-
   Future<void> _openAppTheme() async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => _ThemeSettingsScreen(
-          selected: _themeMode,
-          onSelected: _setTheme,
-          paletteSelected: _paletteId,
-          onPaletteSelected: _setPalette,
-        ),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const _ThemeAppScreen()),
     );
   }
 
