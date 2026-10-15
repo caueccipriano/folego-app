@@ -38,3 +38,4 @@ flutter:
   generate: true
   assets:
     - web/icons/Icon-512.png
+    - assets/fonts/
