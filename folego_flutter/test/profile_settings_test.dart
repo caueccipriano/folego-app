@@ -45,6 +45,25 @@ void main() {
     });
   });
 
+  group('Tema do app navigation and palette previews', () {
+    test('theme options stay in a dedicated screen instead of inline Profile', () {
+      final profile = File('lib/features/profile/profile_screen_v2.dart')
+          .readAsStringSync();
+      final widgets = File('lib/features/profile/profile_widgets.dart')
+          .readAsStringSync();
+      expect(profile, contains("title: 'tema do app'"));
+      expect(profile, contains('onTap: _openAppTheme'));
+      expect(profile, contains('builder: (_) => _ThemeSettingsScreen('));
+      expect(widgets, contains("AppBar(title: const Text('Tema do app'))"));
+      expect(widgets, contains("ValueKey('theme-live-preview')"));
+      expect(widgets, contains("'theme-palette-"));
+      expect(widgets, contains('onSelected(palette.id)'));
+      expect(widgets, contains('ThemeMode.system'));
+      expect(widgets, contains('ThemeMode.light'));
+      expect(widgets, contains('ThemeMode.dark'));
+    });
+  });
+
   group('Profile language preferences', () {
     test('only exposes locales with complete product coverage', () async {
       final repository = AppPreferenceRepository(_MemoryPreferenceStore());
