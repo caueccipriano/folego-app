@@ -217,6 +217,9 @@ class WalletDebt {
     required this.nextAmount,
     required this.paidInstallments,
     this.creditor,
+    this.debtType = 'other',
+    this.recordedPaidAmount = 0,
+    this.scheduledRemainingBalance = 0,
     this.originalAmount,
     this.totalInstallments,
     this.paymentAccountId,
@@ -226,6 +229,9 @@ class WalletDebt {
   final String id;
   final String name;
   final String? creditor;
+  final String debtType;
+  final double recordedPaidAmount;
+  final double scheduledRemainingBalance;
   final double? originalAmount;
   final double openingBalance;
   final double remainingBalance;
@@ -235,27 +241,28 @@ class WalletDebt {
   final DateTime? nextDueDate;
   final double nextAmount;
 
-  double? get paidAmount {
-    final original = originalAmount;
-    if (original == null) return null;
-    final paid = original - remainingBalance;
-    if (paid < 0) return 0;
-    if (paid > original) return original;
-    return paid;
-  }
+  // Loan balances are lender-reported payoff figures, not amortization math.
+  // Only show a progress bar when actual payments and an active schedule exist.
+  double? get paidAmount => debtType == 'loan' || recordedPaidAmount <= 0
+      ? null : recordedPaidAmount;
 
   double? get progress {
-    final original = originalAmount;
     final paid = paidAmount;
-    if (original == null || original <= 0 || paid == null) return null;
-    return (paid / original).clamp(0.0, 1.0).toDouble();
+    final currentPlan = recordedPaidAmount + scheduledRemainingBalance;
+    if (paid == null || currentPlan <= 0) return null;
+    return (paid / currentPlan).clamp(0.0, 1.0).toDouble();
   }
+
+  double get currentScheduleTotal => recordedPaidAmount + scheduledRemainingBalance;
 
   factory WalletDebt.fromJson(Map<String, dynamic> json) {
     return WalletDebt(
       id: json['id'] as String,
       name: json['name'] as String,
       creditor: json['creditor'] as String?,
+      debtType: json['debt_type'] as String? ?? 'other',
+      recordedPaidAmount: _number(json['recorded_paid_amount']),
+      scheduledRemainingBalance: _number(json['scheduled_remaining_balance']),
       originalAmount: _nullableNumber(json['original_amount']),
       openingBalance: _number(json['opening_balance']),
       remainingBalance: _number(json['remaining_balance']),
