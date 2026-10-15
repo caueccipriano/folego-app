@@ -13,6 +13,10 @@ void main() {
           greaterThanOrEqualTo(4.5), reason: '$context texto');
         expect(FolegoColorTokens.contrastRatio(t.textoSecundario, t.superficie),
           greaterThanOrEqualTo(4.5), reason: '$context secundario');
+        expect(FolegoColorTokens.contrastRatio(t.marca, t.superficie),
+          greaterThanOrEqualTo(4.5), reason: '$context marca na superficie');
+        expect(FolegoColorTokens.contrastRatio(t.marca, t.fundo),
+          greaterThanOrEqualTo(4.5), reason: '$context marca no fundo');
         expect(FolegoColorTokens.contrastRatio(t.marcaSobre, t.marca),
           greaterThanOrEqualTo(4.5), reason: '$context marca');
         expect(FolegoColorTokens.contrastRatio(t.acaoSobre, t.acao),
