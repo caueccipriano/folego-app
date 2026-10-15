@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/features/home/monthly_closing_review.dart';
 
 void main() {
+  setUpAll(() async => initializeDateFormatting('pt_BR'));
+
   final example = MonthlyMoneySummary.fromJson({
     'period_month': '2026-10-01',
     'income_amount': 3000,
