@@ -275,8 +275,8 @@ class _MonthlyHeadlineTile extends StatelessWidget {
       key: data.tapKey,
       onTap: data.onTap,
       borderRadius: BorderRadius.circular(AppRadii.compactCard),
-      child: Container(
-      width: double.infinity,
+      child: Ink(
+        width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: muted,
