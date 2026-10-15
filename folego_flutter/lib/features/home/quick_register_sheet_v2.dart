@@ -487,7 +487,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final border = AppColors.border(brightness);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
-    final accent = _isExpense ? AppColors.lime : AppColors.positiveText(brightness);
+    final accent = _isExpense ? AppColors.action(brightness) : AppColors.positiveText(brightness);
     final maxWidth = layout == AppLayoutSize.compact
         ? viewport.width
         : AppContentWidths.form;
@@ -694,8 +694,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                             child: FilledButton(
                               onPressed: _saving ? null : _save,
                               style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.lime,
-                                foregroundColor: AppColors.iconOnLime,
+                                backgroundColor: AppColors.action(brightness),
+                                foregroundColor: AppColors.onAction(brightness),
                               ),
                               child: _saving
                                   ? const SizedBox(
@@ -703,7 +703,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                                       height: 22,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: AppColors.iconOnLime,
+                                        color: AppColors.onAction(brightness),
                                       ),
                                     )
                                   : Text(_isExpense ? 'registrar gasto' : 'registrar receita'),
