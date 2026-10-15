@@ -69,6 +69,9 @@ jobs:
       - name: Registered income and fixed expenses safety
         run: flutter test test/registered_spending_margin_safety_test.dart
 
+      - name: Atomic spending behavior security contract
+        run: flutter test test/atomic_behavior_contract_test.dart test/spending_behavior_test.dart
+
       - name: Flutter test
         run: |
           set +e
