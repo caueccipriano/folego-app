@@ -23,18 +23,18 @@ abstract final class AppPalette {
   static const lime = AppColors.lime;
 
   // Compatibilidade com componentes antigos.
-  static const pink = Color(0xFFD4457A);
-  static const green = Color(0xFF3B6D11);
-  static const orange = Color(0xFFE8A87C);
-  static const teal = Color(0xFF58A8A0);
-  static const indigo = Color(0xFF5969C9);
+  static const pink = FolegoLegacyColors.hexFFD4457A;
+  static const green = FolegoLegacyColors.hexFF3B6D11;
+  static const orange = FolegoLegacyColors.hexFFE8A87C;
+  static const teal = FolegoLegacyColors.hexFF58A8A0;
+  static const indigo = FolegoLegacyColors.hexFF5969C9;
 
   // Light
   static const lightBackground = AppColors.lightBackground;
 
   static const lightSurface = AppColors.lightSurface;
 
-  static const lightSurfaceMuted = Color(0xFFF0ECE2);
+  static const lightSurfaceMuted = FolegoLegacyColors.hexFFF0ECE2;
 
   static const lightText = AppColors.lightPrimaryText;
 
@@ -47,7 +47,7 @@ abstract final class AppPalette {
 
   static const darkSurface = AppColors.darkSurface;
 
-  static const darkSurfaceMuted = Color(0xFF25252D);
+  static const darkSurfaceMuted = FolegoLegacyColors.hexFF25252D;
 
   static const darkText = AppColors.darkPrimaryText;
 
@@ -60,7 +60,7 @@ abstract final class AppPalette {
   static const expense = pink;
   static const transfer = AppColors.purpleDark;
 
-  static const warning = Color(0xFFE8A87C);
+  static const warning = FolegoLegacyColors.hexFFE8A87C;
 
   static const chartColors = <Color>[
     AppColors.purpleLight,
