@@ -21,11 +21,13 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
     required this.summary,
     required this.unavailable,
     this.onOpenEvolution,
+    this.onOpenClosing,
   });
 
   final MonthlyMoneySummary? summary;
   final bool unavailable;
   final VoidCallback? onOpenEvolution;
+  final VoidCallback? onOpenClosing;
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +173,14 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                 label: const Text('entender os números'),
                 style: TextButton.styleFrom(foregroundColor: purple),
               ),
+              if (onOpenClosing != null)
+                TextButton.icon(
+                  key: const ValueKey('monthly-money-review'),
+                  onPressed: onOpenClosing,
+                  icon: const Icon(Icons.fact_check_outlined, size: 17),
+                  label: const Text('revisar meu mês'),
+                  style: TextButton.styleFrom(foregroundColor: purple),
+                ),
               if (onOpenEvolution != null)
                 TextButton.icon(
                   key: const ValueKey('monthly-money-evolution'),

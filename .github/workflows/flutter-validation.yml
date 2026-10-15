@@ -39,6 +39,39 @@ jobs:
       - name: Home data freshness safety regression
         run: flutter test test/home_data_freshness_test.dart test/home_load_guard_test.dart test/sheet_sync_status_test.dart test/financial_organization_space_isolation_test.dart test/transaction_pending_guard_test.dart test/classification_review_overview_test.dart test/sheet_reconciliation_audit_test.dart
 
+      - name: Home and Wallet compact UX regressions
+        run: flutter test test/home_monthly_money_wiring_test.dart test/wallet_qa_mobile_stress_test.dart
+
+      - name: Admin dashboard synthetic UI and access-denied tests
+        run: flutter test test/folego_admin_layout_test.dart
+
+      - name: Purchase simulation and entry safety
+        run: flutter test test/purchase_simulation_test.dart test/purchase_entry_wiring_test.dart
+
+      - name: Agenda month view regression
+        run: flutter test test/agenda_monthly_view_wiring_test.dart
+
+      - name: Import mobile review safety
+        run: flutter test test/statement_import_sticky_review_test.dart test/statement_import_ui_test.dart
+
+      - name: Safe current month budget pacing
+        run: flutter test test/budget_pace_context_test.dart
+
+      - name: Monthly review read-only checklist regression
+        run: flutter test test/monthly_close_review_test.dart
+
+      - name: Help center regression
+        run: flutter test test/folego_help_center_test.dart
+
+      - name: Fixed and variable spending classification and privacy
+        run: flutter test test/spending_behavior_test.dart
+
+      - name: Registered income and fixed expenses safety
+        run: flutter test test/registered_spending_margin_safety_test.dart
+
+      - name: Atomic spending behavior security contract
+        run: flutter test test/atomic_behavior_contract_test.dart test/spending_behavior_test.dart
+
       - name: Flutter test
         run: |
           set +e

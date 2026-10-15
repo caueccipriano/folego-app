@@ -28,11 +28,13 @@ class ProjectionScreen extends StatefulWidget {
     required this.repository,
     required this.spaceId,
     required this.onBack,
+    this.startWithPurchase = false,
   });
 
   final FolegoRepository repository;
   final String spaceId;
   final VoidCallback onBack;
+  final bool startWithPurchase;
 
   @override
   State<ProjectionScreen> createState() => _ProjectionScreenState();
@@ -44,6 +46,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   bool _showCategories = false;
   bool _loading = true;
   bool _savingPlan = false;
+  bool _openedPurchasePrompt = false;
   int _loadGeneration = 0;
   String? _error;
 
@@ -74,6 +77,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       _disabledVariableIncomeKeys.clear();
       _recurringItems = null;
       _expenseCategories = null;
+      _openedPurchasePrompt = false;
       _load();
     }
   }
@@ -128,6 +132,14 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         _loading = false;
         _error = null;
       });
+      if (widget.startWithPurchase && !_openedPurchasePrompt) {
+        _openedPurchasePrompt = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && widget.spaceId == spaceId) {
+            _openSimulation(initialTemplate: _SimulationTemplate.purchase);
+          }
+        });
+      }
     } catch (error) {
       if (!mounted || requestId != _loadGeneration ||
           widget.spaceId != spaceId || widget.repository != repository) {
@@ -279,7 +291,9 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     }
   }
 
-  Future<void> _openSimulation() async {
+  Future<void> _openSimulation({
+    _SimulationTemplate initialTemplate = _SimulationTemplate.free,
+  }) async {
     try {
       await _ensureSimulationSources();
     } catch (error) {
@@ -303,6 +317,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       builder: (_) => _ProjectionSimulationSheet(
         recurringItems: _recurringItems ?? const [],
         categories: _expenseCategories ?? const [],
+        initialTemplate: initialTemplate,
       ),
     );
 
@@ -1837,10 +1852,12 @@ class _ProjectionSimulationSheet extends StatefulWidget {
   const _ProjectionSimulationSheet({
     required this.recurringItems,
     required this.categories,
+    this.initialTemplate = _SimulationTemplate.free,
   });
 
   final List<RecurringItem> recurringItems;
   final List<CategoryItem> categories;
+  final _SimulationTemplate initialTemplate;
 
   @override
   State<_ProjectionSimulationSheet> createState() =>
@@ -1874,6 +1891,7 @@ class _ProjectionSimulationSheetState
   @override
   void initState() {
     super.initState();
+    _template = widget.initialTemplate;
     final candidates = _salaryCandidates;
     if (candidates.length == 1) {
       _salarySource = candidates.single;

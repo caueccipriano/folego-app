@@ -8,6 +8,7 @@ import '../models/folego_snapshot.dart';
 import '../models/sheet_sync_status.dart';
 import '../models/sheet_reconciliation_audit.dart';
 import '../models/monthly_money_summary.dart';
+import '../models/spending_behavior.dart';
 import '../models/projection_model.dart';
 import '../models/onboarding_state.dart';
 import '../models/recurring_item.dart';
@@ -20,6 +21,126 @@ class FolegoRepository {
   FolegoRepository(this._client);
 
   final SupabaseClient _client;
+
+
+  /// Confirmed expenses by purchase date, rather than card installment month.
+  /// Excludes payment of the invoice, transfers and refunds to avoid counting
+  /// them as additional purchases. A missing classification stays unknown.
+  Future<List<SpendingBehaviorEntry>> getSpendingBehaviorEntries({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    const pageSize = 200;
+    const maxRows = 12000;
+    final start = DateTime(periodMonth.year, periodMonth.month);
+    final end = DateTime(periodMonth.year, periodMonth.month + 1);
+    final entries = <SpendingBehaviorEntry>[];
+
+    for (var offset = 0; offset < maxRows; offset += pageSize) {
+      final response = await _client
+          .from('financial_events')
+          .select(
+            'id,description,amount,occurred_at,event_type,'
+            'behavior_class,necessity_class,frequency_class',
+          )
+          .eq('space_id', spaceId)
+          .eq('status', 'confirmed')
+          .inFilter(
+            'event_type',
+            const ['expense', 'card_purchase', 'benefit_expense'],
+          )
+          .gte('occurred_at', start.toUtc().toIso8601String())
+          .lt('occurred_at', end.toUtc().toIso8601String())
+          .order('occurred_at', ascending: false)
+          .order('id', ascending: false)
+          .range(offset, offset + pageSize - 1);
+
+      final rows = List<Map<String, dynamic>>.from(response);
+      entries.addAll(rows.map(SpendingBehaviorEntry.fromJson));
+      if (rows.length < pageSize) return entries;
+    }
+    // Never silently display an incomplete total.
+    throw StateError('muitos lançamentos para resumir com segurança');
+  }
+
+  /// Confirmed income events in the exact SAME occurrence-date window as
+  /// getSpendingBehaviorEntries. This is not a bank balance or future salary.
+  /// Uses deterministic, complete pagination to avoid partial income totals.
+  Future<double> getRegisteredIncomeForMonth({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    const pageSize = 200;
+    const maxRows = 12000;
+    final start = DateTime(periodMonth.year, periodMonth.month);
+    final end = DateTime(periodMonth.year, periodMonth.month + 1);
+    var sum = 0.0;
+
+    for (var offset = 0; offset < maxRows; offset += pageSize) {
+      final response = await _client
+          .from('financial_events')
+          .select('id,amount')
+          .eq('space_id', spaceId)
+          .eq('status', 'confirmed')
+          .eq('event_type', 'income')
+          .gte('occurred_at', start.toUtc().toIso8601String())
+          .lt('occurred_at', end.toUtc().toIso8601String())
+          .order('id', ascending: true)
+          .range(offset, offset + pageSize - 1);
+      final rows = List<Map<String, dynamic>>.from(response);
+      for (final row in rows) {
+        final raw = row['amount'];
+        final amount = raw is num
+            ? raw.toDouble()
+            : double.tryParse(raw?.toString() ?? '');
+        if (amount == null || !amount.isFinite || amount < 0) {
+          throw const FormatException('Invalid registered income entry');
+        }
+        sum += amount;
+      }
+      if (rows.length < pageSize) return sum;
+    }
+    throw StateError('muitas receitas para totalizar com segurança');
+  }
+
+  /// Atomic behavior-only update. The server uses SELECT ... FOR UPDATE and
+  /// compares the previous behavior under the row lock. If it has changed,
+  /// fail closed rather than overwriting another device's decision.
+  ///
+  /// This RPC MUST be deployed on the target Supabase project before
+  /// publishing the client; otherwise the app shows an error and writes nothing.
+  Future<void> setSpendingBehavior({
+    required String spaceId,
+    required SpendingBehaviorEntry entry,
+    required ExpenseBehavior behavior,
+  }) async {
+    if (entry.eventType != 'expense' &&
+        entry.eventType != 'card_purchase' &&
+        entry.eventType != 'benefit_expense') {
+      throw StateError('este lançamento não permite classificação de gasto');
+    }
+
+    final expected = entry.behavior == ExpenseBehavior.unclassified
+        ? null
+        : entry.behavior.databaseValue;
+    final next = behavior == ExpenseBehavior.unclassified
+        ? null
+        : behavior.databaseValue;
+
+    try {
+      await _client.rpc('set_event_behavior_class', params: {
+        'p_space_id': spaceId,
+        'p_event_id': entry.id,
+        'p_expected_behavior_class': expected,
+        'p_behavior_class': next,
+      });
+    } on PostgrestException catch (error) {
+      if (error.message.contains('annotation_conflict')) {
+        throw StateError('classificação alterada em outra sessão; recarregue');
+      }
+      rethrow;
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // ESPAÇO / PERFIL

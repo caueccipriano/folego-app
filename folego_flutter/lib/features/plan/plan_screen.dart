@@ -6,6 +6,7 @@ import '../../data/repositories/folego_repository.dart';
 import 'flexible_budget_screen.dart';
 import 'plan_screen_web2.dart' as base;
 import 'projection_screen.dart';
+import 'spending_behavior_screen.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({
@@ -28,12 +29,14 @@ class PlanScreen extends StatefulWidget {
 
 class _PlanScreenState extends State<PlanScreen> {
   bool _projection = false;
+  bool _startWithPurchase = false;
 
   @override
   void didUpdateWidget(covariant PlanScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId) {
       _projection = false;
+      _startWithPurchase = false;
     }
     if (oldWidget.projectionOpenToken != widget.projectionOpenToken &&
         widget.projectionOpenToken != null) {
@@ -43,12 +46,35 @@ class _PlanScreenState extends State<PlanScreen> {
 
   void _openProjection() {
     if (_projection) return;
-    setState(() => _projection = true);
+    setState(() {
+      _startWithPurchase = false;
+      _projection = true;
+    });
+  }
+
+  void _openPurchaseProjection() {
+    setState(() {
+      _startWithPurchase = true;
+      _projection = true;
+    });
+  }
+
+  void _openSpendingBehavior(DateTime month) {
+    Navigator.of(context).push<void>(MaterialPageRoute<void>(
+      builder: (_) => SpendingBehaviorScreen(
+        repository: widget.repository,
+        spaceId: widget.spaceId,
+        periodMonth: month,
+      ),
+    ));
   }
 
   void _openSummary() {
     if (!_projection) return;
-    setState(() => _projection = false);
+    setState(() {
+      _projection = false;
+      _startWithPurchase = false;
+    });
   }
 
   @override
@@ -58,6 +84,7 @@ class _PlanScreenState extends State<PlanScreen> {
         repository: widget.repository,
         spaceId: widget.spaceId,
         onBack: _openSummary,
+        startWithPurchase: _startWithPurchase,
       );
     }
 
@@ -69,6 +96,8 @@ class _PlanScreenState extends State<PlanScreen> {
         spaceId: widget.spaceId,
         refreshToken: refreshToken,
         onProjectionRequested: _openProjection,
+        onPurchaseSimulationRequested: _openPurchaseProjection,
+        onSpendingBehaviorRequested: _openSpendingBehavior,
         onFlexibleBudgetRequested: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => FlexibleBudgetScreen(
