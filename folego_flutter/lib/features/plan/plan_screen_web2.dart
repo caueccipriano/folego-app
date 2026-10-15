@@ -836,6 +836,7 @@ class _PlanScreenState extends State<PlanScreen> {
 
   Widget _buildSummary(Brightness brightness) {
     final summary = _summary;
+    final diagnostics = BudgetMonthDiagnostics.fromItems(_items);
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
@@ -976,6 +977,21 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
             ),
           ],
+          if (diagnostics.categoriesOverLimit > 0 ||
+              diagnostics.spendingWithoutLimit > 0) ...[
+            const SizedBox(height: 12),
+            Text(
+              '${diagnostics.categoriesOverLimit} categorias acima do próprio '
+              'limite: ${Formatters.money(diagnostics.exceededInLimitedCategories)}. '
+              'gastos sem limite: '
+              '${Formatters.money(diagnostics.spendingWithoutLimit)}. '
+              'limites não usados em outras categorias: '
+              '${Formatters.money(diagnostics.remainingInLimitedCategories)}.',
+              key: const ValueKey('plan-category-offset-explanation'),
+              style: AppTypography.body(
+                context, fontSize: 11, color: secondaryText),
+            ),
+          ],
           const SizedBox(height: 10),
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -1006,10 +1022,18 @@ class _PlanScreenState extends State<PlanScreen> {
                     '${Formatters.money(summary.actualAmount)} = '
                     '${summary.remainingAmount < 0 ? "−" : "+"}'
                     '${Formatters.money(summary.remainingAmount.abs())}.\n\n'
-                    '4. despesas sem limite também contam no total. '
+                    '4. confira onde o mês saiu do trilho: '
+                    '${Formatters.money(diagnostics.exceededInLimitedCategories)} '
+                    'de excesso em ${diagnostics.categoriesOverLimit} categorias '
+                    'com limite + '
+                    '${Formatters.money(diagnostics.spendingWithoutLimit)} '
+                    'em categorias sem limite − '
+                    '${Formatters.money(diagnostics.remainingInLimitedCategories)} '
+                    'de limites não utilizados em outras categorias.\\n\\n'
+                    '5. despesas sem limite também contam no total. '
                     'gastos em “a classificar” estão incluídos, mas '
                     'a categoria ainda deve ser revisada.\n\n'
-                    '5. pagar fatura ou transferir dinheiro entre suas contas '
+                    '6. pagar fatura ou transferir dinheiro entre suas contas '
                     'não deve contar como compra nova. '
                     'este cálculo não é o saldo bancário.',
                     style: AppTypography.body(context, fontSize: 12, color: primaryText),
@@ -1183,7 +1207,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                   ? '${Formatters.money(parent.actualAmount)} aguardando categoria · já entra no total'
                                   : parent.hasBudget
                                   ? parent.remainingAmount >= 0
-                                        ? '${Formatters.money(parent.remainingAmount)} ainda disponíveis'
+                                        ? '${Formatters.money(parent.remainingAmount)} abaixo do limite'
                                         : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
                                   : parent.hasActivity
                                   ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
