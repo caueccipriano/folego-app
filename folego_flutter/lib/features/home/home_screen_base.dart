@@ -592,15 +592,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             if (showUpcoming) upcoming,
                             if (showUpcoming && showLatest)
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 16),
                             if (showLatest) latestSection,
+                            if (showUpcoming || showLatest)
+                              const SizedBox(height: 16),
+                            smartCheckin,
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  smartCheckin,
                   const SizedBox(height: 22),
                   optionalReview,
                 ],
