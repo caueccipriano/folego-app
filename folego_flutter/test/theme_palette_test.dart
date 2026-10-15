@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/theme/app_color_tokens.dart';
+import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
   test('9 paletas coerentes com 2 modos e tokens completos', () {
@@ -58,6 +59,26 @@ void main() {
     }
     for (final id in ['safira', 'mochi', 'cacau']) {
       expect(FolegoColorTokens.palette(id).id, id);
+    }
+  });
+
+  test('ThemeData aplica tokens da própria paleta, sem herdar cores da anterior', () {
+    final previous = AppColorSelection.selected.value;
+    addTearDown(() => AppColorSelection.choose(previous));
+    for (final palette in FolegoColorTokens.catalog) {
+      AppColorSelection.choose(palette.id);
+      for (final brightness in Brightness.values) {
+        final theme = brightness == Brightness.dark
+            ? AppTheme.dark() : AppTheme.light();
+        final tokens = FolegoColorTokens.fromId(palette.id, brightness);
+        expect(theme.scaffoldBackgroundColor, tokens.fundo);
+        expect(theme.cardColor, tokens.superficie);
+        expect(theme.colorScheme.primary, tokens.marca);
+        expect(theme.colorScheme.secondary, tokens.acao);
+        expect(theme.colorScheme.tertiary, tokens.acao);
+        expect(theme.colorScheme.onSurface, tokens.textoPrincipal);
+        expect(theme.extension<FolegoColorTokens>()?.marcaHero, tokens.marcaHero);
+      }
     }
   });
 
