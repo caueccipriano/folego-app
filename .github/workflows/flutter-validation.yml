@@ -42,6 +42,9 @@ jobs:
       - name: Fixed and variable spending classification and privacy
         run: flutter test test/spending_behavior_test.dart
 
+      - name: Registered income and fixed expenses safety
+        run: flutter test test/registered_income_fixed_margin_test.dart test/spending_behavior_test.dart
+
       - name: Flutter test
         run: |
           set +e
