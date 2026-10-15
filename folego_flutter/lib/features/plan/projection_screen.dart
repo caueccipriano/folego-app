@@ -318,7 +318,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _ProjectionSimulationSheet(
         recurringItems: _recurringItems ?? const [],
         categories: _expenseCategories ?? const [],
@@ -1168,7 +1168,7 @@ class _MonthCarousel extends StatelessWidget {
               onPressed: () => onTap(index),
               backgroundColor: selected
                   ? accent.withValues(alpha: .14)
-                  : Colors.transparent,
+                  : AppColors.transparent,
               side: BorderSide(
                 color: selected ? accent.withValues(alpha: .45) : border,
               ),
@@ -1251,7 +1251,7 @@ class _SegmentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? accent.withValues(alpha: .13) : Colors.transparent,
+      color: selected ? accent.withValues(alpha: .13) : AppColors.transparent,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
