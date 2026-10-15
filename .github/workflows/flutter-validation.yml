@@ -39,6 +39,9 @@ jobs:
       - name: Discovery and isolated demo regression
         run: flutter test test/discovery_test.dart test/statement_import_qa_mobile_stress_test.dart
 
+      - name: Wallet commitment and spending clarity
+        run: flutter test test/wallet_commitment_insights_test.dart
+
       - name: Smart category suggestions (quick register and classification)
         run: flutter test test/smart_category_suggestion_test.dart
 
