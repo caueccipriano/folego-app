@@ -17,7 +17,7 @@ test.describe('Fôlego public PWA shell', () => {
     await page.getByRole('button', { name: 'buscar nos exemplos', exact: true }).click();
     const field = page.getByRole('textbox').first();
     await field.fill('mercado');
-    await expect(page.getByText('mercado da semana', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /mercado da semana/i }).first()).toBeVisible();
     await capture(page, testInfo, 'demo-search');
     expect(financialWrites).toEqual([]);
   });
