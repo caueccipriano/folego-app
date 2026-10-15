@@ -304,14 +304,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => FractionallySizedBox(heightFactor: .94, child: editor),
       );
     }
     return showDialog<_CategoryDraft>(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         insetPadding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640, maxHeight: 840),
