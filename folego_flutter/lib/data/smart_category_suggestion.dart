@@ -119,7 +119,9 @@ SmartCategorySuggestion? suggestSmartCategory({
         'compra', 'pagamento', 'transferencia', 'enviado', 'recebido',
         'parcela', 'fatura', 'cartao', 'credito', 'debito', 'supermercado',
         'mercado', 'restaurante', 'loja', 'posto', 'pix', 'saque',
-      }.contains(first)) return null;
+      }.contains(first)) {
+        return null;
+      }
       return first;
     }
 
@@ -131,7 +133,9 @@ SmartCategorySuggestion? suggestSmartCategory({
         if (item.status != 'confirmed' ||
             _direction(item.eventType) != direction ||
             !catalog.containsKey(item.categoryId) ||
-            merchantPrefix(item.description) != prefix) continue;
+            merchantPrefix(item.description) != prefix) {
+          continue;
+        }
         similar.update(item.categoryId!, (n) => n + 1, ifAbsent: () => 1);
         evidenceDescriptions.add(_normalizeCategoryText(item.description));
       }
