@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/budget_overview_item.dart';
+import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/features/plan/plan_insights_section.dart';
 
 void main() {
@@ -46,7 +47,7 @@ void main() {
     expect(find.text('despesas do mês'), findsOneWidget);
     expect(find.text('dinheiro que saiu das contas'), findsOneWidget);
     expect(find.text('disponível estimado agora'), findsOneWidget);
-    expect(find.textContaining('R\$ 1.476,51'), findsOneWidget);
+    expect(find.textContaining(Formatters.money(insights.debtPayments)), findsOneWidget);
   });
 
   testWidgets('suggested limit stays opt-in until explicit review callback',
