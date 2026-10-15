@@ -412,3 +412,144 @@ class _SpendingTotals extends StatelessWidget {
     );
   }
 }
+
+
+/// Income comparison is deliberately observational, not a commitment engine.
+class _RegisteredMarginCard extends StatelessWidget {
+  const _RegisteredMarginCard({required this.margin, required this.hidden});
+
+  final RegisteredSpendingMargin? margin;
+  final bool hidden;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final ink = AppColors.primaryText(brightness);
+    final muted = AppColors.secondaryText(brightness);
+    final border = AppColors.border(brightness);
+
+    return DecoratedBox(
+      key: const ValueKey('spending-registered-income-margin'),
+      decoration: BoxDecoration(
+        color: AppColors.surface(brightness),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('renda x gastos fixos',
+                style: AppTypography.section(context, fontSize: 17)),
+            const SizedBox(height: 7),
+            Text(
+              'comparação de receitas e gastos confirmados '
+              'por data do lançamento neste mês.',
+              style: AppTypography.body(context, fontSize: 11, color: muted),
+            ),
+            const SizedBox(height: 12),
+            if (margin == null)
+              Text(
+                'receitas indisponíveis nesta consulta. não é possível '
+                'calcular uma margem confiável agora.',
+                key: const ValueKey('spending-income-unavailable'),
+                style: AppTypography.body(context, fontSize: 12, color: muted),
+              )
+            else ...[
+              _MarginLine('receitas registradas', margin!.registeredIncome),
+              _MarginLine('fixos classificados e registrados',
+                  margin!.expenses.fixed),
+              const Divider(height: 18),
+              _MarginLine(
+                'referência para variáveis após fixos',
+                margin!.afterClassifiedFixed,
+                key: const ValueKey('spending-after-fixed'),
+                emphasize: true,
+              ),
+              const SizedBox(height: 5),
+              _MarginLine(
+                'diferença após todos os gastos registrados',
+                margin!.afterAllRecordedSpending,
+                key: const ValueKey('spending-after-all-recorded'),
+              ),
+              if (margin!.hasUnknownExpenses) ...[
+                const SizedBox(height: 9),
+                Text(
+                  'atenção: há ${margin!.expenses.unclassifiedCount} '
+                  'gasto(s) sem classificação. eles estão incluídos '
+                  'na diferença após todos os gastos.',
+                  key: const ValueKey('spending-unknown-warning'),
+                  style: AppTypography.body(
+                    context, fontSize: 11, color: ink,
+                  ),
+                ),
+              ],
+              if (margin!.fixedShareOfIncome != null && !hidden) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${(margin!.fixedShareOfIncome! * 100).round()}% das '
+                  'receitas registradas equivalem aos gastos fixos '
+                  'já classificados.',
+                  style: AppTypography.body(
+                    context, fontSize: 11, color: muted,
+                  ),
+                ),
+              ],
+            ],
+            const SizedBox(height: 12),
+            Text(
+              'não é saldo livre para gastar: parcelas futuras, contas '
+              'a vencer, reservas, dívidas e itens não cadastrados podem '
+              'reduzir sua margem real. gastos no cartão são contados '
+              'na compra, não no pagamento da fatura.',
+              style: AppTypography.body(context, fontSize: 11, color: muted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarginLine extends StatelessWidget {
+  const _MarginLine(
+    this.label,
+    this.amount, {
+    super.key,
+    this.emphasize = false,
+  });
+
+  final String label;
+  final double amount;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppTypography.body(
+                context, fontSize: 12,
+                color: AppColors.secondaryText(brightness),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            Formatters.money(amount),
+            style: emphasize
+                ? AppTypography.money(context, fontSize: 16,
+                    color: AppColors.primaryText(brightness))
+                : AppTypography.money(context, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+}
