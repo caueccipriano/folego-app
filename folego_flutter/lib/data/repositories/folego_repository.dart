@@ -63,6 +63,46 @@ class FolegoRepository {
     throw StateError('muitos lançamentos para resumir com segurança');
   }
 
+  /// Confirmed income events in the exact SAME occurrence-date window as
+  /// getSpendingBehaviorEntries. This is not a bank balance or future salary.
+  /// Uses deterministic, complete pagination to avoid partial income totals.
+  Future<double> getRegisteredIncomeForMonth({
+    required String spaceId,
+    required DateTime periodMonth,
+  }) async {
+    const pageSize = 200;
+    const maxRows = 12000;
+    final start = DateTime(periodMonth.year, periodMonth.month);
+    final end = DateTime(periodMonth.year, periodMonth.month + 1);
+    var sum = 0.0;
+
+    for (var offset = 0; offset < maxRows; offset += pageSize) {
+      final response = await _client
+          .from('financial_events')
+          .select('id,amount')
+          .eq('space_id', spaceId)
+          .eq('status', 'confirmed')
+          .eq('event_type', 'income')
+          .gte('occurred_at', start.toUtc().toIso8601String())
+          .lt('occurred_at', end.toUtc().toIso8601String())
+          .order('id', ascending: true)
+          .range(offset, offset + pageSize - 1);
+      final rows = List<Map<String, dynamic>>.from(response);
+      for (final row in rows) {
+        final raw = row['amount'];
+        final amount = raw is num
+            ? raw.toDouble()
+            : double.tryParse(raw?.toString() ?? '');
+        if (amount == null || !amount.isFinite || amount < 0) {
+          throw const FormatException('Invalid registered income entry');
+        }
+        sum += amount;
+      }
+      if (rows.length < pageSize) return sum;
+    }
+    throw StateError('muitas receitas para totalizar com segurança');
+  }
+
   /// Changes only the spending-behavior annotation. The current necessity,
   /// frequency and all user tags MUST be passed through unmodified because
   /// the existing RPC replaces all annotation fields and tag associations.
