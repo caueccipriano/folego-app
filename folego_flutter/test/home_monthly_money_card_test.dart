@@ -69,9 +69,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: HomeMonthlyMoneyCard(
-            summary: summary,
-            unavailable: false,
+          body: SingleChildScrollView(
+            child: HomeMonthlyMoneyCard(
+              summary: summary,
+              unavailable: false,
+            ),
           ),
         ),
       ),
@@ -147,7 +149,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: HomeMonthlyMoneyCard(summary: summary, unavailable: false),
+          body: SingleChildScrollView(
+            child: HomeMonthlyMoneyCard(summary: summary, unavailable: false),
+          ),
         ),
       ),
     );
