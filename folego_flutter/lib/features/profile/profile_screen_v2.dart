@@ -228,6 +228,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _openAppTheme() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => _ThemeSettingsScreen(
+          selected: _themeMode,
+          onSelected: _setTheme,
+          paletteSelected: _paletteId,
+          onPaletteSelected: _setPalette,
+        ),
+      ),
+    );
+  }
+
   Future<void> _openSheetAudit() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -789,15 +802,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _AppearanceCard(
-          selected: _themeMode,
-          onSelected: _setTheme,
-          paletteSelected: _paletteId,
-          onPaletteSelected: _setPalette,
-        ),
-        const SizedBox(height: 8),
         _SettingsCard(
           children: [
+            _SettingsRow(
+              icon: AppIcons.systemTheme,
+              title: 'tema do app',
+              subtitle: 'paletas, prévia e modo claro ou escuro',
+              onTap: _openAppTheme,
+            ),
             _SettingsRow(
               icon: AppIcons.notifications,
               title: 'notificações',

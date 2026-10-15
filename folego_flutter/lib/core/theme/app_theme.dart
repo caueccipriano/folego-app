@@ -118,12 +118,31 @@ abstract final class AppTheme {
         ).copyWith(
           primary: tokens.marca,
           onPrimary: tokens.marcaSobre,
+          primaryContainer: Color.alphaBlend(
+            tokens.marca.withValues(alpha: .13), tokens.superficie,
+          ),
+          onPrimaryContainer: tokens.textoPrincipal,
 
           secondary: tokens.acao,
           onSecondary: tokens.acaoSobre,
+          secondaryContainer: Color.alphaBlend(
+            tokens.acao.withValues(alpha: .13), tokens.superficie,
+          ),
+          onSecondaryContainer: tokens.textoPrincipal,
+          tertiary: tokens.acao,
+          onTertiary: tokens.acaoSobre,
+          tertiaryContainer: tokens.superficieAlta,
+          onTertiaryContainer: tokens.textoPrincipal,
 
           surface: tokens.superficie,
           onSurface: tokens.textoPrincipal,
+          surfaceContainerLow: tokens.superficie,
+          surfaceContainer: tokens.superficie,
+          surfaceContainerHigh: tokens.superficieAlta,
+          surfaceBright: tokens.superficie,
+          surfaceDim: tokens.fundo,
+          inverseSurface: tokens.textoPrincipal,
+          onInverseSurface: tokens.fundo,
 
           error: tokens.estourado,
           onError: tokens.estouradoSobre,
@@ -162,12 +181,31 @@ abstract final class AppTheme {
         ).copyWith(
           primary: tokens.marca,
           onPrimary: tokens.marcaSobre,
+          primaryContainer: Color.alphaBlend(
+            tokens.marca.withValues(alpha: .13), tokens.superficie,
+          ),
+          onPrimaryContainer: tokens.textoPrincipal,
 
           secondary: tokens.acao,
           onSecondary: tokens.acaoSobre,
+          secondaryContainer: Color.alphaBlend(
+            tokens.acao.withValues(alpha: .13), tokens.superficie,
+          ),
+          onSecondaryContainer: tokens.textoPrincipal,
+          tertiary: tokens.acao,
+          onTertiary: tokens.acaoSobre,
+          tertiaryContainer: tokens.superficieAlta,
+          onTertiaryContainer: tokens.textoPrincipal,
 
           surface: tokens.superficie,
           onSurface: tokens.textoPrincipal,
+          surfaceContainerLow: tokens.superficie,
+          surfaceContainer: tokens.superficie,
+          surfaceContainerHigh: tokens.superficieAlta,
+          surfaceBright: tokens.superficie,
+          surfaceDim: tokens.fundo,
+          inverseSurface: tokens.textoPrincipal,
+          onInverseSurface: tokens.fundo,
 
           error: tokens.estourado,
           onError: tokens.estouradoSobre,
@@ -391,7 +429,7 @@ abstract final class AppTheme {
           }
           if (states.contains(WidgetState.selected)) {
             return brightness == Brightness.dark
-                ? AppColors.darkPrimaryText
+                ? tokens.textoPrincipal
                 : tokens.marcaSobre;
           }
           return secondaryText;
