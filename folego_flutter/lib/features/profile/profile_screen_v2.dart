@@ -910,9 +910,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               : null,
           onTap: _confirmSignOut,
         ),
-        const Divider(height: 24),
+        const Divider(height: 1, indent: 54, endIndent: 12),
         ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 10),
+          leading: Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.expenseText(Theme.of(context).brightness)
+                  .withValues(alpha: .10),
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
+            child: Icon(
+              AppIcons.delete,
+              size: 16,
+              color: AppColors.expenseText(Theme.of(context).brightness),
+            ),
+          ),
           title: Text(
             'exclusão permanente',
             style: AppTypography.body(context, fontWeight: FontWeight.w600),
@@ -999,7 +1014,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _preferencesSection(),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 20),
                           _dataSection(),
                         ],
                       ),
