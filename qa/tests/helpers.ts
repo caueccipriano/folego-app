@@ -12,12 +12,17 @@ export async function openFolego(page: Page) {
   return pageErrors;
 }
 
-export async function enableFlutterAccessibility(page: Page) {
+export async function enableFlutterAccessibility(page: Page, hasTouch = false) {
   const button = page.getByRole('button', { name: /enable accessibility/i });
   if (await button.count()) {
-    await button.first().evaluate((element) => {
-      (element as HTMLElement).click();
-    });
+    // Chromium mobile listens for touch activation on Flutter's semantics
+    // placeholder. A DOM .click() does not produce that touch sequence.
+    const isAndroid = /Android/i.test(await page.evaluate(() => navigator.userAgent));
+    if (hasTouch && isAndroid) {
+      await button.first().tap({ force: true });
+    } else {
+      await button.first().evaluate(element => (element as HTMLElement).click());
+    }
     await page.waitForTimeout(250);
   }
 }

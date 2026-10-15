@@ -10,6 +10,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/error_translator.dart';
 import 'auth_validation.dart';
+import '../discovery/demo_screen.dart';
 import 'auth_widgets.dart';
 
 enum _AuthView { login, signUp, recovery, checkEmail, recoverySent }
@@ -363,6 +364,13 @@ class _AuthScreenState extends State<AuthScreen> {
                 color: secondary,
               ),
             ),
+            if (_view == _AuthView.login)
+              TextButton(
+                key: const ValueKey('auth-open-demo'),
+                onPressed: _loading ? null : () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(builder: (_) => const DemoScreen())),
+                child: const Text('experimentar com dados fictícios'),
+              ),
             const SizedBox(height: 24),
             if (_isSignUp) ...[
               AuthTextField(
@@ -567,6 +575,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 onPressed: () =>
                     _changeView(_isSignUp ? _AuthView.login : _AuthView.signUp),
               ),
+
           ],
         ),
       ),

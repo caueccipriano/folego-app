@@ -26,6 +26,7 @@ import '../../shared/widgets/app_section_header.dart';
 import '../diary/diary_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
+import '../discovery/discovery_navigation.dart';
 import 'home_pulse_card.dart';
 import 'home_data_freshness.dart';
 import 'home_load_guard.dart';
@@ -707,7 +708,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final border = AppColors.border(brightness);
     final hidden = FinancialPrivacy.hidden.value;
 
-    return Row(
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
@@ -751,7 +753,19 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icon(hidden ? AppIcons.eyeOff : AppIcons.eye, size: 19),
         ),
       ],
-    );
+    ),
+    const SizedBox(height: 12),
+    Wrap(spacing: 10, runSpacing: 8, children: [
+      OutlinedButton.icon(
+        key: const ValueKey('home-global-search'),
+        onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository),
+        icon: const Icon(AppIcons.search, size: 18), label: const Text('buscar no Fôlego')),
+      OutlinedButton.icon(
+        key: const ValueKey('home-pending-center'),
+        onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository, pendingOnly: true),
+        icon: const Icon(AppIcons.transactions, size: 18), label: const Text('pendências')),
+    ]),
+    ]);
   }
 
   Widget _buildHero({required FolegoSnapshot snapshot}) {

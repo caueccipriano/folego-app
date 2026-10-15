@@ -11,7 +11,7 @@ test.describe('authenticated navigation smoke', () => {
     page,
   }, testInfo) => {
     await openFolego(page);
-    await enableFlutterAccessibility(page);
+    await enableFlutterAccessibility(page, Boolean(testInfo.project.use.hasTouch));
 
     const emailField = page.getByRole('textbox', { name: /e-mail/i }).first();
     await expect(emailField).toBeVisible();

@@ -512,7 +512,7 @@ Future<void> _drainAsync(WidgetTester tester) async {
 }
 
 Future<void> _switchOrganizationTab(WidgetTester tester, String label) async {
-  await tester.tap(find.text(label));
+  await tester.tap(find.widgetWithText(Tab, label.toLowerCase()));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump();
