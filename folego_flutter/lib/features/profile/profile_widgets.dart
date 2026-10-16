@@ -441,16 +441,67 @@ class _AppearanceCard extends StatelessWidget {
   }
 }
 
-class _PaletteGrid extends StatelessWidget {
+class _PaletteGrid extends StatefulWidget {
   const _PaletteGrid({required this.selected, required this.onSelected});
   final String selected;
   final ValueChanged<String> onSelected;
 
   @override
+  State<_PaletteGrid> createState() => _PaletteGridState();
+}
+
+class _PaletteGridState extends State<_PaletteGrid> {
+  static const _newIds = <String>{
+    'highlighter', 'pomar', 'voltagem', 'cosmos', 'mostarda',
+    'groovy', 'atelie', 'contraste', 'terra',
+  };
+
+  String _filter = 'todas';
+
+  @override
   Widget build(BuildContext context) {
     final activeColors = FolegoColorTokens.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return LayoutBuilder(
+    final filtered = FolegoColorTokens.catalog.where((palette) {
+      final isNew = _newIds.contains(palette.id);
+      if (_filter == 'novas') return isNew;
+      if (_filter == 'anteriores') return !isNew;
+      return true;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            for (final choice in const [
+              ('todas', 'todas · 24'),
+              ('novas', 'novas · 9'),
+              ('anteriores', 'anteriores · 15'),
+            ])
+              ChoiceChip(
+                label: Text(choice.$2),
+                selected: _filter == choice.$1,
+                showCheckmark: false,
+                onSelected: (_) => setState(() => _filter = choice.$1),
+                backgroundColor: activeColors.superficie,
+                selectedColor: activeColors.superficieAlta,
+                side: BorderSide(
+                  color: _filter == choice.$1
+                    ? activeColors.marca : activeColors.borda,
+                ),
+                labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: activeColors.textoPrincipal,
+                  fontWeight: _filter == choice.$1
+                    ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
       builder: (context, constraints) {
         const gap = 10.0;
         final columns = constraints.maxWidth >= 650 ? 3 : 2;
@@ -459,7 +510,7 @@ class _PaletteGrid extends StatelessWidget {
           spacing: gap,
           runSpacing: gap,
           children: [
-            for (final palette in FolegoColorTokens.catalog)
+            for (final palette in filtered)
               SizedBox(
                 width: width,
                 child: Builder(
@@ -468,7 +519,7 @@ class _PaletteGrid extends StatelessWidget {
                       palette.id, Brightness.light);
                     final dark = FolegoColorTokens.fromId(
                       palette.id, Brightness.dark);
-                    final active = selected == palette.id;
+                    final active = widget.selected == palette.id;
                     return Semantics(
                       button: true,
                       selected: active,
@@ -477,7 +528,7 @@ class _PaletteGrid extends StatelessWidget {
                         color: scheme.surface,
                         borderRadius: BorderRadius.circular(AppRadii.control),
                         child: InkWell(
-                          onTap: () => onSelected(palette.id),
+                          onTap: () => widget.onSelected(palette.id),
                           borderRadius: BorderRadius.circular(AppRadii.control),
                           child: Container(
                             key: ValueKey('theme-palette-${palette.id}'),
@@ -542,6 +593,8 @@ class _PaletteGrid extends StatelessWidget {
           ],
         );
       },
+        ),
+      ],
     );
   }
 }
