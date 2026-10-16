@@ -84,6 +84,10 @@ void main() {
     expect(source, contains('final heroValueColor = tokens.acaoHero;'));
     expect(source, contains('heroCurrencySpans(contextCopy, tokens.acaoHero)'));
     expect(source, contains('heroCurrencySpans(fact, tokens.acaoHero)'));
+    final preview = File('lib/features/profile/profile_widgets.dart')
+        .readAsStringSync();
+    expect(preview, contains("Text(r'R\$ 1.250,00',"));
+    expect(preview, contains('color: colors.acaoHero,'));
   });
 
 }
