@@ -4,8 +4,8 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
-  test('15 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 15);
+  test('17 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 17);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -60,8 +60,36 @@ void main() {
     for (final id in [
       'safira', 'mochi', 'cacau',
       'matcha', 'pixel', 'cherry', 'butter', 'orbit', 'disco',
+      'pistache_frost', 'terracota_gallery',
     ]) {
       expect(FolegoColorTokens.palette(id).id, id);
+    }
+  });
+
+  test('referências Pistache Frost e Terracota Gallery preservam as cores originais', () {
+    final frost = FolegoColorTokens.palette('pistache_frost');
+    final gallery = FolegoColorTokens.palette('terracota_gallery');
+    expect(frost.action, const Color(0xFFB9C255));
+    expect(frost.lightBackground, const Color(0xFFE6F1FA));
+    expect(frost.brand, const Color(0xFF5798D7));
+    expect(gallery.brand, const Color(0xFFC34811));
+    expect(gallery.action, const Color(0xFFD9D1CA));
+
+    final frostLight = FolegoColorTokens.fromId(
+      'pistache_frost', Brightness.light,
+    );
+    final galleryLight = FolegoColorTokens.fromId(
+      'terracota_gallery', Brightness.light,
+    );
+    expect(frostLight.marcaHero, const Color(0xFF254A72));
+    expect(galleryLight.marcaHero, const Color(0xFF0B369A));
+    for (final id in ['pistache_frost', 'terracota_gallery']) {
+      for (final mode in Brightness.values) {
+        final tokens = FolegoColorTokens.fromId(id, mode);
+        expect(FolegoColorTokens.contrastRatio(
+          tokens.acaoHero, tokens.marcaHero,
+        ), greaterThanOrEqualTo(4.5), reason: '$id $mode KPI');
+      }
     }
   });
 
