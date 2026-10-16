@@ -5,6 +5,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_color_tokens.dart';
+import '../../core/utils/error_translator.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -107,7 +108,7 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = ErrorTranslator.forDisplay(error);
       });
     }
   }
@@ -233,7 +234,13 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('não consegui atualizar: $error')));
+      ).showSnackBar(SnackBar(
+        content: Text(
+          'Não consegui confirmar o registro. Antes de tentar novamente, '
+          'confira se ele já aparece em Lançamentos. '
+          '${ErrorTranslator.forDisplay(error)}',
+        ),
+      ));
     } finally {
       if (mounted) setState(() => _realizingKey = null);
     }

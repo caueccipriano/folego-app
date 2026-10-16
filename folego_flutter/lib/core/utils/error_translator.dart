@@ -69,6 +69,9 @@ abstract final class ErrorTranslator {
     }
 
     switch (error.code) {
+      case '42725':
+        return 'Não foi possível consultar este movimento. Confira se já '
+            'foi registrado antes de tentar novamente.';
       case '23505':
         return 'Já existe um registro com esses dados.';
       case '23503':
