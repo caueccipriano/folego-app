@@ -1,5 +1,6 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { formatPushByTone } from "./notification_tone.ts";
 
 type Candidate = {
   user_id: string;
@@ -111,12 +112,37 @@ Deno.serve(async (req: Request) => {
   }
 
   const candidates = (candidatesData ?? []) as Candidate[];
+  // Resolve the user's active tone for EVERY push kind. Bulk-read once to
+  // avoid one privileged query per candidate. Never send a wrong-tone push if
+  // preferences cannot be loaded.
+  const users = [...new Set(candidates.map((candidate) => candidate.user_id))];
+  const { data: toneRows, error: toneError } = users.length === 0
+    ? { data: [] as Array<{ user_id: string; space_id: string; reminder_style: string }>, error: null }
+    : await supabase.from("notification_preferences")
+      .select("user_id,space_id,reminder_style")
+      .in("user_id", users);
+  if (toneError) {
+    console.error("notification tone query failed", toneError.code);
+    return json(500, { error: "tone_query_failed" });
+  }
+  const tones = new Map<string, string>(
+    (toneRows ?? []).map((row) => [`${row.user_id}:${row.space_id}`, row.reminder_style]),
+  );
+  let skippedPreferences = 0;
   let sent = 0;
   let skippedQuiet = 0;
   let disabled = 0;
   let failed = 0;
 
   for (const candidate of candidates) {
+    const style = tones.get(`${candidate.user_id}:${candidate.space_id}`);
+    if (!style) {
+      skippedPreferences += 1;
+      continue;
+    }
+    const styled = formatPushByTone(candidate.kind, candidate.title, candidate.body, style);
+    const outgoing = { ...candidate, ...styled };
+
     const { data: shouldDeliver, error: quietError } = await supabase.rpc(
       "web_push_should_deliver",
       {
@@ -151,8 +177,8 @@ Deno.serve(async (req: Request) => {
     let delivered = false;
 
     const pushPayload = JSON.stringify({
-      title: candidate.title,
-      body: candidate.body,
+      title: outgoing.title,
+      body: outgoing.body,
       route: candidate.route,
       tag: candidate.stable_key,
       icon: "icons/Icon-192.png",
@@ -211,7 +237,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (delivered) await recordDelivery(candidate);
+    if (delivered) await recordDelivery(outgoing);
   }
 
   return json(200, {
@@ -219,6 +245,7 @@ Deno.serve(async (req: Request) => {
     candidates: candidates.length,
     sent,
     skipped_quiet: skippedQuiet,
+    skipped_preferences: skippedPreferences,
     disabled,
     failed,
   });

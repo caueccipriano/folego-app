@@ -420,6 +420,13 @@ void main() {
 
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
+      // O seletor global de tom ganhou sua própria seção acima dos tipos.
+      // Localize pelo identificador, não por deslocamentos fixos na lista.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('notification-toggle-invoices')),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(
         find.byKey(const ValueKey('notification-toggle-invoices')),
       );
@@ -428,7 +435,11 @@ void main() {
       expect(data.current.invoicesEnabled, isFalse);
       expect(data.current.financialRemindersEnabled, isFalse);
 
-      await _scrollNotifications(tester, -700);
+      await tester.scrollUntilVisible(
+        find.text('3 dias antes'),
+        170,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('3 dias antes'));
       await tester.pumpAndSettle();
       expect(data.current.reminderOffsetDays, 3);
