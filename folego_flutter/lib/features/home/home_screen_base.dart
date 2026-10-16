@@ -21,6 +21,7 @@ import '../../data/models/transaction_item.dart';
 import '../../data/models/upcoming_events.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/activity_inbox_bell.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../diary/diary_screen.dart';
 import '../onboarding/getting_started_screen.dart';
@@ -732,7 +733,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 6),
+        ActivityInboxBell(repository: widget.repository, spaceId: widget.space.id),
+        const SizedBox(width: 6),
         IconButton(
           key: const ValueKey('home-agenda-shortcut'),
           tooltip: 'abrir agenda',

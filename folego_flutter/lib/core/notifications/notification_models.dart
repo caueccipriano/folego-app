@@ -30,6 +30,7 @@ class NotificationPreferences {
     this.commitmentEnabled = false,
     this.weeklyReviewEnabled = true,
     this.financialRemindersEnabled = false,
+    this.transactionActivityEnabled = true,
     this.invoicesEnabled = true,
     this.debtsEnabled = true,
     this.recurrencesEnabled = true,
@@ -58,6 +59,7 @@ class NotificationPreferences {
   final bool commitmentEnabled;
   final bool weeklyReviewEnabled;
   final bool financialRemindersEnabled;
+  final bool transactionActivityEnabled;
   final bool invoicesEnabled;
   final bool debtsEnabled;
   final bool recurrencesEnabled;
@@ -91,6 +93,7 @@ class NotificationPreferences {
     bool? commitmentEnabled,
     bool? weeklyReviewEnabled,
     bool? financialRemindersEnabled,
+    bool? transactionActivityEnabled,
     bool? invoicesEnabled,
     bool? debtsEnabled,
     bool? recurrencesEnabled,
@@ -119,6 +122,8 @@ class NotificationPreferences {
     weeklyReviewEnabled: weeklyReviewEnabled ?? this.weeklyReviewEnabled,
     financialRemindersEnabled:
         financialRemindersEnabled ?? this.financialRemindersEnabled,
+    transactionActivityEnabled:
+        transactionActivityEnabled ?? this.transactionActivityEnabled,
     invoicesEnabled: invoicesEnabled ?? this.invoicesEnabled,
     debtsEnabled: debtsEnabled ?? this.debtsEnabled,
     recurrencesEnabled: recurrencesEnabled ?? this.recurrencesEnabled,
@@ -166,6 +171,8 @@ class NotificationPreferences {
       reminderStyle: json['reminder_style'] as String? ?? 'normal',
       commitmentEnabled: json['commitment_enabled'] as bool? ?? false,
       weeklyReviewEnabled: json['weekly_review_enabled'] as bool? ?? true,
+      transactionActivityEnabled:
+          json['transaction_activity_enabled'] as bool? ?? true,
       financialRemindersEnabled:
           json['financial_reminders_enabled'] as bool? ?? false,
       invoicesEnabled: json['invoices_enabled'] as bool? ?? true,
@@ -201,6 +208,7 @@ class NotificationPreferences {
     'commitment_enabled': commitmentEnabled,
     'weekly_review_enabled': weeklyReviewEnabled,
     'financial_reminders_enabled': financialRemindersEnabled,
+    'transaction_activity_enabled': transactionActivityEnabled,
     'invoices_enabled': invoicesEnabled,
     'debts_enabled': debtsEnabled,
     'recurrences_enabled': recurrencesEnabled,
@@ -229,15 +237,19 @@ class NotificationHistoryItem {
     required this.body,
     required this.route,
     required this.deliveredAt,
+    this.stableKey = '',
+    this.payload = const {},
+    this.seenAt,
   });
-
   final int id;
-  final String kind;
-  final String title;
-  final String body;
-  final String route;
+  final String kind, title, body, route, stableKey;
   final DateTime deliveredAt;
-
+  final Map<String, dynamic> payload;
+  final DateTime? seenAt;
+  String get readKey => stableKey.isEmpty ? 'legacy:$id' : stableKey;
+  bool get isUnread => seenAt == null;
+  bool get needsReview =>
+      kind == 'captureNeedsReview' || kind == 'transactionNeedsReview';
   factory NotificationHistoryItem.fromJson(Map<String, dynamic> json) =>
       NotificationHistoryItem(
         id: (json['id'] as num).toInt(),
@@ -245,6 +257,11 @@ class NotificationHistoryItem {
         title: json['title'] as String? ?? 'Fôlego',
         body: json['body'] as String? ?? '',
         route: json['route'] as String? ?? '/',
+        stableKey: json['stable_key'] as String? ?? '',
+        payload: json['payload'] is Map
+            ? Map<String, dynamic>.from(json['payload'] as Map)
+            : const {},
+        seenAt: DateTime.tryParse(json['seen_at']?.toString() ?? ''),
         deliveredAt: DateTime.parse(json['delivered_at'] as String),
       );
 }
@@ -439,18 +456,27 @@ String notificationBody(
       ? event.dayOffset
       : reminderOffsetDays;
   if (leadDays <= 0) {
-    return applyNotificationTone(event.isRecurringIncome
-        ? '${event.title} está previsto para hoje'
-        : '${event.title} vence hoje', reminderStyle);
+    return applyNotificationTone(
+      event.isRecurringIncome
+          ? '${event.title} está previsto para hoje'
+          : '${event.title} vence hoje',
+      reminderStyle,
+    );
   }
   if (leadDays == 1) {
-    return applyNotificationTone(event.isRecurringIncome
-        ? '${event.title} está previsto para amanhã'
-        : '${event.title} vence amanhã', reminderStyle);
+    return applyNotificationTone(
+      event.isRecurringIncome
+          ? '${event.title} está previsto para amanhã'
+          : '${event.title} vence amanhã',
+      reminderStyle,
+    );
   }
-  return applyNotificationTone(event.isRecurringIncome
-      ? '${event.title} está previsto em $leadDays dias'
-      : '${event.title} vence em $leadDays dias', reminderStyle);
+  return applyNotificationTone(
+    event.isRecurringIncome
+        ? '${event.title} está previsto em $leadDays dias'
+        : '${event.title} vence em $leadDays dias',
+    reminderStyle,
+  );
 }
 
 String notificationRoute(NotificationUpcomingEvent event) {

@@ -6,7 +6,7 @@ import 'notification_models.dart';
 
 class NotificationHistoryCache {
   NotificationHistoryCache({SharedPreferencesAsync? preferences})
-      : _preferences = preferences ?? SharedPreferencesAsync();
+    : _preferences = preferences ?? SharedPreferencesAsync();
 
   final SharedPreferencesAsync _preferences;
 
@@ -30,6 +30,9 @@ class NotificationHistoryCache {
             'title': item.title,
             'body': item.body,
             'route': item.route,
+            'stable_key': item.stableKey,
+            'payload': item.payload,
+            'seen_at': item.seenAt?.toIso8601String(),
             'delivered_at': item.deliveredAt.toIso8601String(),
           },
         )

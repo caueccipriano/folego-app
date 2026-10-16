@@ -379,6 +379,24 @@ class _NotificationSettingsScreenState
                           const SizedBox(height: 16),
                           _toneSection(prefs),
                           const SizedBox(height: 16),
+                          _SettingsSection(
+                            title: 'movimentações no aplicativo',
+                            subtitle: 'avisos na central do Fôlego; não ativa push no iPhone',
+                            child: _toggle(
+                              keyName: 'transactionActivity',
+                              icon: AppIcons.notifications,
+                              title: 'notificações de lançamentos',
+                              value: prefs.transactionActivityEnabled,
+                              onChanged: (value) => _save(
+                                prefs.copyWith(
+                                  transactionActivityEnabled: value,
+                                ),
+                                key: 'transactionActivity',
+                                label: 'os avisos de lançamentos',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           _typesSection(prefs),
                           const SizedBox(height: 16),
                           _realtimeSection(prefs),
@@ -560,66 +578,68 @@ class _NotificationSettingsScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        Text('como o Fôlego fala com você',
-            style: AppTypography.label(context, fontSize: 12)),
+        Text(
+          'como o Fôlego fala com você',
+          style: AppTypography.label(context, fontSize: 12),
+        ),
         const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-            key: ValueKey(
-              'reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset',
-            ),
-            initialValue: prefs.reminderStyle,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              hintText: 'Escolha o tom',
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            ),
-            items: const [
-              DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
-              DropdownMenuItem(value: 'normal', child: Text('Normal')),
-              DropdownMenuItem(value: 'firm', child: Text('Firme')),
-              DropdownMenuItem(
-                value: 'aggressive',
-                child: Text('Agressivo · com palavrões'),
-              ),
-            ],
-            onChanged: _saving
-                ? null
-                : (value) async {
-                    if (value == null) return;
-                    if (value == 'aggressive') {
-                      final accepted = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Ativar tom agressivo?'),
-                          content: const Text(
-                            'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancelar'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Ativar'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (accepted != true) {
-                        if (mounted) setState(() => _reminderStylePickerReset++);
-                        return;
-                      }
-                    }
-                    await _save(
-                      prefs.copyWith(reminderStyle: value),
-                      key: 'reminder-style',
-                      label: 'o tom dos avisos',
-                    );
-                  },
+        DropdownButtonFormField<String>(
+          key: ValueKey(
+            'reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset',
           ),
+          initialValue: prefs.reminderStyle,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            hintText: 'Escolha o tom',
+            border: OutlineInputBorder(),
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
+            DropdownMenuItem(value: 'normal', child: Text('Normal')),
+            DropdownMenuItem(value: 'firm', child: Text('Firme')),
+            DropdownMenuItem(
+              value: 'aggressive',
+              child: Text('Agressivo · com palavrões'),
+            ),
+          ],
+          onChanged: _saving
+              ? null
+              : (value) async {
+                  if (value == null) return;
+                  if (value == 'aggressive') {
+                    final accepted = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Ativar tom agressivo?'),
+                        content: const Text(
+                          'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Ativar'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (accepted != true) {
+                      if (mounted) setState(() => _reminderStylePickerReset++);
+                      return;
+                    }
+                  }
+                  await _save(
+                    prefs.copyWith(reminderStyle: value),
+                    key: 'reminder-style',
+                    label: 'o tom dos avisos',
+                  );
+                },
+        ),
         const SizedBox(height: 12),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -632,7 +652,10 @@ class _NotificationSettingsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('prévia de um aviso', style: AppTypography.label(context, fontSize: 11)),
+                Text(
+                  'prévia de um aviso',
+                  style: AppTypography.label(context, fontSize: 11),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   notificationTonePreview(prefs.reminderStyle),
@@ -646,74 +669,76 @@ class _NotificationSettingsScreenState
         const SizedBox(height: 3),
         Text(
           'Seu tom também vale para avisos na tela bloqueada. Valores, datas e links continuam corretos.',
-          style: AppTypography.body(context, fontSize: 10,
-            color: FolegoColorTokens.of(context).textoSecundario),
+          style: AppTypography.body(
+            context,
+            fontSize: 10,
+            color: FolegoColorTokens.of(context).textoSecundario,
+          ),
         ),
       ],
     ),
   );
 
-  Widget _dailySummarySection(
-    NotificationPreferences prefs,
-  ) => _SettingsSection(
-    title: 'revisão e hábito',
-    subtitle: 'uma revisão curta para manter suas finanças em dia',
-    child: Column(
-      children: [
-        _toggle(
-          keyName: 'daily-summary',
-          icon: AppIcons.calendar,
-          title: 'Seu Fôlego de hoje',
-          subtitle: 'pendências, gastos do dia e próximas contas',
-          value: prefs.dailySummaryEnabled,
-          onChanged: (value) => _save(
-            prefs.copyWith(dailySummaryEnabled: value),
-            key: 'daily-summary',
-            label: 'o resumo diário',
-          ),
+  Widget _dailySummarySection(NotificationPreferences prefs) =>
+      _SettingsSection(
+        title: 'revisão e hábito',
+        subtitle: 'uma revisão curta para manter suas finanças em dia',
+        child: Column(
+          children: [
+            _toggle(
+              keyName: 'daily-summary',
+              icon: AppIcons.calendar,
+              title: 'Seu Fôlego de hoje',
+              subtitle: 'pendências, gastos do dia e próximas contas',
+              value: prefs.dailySummaryEnabled,
+              onChanged: (value) => _save(
+                prefs.copyWith(dailySummaryEnabled: value),
+                key: 'daily-summary',
+                label: 'o resumo diário',
+              ),
+            ),
+            _toggle(
+              keyName: 'commitment',
+              icon: AppIcons.notifications,
+              title: 'Modo compromisso',
+              subtitle: 'Segunda chamada após 90 minutos, só se a revisão não foi concluída',
+              value: prefs.commitmentEnabled,
+              onChanged: (value) => _save(
+                prefs.copyWith(commitmentEnabled: value),
+                key: 'commitment',
+                label: 'o modo compromisso',
+              ),
+            ),
+            _toggle(
+              keyName: 'weekly-review',
+              icon: AppIcons.calendar,
+              title: 'Revisão de domingo',
+              subtitle:
+                  'A revisão diária lembra também das contas da próxima semana',
+              value: prefs.weeklyReviewEnabled,
+              onChanged: (value) => _save(
+                prefs.copyWith(weeklyReviewEnabled: value),
+                key: 'weekly-review',
+                label: 'a revisão semanal',
+              ),
+            ),
+            ListTile(
+              key: const ValueKey('daily-summary-time'),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(AppIcons.calendar),
+              title: const Text('horário do resumo'),
+              subtitle: Text(
+                _clock(prefs.dailySummaryHour, prefs.dailySummaryMinute),
+              ),
+              trailing: const Icon(AppIcons.chevronRight),
+              enabled: prefs.dailySummaryEnabled && !_savingThis('daily-time'),
+              onTap: !prefs.dailySummaryEnabled || _savingThis('daily-time')
+                  ? null
+                  : _pickDailySummaryTime,
+            ),
+          ],
         ),
-        _toggle(
-          keyName: 'commitment',
-          icon: AppIcons.notifications,
-          title: 'Modo compromisso',
-          subtitle: 'Segunda chamada após 90 minutos, só se a revisão não foi concluída',
-          value: prefs.commitmentEnabled,
-          onChanged: (value) => _save(
-            prefs.copyWith(commitmentEnabled: value),
-            key: 'commitment',
-            label: 'o modo compromisso',
-          ),
-        ),
-        _toggle(
-          keyName: 'weekly-review',
-          icon: AppIcons.calendar,
-          title: 'Revisão de domingo',
-          subtitle:
-              'A revisão diária lembra também das contas da próxima semana',
-          value: prefs.weeklyReviewEnabled,
-          onChanged: (value) => _save(
-            prefs.copyWith(weeklyReviewEnabled: value),
-            key: 'weekly-review',
-            label: 'a revisão semanal',
-          ),
-        ),
-        ListTile(
-          key: const ValueKey('daily-summary-time'),
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(AppIcons.calendar),
-          title: const Text('horário do resumo'),
-          subtitle: Text(
-            _clock(prefs.dailySummaryHour, prefs.dailySummaryMinute),
-          ),
-          trailing: const Icon(AppIcons.chevronRight),
-          enabled: prefs.dailySummaryEnabled && !_savingThis('daily-time'),
-          onTap: !prefs.dailySummaryEnabled || _savingThis('daily-time')
-              ? null
-              : _pickDailySummaryTime,
-        ),
-      ],
-    ),
-  );
+      );
 
   Widget _timingSection(NotificationPreferences prefs) => _SettingsSection(
     title: 'quando avisar',
