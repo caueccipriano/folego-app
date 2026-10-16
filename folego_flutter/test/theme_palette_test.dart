@@ -4,8 +4,8 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
-  test('25 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 25);
+  test('27 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 27);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -64,8 +64,29 @@ void main() {
       'matcha', 'pixel', 'cherry', 'butter', 'orbit', 'disco',
       'terracota', 'indigopop', 'oldlace', 'discofever',
       'bruma', 'jet', 'acidblue', 'popart', 'forestclub', 'hyperblue',
+      'pistachioice', 'galleryterra',
     ]) {
       expect(FolegoColorTokens.palette(id).id, id);
+    }
+  });
+
+  test('referências editoriais mantêm as três cores de origem', () {
+    final pistachio = FolegoColorTokens.palette('pistachioice');
+    expect(pistachio.brand, const Color(0xFF5798D7));
+    expect(pistachio.action, const Color(0xFFB9C255));
+    expect(pistachio.lightBackground, const Color(0xFFE6F1FA));
+    final gallery = FolegoColorTokens.palette('galleryterra');
+    expect(gallery.brand, const Color(0xFF0B369A));
+    expect(gallery.action, const Color(0xFFC34811));
+    expect(gallery.lightBackground, const Color(0xFFD9D1CA));
+    for (final id in ['pistachioice', 'galleryterra']) {
+      final light = FolegoColorTokens.fromId(id, Brightness.light);
+      final dark = FolegoColorTokens.fromId(id, Brightness.dark);
+      expect(light.fundo, isNot(dark.fundo));
+      expect(FolegoColorTokens.contrastRatio(light.acaoHero, light.marcaHero),
+        greaterThanOrEqualTo(4.5));
+      expect(FolegoColorTokens.contrastRatio(dark.acaoHero, dark.marcaHero),
+        greaterThanOrEqualTo(4.5));
     }
   });
 
