@@ -6,20 +6,20 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/features/home/home_financial_hero.dart';
 
 void main() {
-  test('valor principal usa a cor de texto do hero, nunca rosa fixo', () {
+  test('valor principal usa a cor secundaria de cada paleta, sem rosa fixo', () {
     final source = File('lib/features/home/home_financial_hero.dart')
         .readAsStringSync();
-    expect(source, contains('final heroValueColor = onPurple;'));
+    expect(source, contains('final heroValueColor = tokens.acaoHero;'));
     expect(source, isNot(contains('final heroValueColor = spendable <= 0')));
     expect(source, isNot(contains('color: tokens.estouradoHero')));
   });
 
-  test('hero numerico permanece legivel em todos os 15 temas e modos', () {
+  test('hero numerico secundario permanece legivel em todos os 15 temas e modos', () {
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
         expect(
-          FolegoColorTokens.contrastRatio(t.marcaHeroSobre, t.marcaHero),
+          FolegoColorTokens.contrastRatio(t.acaoHero, t.marcaHero),
           greaterThanOrEqualTo(4.5),
           reason: '${palette.name} / $brightness',
         );
@@ -38,7 +38,7 @@ void main() {
       }
     }
   });
-  test('valor secundário usa cor de ação na base Cacau sem mudar o KPI', () {
+  test('Cacau aplica a cor pistache ao KPI e aos valores auxiliares', () {
     for (final brightness in Brightness.values) {
       final tokens = FolegoColorTokens.fromId('cacau', brightness);
       expect(tokens.acaoHero, tokens.acao);
@@ -78,10 +78,10 @@ void main() {
     expect(dateSpans.map((s) => s.text).join(), 'recebe em 16 dias · 31 out');
   });
 
-  test('estrutura do card principal preserva valor neutro e realça detalhes', () {
+  test('estrutura do card aplica acento no KPI e em valores auxiliares', () {
     final source = File('lib/features/home/home_financial_hero.dart')
         .readAsStringSync();
-    expect(source, contains('final heroValueColor = onPurple;'));
+    expect(source, contains('final heroValueColor = tokens.acaoHero;'));
     expect(source, contains('heroCurrencySpans(contextCopy, tokens.acaoHero)'));
     expect(source, contains('heroCurrencySpans(fact, tokens.acaoHero)'));
   });
