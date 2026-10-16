@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/account_item.dart';
@@ -26,6 +28,17 @@ void main() {
   tearDown(() {
     debugFinancialAgendaLoader = null;
     debugDebtDetailLoader = null;
+  });
+
+  test('Agenda never shows raw Postgres errors for manual payments', () {
+    final agendaSource = File('lib/features/home/upcoming_events_screen_base.dart')
+        .readAsStringSync();
+    final translator = File('lib/core/utils/error_translator.dart')
+        .readAsStringSync();
+    expect(agendaSource, contains('ErrorTranslator.forDisplay(error)'));
+    expect(agendaSource, contains('confira se ele já aparece em Lançamentos'));
+    expect(agendaSource, isNot(contains(r'não consegui atualizar: $error')));
+    expect(translator, contains("case '42725':"));
   });
 
   test('agenda groups overdue, today, tomorrow, week and later correctly', () {
