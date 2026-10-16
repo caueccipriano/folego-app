@@ -5,6 +5,20 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
 
+// Memory only: scoped to the repository session and financial space. No ledger
+// or browser storage writes, and no previous user's data in a global cache.
+final _sessionReadings = Expando<Map<String, FolegoSnapshot>>();
+FolegoSnapshot? previousFolegoReading(
+  Object session,
+  String spaceId,
+  FolegoSnapshot current,
+) {
+  final readings = _sessionReadings[session] ??= <String, FolegoSnapshot>{};
+  final previous = readings[spaceId];
+  readings[spaceId] = current;
+  return previous;
+}
+
 /// Component deltas are evidence, not an attribution to individual purchases.
 class FolegoChangeExplanation extends StatelessWidget {
   const FolegoChangeExplanation({
@@ -32,7 +46,7 @@ class FolegoChangeExplanation extends StatelessWidget {
           const SizedBox(height: 12),
           if (before == null)
             const Text(
-              'este é seu ponto de partida nesta tela. atualize o início depois de um lançamento para comparar com a leitura anterior desta sessão.',
+              'esta é a primeira leitura desta sessão. atualize o início depois de um lançamento para comparar com a leitura anterior. ao fechar o app, essa referência é descartada.',
             )
           else ...[
             Text(

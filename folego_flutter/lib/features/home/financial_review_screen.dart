@@ -84,74 +84,53 @@ class FinancialReviewScreen extends StatelessWidget {
         style: AppTypography.section(context, fontSize: 16),
       ),
     ),
-    body: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        FolegoChangeExplanation(current: snapshot, previous: previous),
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          icon: const Icon(Icons.bar_chart_rounded),
-          label: const Text('comparar categorias no mesmo período'),
-          onPressed: () => Navigator.of(context).push<void>(
-            MaterialPageRoute(
-              builder: (_) => CategoryPeriodComparison(
-                repository: repository,
-                spaceId: space.id,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (summary != null)
-          OutlinedButton.icon(
-            icon: const Icon(Icons.fact_check_outlined),
-            label: const Text('fazer meu fechamento guiado'),
-            onPressed: () => showMonthlyClosingReview(
-              context,
-              summary: summary!,
-              onReviewAccounts: () => Navigator.of(context).push<void>(
+    body: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 850),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            FolegoChangeExplanation(current: snapshot, previous: previous),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              icon: const Icon(Icons.bar_chart_rounded),
+              label: const Text('comparar categorias no mesmo período'),
+              onPressed: () => Navigator.of(context).push<void>(
                 MaterialPageRoute(
-                  builder: (_) => Scaffold(
-                    appBar: AppBar(
-                      title: const Text('conferir contas e faturas'),
-                    ),
-                    body: WalletScreen(
-                      repository: repository,
-                      spaceId: space.id,
-                    ),
-                  ),
-                ),
-              ),
-              onReviewCategories: () async {
-                final pending = await repository
-                    .listPendingTransactionClassifications(space.id);
-                if (!context.mounted) return;
-                await Navigator.of(context).push<bool>(
-                  MaterialPageRoute(
-                    builder: (_) => TransactionClassificationInbox(
-                      repository: repository,
-                      spaceId: space.id,
-                      initialItems: pending,
-                    ),
-                  ),
-                );
-              },
-              onReviewBehavior: () => Navigator.of(context).push<void>(
-                MaterialPageRoute(
-                  builder: (_) => SpendingBehaviorScreen(
+                  builder: (_) => CategoryPeriodComparison(
                     repository: repository,
                     spaceId: space.id,
-                    periodMonth: summary!.periodMonth,
                   ),
                 ),
               ),
             ),
-          ),
-        const SizedBox(height: 8),
-        const Text(
-          'as ferramentas de conferência abrem seus registros atuais. ao retornar ao início, puxe para atualizar e ver uma nova leitura do Fôlego.',
+            const SizedBox(height: 8),
+            if (summary != null)
+              OutlinedButton.icon(
+                icon: const Icon(Icons.fact_check_outlined),
+                label: const Text('fazer meu fechamento guiado'),
+                onPressed: () => showMonthlyClosingReview(
+                  context,
+                  summary: summary!,
+                  onReviewAccounts: () =>
+                      reviewFinancialAccounts(context, repository, space.id),
+                  onReviewCategories: () =>
+                      reviewFinancialCategories(context, repository, space.id),
+                  onReviewBehavior: () => reviewFinancialBehavior(
+                    context,
+                    repository,
+                    space.id,
+                    summary!.periodMonth,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            const Text(
+              'as ferramentas de conferência abrem seus registros atuais. ao retornar ao início, puxe para atualizar e ver uma nova leitura do Fôlego.',
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }

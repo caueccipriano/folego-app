@@ -173,7 +173,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
         builder: (_) => SpendingBehaviorScreen(
           repository: widget.repository,
           spaceId: widget.spaceId,
-          periodMonth: month,
+          periodMonth: _month,
         ),
       ),
     );

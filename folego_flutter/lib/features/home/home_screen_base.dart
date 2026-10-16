@@ -27,6 +27,7 @@ import '../onboarding/getting_started_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'financial_review_screen.dart';
+import 'folego_change_explanation.dart';
 import '../discovery/discovery_navigation.dart';
 import 'home_pulse_card.dart';
 import 'home_data_freshness.dart';
@@ -213,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final snapshot = values[0] as FolegoSnapshot?;
 
       setState(() {
-        if (snapshot != null && _snapshot != null) _previousSnapshot = _snapshot;
+        if (snapshot != null) _previousSnapshot = previousFolegoReading(widget.repository, requestedSpaceId, snapshot);
         _snapshot = snapshot ?? _snapshot;
         if (snapshot != null) {
           _lastSuccessfulSnapshotAt = DateTime.now();
