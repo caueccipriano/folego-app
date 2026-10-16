@@ -636,6 +636,19 @@ class _ThemeLivePreview extends StatelessWidget {
                 Text(r'R$ 1.250,00',
                   style: TextStyle(color: colors.marcaHeroSobre,
                     fontSize: 26, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 5),
+                Text.rich(
+                  TextSpan(children: [
+                    TextSpan(text: 'em conta: ',
+                      style: TextStyle(color: colors.marcaHeroSobre)),
+                    TextSpan(text: r'R$ 62,90',
+                      style: TextStyle(
+                        color: colors.acaoHero,
+                        fontWeight: FontWeight.w800,
+                      )),
+                  ]),
+                  style: const TextStyle(fontSize: 12),
+                ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
