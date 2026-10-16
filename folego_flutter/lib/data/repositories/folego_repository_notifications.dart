@@ -6,7 +6,7 @@ import 'folego_repository.dart';
 extension FolegoRepositoryNotifications on FolegoRepository {
   static const _preferenceColumns = '''
     reminder_style,commitment_enabled,weekly_review_enabled,
-    space_id,financial_reminders_enabled,invoices_enabled,debts_enabled,
+    space_id,financial_reminders_enabled,transaction_activity_enabled,invoices_enabled,debts_enabled,
     recurrences_enabled,subscriptions_enabled,expected_income_enabled,
     overdue_enabled,plan_thresholds_enabled,card_limit_thresholds_enabled,
     large_expenses_enabled,large_expense_threshold,
@@ -106,14 +106,63 @@ extension FolegoRepositoryNotifications on FolegoRepository {
 
     final data = await Supabase.instance.client
         .from('notification_history')
-        .select('id,kind,title,body,route,delivered_at')
+        .select('id,kind,title,body,route,delivered_at,stable_key,payload')
         .eq('user_id', userId)
         .eq('space_id', spaceId)
         .order('delivered_at', ascending: false)
         .limit(limit);
 
+    final states = await Supabase.instance.client
+        .from('financial_activity_read_state')
+        .select('stable_key,seen_at')
+        .eq('user_id', userId)
+        .eq('space_id', spaceId);
+    final seen = {for (final row in states) row['stable_key']: row['seen_at']};
     return List<Map<String, dynamic>>.from(data)
-        .map(NotificationHistoryItem.fromJson)
+        .map((row) {
+          final stableKey = row['stable_key']?.toString() ?? '';
+          final key = stableKey.isEmpty ? 'legacy:${row['id']}' : stableKey;
+          return NotificationHistoryItem.fromJson({
+            ...row,
+            'seen_at': seen[key],
+          });
+        })
         .toList(growable: false);
+  }
+
+  Future<int> getNotificationUnreadCount(String spaceId) async {
+    final result = await Supabase.instance.client.rpc(
+      'get_financial_activity_unread_count',
+      params: {'p_space_id': spaceId},
+    );
+    return result is num
+        ? result.toInt()
+        : int.tryParse(result.toString()) ?? 0;
+  }
+
+  Future<void> markNotificationRead(String spaceId, String stableKey) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) throw StateError('Sessão necessária.');
+    await Supabase.instance.client.from('financial_activity_read_state').upsert(
+      {
+        'user_id': userId,
+        'space_id': spaceId,
+        'stable_key': stableKey,
+        'seen_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      onConflict: 'user_id,stable_key',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getCaptureForReview(
+    String spaceId,
+    String id,
+  ) async {
+    return await Supabase.instance.client
+        .from('financial_capture_inbox')
+        .select()
+        .eq('space_id', spaceId)
+        .eq('id', id)
+        .maybeSingle();
   }
 }

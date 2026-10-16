@@ -642,6 +642,72 @@ async function pullRows(supabase: any, spaceId: string, since: string, limit: nu
   return { rows, cursor };
 }
 
+// Receipt staging only: never calls accounting RPCs or writes financial_events/impacts.
+function captureDecision(receipt: any, events: any[], accounts: any[], impacts: any[], aliases: Record<string,string> = {}) {
+  const norm=(v:any)=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const day=(v:any)=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v));
+  const cents=(v:any)=>Math.round(Number(v)*100);
+  const accountIds=new Set(accounts.filter(a=>norm(a.name)==='mercadopago'||norm(a.institution)==='mercadopago').map(a=>a.id));
+  const compatible=events.filter(e=>e.status==='confirmed' && day(e.occurred_at)===day(receipt.occurred_at) && impacts.some(i=>i.event_id===e.id&&accountIds.has(i.account_id)&&i.dimension==='cash'&&(receipt.direction==='in'?Number(i.amount)>0:receipt.direction==='out'?Number(i.amount)<0:false)));
+  const context=(e:any)=>{
+    const party=norm(receipt.counterparty);
+    if(!party)return true;
+    const raw=String(receipt.counterparty??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const words=raw.split(/[^a-z0-9]+/).filter((w:string)=>w.length>=4&&!['banco','pagamento','pagamentos','instituicao','financeira','silva','santos'].includes(w));
+    const evidence=norm([e.description,e.metadata?.counterparty,e.metadata?.recipient,e.metadata?.beneficiary,e.metadata?.merchant].filter(Boolean).join(' '));
+    const configured=Object.entries(aliases).some(([key,value])=>party.includes(norm(key))&&evidence.includes(norm(value)));
+    return configured||words.some((w:string)=>evidence.includes(w));
+  };
+  const providerMatch=(e:any)=>!!receipt.provider_transaction_id&&[e.metadata?.provider_transaction_id,e.metadata?.pix_end_to_end_id,e.metadata?.end_to_end_id].some(v=>v===receipt.provider_transaction_id);
+  const exact=compatible.filter(e=>cents(e.amount)===cents(receipt.amount));
+  if(exact.length===1 && !context(exact[0]) && !providerMatch(exact[0])) return {status:'needs_review',review_status:'needs_review',review_reason:'counterparty_mismatch',linked_event_id:null,linked_launch_id:null};
+  if(exact.length===1) return {status:'linked',review_status:'linked',linked_event_id:exact[0].id,linked_launch_id:exact[0].external_id?.replace(/^sheet:/,'')??'event:'+exact[0].id,review_reason:'existing_confirmed_event',candidate_event_id:null,difference:null};
+  if(exact.length>1) return {status:'needs_review',review_status:'needs_review',review_reason:'multiple_compatible_events',linked_event_id:null,linked_launch_id:null};
+  const nearby=compatible.filter(e=>Math.abs(cents(e.amount)-cents(receipt.amount))<=100 && ((receipt.counterparty&&context(e)) || providerMatch(e) || Math.abs(Date.parse(e.occurred_at)-Date.parse(receipt.occurred_at))<=15*60000));
+  if(nearby.length===1) return {status:'needs_review',review_status:'needs_review',review_reason:'amount_mismatch',linked_event_id:null,linked_launch_id:null,candidate_event_id:nearby[0].id,difference:(cents(receipt.amount)-cents(nearby[0].amount))/100};
+  return {status:'needs_review',review_status:'needs_review',review_reason:receipt.direction==='unknown'?'direction_unknown':'no_exact_match',linked_event_id:null,linked_launch_id:null};
+}
+
+async function captureReceipts(supabase:any,spaceId:string,body:any,aliases:Record<string,string>={}) {
+  if(!Array.isArray(body.receipts)||body.receipts.length>50) throw new Error('capture_batch_invalid');
+  const results=[];
+  for(const r of body.receipts) {
+    if(r?.source_kind!=='gmail'||r.provider!=='MercadoPago'||! /^[a-f0-9]{64}$/i.test(r.source_hash??'')||!['in','out','unknown'].includes(r.direction)||typeof r.amount!=='number'||!Number.isFinite(r.amount)||r.amount<=0||r.amount>999999999||Math.abs(r.amount*100-Math.round(r.amount*100))>0.00001||!Number.isFinite(Date.parse(r.occurred_at))||!/(?:Z|[+-]\d{2}:\d{2})$/.test(r.occurred_at)||typeof r.description!=='string'||!r.description.trim()||r.description.length>500) {results.push({source_hash:r?.source_hash,status:'invalid',review_reason:'invalid_receipt'});continue;}
+    const existing=await supabase.from('financial_capture_inbox').select('id,review_status,linked_event_id,review_reason,metadata').eq('space_id',spaceId).eq('provider','MercadoPago').eq('source_kind','gmail').eq('source_hash',r.source_hash).maybeSingle();
+    if(existing.error) throw existing.error;
+    if(!existing.data && r.provider_transaction_id){
+      const byId=await supabase.from('financial_capture_inbox').select('id,review_status,linked_event_id,review_reason,metadata').eq('space_id',spaceId).eq('provider','MercadoPago').eq('provider_transaction_id',String(r.provider_transaction_id).slice(0,150)).maybeSingle();
+      if(byId.error)throw byId.error; existing.data=byId.data;
+    }
+    if(existing.data){results.push({source_hash:r.source_hash,status:'already_seen',capture_id:existing.data.id,...existing.data,linked_launch_id:existing.data.metadata?.linked_launch_id??null});continue;}
+    const at=Date.parse(r.occurred_at);
+    const [ev,ac,im]=await Promise.all([
+      supabase.from('financial_events').select('id,description,amount,occurred_at,status,event_type,external_id,metadata').eq('space_id',spaceId).eq('status','confirmed').gte('occurred_at',new Date(at-86400000).toISOString()).lte('occurred_at',new Date(at+86400000).toISOString()).limit(1000),
+      supabase.from('accounts').select('id,name,institution').eq('space_id',spaceId),
+      supabase.from('financial_impacts').select('event_id,account_id,dimension,amount').eq('space_id',spaceId).eq('dimension','cash').gte('effective_date',new Date(at-86400000).toISOString().slice(0,10)).lte('effective_date',new Date(at+86400000).toISOString().slice(0,10)).limit(3000)
+    ]);
+    if(ev.error||ac.error||im.error) throw ev.error??ac.error??im.error;
+    // A truncated scan cannot prove uniqueness.
+    const d=ev.data.length===1000||im.data.length===3000?{status:'needs_review',review_status:'needs_review',review_reason:'scan_limit',linked_event_id:null}:captureDecision(r,ev.data,ac.data,im.data,aliases);
+    const result:any={source_hash:r.source_hash,...d};
+    if(body.dry_run!==true){
+      const row={space_id:spaceId,provider:'MercadoPago',source_kind:'gmail',source_hash:r.source_hash,provider_transaction_id:String(r.provider_transaction_id??'').slice(0,150)||null,direction:r.direction,amount:r.amount,counterparty:String(r.counterparty??'').slice(0,150)||null,description:r.description.trim(),occurred_at:new Date(at).toISOString(),review_status:d.review_status,linked_event_id:d.linked_event_id,review_reason:d.review_reason,metadata:{provider_transaction_id:String(r.provider_transaction_id??'').slice(0,150)||null,candidate_event_id:(d as any).candidate_event_id??null,difference:(d as any).difference??null,linked_launch_id:(d as any).linked_launch_id??null}};
+      const inserted=await supabase.from('financial_capture_inbox').upsert(row,{onConflict:'space_id,provider,source_kind,source_hash',ignoreDuplicates:true}).select('id');
+      if(inserted.error){
+        if(inserted.error.code!=='23505')throw inserted.error;
+        let retry=supabase.from('financial_capture_inbox').select('id,review_status,linked_event_id,review_reason,metadata').eq('space_id',spaceId).eq('provider','MercadoPago');
+        retry=r.provider_transaction_id?retry.eq('provider_transaction_id',String(r.provider_transaction_id).slice(0,150)):retry.eq('source_kind','gmail').eq('source_hash',r.source_hash);
+        const raced=await retry.maybeSingle();
+        if(raced.error||!raced.data)throw raced.error??inserted.error;
+        results.push({source_hash:r.source_hash,status:'already_seen',capture_id:raced.data.id,...raced.data,linked_launch_id:raced.data.metadata?.linked_launch_id??null});continue;
+      }
+      result.capture_id=inserted.data?.[0]?.id??null;
+    }
+    results.push(result);
+  }
+  return {ok:true,dry_run:body.dry_run===true,financial_writes:0,receipts:results};
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
@@ -667,7 +733,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: integration, error: integrationError } = await supabase
     .from("sheet_sync_integrations")
-    .select("id,space_id,spreadsheet_id,token_hash,enabled")
+    .select("id,space_id,spreadsheet_id,token_hash,enabled,capture_counterparty_aliases")
     .eq("spreadsheet_id", spreadsheetId)
     .eq("enabled", true)
     .maybeSingle();
@@ -690,6 +756,7 @@ Deno.serve(async (req: Request) => {
     if (action === "health") {
       return json(200, { ok: true, space_id: spaceId, spreadsheet_id: spreadsheetId, mode: "bidirectional-classification-cas" });
     }
+    if (action === "capture_receipts") return json(200, await captureReceipts(supabase, spaceId, body, integration.capture_counterparty_aliases ?? {}));
     const ctx = await loadContext(supabase, spaceId);
 
 
