@@ -82,6 +82,12 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     FolegoPalette('disco', 'Disco', Color(0xFFA72F8D),
         Color(0xFFB8FF5F), Color(0xFFFFF1FC), Color(0xFF1C0F1E),
         description: 'Magenta + verde ácido'),
+    FolegoPalette('pistache_frost', 'Pistache Frost', Color(0xFF5798D7),
+        Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF0D1B27),
+        description: 'Pistache + azul-gelo'),
+    FolegoPalette('terracota_gallery', 'Terracota Gallery', Color(0xFFC34811),
+        Color(0xFFD9D1CA), Color(0xFFF6F2ED), Color(0xFF181820),
+        description: 'Terracota + azul-galeria + linho'),
   ];
 
   // Cada paleta tem cores próprias para claro e escuro. Não interpolar
@@ -236,6 +242,26 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
         surface: Color(0xFF301B32), elevated: Color(0xFF452647),
         foreground: Color(0xFFFFF0FC), muted: Color(0xFFD9B7D4),
         border: Color(0xFF67416A), hero: Color(0xFF692059)),
+    ],
+    'pistache_frost': [
+      FolegoColorWay(brand: Color(0xFF5798D7), background: Color(0xFFE6F1FA),
+        surface: Color(0xFFFDFEFF), elevated: Color(0xFFD5E8F6),
+        foreground: Color(0xFF183649), muted: Color(0xFF526C7D),
+        border: Color(0xFFC2D8E8), hero: Color(0xFF254A72)),
+      FolegoColorWay(brand: Color(0xFF90C4F2), background: Color(0xFF0D1B27),
+        surface: Color(0xFF172A3A), elevated: Color(0xFF243A4D),
+        foreground: Color(0xFFEDF6FB), muted: Color(0xFFB9CDDA),
+        border: Color(0xFF35526A), hero: Color(0xFF123B56)),
+    ],
+    'terracota_gallery': [
+      FolegoColorWay(brand: Color(0xFFC34811), background: Color(0xFFF6F2ED),
+        surface: Color(0xFFFFFDFB), elevated: Color(0xFFD9D1CA),
+        foreground: Color(0xFF332824), muted: Color(0xFF736259),
+        border: Color(0xFFD8C6BB), hero: Color(0xFF0B369A)),
+      FolegoColorWay(brand: Color(0xFFFF9E79), background: Color(0xFF181820),
+        surface: Color(0xFF252531), elevated: Color(0xFF37343D),
+        foreground: Color(0xFFFAF3EE), muted: Color(0xFFCBBDB8),
+        border: Color(0xFF514D58), hero: Color(0xFF1A4299)),
     ],
   };
 
