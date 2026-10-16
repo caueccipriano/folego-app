@@ -1,6 +1,6 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
-import { formatPushByTone } from "../_shared/notification_tone.ts";
+import { formatPushByTone } from "./notification_tone.ts";
 
 type Candidate = {
   user_id: string;
