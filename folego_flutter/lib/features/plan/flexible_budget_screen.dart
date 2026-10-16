@@ -20,7 +20,6 @@ import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
-import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 
 class FlexibleBudgetScreen extends StatefulWidget {
@@ -28,10 +27,16 @@ class FlexibleBudgetScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.spaceId,
+    this.overviewLoader,
+    this.itemsLoader,
   });
 
   final FolegoRepository repository;
   final String spaceId;
+  @visibleForTesting
+  final Future<FlexibleBudgetOverview> Function(DateTime)? overviewLoader;
+  @visibleForTesting
+  final Future<List<BudgetOverviewItem>> Function(DateTime)? itemsLoader;
 
   @override
   State<FlexibleBudgetScreen> createState() => _FlexibleBudgetScreenState();
@@ -43,6 +48,8 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
   List<BudgetOverviewItem> _items = const [];
   bool _loading = true;
   bool _saving = false;
+  bool _changed = false;
+  int _generation = 0;
   bool _openingClassification = false;
   String? _error;
 
@@ -83,29 +90,33 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       .length;
 
   Future<void> _load() async {
+    final generation = ++_generation;
+    final month = _month;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final values = await Future.wait<dynamic>([
-        widget.repository.getFlexibleBudgetOverview(
-          spaceId: widget.spaceId,
-          periodMonth: _month,
-        ),
-        widget.repository.getBudgetOverview(
-          spaceId: widget.spaceId,
-          periodMonth: _month,
-        ),
+        widget.overviewLoader?.call(month) ??
+            widget.repository.getFlexibleBudgetOverview(
+              spaceId: widget.spaceId,
+              periodMonth: month,
+            ),
+        widget.itemsLoader?.call(month) ??
+            widget.repository.getBudgetOverview(
+              spaceId: widget.spaceId,
+              periodMonth: month,
+            ),
       ]);
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() {
         _overview = values[0] as FlexibleBudgetOverview;
         _items = values[1] as List<BudgetOverviewItem>;
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() {
         _loading = false;
         _error = error.toString().replaceFirst('Exception: ', '');
@@ -130,7 +141,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       final pending = await widget.repository
           .listPendingTransactionClassifications(widget.spaceId);
       if (!mounted) return;
-      await Navigator.of(context).push(
+      final changed = await Navigator.of(context).push<bool>(
         MaterialPageRoute<bool>(
           builder: (_) => TransactionClassificationInbox(
             repository: widget.repository,
@@ -139,7 +150,10 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
           ),
         ),
       );
-      if (mounted) await _load();
+      if (changed == true) {
+        _changed = true;
+        if (mounted) await _load();
+      }
     } catch (_) {
       if (mounted) {
         AppSnackbars.show(
@@ -153,12 +167,13 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
   }
 
   Future<void> _openSpendingBehavior() async {
+    _changed = true;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => SpendingBehaviorScreen(
           repository: widget.repository,
           spaceId: widget.spaceId,
-          periodMonth: _month,
+          periodMonth: month,
         ),
       ),
     );
@@ -250,6 +265,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
         periodMonth: _month,
         limitAmount: amount,
       );
+      _changed = true;
       if (!mounted) return;
       AppSnackbars.show(
         context,
@@ -354,6 +370,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
         plannedAmount: amount,
         scope: BudgetLimitScope.month,
       );
+      _changed = true;
       if (!mounted) return;
       AppSnackbars.show(
         context,
@@ -377,61 +394,71 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return Scaffold(
-      backgroundColor: AppColors.background(brightness),
-      body: SafeArea(
-        child: AppContentContainer.dashboard(
-          fillHeight: true,
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 20, 0, 100),
-              children: [
-                AppPageHeader(
-                  title: 'orçamento flexível',
-                  subtitle: 'controle do que pode variar sem apertar o mês',
-                  leading: IconButton(
-                    tooltip: 'voltar',
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(AppIcons.back),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _monthPicker(brightness),
-                const SizedBox(height: 18),
-                if (_loading && _overview == null)
-                  const AppLoadingState(
-                    label: 'organizando seu orçamento flexível',
-                  )
-                else if (_error != null && _overview == null)
-                  AppErrorState(
-                    title: 'não consegui carregar seu orçamento flexível',
-                    description: _error,
-                    onRetry: _load,
-                  )
-                else ...[
-                  _globalCard(brightness),
+    return PopScope<bool>(
+      canPop: !_changed,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.of(context).pop(true);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColors.background(brightness),
+          surfaceTintColor: AppColors.transparent,
+          title: Text(
+            'orçamento flexível',
+            style: AppTypography.section(context, fontSize: 16),
+          ),
+          leading: IconButton(
+            key: const ValueKey('flex-budget-back'),
+            tooltip: 'voltar',
+            onPressed: () => Navigator.of(context).pop(_changed),
+            icon: const Icon(AppIcons.back),
+          ),
+        ),
+        backgroundColor: AppColors.background(brightness),
+        body: SafeArea(
+          child: AppContentContainer.dashboard(
+            fillHeight: true,
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(0, 20, 0, 100),
+                children: [
+                  _monthPicker(brightness),
                   const SizedBox(height: 18),
-                  BudgetSpendingStory(
-                    overview: _overview!,
-                    items: _flexibleItems,
-                    onCategory: (item) => showBudgetCategorySpending(
-                      context: context,
-                      repository: widget.repository,
-                      spaceId: widget.spaceId,
-                      month: _month,
-                      category: item,
+                  if (_loading && _overview == null)
+                    const AppLoadingState(
+                      label: 'organizando seu orçamento flexível',
+                    )
+                  else if (_error != null && _overview == null)
+                    AppErrorState(
+                      title: 'não consegui carregar seu orçamento flexível',
+                      description: _error,
+                      onRetry: _load,
+                    )
+                  else ...[
+                    _globalCard(brightness),
+                    const SizedBox(height: 18),
+                    BudgetSpendingStory(
+                      overview: _overview!,
+                      items: _flexibleItems,
+                      onCategory: (item) => showBudgetCategorySpending(
+                        context: context,
+                        repository: widget.repository,
+                        spaceId: widget.spaceId,
+                        month: _month,
+                        category: item,
+                      ),
+                      onClassify: _openingClassification
+                          ? null
+                          : _openClassification,
+                      onSpendingBehavior: _openSpendingBehavior,
                     ),
-                    onClassify: _openingClassification
-                        ? null
-                        : _openClassification,
-                    onSpendingBehavior: _openSpendingBehavior,
-                  ),
-                  const SizedBox(height: 22),
-                  _categorySection(brightness),
+                    const SizedBox(height: 22),
+                    _categorySection(brightness),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

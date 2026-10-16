@@ -26,6 +26,7 @@ import '../diary/diary_screen.dart';
 import '../onboarding/getting_started_screen.dart';
 import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
+import 'financial_review_screen.dart';
 import '../discovery/discovery_navigation.dart';
 import 'home_pulse_card.dart';
 import 'home_data_freshness.dart';
@@ -56,6 +57,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   FolegoSnapshot? _snapshot;
+  FolegoSnapshot? _previousSnapshot;
 
   MonthlyMoneySummary? _monthlyMoney;
   ProjectionResult? _projection;
@@ -94,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // new one. Old in-flight requests must never repopulate this screen.
     _loadGeneration += 1;
     _snapshot = null;
+    _previousSnapshot = null;
     _monthlyMoney = null;
     _projection = null;
     _recentTransactions = const [];
@@ -210,6 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final snapshot = values[0] as FolegoSnapshot?;
 
       setState(() {
+        if (snapshot != null && _snapshot != null) _previousSnapshot = _snapshot;
         _snapshot = snapshot ?? _snapshot;
         if (snapshot != null) {
           _lastSuccessfulSnapshotAt = DateTime.now();
@@ -446,7 +450,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ?.onOpenMonthlyTransactions?.call(periodMonth, types);
             },
       onOpenClosing: _monthlyMoney == null ? null
-          : () => showMonthlyClosingReview(context, summary: _monthlyMoney!),
+          : () => showMonthlyClosingReview(context, summary: _monthlyMoney!,
+            onReviewAccounts: () => reviewFinancialAccounts(context, widget.repository, widget.space.id),
+            onReviewCategories: () => reviewFinancialCategories(context, widget.repository, widget.space.id),
+            onReviewBehavior: () => reviewFinancialBehavior(context, widget.repository, widget.space.id, _monthlyMoney!.periodMonth),
+          ),
       onOpenEvolution: () => showClosedMonthEvolution(
         context,
         repository: widget.repository,
@@ -769,12 +777,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHero({required FolegoSnapshot snapshot}) {
     final wallet = HomeWalletNavigationScope.maybeOf(context);
-    return HomeFinancialHero(
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      HomeFinancialHero(
       snapshot: snapshot,
       onOpenAccounts: wallet == null ? null : () => wallet.onOpenSection(0),
       onOpenInvoices: wallet == null ? null : () => wallet.onOpenSection(1),
       onOpenCommitments: () { _openUpcomingEvents(); },
-    );
+      ),
+      Align(alignment: Alignment.centerLeft, child: TextButton.icon(
+        key: const ValueKey('home-understand-folego'),
+        icon: const Icon(Icons.insights_outlined, size: 18),
+        label: const Text('o que mudou no meu Fôlego?'),
+        onPressed: () => Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => FinancialReviewScreen(
+          repository: widget.repository, space: widget.space, snapshot: snapshot,
+          previous: _previousSnapshot, summary: _monthlyMoney,
+        ))),
+      )),
+    ]);
   }
 
   Widget _buildQuickActions({

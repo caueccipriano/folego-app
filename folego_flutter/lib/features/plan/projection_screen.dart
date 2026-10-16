@@ -411,7 +411,9 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       child: SafeArea(
         child: AppContentContainer.dashboard(
           fillHeight: true,
-          child: _loading
+          child: Column(children: [
+            _ProjectionHeader(onBack: widget.onBack, onScenario: _openScenarioSettings),
+            Expanded(child: _loading
               ? const AppLoadingState(label: 'calculando sua projeção')
               : _error != null
               ? AppErrorState(
@@ -419,7 +421,8 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   description: _error,
                   onRetry: () => _load(),
                 )
-              : _buildContent(brightness),
+              : _buildContent(brightness)),
+          ]),
         ),
       ),
     );
@@ -438,10 +441,6 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(0, 12, 0, 72),
           children: [
-            _ProjectionHeader(
-              onBack: widget.onBack,
-              onScenario: _openScenarioSettings,
-            ),
             const SizedBox(height: 12),
             if (wide)
               Row(

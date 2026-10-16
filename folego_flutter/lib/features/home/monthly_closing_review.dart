@@ -9,7 +9,12 @@ import '../../data/models/monthly_money_summary.dart';
 /// A manual, read-only month review. Never marks transactions as paid,
 /// writes a backend "closed" flag, or mutates a financial space.
 class MonthlyClosingReview extends StatefulWidget {
-  const MonthlyClosingReview({super.key, required this.summary});
+  const MonthlyClosingReview({super.key, required this.summary,
+    this.onReviewAccounts, this.onReviewCategories, this.onReviewBehavior});
+
+  final Future<void> Function()? onReviewAccounts;
+  final Future<void> Function()? onReviewCategories;
+  final Future<void> Function()? onReviewBehavior;
 
   final MonthlyMoneySummary summary;
 
@@ -19,6 +24,19 @@ class MonthlyClosingReview extends StatefulWidget {
 
 class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
   final List<bool> _checked = [false, false, false];
+  bool _opening = false;
+
+  Future<void> _open(Future<void> Function() action) async {
+    if (_opening) return;
+    setState(() => _opening = true);
+    try {
+      await action();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(content: Text('não consegui abrir a conferência. tente novamente.')));
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
 
   static const _steps = [
     (
@@ -47,6 +65,10 @@ class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
       top: false,
       child: Column(
         children: [
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Row(children: [
+            Expanded(child: Text('fechamento guiado', style: AppTypography.section(context, fontSize: 16))),
+            IconButton(key: const ValueKey('monthly-close-dismiss'), tooltip: 'fechar revisão', onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
+          ])),
           Expanded(
             child: ListView(
               key: const ValueKey('monthly-close-scroll'),
@@ -91,6 +113,16 @@ class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
                   ),
                 ),
                 const SizedBox(height: 18),
+                if (widget.onReviewAccounts != null) OutlinedButton.icon(
+                  onPressed: _opening ? null : () => _open(widget.onReviewAccounts!),
+                  icon: const Icon(Icons.account_balance_wallet_outlined), label: const Text('1 · conferir contas e faturas')),
+                if (widget.onReviewCategories != null) OutlinedButton.icon(
+                  onPressed: _opening ? null : () => _open(widget.onReviewCategories!),
+                  icon: const Icon(Icons.category_outlined), label: const Text('2 · resolver categorias pendentes')),
+                if (widget.onReviewBehavior != null) OutlinedButton.icon(
+                  onPressed: _opening ? null : () => _open(widget.onReviewBehavior!),
+                  icon: const Icon(Icons.tune), label: const Text('3 · revisar fixos e variáveis')),
+                if (widget.onReviewBehavior != null) const Text('confira também os gastos sem classificação. esses atalhos não marcam a revisão como concluída; confirme abaixo depois de verificar. categorias pendentes podem incluir outros meses.'),
                 Text('antes de encerrar sua revisão',
                     style: AppTypography.section(context, fontSize: 17)),
                 const SizedBox(height: 5),
@@ -179,6 +211,9 @@ class _ReviewMetric extends StatelessWidget {
 Future<void> showMonthlyClosingReview(
   BuildContext context, {
   required MonthlyMoneySummary summary,
+  Future<void> Function()? onReviewAccounts,
+  Future<void> Function()? onReviewCategories,
+  Future<void> Function()? onReviewBehavior,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -187,7 +222,7 @@ Future<void> showMonthlyClosingReview(
     showDragHandle: true,
     builder: (_) => FractionallySizedBox(
       heightFactor: .86,
-      child: MonthlyClosingReview(summary: summary),
+      child: MonthlyClosingReview(summary: summary, onReviewAccounts: onReviewAccounts, onReviewCategories: onReviewCategories, onReviewBehavior: onReviewBehavior),
     ),
   );
 }

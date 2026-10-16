@@ -103,8 +103,8 @@ class _PlanScreenState extends State<PlanScreen> {
         onProjectionRequested: _openProjection,
         onPurchaseSimulationRequested: _openPurchaseProjection,
         onSpendingBehaviorRequested: _openSpendingBehavior,
-        onFlexibleBudgetRequested: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
+        onFlexibleBudgetRequested: () => Navigator.of(context).push<bool>(
+          MaterialPageRoute<bool>(
             builder: (_) => FlexibleBudgetScreen(
               repository: widget.repository,
               spaceId: widget.spaceId,

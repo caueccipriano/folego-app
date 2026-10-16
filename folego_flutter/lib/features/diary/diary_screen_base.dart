@@ -20,7 +20,6 @@ import '../../data/repositories/folego_repository_diary.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
-import '../../shared/widgets/app_page_header.dart';
 import '../transactions/transactions_screen.dart';
 import 'reflection_form_sheet.dart';
 
@@ -165,9 +164,15 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
-      builder: (context, hidden, _) => ColoredBox(
-        color: AppColors.background(brightness),
-        child: SafeArea(
+      builder: (context, hidden, _) => Scaffold(
+        backgroundColor: AppColors.background(brightness),
+        appBar: AppBar(
+          backgroundColor: AppColors.background(brightness),
+          title: Text('diário', style: AppTypography.section(context, fontSize: 18)),
+          leading: IconButton(tooltip: 'voltar', onPressed: () => Navigator.of(context).maybePop(), icon: const Icon(AppIcons.back)),
+          actions: [IconButton(tooltip: 'ver lançamentos', onPressed: _openTransactions, icon: const Icon(AppIcons.transactions))],
+        ),
+        body: SafeArea(
           child: AppContentContainer.dashboard(
             fillHeight: true,
             child: RefreshIndicator(
@@ -250,20 +255,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppPageHeader(
-          title: 'diário',
-          subtitle: 'revise um gasto, entenda sua escolha e acompanhe seu mês',
-          leading: IconButton(
-            tooltip: 'voltar',
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(AppIcons.back),
-          ),
-          trailing: TextButton.icon(
-            onPressed: _openTransactions,
-            icon: const Icon(AppIcons.transactions, size: 18),
-            label: const Text('ver lançamentos'),
-          ),
-        ),
+        Text('revise um gasto, entenda sua escolha e acompanhe seu mês', style: AppTypography.body(context, fontSize: 13)),
         const SizedBox(height: 16),
         Align(
           alignment: Alignment.centerLeft,
