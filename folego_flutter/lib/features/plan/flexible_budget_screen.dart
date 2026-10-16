@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'budget_spending_story.dart';
+import 'spending_behavior_screen.dart';
+import 'plan_screen_web2.dart' show showBudgetCategorySpending;
+import '../transactions/transaction_classification_inbox.dart';
+import '../../data/repositories/folego_repository_transaction_classification.dart';
+
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -37,6 +43,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
   List<BudgetOverviewItem> _items = const [];
   bool _loading = true;
   bool _saving = false;
+  bool _openingClassification = false;
   String? _error;
 
   @override
@@ -64,7 +71,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
     result.sort((a, b) {
       final activity = b.actualAmount.compareTo(a.actualAmount);
       if (activity != 0) return activity;
-      return a.categoryName.toLowerCase().compareTo(b.categoryName.toLowerCase());
+      return a.categoryName.toLowerCase().compareTo(
+        b.categoryName.toLowerCase(),
+      );
     });
     return result;
   }
@@ -106,8 +115,53 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
 
   Future<void> _changeMonth(int delta) async {
     if (_saving) return;
-    setState(() => _month = DateTime(_month.year, _month.month + delta));
+    setState(() {
+      _month = DateTime(_month.year, _month.month + delta);
+      _overview = null;
+      _items = const [];
+    });
     await _load();
+  }
+
+  Future<void> _openClassification() async {
+    if (_openingClassification) return;
+    setState(() => _openingClassification = true);
+    try {
+      final pending = await widget.repository
+          .listPendingTransactionClassifications(widget.spaceId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<bool>(
+          builder: (_) => TransactionClassificationInbox(
+            repository: widget.repository,
+            spaceId: widget.spaceId,
+            initialItems: pending,
+          ),
+        ),
+      );
+      if (mounted) await _load();
+    } catch (_) {
+      if (mounted)
+        AppSnackbars.show(
+          context,
+          'não consegui abrir as sugestões. tente novamente.',
+        );
+    } finally {
+      if (mounted) setState(() => _openingClassification = false);
+    }
+  }
+
+  Future<void> _openSpendingBehavior() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SpendingBehaviorScreen(
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+          periodMonth: _month,
+        ),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   Future<void> _editGlobalLimit() async {
@@ -148,7 +202,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                   style: AppTypography.body(
                     context,
                     fontSize: 12,
-                    color: AppColors.secondaryText(Theme.of(context).brightness),
+                    color: AppColors.secondaryText(
+                      Theme.of(context).brightness,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -156,7 +212,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                   key: const ValueKey('flex-budget-limit-input'),
                   controller: controller,
                   autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'teto deste mês',
                     prefixText: 'R\$ ',
@@ -245,7 +303,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                   item.categoryName,
                   style: AppTypography.body(
                     context,
-                    color: AppColors.secondaryText(Theme.of(context).brightness),
+                    color: AppColors.secondaryText(
+                      Theme.of(context).brightness,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -253,11 +313,14 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                   key: const ValueKey('flex-category-limit-input'),
                   controller: controller,
                   autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'limite deste mês',
                     prefixText: 'R\$ ',
-                    helperText: 'use R\$ 0 para remover o limite desta categoria',
+                    helperText:
+                        'use R\$ 0 para remover o limite desta categoria',
                     errorText: error,
                   ),
                 ),
@@ -337,7 +400,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                 _monthPicker(brightness),
                 const SizedBox(height: 18),
                 if (_loading && _overview == null)
-                  const AppLoadingState(label: 'organizando seu orçamento flexível')
+                  const AppLoadingState(
+                    label: 'organizando seu orçamento flexível',
+                  )
                 else if (_error != null && _overview == null)
                   AppErrorState(
                     title: 'não consegui carregar seu orçamento flexível',
@@ -346,6 +411,22 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                   )
                 else ...[
                   _globalCard(brightness),
+                  const SizedBox(height: 18),
+                  BudgetSpendingStory(
+                    overview: _overview!,
+                    items: _flexibleItems,
+                    onCategory: (item) => showBudgetCategorySpending(
+                      context: context,
+                      repository: widget.repository,
+                      spaceId: widget.spaceId,
+                      month: _month,
+                      category: item,
+                    ),
+                    onClassify: _openingClassification
+                        ? null
+                        : _openClassification,
+                    onSpendingBehavior: _openSpendingBehavior,
+                  ),
                   const SizedBox(height: 22),
                   _categorySection(brightness),
                 ],
@@ -374,7 +455,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
               ),
               const SizedBox(height: 3),
               Text(
-                _isPastMonth ? 'mês encerrado · somente consulta' : 'seu limite para gastos flexíveis',
+                _isPastMonth
+                    ? 'mês encerrado · somente consulta'
+                    : 'seu limite para gastos flexíveis',
                 style: AppTypography.body(
                   context,
                   fontSize: 12,
@@ -447,7 +530,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
             children: [
               _MiniMetric(
                 label: 'teto',
-                value: overview.configured ? Formatters.money(overview.limitAmount) : '—',
+                value: overview.configured
+                    ? Formatters.money(overview.limitAmount)
+                    : '—',
                 brightness: brightness,
               ),
               _MiniMetric(
@@ -458,7 +543,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
               _MiniMetric(
                 label: overview.isExceeded ? 'ultrapassou' : 'resta no teto',
                 value: Formatters.money(
-                  overview.isExceeded ? overview.exceededAmount : overview.remainingAmount,
+                  overview.isExceeded
+                      ? overview.exceededAmount
+                      : overview.remainingAmount,
                 ),
                 brightness: brightness,
               ),
@@ -484,14 +571,20 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                 context,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: overview.isExceeded ? stateColor : AppColors.primaryText(brightness),
+                color: overview.isExceeded
+                    ? stateColor
+                    : AppColors.primaryText(brightness),
               ),
             ),
           ] else ...[
             const SizedBox(height: 14),
             Text(
               'defina quanto você quer permitir para gastos flexíveis neste mês.',
-              style: AppTypography.body(context, fontSize: 12, color: secondary),
+              style: AppTypography.body(
+                context,
+                fontSize: 12,
+                color: secondary,
+              ),
             ),
           ],
         ],
@@ -507,8 +600,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       children: [
         const AppSectionHeader(
           title: 'limites por categoria',
-          subtitle:
-              'eles ajudam a distribuir o limite. gastos flexíveis sem categoria ou sem limite também contam no teto global; consulte o saldo bancário antes de gastar',
+          subtitle: 'eles ajudam a distribuir o limite. gastos flexíveis sem categoria ou sem limite também contam no teto global; consulte o saldo bancário antes de gastar',
         ),
         if (_activeWithoutLimit > 0) ...[
           const SizedBox(height: 12),
@@ -545,7 +637,10 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
     final border = AppColors.border(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final family = item.parentName ?? item.categoryName;
-    final color = CategoryVisuals.colorFor(category: family, brightness: brightness);
+    final color = CategoryVisuals.colorFor(
+      category: family,
+      brightness: brightness,
+    );
     final icon = CategoryVisuals.iconFor(
       category: family,
       subcategory: item.categoryName,
@@ -558,7 +653,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
         child: InkWell(
           key: ValueKey('flex-budget-category-${item.categoryId}'),
-          onTap: _isPastMonth || _saving ? null : () => _editCategoryLimit(item),
+          onTap: _isPastMonth || _saving
+              ? null
+              : () => _editCategoryLimit(item),
           borderRadius: BorderRadius.circular(AppRadii.compactCard),
           child: Container(
             padding: const EdgeInsets.all(14),
@@ -596,7 +693,9 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                         style: AppTypography.label(
                           context,
                           fontSize: 10,
-                          color: item.hasBudget ? secondary : AppColors.warningText(brightness),
+                          color: item.hasBudget
+                              ? secondary
+                              : AppColors.warningText(brightness),
                         ),
                       ),
                     ],
@@ -621,7 +720,6 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       ),
     );
   }
-
 
   Color _progressColor(BudgetProgressState state, Brightness brightness) {
     return switch (state) {

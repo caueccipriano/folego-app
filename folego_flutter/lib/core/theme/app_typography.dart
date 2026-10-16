@@ -214,12 +214,12 @@ abstract final class AppTypography {
     double fontSize = 18,
     Color? color,
   }) {
-    return _interface(
+    return _brand(
       textStyle: Theme.of(context).textTheme.titleLarge,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      height: 1.25,
-      letterSpacing: 0,
+      height: 1.10,
+      letterSpacing: -.25,
       color: color,
     );
   }
