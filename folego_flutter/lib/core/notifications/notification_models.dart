@@ -393,6 +393,7 @@ class FinancialNotificationIntent {
       body: notificationBody(
         event,
         reminderOffsetDays: preferences.reminderOffsetDays,
+        reminderStyle: preferences.reminderStyle,
       ),
       scheduledAt: event.scheduledAt,
       route: notificationRoute(event),
@@ -410,29 +411,46 @@ String financialNotificationStableKey({
 }) =>
     '$entityType:$entityId:${_dateOnly(dueDate)}:$reminderOffsetDays:${kind.name}';
 
+/// Política central para todos os avisos gerados pelo cliente, sem alterar
+/// nomes de contas, valores, datas, rotas ou prioridade dos alertas.
+String applyNotificationTone(String factualText, String style) {
+  final prefix = switch (style) {
+    'welcoming' => 'Vamos cuidar disso com calma. ',
+    'firm' => 'Atenção: confira este aviso agora. ',
+    'aggressive' => 'Porra, presta atenção nisso: ',
+    _ => '',
+  };
+  return '$prefix$factualText';
+}
+
+/// Mesma política usada na prévia da configuração global.
+String notificationTonePreview(String style) =>
+    applyNotificationTone('Sua fatura vence amanhã.', style);
+
 String notificationBody(
   NotificationUpcomingEvent event, {
   int reminderOffsetDays = 0,
+  String reminderStyle = 'normal',
 }) {
   if (event.overdue || event.dayOffset < 0) {
-    return '${event.title} está atrasado';
+    return applyNotificationTone('${event.title} está atrasado', reminderStyle);
   }
   final leadDays = event.dayOffset < reminderOffsetDays
       ? event.dayOffset
       : reminderOffsetDays;
   if (leadDays <= 0) {
-    return event.isRecurringIncome
+    return applyNotificationTone(event.isRecurringIncome
         ? '${event.title} está previsto para hoje'
-        : '${event.title} vence hoje';
+        : '${event.title} vence hoje', reminderStyle);
   }
   if (leadDays == 1) {
-    return event.isRecurringIncome
+    return applyNotificationTone(event.isRecurringIncome
         ? '${event.title} está previsto para amanhã'
-        : '${event.title} vence amanhã';
+        : '${event.title} vence amanhã', reminderStyle);
   }
-  return event.isRecurringIncome
+  return applyNotificationTone(event.isRecurringIncome
       ? '${event.title} está previsto em $leadDays dias'
-      : '${event.title} vence em $leadDays dias';
+      : '${event.title} vence em $leadDays dias', reminderStyle);
 }
 
 String notificationRoute(NotificationUpcomingEvent event) {
