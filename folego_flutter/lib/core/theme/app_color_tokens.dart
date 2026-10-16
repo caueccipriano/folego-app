@@ -40,6 +40,15 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     FolegoPalette('folego', 'Fôlego', Color(0xFF6C3CE9),
         Color(0xFFC6F135), Color(0xFFF5F1E8), Color(0xFF101014),
         description: 'Roxo + lima · original'),
+    // Referência Pistachio · Frost · Iced Denim (#B9C255/#E6F1FA/#5798D7).
+    FolegoPalette('pistachioice', 'Pistachio Ice', Color(0xFF5798D7),
+        Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF12202C),
+        description: 'Pistache + azul-gelo + denim'),
+    // Referência Burnt Terracotta · Gallery Blue · Stone Linen
+    // (#C34811/#0B369A/#D9D1CA).
+    FolegoPalette('galleryterra', 'Gallery Terra', Color(0xFF0B369A),
+        Color(0xFFC34811), Color(0xFFD9D1CA), Color(0xFF111B30),
+        description: 'Azul-galeria + terracota + linho'),
     FolegoPalette('mare', 'Maré', Color(0xFF0F8B8D),
         Color(0xFFFF7A59), Color(0xFFEDF8F8), Color(0xFF091A1C),
         description: 'Turquesa + coral'),
@@ -112,15 +121,6 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     FolegoPalette('hyperblue', 'Hyper Blue', Color(0xFF284BDF),
         Color(0xFFFF8A37), Color(0xFFFAF4E8), Color(0xFF101A39),
         description: 'Azul intenso + tangerina'),
-    // Referência Pistachio · Frost · Iced Denim (#B9C255/#E6F1FA/#5798D7).
-    FolegoPalette('pistachioice', 'Pistachio Ice', Color(0xFF5798D7),
-        Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF12202C),
-        description: 'Pistache + azul-gelo + denim'),
-    // Referência Burnt Terracotta · Gallery Blue · Stone Linen
-    // (#C34811/#0B369A/#D9D1CA).
-    FolegoPalette('galleryterra', 'Gallery Terra', Color(0xFF0B369A),
-        Color(0xFFC34811), Color(0xFFD9D1CA), Color(0xFF111B30),
-        description: 'Azul-galeria + terracota + linho'),
   ];
 
   // Cada paleta tem cores próprias para claro e escuro. Não interpolar
