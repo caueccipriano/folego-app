@@ -208,10 +208,10 @@ class HomeFinancialHero extends StatelessWidget {
         homeIsBudgetLimited(snapshot) &&
         budgetNavigation != null;
     final normalizedStatus = snapshot.status.trim().toLowerCase();
-    // O valor principal nunca herda rosas/vermelhos/limas de estados
-    // semânticos que não pertencem à paleta ativa. Os estados financeiros
-    // continuam explícitos na mensagem de contexto, não na cor dos dígitos.
-    final heroValueColor = onPurple;
+    // O número principal e os valores secundários acompanham a cor de
+    // ação da paleta ativa, ajustada para contraste sobre o card.
+    // Alertas mantêm seu significado nos textos de contexto e no detalhamento.
+    final heroValueColor = tokens.acaoHero;
     final showVoice =
         spendable > 0 &&
         (!compact ||
