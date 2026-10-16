@@ -77,7 +77,9 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
     ]);
     final parents = <String, BudgetOverviewItem>{};
     for (final month in months) {
-      for (final item in month.where((item) => item.isParent)) {
+      for (final item in month.where(
+        (item) => item.isParent && !item.isPending,
+      )) {
         parents[item.categoryId] = item;
       }
     }
@@ -85,6 +87,7 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
     // Three parent categories at a time: at most six independent RPCs.
     final categories = parents.values.toList();
     for (var offset = 0; offset < categories.length; offset += 3) {
+      if (!mounted) return [];
       final batch = categories.skip(offset).take(3);
       final values = await Future.wait(
         batch.map((parent) async {

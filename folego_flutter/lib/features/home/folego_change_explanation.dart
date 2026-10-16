@@ -103,7 +103,7 @@ class FolegoChangeExplanation extends StatelessWidget {
             style: AppTypography.body(context, fontWeight: FontWeight.w700),
           ),
           const Text(
-            'o disponível respeita a margem de caixa e, quando configurado, o teto flexível. não é a soma dos saldos das contas. a próxima renda prevista ainda não é dinheiro recebido.',
+            'mais saldo costuma ampliar a margem de caixa; mais reservas e compromissos a reduzem. gastar no teto flexível reduz a margem do orçamento. o disponível respeita a margem de caixa e, quando configurado, o teto flexível. não é a soma dos saldos das contas. a próxima renda prevista ainda não é dinheiro recebido.',
           ),
           if (current.dailyFolego != null) ...[
             const SizedBox(height: 8),

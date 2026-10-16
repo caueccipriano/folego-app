@@ -107,6 +107,68 @@ void main() {
       );
     }
   }
+  test('session readings never cross repositories or financial spaces', () {
+    final firstSession = Object();
+    final secondSession = Object();
+    final reading = FolegoSnapshot.fromJson({
+      'as_of_date': '2026-10-16',
+      'spendable_pool': 100,
+    });
+    expect(previousFolegoReading(firstSession, 'a', reading), isNull);
+    expect(previousFolegoReading(firstSession, 'b', reading), isNull);
+    expect(previousFolegoReading(secondSession, 'a', reading), isNull);
+    expect(previousFolegoReading(firstSession, 'a', reading), same(reading));
+  });
+  for (final mode in Brightness.values) {
+    testWidgets('back remains at the top after long budget scrolling $mode', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repo = FolegoRepository(
+        SupabaseClient('https://example.supabase.co', 'public-test-key'),
+      );
+      final overview = FlexibleBudgetOverview.fromJson({
+        'period_month': '2026-10-01',
+        'configured': true,
+        'limit_amount': 1000,
+        'used_amount': 400,
+      });
+      final items = List.generate(
+        20,
+        (i) => BudgetOverviewItem.fromJson({
+          'category_id': '$i',
+          'category_name': 'categoria $i',
+          'parent_id': 'parent',
+          'actual_amount': 20,
+        }),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: mode),
+          home: FlexibleBudgetScreen(
+            repository: repo,
+            spaceId: 'synthetic',
+            overviewLoader: (_) async => overview,
+            itemsLoader: (_) async => items,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final back = find.byKey(const ValueKey('flex-budget-back'));
+      final before = tester.getCenter(back);
+      await tester.fling(
+        find.byType(ListView).first,
+        const Offset(0, -1800),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getCenter(back), before);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('component explanation responds immediately to privacy', (
     tester,
   ) async {
