@@ -56,8 +56,8 @@ void main() {
     // Revisão diária e segunda chamada já são estilizadas no SQL,
     // para evitar empilhar o mesmo tom duas vezes na entrega do push.
     expect(shared, contains('kind === "dailySummary"'));
-    expect(daily, contains("case pref.reminder_style"));
-    expect(daily, contains("if is_followup then"));
+    expect(daily, contains('case pref.reminder_style'));
+    expect(daily, contains('if is_followup then'));
   });
 
   test('contrato de lembretes agendados respeita todas as preferências', () {
