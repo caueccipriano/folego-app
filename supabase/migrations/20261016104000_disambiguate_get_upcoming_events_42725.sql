@@ -1,50 +1,51 @@
--- Fix SQLSTATE 42725 in Agenda/recurring-payment realization.
--- Before: get_upcoming_events(uuid,date,date) conflicts with the 4-arg
--- version because three trailing arguments on the latter have defaults.
--- Preserve BOTH existing signatures, result formats, grants and OIDs.
--- Canonical Flutter Agenda already supplies all four named arguments.
--- Existing 3-positional-argument consumers keep using the legacy wrapper.
--- Schema-only: no changes to financial_events, balances or other data.
+-- Fix SQLSTATE 42725 from overlapping public.get_upcoming_events signatures.
+--
+-- Keep both 3-argument legacy and 4-argument Agenda RPCs intact: dropping
+-- either would risk API compatibility and dependent financial functions.
+-- Instead disambiguate the ONLY two stored routines that use 3 positional
+-- arguments. Named p_from/p_until uniquely resolve the legacy 3-arg function.
+-- No financial rows or balances are modified. Function OIDs, return types,
+-- grants, security modes and existing authorization checks are preserved.
 DO $agenda_rpc_fix$
 DECLARE
-  v_canonical oid := to_regprocedure('public.get_upcoming_events(uuid,date,date,integer)');
-  v_legacy oid := to_regprocedure('public.get_upcoming_events(uuid,date,date)');
-  v_defaults integer;
-  v_sql text;
-  v_old_args constant text :=
-    'p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_limit integer DEFAULT 120';
-  v_new_args constant text :=
-    'p_start_date date, p_end_date date, p_limit integer';
+  v_realize oid := to_regprocedure('private.realize_recurring(uuid,uuid,date,numeric)');
+  v_overview oid := to_regprocedure('public.get_app_overview(uuid,date)');
+  v_definition text;
+  v_old text;
+  v_new text;
 BEGIN
-  IF v_canonical IS NULL OR v_legacy IS NULL THEN
-    RAISE EXCEPTION 'agenda_rpc_expected_signatures_missing';
+  IF v_realize IS NULL OR v_overview IS NULL THEN
+    RAISE EXCEPTION 'agenda_42725_expected_consumers_missing';
   END IF;
 
-  SELECT pronargdefaults INTO v_defaults
-  FROM pg_proc WHERE oid = v_canonical;
-
-  IF v_defaults = 0 THEN
-    RAISE NOTICE 'get_upcoming_events canonical overload already disambiguated';
-    RETURN;
+  v_old := 'public.get_upcoming_events(p_space_id, p_due_date, p_due_date)';
+  v_new := 'public.get_upcoming_events(p_space_id => p_space_id, p_from => p_due_date, p_until => p_due_date)';
+  SELECT pg_get_functiondef(v_realize) INTO v_definition;
+  IF position(v_new IN v_definition) = 0 THEN
+    IF position(v_old IN v_definition) = 0 THEN
+      RAISE EXCEPTION 'agenda_42725_realize_recurring_definition_changed';
+    END IF;
+    EXECUTE replace(v_definition, v_old, v_new);
   END IF;
-  IF v_defaults <> 3 THEN
-    RAISE EXCEPTION 'agenda_rpc_unexpected_default_count: %', v_defaults;
+
+  v_old := 'public.get_upcoming_events(p_space_id,least(today,month_start),greatest(today+60,next_month-1))';
+  v_new := 'public.get_upcoming_events(p_space_id => p_space_id, p_from => least(today,month_start), p_until => greatest(today+60,next_month-1))';
+  SELECT pg_get_functiondef(v_overview) INTO v_definition;
+  IF position(v_new IN v_definition) = 0 THEN
+    IF position(v_old IN v_definition) = 0 THEN
+      RAISE EXCEPTION 'agenda_42725_get_app_overview_definition_changed';
+    END IF;
+    EXECUTE replace(v_definition, v_old, v_new);
   END IF;
 
-  SELECT pg_get_functiondef(v_canonical) INTO v_sql;
-  IF position(v_old_args IN v_sql) = 0 THEN
-    RAISE EXCEPTION 'agenda_rpc_original_signature_changed';
+  -- Fail atomically if the original ambiguous calls survive.
+  SELECT pg_get_functiondef(v_realize) INTO v_definition;
+  IF position('public.get_upcoming_events(p_space_id, p_due_date, p_due_date)' IN v_definition) > 0 THEN
+    RAISE EXCEPTION 'agenda_42725_postcondition_realize_failed';
   END IF;
-  v_sql := replace(v_sql, v_old_args, v_new_args);
-
-  -- CREATE OR REPLACE keeps the original canonical signature/OID, definer
-  -- status, function body, return type, existing grants and references.
-  EXECUTE v_sql;
-
-  SELECT pronargdefaults INTO v_defaults
-  FROM pg_proc WHERE oid = v_canonical;
-  IF v_defaults <> 0 THEN
-    RAISE EXCEPTION 'agenda_rpc_postcondition_failed';
+  SELECT pg_get_functiondef(v_overview) INTO v_definition;
+  IF position('public.get_upcoming_events(p_space_id,least(today,month_start),greatest(today+60,next_month-1))' IN v_definition) > 0 THEN
+    RAISE EXCEPTION 'agenda_42725_postcondition_overview_failed';
   END IF;
 END;
 $agenda_rpc_fix$;
