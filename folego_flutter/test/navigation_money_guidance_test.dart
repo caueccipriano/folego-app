@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/data/models/budget_overview_item.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
@@ -66,9 +65,7 @@ void main() {
           addTearDown(tester.view.resetPhysicalSize);
           addTearDown(tester.view.resetDevicePixelRatio);
           final pending = Completer<FlexibleBudgetOverview>();
-          final repo = FolegoRepository(
-            SupabaseClient('https://example.supabase.co', 'public-test-key'),
-          );
+          final repo = _UnusedRepository();
           bool? returned;
           await tester.pumpWidget(
             MaterialApp(
@@ -192,9 +189,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      final repo = FolegoRepository(
-        SupabaseClient('https://example.supabase.co', 'public-test-key'),
-      );
+      final repo = _UnusedRepository();
       final overview = FlexibleBudgetOverview.fromJson({
         'period_month': '2026-10-01',
         'configured': true,
@@ -263,4 +258,11 @@ void main() {
     expect(find.textContaining('421'), findsNothing);
     expect(find.text('variação oculta'), findsOneWidget);
   });
+}
+
+class _UnusedRepository implements FolegoRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw StateError(
+    'unexpected backend access in synthetic navigation test',
+  );
 }
