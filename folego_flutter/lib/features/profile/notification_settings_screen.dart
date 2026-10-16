@@ -6,6 +6,7 @@ import '../../core/notifications/notification_models.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -376,6 +377,8 @@ class _NotificationSettingsScreenState
                           const SizedBox(height: 16),
                           _masterSection(prefs),
                           const SizedBox(height: 16),
+                          _toneSection(prefs),
+                          const SizedBox(height: 16),
                           _typesSection(prefs),
                           const SizedBox(height: 16),
                           _realtimeSection(prefs),
@@ -406,6 +409,8 @@ class _NotificationSettingsScreenState
       key: const ValueKey('notifications-master-toggle'),
       contentPadding: EdgeInsets.zero,
       secondary: const Icon(AppIcons.notifications),
+      activeColor: FolegoColorTokens.of(context).acaoSobre,
+      activeTrackColor: FolegoColorTokens.of(context).acao,
       title: const Text('lembretes financeiros'),
       subtitle: const Text('controle geral de todas as notificações'),
       value: prefs.financialRemindersEnabled,
@@ -548,6 +553,106 @@ class _NotificationSettingsScreenState
     ),
   );
 
+  Widget _toneSection(NotificationPreferences prefs) => _SettingsSection(
+    title: 'tom das notificações',
+    subtitle: 'uma escolha para todos os avisos: faturas, contas, limites, gastos, revisões e próximos recebimentos',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        Text('como o Fôlego fala com você',
+            style: AppTypography.label(context, fontSize: 12)),
+        const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+            key: ValueKey(
+              'reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset',
+            ),
+            initialValue: prefs.reminderStyle,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              hintText: 'Escolha o tom',
+              border: OutlineInputBorder(),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
+              DropdownMenuItem(value: 'normal', child: Text('Normal')),
+              DropdownMenuItem(value: 'firm', child: Text('Firme')),
+              DropdownMenuItem(
+                value: 'aggressive',
+                child: Text('Agressivo · com palavrões'),
+              ),
+            ],
+            onChanged: _saving
+                ? null
+                : (value) async {
+                    if (value == null) return;
+                    if (value == 'aggressive') {
+                      final accepted = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Ativar tom agressivo?'),
+                          content: const Text(
+                            'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Ativar'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (accepted != true) {
+                        if (mounted) setState(() => _reminderStylePickerReset++);
+                        return;
+                      }
+                    }
+                    await _save(
+                      prefs.copyWith(reminderStyle: value),
+                      key: 'reminder-style',
+                      label: 'o tom dos avisos',
+                    );
+                  },
+          ),
+        const SizedBox(height: 12),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: FolegoColorTokens.of(context).superficieAlta,
+            border: Border.all(color: FolegoColorTokens.of(context).borda),
+            borderRadius: BorderRadius.circular(AppRadii.control),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('prévia de um aviso', style: AppTypography.label(context, fontSize: 11)),
+                const SizedBox(height: 6),
+                Text(
+                  notificationTonePreview(prefs.reminderStyle),
+                  key: const ValueKey('notification-tone-preview'),
+                  style: AppTypography.body(context, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          'Seu tom também vale para avisos na tela bloqueada. Valores, datas e links continuam corretos.',
+          style: AppTypography.body(context, fontSize: 10,
+            color: FolegoColorTokens.of(context).textoSecundario),
+        ),
+      ],
+    ),
+  );
+
   Widget _dailySummarySection(
     NotificationPreferences prefs,
   ) => _SettingsSection(
@@ -566,57 +671,6 @@ class _NotificationSettingsScreenState
             key: 'daily-summary',
             label: 'o resumo diário',
           ),
-        ),
-        DropdownButtonFormField<String>(
-          key: ValueKey(
-            'reminder-style-${prefs.reminderStyle}-$_reminderStylePickerReset',
-          ),
-          initialValue: prefs.reminderStyle,
-          decoration: const InputDecoration(labelText: 'tom dos avisos'),
-          items: const [
-            DropdownMenuItem(value: 'welcoming', child: Text('Acolhedor')),
-            DropdownMenuItem(value: 'normal', child: Text('Normal')),
-            DropdownMenuItem(value: 'firm', child: Text('Firme')),
-            DropdownMenuItem(
-              value: 'aggressive',
-              child: Text('Agressivo · com palavrões'),
-            ),
-          ],
-          onChanged: _saving
-              ? null
-              : (value) async {
-                  if (value == null) return;
-                  if (value == 'aggressive') {
-                    final accepted = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Ativar tom agressivo?'),
-                        content: const Text(
-                          'Os avisos usarão palavrões, inclusive na tela bloqueada. Você pode mudar o tom quando quiser.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancelar'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Ativar'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (accepted != true) {
-                      if (mounted) setState(() => _reminderStylePickerReset++);
-                      return;
-                    }
-                  }
-                  await _save(
-                    prefs.copyWith(reminderStyle: value),
-                    key: 'reminder-style',
-                    label: 'o tom dos avisos',
-                  );
-                },
         ),
         _toggle(
           keyName: 'commitment',
@@ -776,6 +830,8 @@ class _NotificationSettingsScreenState
           key: ValueKey('notification-toggle-$keyName'),
           contentPadding: EdgeInsets.zero,
           secondary: Icon(icon, size: 20),
+          activeColor: FolegoColorTokens.of(context).acaoSobre,
+          activeTrackColor: FolegoColorTokens.of(context).acao,
           title: Text(title),
           subtitle: subtitle == null ? null : Text(subtitle),
           value: value,
