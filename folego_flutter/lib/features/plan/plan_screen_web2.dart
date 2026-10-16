@@ -30,16 +30,19 @@ Future<void> showBudgetCategorySpending({
   required String spaceId,
   required DateTime month,
   required BudgetOverviewItem category,
-}) => showModalBottomSheet<void>(
-  context: context,
-  isScrollControlled: true,
-  builder: (_) => _BudgetCategorySpendingSheet(
-    categoryName: category.categoryName,
-    entries: repository.getBudgetImpactDetails(
-      spaceId: spaceId, periodMonth: month, categoryId: category.categoryId,
+}) {
+  final entries = repository.getBudgetImpactDetails(
+    spaceId: spaceId, periodMonth: month, categoryId: category.categoryId,
+  );
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _BudgetCategorySpendingSheet(
+      categoryName: category.categoryName,
+      entries: entries,
     ),
-  ),
-);
+  );
+}
 
 typedef PlanBudgetLoader = Future<List<BudgetOverviewItem>> Function({
   required String spaceId,
