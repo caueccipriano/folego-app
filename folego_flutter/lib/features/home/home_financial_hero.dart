@@ -211,7 +211,9 @@ class HomeFinancialHero extends StatelessWidget {
     // O número principal mantém contraste neutro; apenas quantias auxiliares
     // acompanham a cor secundária da paleta, ajustada para leitura.
     // Alertas continuam semânticos, sem redefinir a cor de valores principais.
-    final heroValueColor = onPurple;
+    // KPI e cifras auxiliares seguem a cor secundária escolhida,
+    // com contraste adaptado ao fundo do card pelo token de tema.
+    final heroValueColor = tokens.acaoHero;
     final showVoice =
         spendable > 0 &&
         (!compact ||
