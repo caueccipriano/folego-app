@@ -425,7 +425,10 @@ class _WalletScreenState extends State<WalletScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('total nas contas'),
-                  trailing: Text(Formatters.money(summary.totalCash)),
+                  trailing: Text(
+                    Formatters.money(summary.totalCash),
+                    style: AppTypography.money(sheetContext, fontSize: 14),
+                  ),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -434,7 +437,10 @@ class _WalletScreenState extends State<WalletScreen> {
                         ? 'contas fora do disponível'
                         : 'diferença entre total e disponível',
                   ),
-                  trailing: Text(Formatters.money(outsideAvailable)),
+                  trailing: Text(
+                    Formatters.money(outsideAvailable),
+                    style: AppTypography.money(sheetContext, fontSize: 14),
+                  ),
                 ),
                 const Divider(),
                 ListTile(
@@ -442,7 +448,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   title: const Text('disponível agora'),
                   trailing: Text(
                     Formatters.money(summary.availableCash),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: AppTypography.money(sheetContext, fontSize: 15),
                   ),
                 ),
                 const SizedBox(height: 8),
