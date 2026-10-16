@@ -126,6 +126,57 @@ void main() {
       );
     },
   );
+  for (final width in [320.0, 390.0]) {
+    testWidgets('donut center stays inside ring with large text at $width', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(1.6)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: MonthlyCategoryDonut(
+                items: [
+                  category(
+                    'Dívidas, financiamentos e compromissos de longo prazo',
+                    1234567.89,
+                  ),
+                ],
+                onCategory: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      final ring = tester.getRect(
+        find.byKey(const ValueKey('category-donut-paint')),
+      );
+      final center = tester.getRect(
+        find.byKey(const ValueKey('category-donut-center')),
+      );
+      expect(center.width, lessThanOrEqualTo(ring.width * .61));
+      expect(center.height, lessThan(ring.height - 48));
+      expect(center.center, ring.center);
+      expect(find.text('nas categorias acima de zero'), findsNothing);
+      final explanation = find.byKey(
+        const ValueKey('category-donut-explanation'),
+      );
+      await tester.ensureVisible(explanation);
+      await tester.tap(find.text('Como esse gráfico é calculado'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Pagar a fatura não conta'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('empty month has no misleading donut', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
