@@ -4,6 +4,13 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
+  test('referências recentes são fáceis de encontrar na seleção de temas', () {
+    final ids = FolegoColorTokens.catalog.map((item) => item.id).toList();
+    expect(ids.take(3).toList(),
+      ['folego', 'pistache_frost', 'terracota_gallery']);
+    expect(ids.toSet().length, 27);
+  });
+
   test('27 paletas coerentes com 2 modos e tokens completos', () {
     expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 27);
     for (final palette in FolegoColorTokens.catalog) {
