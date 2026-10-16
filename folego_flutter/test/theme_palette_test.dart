@@ -4,8 +4,8 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
-  test('15 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 15);
+  test('24 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 24);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -62,6 +62,34 @@ void main() {
       'matcha', 'pixel', 'cherry', 'butter', 'orbit', 'disco',
     ]) {
       expect(FolegoColorTokens.palette(id).id, id);
+    }
+  });
+
+  test('nove novas paletas preservam cores das referências Gen Z', () {
+    final expected = <String, Color>{
+      'highlighter': const Color(0xFFFFD200),
+      'pomar': const Color(0xFFFFCA26),
+      'voltagem': const Color(0xFFCDF22B),
+      'cosmos': const Color(0xFFE3A750),
+      'mostarda': const Color(0xFFF2D04E),
+      'groovy': const Color(0xFFFF7A1A),
+      'atelie': const Color(0xFFFA2D1A),
+      'contraste': const Color(0xFFF94500),
+      'terra': const Color(0xFFEACB91),
+    };
+    for (final entry in expected.entries) {
+      final palette = FolegoColorTokens.palette(entry.key);
+      expect(palette.id, entry.key);
+      expect(palette.action, entry.value, reason: entry.key);
+      expect(palette.description, isNotEmpty);
+      final light = FolegoColorTokens.fromId(entry.key, Brightness.light);
+      final dark = FolegoColorTokens.fromId(entry.key, Brightness.dark);
+      expect(light.fundo, isNot(dark.fundo));
+      expect(light.superficie, isNot(dark.superficie));
+      expect(FolegoColorTokens.contrastRatio(light.acaoHero, light.marcaHero),
+        greaterThanOrEqualTo(4.5), reason: '${entry.key} claro');
+      expect(FolegoColorTokens.contrastRatio(dark.acaoHero, dark.marcaHero),
+        greaterThanOrEqualTo(4.5), reason: '${entry.key} escuro');
     }
   });
 
