@@ -4,8 +4,8 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
-  test('15 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 15);
+  test('25 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 25);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -24,6 +24,8 @@ void main() {
           greaterThanOrEqualTo(4.5), reason: '$context acao');
         expect(FolegoColorTokens.contrastRatio(t.marcaHeroSobre, t.marcaHero),
           greaterThanOrEqualTo(4.5), reason: '$context hero');
+        expect(FolegoColorTokens.contrastRatio(t.acaoHero, t.marcaHero),
+          greaterThanOrEqualTo(4.5), reason: '$context acento de numero no hero');
         for (final value in [t.folga, t.apertado, t.estourado]) {
           expect(FolegoColorTokens.contrastRatio(value, t.superficie),
             greaterThanOrEqualTo(4.5), reason: '$context estado na superficie');
@@ -60,6 +62,8 @@ void main() {
     for (final id in [
       'safira', 'mochi', 'cacau',
       'matcha', 'pixel', 'cherry', 'butter', 'orbit', 'disco',
+      'terracota', 'indigopop', 'oldlace', 'discofever',
+      'bruma', 'jet', 'acidblue', 'popart', 'forestclub', 'hyperblue',
     ]) {
       expect(FolegoColorTokens.palette(id).id, id);
     }
