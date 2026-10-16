@@ -6,10 +6,10 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/features/home/home_financial_hero.dart';
 
 void main() {
-  test('valor principal usa a cor secundaria de cada paleta, sem rosa fixo', () {
+  test('valor principal neutro; valores auxiliares acompanham o destaque secundario', () {
     final source = File('lib/features/home/home_financial_hero.dart')
         .readAsStringSync();
-    expect(source, contains('final heroValueColor = tokens.acaoHero;'));
+    expect(source, contains('final heroValueColor = onPurple;'));
     expect(source, isNot(contains('final heroValueColor = spendable <= 0')));
     expect(source, isNot(contains('color: tokens.estouradoHero')));
   });
@@ -38,7 +38,7 @@ void main() {
       }
     }
   });
-  test('Cacau aplica a cor pistache ao KPI e aos valores auxiliares', () {
+  test('Cacau aplica cor pistache somente aos valores auxiliares', () {
     for (final brightness in Brightness.values) {
       final tokens = FolegoColorTokens.fromId('cacau', brightness);
       expect(tokens.acaoHero, tokens.acao);
@@ -78,15 +78,17 @@ void main() {
     expect(dateSpans.map((s) => s.text).join(), 'recebe em 16 dias · 31 out');
   });
 
-  test('estrutura do card aplica acento no KPI e em valores auxiliares', () {
+  test('estrutura do card preserva KPI neutro e realca valores auxiliares', () {
     final source = File('lib/features/home/home_financial_hero.dart')
         .readAsStringSync();
-    expect(source, contains('final heroValueColor = tokens.acaoHero;'));
+    expect(source, contains('final heroValueColor = onPurple;'));
     expect(source, contains('heroCurrencySpans(contextCopy, tokens.acaoHero)'));
     expect(source, contains('heroCurrencySpans(fact, tokens.acaoHero)'));
     final preview = File('lib/features/profile/profile_widgets.dart')
         .readAsStringSync();
     expect(preview, contains("Text(r'R\$ 1.250,00',"));
+    expect(preview, contains('style: TextStyle(color: colors.marcaHeroSobre,'));
+    expect(preview, contains("TextSpan(text: r'R\$ 62,90',"));
     expect(preview, contains('color: colors.acaoHero,'));
   });
 
