@@ -147,6 +147,10 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
                 return const Center(child: CircularProgressIndicator());
               }
               final rows = state.data!;
+              final maximum = rows.fold<double>(
+                0,
+                (value, row) => math.max(value, math.max(row.$2, row.$3)),
+              );
               return ValueListenableBuilder<bool>(
                 valueListenable: FinancialPrivacy.hidden,
                 builder: (context, hidden, _) => ListView(
@@ -165,6 +169,10 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
                     ),
                     const Text(
                       'inclui o dia de hoje, que ainda pode estar incompleto. em meses mais curtos, os dias sem equivalente ficam fora. valores dependem do que já foi registrado; sem registros não significa que você não gastou. gastos ainda sem categoria não aparecem nesta comparação; revise as categorias pendentes.',
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'primeira barra: mês atual; segunda: mês anterior. todas usam a mesma escala. créditos líquidos negativos aparecem nos valores, sem barra.',
                     ),
                     const SizedBox(height: 20),
                     if (rows.isEmpty)
@@ -200,14 +208,14 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
                                 math.max(row.$2, row.$3) > 0) ...[
                               const SizedBox(height: 8),
                               LinearProgressIndicator(
-                                value: row.$2 / math.max(row.$2, row.$3),
+                                value: row.$2 / maximum,
                                 color: AppColors.primaryPurple(
                                   Theme.of(context).brightness,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               LinearProgressIndicator(
-                                value: row.$3 / math.max(row.$2, row.$3),
+                                value: row.$3 / maximum,
                                 color: AppColors.secondaryText(
                                   Theme.of(context).brightness,
                                 ),

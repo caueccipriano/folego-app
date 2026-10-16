@@ -167,17 +167,21 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
   }
 
   Future<void> _openSpendingBehavior() async {
-    _changed = true;
+    var changed = false;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => SpendingBehaviorScreen(
           repository: widget.repository,
           spaceId: widget.spaceId,
           periodMonth: _month,
+          onChanged: () {
+            changed = true;
+            _changed = true;
+          },
         ),
       ),
     );
-    if (mounted) await _load();
+    if (changed && mounted) await _load();
   }
 
   Future<void> _editGlobalLimit() async {

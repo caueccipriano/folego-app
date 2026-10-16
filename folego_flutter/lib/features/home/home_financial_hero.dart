@@ -176,12 +176,14 @@ class HomeFinancialHero extends StatelessWidget {
     this.onOpenAccounts,
     this.onOpenInvoices,
     this.onOpenCommitments,
+    this.onOpenChanges,
   });
 
   final FolegoSnapshot snapshot;
   final VoidCallback? onOpenAccounts;
   final VoidCallback? onOpenInvoices;
   final VoidCallback? onOpenCommitments;
+  final VoidCallback? onOpenChanges;
 
   @override
   Widget build(BuildContext context) {
@@ -481,6 +483,7 @@ class HomeFinancialHero extends StatelessWidget {
       onOpenAccounts: onOpenAccounts,
       onOpenInvoices: onOpenInvoices,
       onOpenCommitments: onOpenCommitments,
+      onOpenChanges: onOpenChanges,
     );
     if (AppBreakpoints.of(context) == AppLayoutSize.compact) {
       await showModalBottomSheet<void>(
@@ -551,6 +554,7 @@ class _FolegoExplanation extends StatelessWidget {
     this.onOpenAccounts,
     this.onOpenInvoices,
     this.onOpenCommitments,
+    this.onOpenChanges,
   });
 
   final FolegoSnapshot snapshot;
@@ -558,6 +562,7 @@ class _FolegoExplanation extends StatelessWidget {
   final VoidCallback? onOpenAccounts;
   final VoidCallback? onOpenInvoices;
   final VoidCallback? onOpenCommitments;
+  final VoidCallback? onOpenChanges;
 
   void _closeAndOpen(BuildContext context, VoidCallback? destination) {
     if (destination == null) return;
@@ -573,13 +578,10 @@ class _FolegoExplanation extends StatelessWidget {
     final exceeded = homeFlexibleBudgetExceeded(snapshot);
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .80,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: Row(
               children: [
                 Expanded(
                   child: Text(
@@ -593,7 +595,19 @@ class _FolegoExplanation extends StatelessWidget {
                   icon: const Icon(AppIcons.close),
                 ),
               ],
-            ),
+            )),
+          Expanded(child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              if (onOpenChanges != null) ...[
+                FilledButton.icon(
+                  key: const ValueKey('home-understand-folego'),
+                  icon: const Icon(Icons.insights_outlined),
+                  label: const Text('o que mudou no meu Fôlego?'),
+                  onPressed: () => _closeAndOpen(context, onOpenChanges),
+                ),
+                const SizedBox(height: 12),
+              ],
             const SizedBox(height: 4),
             Text(
               'Seu Fôlego considera o dinheiro livre após compromissos e reservas. Se houver orçamento flexível, vale o menor limite disponível. Entradas futuras não são saldo de hoje.',
@@ -746,8 +760,9 @@ class _FolegoExplanation extends StatelessWidget {
                 color: secondary,
               ),
             ),
-          ],
-        ),
+            ]),
+          )),
+        ]),
       ),
     );
   }

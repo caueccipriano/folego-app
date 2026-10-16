@@ -8,6 +8,7 @@ import 'package:folego/data/models/budget_overview_item.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/folego_change_explanation.dart';
+import 'package:folego/features/home/home_financial_hero.dart';
 import 'package:folego/features/home/monthly_closing_review.dart';
 import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/features/plan/category_period_comparison.dart';
@@ -163,6 +164,58 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  for (final mode in Brightness.values) {
+    testWidgets(
+      'hero review entry opens without changing dashboard height $mode',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        var opened = false;
+        final snapshot = FolegoSnapshot.fromJson({
+          'as_of_date': '2026-10-16',
+          'spendable_pool': 100,
+        });
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(brightness: mode),
+            home: Scaffold(
+              body: HomeFinancialHero(
+                snapshot: snapshot,
+                onOpenChanges: () => opened = true,
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.byKey(const ValueKey('home-folego-explainer')));
+        await tester.pumpAndSettle();
+        final close = find.byTooltip('fechar');
+        final position = tester.getCenter(close);
+        await tester.fling(
+          find.byType(SingleChildScrollView).last,
+          const Offset(0, -700),
+          1000,
+        );
+        await tester.pumpAndSettle();
+        expect(tester.getCenter(close), position);
+        await tester.fling(
+          find.byType(SingleChildScrollView).last,
+          const Offset(0, 1200),
+          1000,
+        );
+        await tester.pumpAndSettle();
+        final action = find.byKey(const ValueKey('home-understand-folego'));
+        await tester.ensureVisible(action);
+        await tester.pumpAndSettle();
+        await tester.tap(action);
+        await tester.pumpAndSettle();
+        expect(opened, isTrue);
+        expect(find.byTooltip('fechar'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   test('session readings never cross repositories or financial spaces', () {
     final firstSession = Object();
     final secondSession = Object();
