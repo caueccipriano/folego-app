@@ -12,9 +12,9 @@ class MonthlyClosingReview extends StatefulWidget {
   const MonthlyClosingReview({super.key, required this.summary,
     this.onReviewAccounts, this.onReviewCategories, this.onReviewBehavior});
 
-  final Future<void> Function()? onReviewAccounts;
-  final Future<void> Function()? onReviewCategories;
-  final Future<void> Function()? onReviewBehavior;
+  final Future<void> Function(BuildContext)? onReviewAccounts;
+  final Future<void> Function(BuildContext)? onReviewCategories;
+  final Future<void> Function(BuildContext)? onReviewBehavior;
 
   final MonthlyMoneySummary summary;
 
@@ -26,11 +26,11 @@ class _MonthlyClosingReviewState extends State<MonthlyClosingReview> {
   final List<bool> _checked = [false, false, false];
   bool _opening = false;
 
-  Future<void> _open(Future<void> Function() action) async {
+  Future<void> _open(Future<void> Function(BuildContext) action) async {
     if (_opening) return;
     setState(() => _opening = true);
     try {
-      await action();
+      await action(context);
     } catch (_) {
       if (mounted) ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(content: Text('não consegui abrir a conferência. tente novamente.')));
     } finally {
@@ -211,9 +211,9 @@ class _ReviewMetric extends StatelessWidget {
 Future<void> showMonthlyClosingReview(
   BuildContext context, {
   required MonthlyMoneySummary summary,
-  Future<void> Function()? onReviewAccounts,
-  Future<void> Function()? onReviewCategories,
-  Future<void> Function()? onReviewBehavior,
+  Future<void> Function(BuildContext)? onReviewAccounts,
+  Future<void> Function(BuildContext)? onReviewCategories,
+  Future<void> Function(BuildContext)? onReviewBehavior,
 }) {
   return showModalBottomSheet<void>(
     context: context,

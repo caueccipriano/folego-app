@@ -9,6 +9,7 @@ import '../../data/repositories/folego_repository_transaction_classification.dar
 import '../plan/category_period_comparison.dart';
 import '../plan/spending_behavior_screen.dart';
 import '../transactions/transaction_classification_inbox.dart';
+import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
 import 'folego_change_explanation.dart';
 import 'monthly_closing_review.dart';
@@ -91,6 +92,22 @@ class FinancialReviewScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             FolegoChangeExplanation(current: snapshot, previous: previous),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('conferir meus lançamentos'),
+              onPressed: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => Scaffold(
+                    appBar: AppBar(title: const Text('conferir lançamentos')),
+                    body: TransactionsScreen(
+                      repository: repository,
+                      space: space,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             FilledButton.icon(
               icon: const Icon(Icons.bar_chart_rounded),
@@ -112,12 +129,19 @@ class FinancialReviewScreen extends StatelessWidget {
                 onPressed: () => showMonthlyClosingReview(
                   context,
                   summary: summary!,
-                  onReviewAccounts: () =>
-                      reviewFinancialAccounts(context, repository, space.id),
-                  onReviewCategories: () =>
-                      reviewFinancialCategories(context, repository, space.id),
-                  onReviewBehavior: () => reviewFinancialBehavior(
-                    context,
+                  onReviewAccounts: (sheetContext) => reviewFinancialAccounts(
+                    sheetContext,
+                    repository,
+                    space.id,
+                  ),
+                  onReviewCategories: (sheetContext) =>
+                      reviewFinancialCategories(
+                        sheetContext,
+                        repository,
+                        space.id,
+                      ),
+                  onReviewBehavior: (sheetContext) => reviewFinancialBehavior(
+                    sheetContext,
                     repository,
                     space.id,
                     summary!.periodMonth,

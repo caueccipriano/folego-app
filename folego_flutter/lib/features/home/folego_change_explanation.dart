@@ -5,18 +5,43 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
 
-// Memory only: scoped to the repository session and financial space. No ledger
-// or browser storage writes, and no previous user's data in a global cache.
-final _sessionReadings = Expando<Map<String, FolegoSnapshot>>();
+// Memory only, keyed by repository session and financial space.
+class _FolegoReading {
+  _FolegoReading(this.latest);
+  FolegoSnapshot latest;
+  FolegoSnapshot? previous;
+}
+
+final _sessionReadings = Expando<Map<String, _FolegoReading>>();
 FolegoSnapshot? previousFolegoReading(
   Object session,
   String spaceId,
   FolegoSnapshot current,
 ) {
-  final readings = _sessionReadings[session] ??= <String, FolegoSnapshot>{};
-  final previous = readings[spaceId];
-  readings[spaceId] = current;
-  return previous;
+  final readings = _sessionReadings[session] ??= <String, _FolegoReading>{};
+  final reading = readings[spaceId];
+  if (reading == null) {
+    readings[spaceId] = _FolegoReading(current);
+    return null;
+  }
+  final old = reading.latest;
+  final unchanged =
+      old.liquidBalance == current.liquidBalance &&
+      old.protectedBalance == current.protectedBalance &&
+      old.mandatoryOutflowsUntilIncome ==
+          current.mandatoryOutflowsUntilIncome &&
+      old.monthlyBudgetPlanned == current.monthlyBudgetPlanned &&
+      old.monthlyBudgetUsed == current.monthlyBudgetUsed &&
+      old.cashHeadroom == current.cashHeadroom &&
+      old.economicHeadroom == current.economicHeadroom &&
+      old.spendablePool == current.spendablePool &&
+      old.dailyFolego == current.dailyFolego &&
+      old.nextIncomeDate == current.nextIncomeDate &&
+      old.daysUntilIncome == current.daysUntilIncome &&
+      old.budgetConfigured == current.budgetConfigured;
+  if (!unchanged) reading.previous = old;
+  reading.latest = current;
+  return reading.previous;
 }
 
 /// Component deltas are evidence, not an attribution to individual purchases.
@@ -60,7 +85,7 @@ class FolegoChangeExplanation extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'o que variou nos componentes:',
+              'o que variou desde a última mudança observada:',
               style: AppTypography.body(context, fontWeight: FontWeight.w700),
             ),
             Text(

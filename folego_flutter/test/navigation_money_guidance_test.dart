@@ -9,6 +9,8 @@ import 'package:folego/data/models/budget_overview_item.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/folego_change_explanation.dart';
+import 'package:folego/features/home/monthly_closing_review.dart';
+import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/features/plan/category_period_comparison.dart';
 import 'package:folego/features/plan/flexible_budget_screen.dart';
 
@@ -107,6 +109,63 @@ void main() {
       );
     }
   }
+  testWidgets(
+    'closing review stays dismissible during pending category navigation',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final pending = Completer<void>();
+      var opened = false;
+      final summary = MonthlyMoneySummary.fromJson({
+        'period_month': '2026-10-01',
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                child: const Text('revisar'),
+                onPressed: () => showMonthlyClosingReview(
+                  context,
+                  summary: summary,
+                  onReviewCategories: (sheetContext) async {
+                    await pending.future;
+                    if (sheetContext.mounted) opened = true;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('revisar'));
+      await tester.pumpAndSettle();
+      final action = find.text('2 · resolver categorias pendentes');
+      await tester.scrollUntilVisible(
+        action,
+        250,
+        scrollable: find.descendant(
+          of: find.byKey(const ValueKey('monthly-close-scroll')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.ensureVisible(action);
+      await tester.pumpAndSettle();
+      await tester.tap(action);
+      await tester.pump();
+      final close = find.byKey(const ValueKey('monthly-close-dismiss'));
+      expect(tester.getCenter(close).dy, lessThan(220));
+      await tester.tap(close);
+      await tester.pumpAndSettle();
+      pending.complete();
+      await tester.pumpAndSettle();
+      expect(opened, isFalse);
+      expect(find.text('revisar'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
   test('session readings never cross repositories or financial spaces', () {
     final firstSession = Object();
     final secondSession = Object();
@@ -117,7 +176,13 @@ void main() {
     expect(previousFolegoReading(firstSession, 'a', reading), isNull);
     expect(previousFolegoReading(firstSession, 'b', reading), isNull);
     expect(previousFolegoReading(secondSession, 'a', reading), isNull);
-    expect(previousFolegoReading(firstSession, 'a', reading), same(reading));
+    expect(previousFolegoReading(firstSession, 'a', reading), isNull);
+    final changed = FolegoSnapshot.fromJson({
+      'as_of_date': '2026-10-16',
+      'spendable_pool': 200,
+    });
+    expect(previousFolegoReading(firstSession, 'a', changed), same(reading));
+    expect(previousFolegoReading(firstSession, 'a', changed), same(reading));
   });
   for (final mode in Brightness.values) {
     testWidgets('back remains at the top after long budget scrolling $mode', (

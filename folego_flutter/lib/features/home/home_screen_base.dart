@@ -452,9 +452,9 @@ class _HomeScreenState extends State<HomeScreen> {
             },
       onOpenClosing: _monthlyMoney == null ? null
           : () => showMonthlyClosingReview(context, summary: _monthlyMoney!,
-            onReviewAccounts: () => reviewFinancialAccounts(context, widget.repository, widget.space.id),
-            onReviewCategories: () => reviewFinancialCategories(context, widget.repository, widget.space.id),
-            onReviewBehavior: () => reviewFinancialBehavior(context, widget.repository, widget.space.id, _monthlyMoney!.periodMonth),
+            onReviewAccounts: (sheetContext) => reviewFinancialAccounts(sheetContext, widget.repository, widget.space.id),
+            onReviewCategories: (sheetContext) => reviewFinancialCategories(sheetContext, widget.repository, widget.space.id),
+            onReviewBehavior: (sheetContext) => reviewFinancialBehavior(sheetContext, widget.repository, widget.space.id, _monthlyMoney!.periodMonth),
           ),
       onOpenEvolution: () => showClosedMonthEvolution(
         context,
