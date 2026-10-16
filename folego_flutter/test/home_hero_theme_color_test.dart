@@ -14,7 +14,7 @@ void main() {
     expect(source, isNot(contains('color: tokens.estouradoHero')));
   });
 
-  test('hero numerico secundario permanece legivel em todos os 15 temas e modos', () {
+  test('hero numerico secundario permanece legivel em todos os 25 temas e modos', () {
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
