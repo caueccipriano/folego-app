@@ -112,6 +112,15 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     FolegoPalette('hyperblue', 'Hyper Blue', Color(0xFF284BDF),
         Color(0xFFFF8A37), Color(0xFFFAF4E8), Color(0xFF101A39),
         description: 'Azul intenso + tangerina'),
+    // Referência Pistachio · Frost · Iced Denim (#B9C255/#E6F1FA/#5798D7).
+    FolegoPalette('pistachioice', 'Pistachio Ice', Color(0xFF5798D7),
+        Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF12202C),
+        description: 'Pistache + azul-gelo + denim'),
+    // Referência Burnt Terracotta · Gallery Blue · Stone Linen
+    // (#C34811/#0B369A/#D9D1CA).
+    FolegoPalette('galleryterra', 'Gallery Terra', Color(0xFF0B369A),
+        Color(0xFFC34811), Color(0xFFD9D1CA), Color(0xFF111B30),
+        description: 'Azul-galeria + terracota + linho'),
   ];
 
   // Cada paleta tem cores próprias para claro e escuro. Não interpolar
@@ -366,6 +375,26 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
         surface: Color(0xFF1B2B4F), elevated: Color(0xFF2A3C61),
         foreground: Color(0xFFF1F5FF), muted: Color(0xFFB7C6E7),
         border: Color(0xFF3A5178), hero: Color(0xFF203784)),
+    ],
+    'pistachioice': [
+      FolegoColorWay(brand: Color(0xFF2B669A), background: Color(0xFFE6F1FA),
+        surface: Color(0xFFFCFEFF), elevated: Color(0xFFD9E8F4),
+        foreground: Color(0xFF1D3448), muted: Color(0xFF4D6376),
+        border: Color(0xFFC3D6E6), hero: Color(0xFF28516F)),
+      FolegoColorWay(brand: Color(0xFF8EC5F2), background: Color(0xFF12202C),
+        surface: Color(0xFF1D3445), elevated: Color(0xFF27485C),
+        foreground: Color(0xFFEDF5FA), muted: Color(0xFFB6CEDB),
+        border: Color(0xFF39546A), hero: Color(0xFF244966)),
+    ],
+    'galleryterra': [
+      FolegoColorWay(brand: Color(0xFF0B369A), background: Color(0xFFD9D1CA),
+        surface: Color(0xFFF9F6F2), elevated: Color(0xFFEAE3DD),
+        foreground: Color(0xFF242E44), muted: Color(0xFF5C6170),
+        border: Color(0xFFC7BBB4), hero: Color(0xFF0B369A)),
+      FolegoColorWay(brand: Color(0xFFA7BDFF), background: Color(0xFF111B30),
+        surface: Color(0xFF1C2944), elevated: Color(0xFF2B3B5A),
+        foreground: Color(0xFFF6F1EB), muted: Color(0xFFC7CDD8),
+        border: Color(0xFF3B4C69), hero: Color(0xFF162D6A)),
     ],
   };
 
