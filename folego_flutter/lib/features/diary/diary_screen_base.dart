@@ -449,7 +449,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             if (pending.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'há ${pending.length} gasto${pending.length == 1 ? '' : 's'} disponíveis para começar.',
+                'há ${pending.length} gasto${pending.length == 1 ? '' : 's'} para começar.',
                 textAlign: TextAlign.center,
                 style: AppTypography.body(
                   context,
