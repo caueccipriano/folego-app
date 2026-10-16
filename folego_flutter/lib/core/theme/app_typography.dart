@@ -252,7 +252,8 @@ abstract final class AppTypography {
       textStyle: Theme.of(context).textTheme.bodyMedium,
       fontSize: effectiveSize,
       fontWeight: isMetric ? FontWeight.w800 : FontWeight.w700,
-      height: isHero ? 1.08 : 1.17,
+      // Compact amounts retain the existing >=1.20 reading-height contract.
+      height: isHero ? 1.08 : (isMetric ? 1.17 : 1.20),
       letterSpacing: isHero ? -1.0 : (isMetric ? -.4 : 0),
       fontFeatures: const [
         FontFeature.tabularFigures(),
