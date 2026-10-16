@@ -36,8 +36,9 @@ class BudgetSpendingStory extends StatelessWidget {
               .where((i) => i.isSubcategory && !i.essential && i.hasActivity)
               .toList()
             ..sort((a, b) {
-              if (a.isOverBudget != b.isOverBudget)
+              if (a.isOverBudget != b.isOverBudget) {
                 return a.isOverBudget ? -1 : 1;
+              }
               return b.actualAmount.compareTo(a.actualAmount);
             });
       final visible = rows.take(5).toList();

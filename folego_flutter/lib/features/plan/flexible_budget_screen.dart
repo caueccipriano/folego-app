@@ -141,11 +141,12 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
       );
       if (mounted) await _load();
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         AppSnackbars.show(
           context,
           'não consegui abrir as sugestões. tente novamente.',
         );
+      }
     } finally {
       if (mounted) setState(() => _openingClassification = false);
     }
