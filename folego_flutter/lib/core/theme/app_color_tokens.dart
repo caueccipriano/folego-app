@@ -40,6 +40,12 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     FolegoPalette('folego', 'Fôlego', Color(0xFF6C3CE9),
         Color(0xFFC6F135), Color(0xFFF5F1E8), Color(0xFF101014),
         description: 'Roxo + lima · original'),
+    FolegoPalette('pistache_frost', 'Pistache Frost', Color(0xFF5798D7),
+        Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF0D1B27),
+        description: 'Pistache + azul-gelo'),
+    FolegoPalette('terracota_gallery', 'Terracota Gallery', Color(0xFFC34811),
+        Color(0xFFD9D1CA), Color(0xFFF6F2ED), Color(0xFF181820),
+        description: 'Terracota + azul-galeria + linho'),
     FolegoPalette('mare', 'Maré', Color(0xFF0F8B8D),
         Color(0xFFFF7A59), Color(0xFFEDF8F8), Color(0xFF091A1C),
         description: 'Turquesa + coral'),
@@ -112,12 +118,6 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     FolegoPalette('hyperblue', 'Hyper Blue', Color(0xFF284BDF),
         Color(0xFFFF8A37), Color(0xFFFAF4E8), Color(0xFF101A39),
         description: 'Azul intenso + tangerina'),
-    FolegoPalette('pistache_frost', 'Pistache Frost', Color(0xFF5798D7),
-        Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF0D1B27),
-        description: 'Pistache + azul-gelo'),
-    FolegoPalette('terracota_gallery', 'Terracota Gallery', Color(0xFFC34811),
-        Color(0xFFD9D1CA), Color(0xFFF6F2ED), Color(0xFF181820),
-        description: 'Terracota + azul-galeria + linho'),
   ];
 
   // Cada paleta tem cores próprias para claro e escuro. Não interpolar
