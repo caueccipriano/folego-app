@@ -79,9 +79,10 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
     body: FutureBuilder<Map<String, dynamic>?>(
       future: _capture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done)
+        if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
-        if (snapshot.hasError || snapshot.data == null)
+        }
+        if (snapshot.hasError || snapshot.data == null) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -94,6 +95,7 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
               ],
             ),
           );
+        }
         final data = snapshot.data!;
         final metadata = data['metadata'] is Map
             ? Map<String, dynamic>.from(data['metadata'] as Map)
@@ -224,8 +226,9 @@ String? captureSuggestionEventType(
 ) {
   if (metadata['is_internal_transfer'] == true ||
       metadata['event_type'] == 'transfer' ||
-      metadata['classification'] == 'transfer')
+      metadata['classification'] == 'transfer') {
     return null;
+  }
   return switch (direction) {
     'in' => 'income',
     'out' => 'expense',

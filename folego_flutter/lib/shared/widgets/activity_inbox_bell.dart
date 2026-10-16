@@ -41,8 +41,9 @@ class _ActivityInboxBellState extends State<ActivityInboxBell>
   }
 
   String? _currentUserId() {
-    if (widget.authenticatedUserId != null)
+    if (widget.authenticatedUserId != null) {
       return widget.authenticatedUserId!();
+    }
     try {
       return Supabase.instance.client.auth.currentUser?.id;
     } catch (_) {
@@ -115,15 +116,17 @@ class _ActivityInboxBellState extends State<ActivityInboxBell>
       if (!mounted ||
           generation != _generation ||
           spaceId != widget.spaceId ||
-          user != _currentUserId())
+          user != _currentUserId()) {
         return;
+      }
       setState(() {
         _unread = count;
         _error = null;
       });
     } catch (_) {
-      if (mounted && generation == _generation)
+      if (mounted && generation == _generation) {
         setState(() => _error = 'não foi possível atualizar os avisos');
+      }
     }
   }
 

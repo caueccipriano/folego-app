@@ -147,13 +147,14 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     final userId = _currentUserId();
 
     // Clear the previous user's data before waiting on any asynchronous work.
-    if (!quiet)
+    if (!quiet) {
       setState(() {
         _items = const [];
         _loading = true;
         _usingOfflineCache = false;
         _error = null;
       });
+    }
 
     if (userId == null || userId.trim().isEmpty) {
       setState(() {
@@ -248,12 +249,13 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       }
       await _load(quiet: true);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('não consegui marcar como lida. tente novamente.'),
           ),
         );
+      }
     }
   }
 
