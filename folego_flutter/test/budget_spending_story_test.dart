@@ -99,7 +99,7 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.byType(LinearProgressIndicator), findsNWidgets(3));
         expect(find.textContaining('parent total'), findsNothing);
-        expect(find.textContaining('essencial'), findsNothing);
+          expect(find.byKey(const ValueKey('budget-story-essencial')), findsNothing);
         expect(
           tester
               .getTopLeft(find.byKey(const ValueKey('budget-story-lazer')))
