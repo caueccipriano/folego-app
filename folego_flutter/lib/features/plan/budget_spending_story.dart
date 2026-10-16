@@ -75,6 +75,7 @@ class BudgetSpendingStory extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Esse é o uso do orçamento, não o saldo do banco. '
+                'Flexível aqui significa não essencial; é diferente de fixo ou variável. '
                 'Uma parcela conta no mês em que entra no Plano; pagar a fatura não conta de novo.',
                 style: AppTypography.body(
                   context,
@@ -199,7 +200,8 @@ class BudgetSpendingStory extends StatelessWidget {
               ),
               const SizedBox(height: 7),
               Text(
-                '1. Confira as sugestões de categoria: o app usa descrições e seu histórico. '
+                '1. Confira as sugestões nas pendências de todos os períodos: '
+                'o app usa descrições e seu histórico. '
                 'Veja o motivo e aceite só o que fizer sentido; sugestões ambíguas ficam para revisão.\n'
                 '2. Nos gastos já registrados, escolha fixo (valor estável) ou variável (muda). '
                 'Recorrente é frequência: uma conta pode ser recorrente e variável. '
