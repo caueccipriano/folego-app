@@ -11,6 +11,7 @@ import '../../core/ui/app_snackbars.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'budget_pace_context.dart';
+import 'monthly_category_donut.dart';
 import '../home/upcoming_events_screen.dart';
 import '../goals/goals_screen.dart';
 import 'plan_insights_section.dart';
@@ -729,6 +730,8 @@ class _PlanScreenState extends State<PlanScreen> {
           _planningPaths(),
           const SizedBox(height:12),
           _buildSummary(brightness),
+                      const SizedBox(height: 16),
+                      MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
           if (_insightsFuture != null) ...[
             const SizedBox(height: 12),
             _buildInsights(),
@@ -778,6 +781,8 @@ class _PlanScreenState extends State<PlanScreen> {
                       _planningPaths(),
                       const SizedBox(height:12),
                       _buildSummary(brightness),
+                      const SizedBox(height: 16),
+                      MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
                       if (_insightsFuture != null) ...[
                         const SizedBox(height: 14),
                         _buildInsights(),

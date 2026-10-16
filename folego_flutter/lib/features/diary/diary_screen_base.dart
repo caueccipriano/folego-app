@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 
+import '../../core/privacy/financial_privacy.dart';
+import 'diary_review_card.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
@@ -51,6 +54,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   List<DiaryEntry> _entries = const [];
   bool _loading = true;
   String? _error;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -67,6 +71,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Future<void> _load({bool silent = false}) async {
+    final generation = ++_loadGeneration;
     if (!silent && mounted) {
       setState(() {
         _loading = true;
@@ -81,14 +86,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
               spaceId: widget.spaceId,
               periodMonth: _month,
             );
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _entries = entries;
         _loading = false;
         _error = null;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _loading = false;
         _error = error.toString().replaceFirst('Exception: ', '');
@@ -97,7 +102,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Future<void> _changeMonth(int delta) async {
-    setState(() => _month = DateTime(_month.year, _month.month + delta));
+    setState(() {
+      _month = DateTime(_month.year, _month.month + delta);
+      _entries = const [];
+    });
     await _load();
   }
 
@@ -152,65 +160,86 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final summary = DiarySummary.fromEntries(_entries);
     final timeline = reflectedTimeline(_entries);
     final pending = pendingReflectionEntries(_entries, limit: 4);
-    final expanded = layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+    final expanded =
+        layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
 
-    return ColoredBox(
-      color: AppColors.background(brightness),
-      child: SafeArea(
-        child: AppContentContainer.dashboard(
-          fillHeight: true,
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: _loading
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      AppLoadingState(label: 'organizando seu diário'),
-                    ],
-                  )
-                : ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(
-                      0,
-                      24,
-                      0,
-                      MediaQuery.paddingOf(context).bottom + 140,
-                    ),
-                    children: [
-                      _header(brightness),
-                      const SizedBox(height: 22),
-                      if (_error != null)
-                        _errorCard(brightness)
-                      else if (expanded)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Column(
-                                children: [
-                                  _summaryCard(summary, brightness),
-                                  const SizedBox(height: 18),
-                                  _pendingSection(pending, brightness),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 24),
-                            Expanded(
-                              flex: 7,
-                              child: _timelineSection(timeline, pending, brightness),
-                            ),
-                          ],
-                        )
-                      else ...[
-                        _summaryCard(summary, brightness),
-                        const SizedBox(height: 18),
-                        _timelineSection(timeline, pending, brightness),
-                        const SizedBox(height: 18),
-                        _pendingSection(pending, brightness),
+    return ValueListenableBuilder<bool>(
+      valueListenable: FinancialPrivacy.hidden,
+      builder: (context, hidden, _) => ColoredBox(
+        color: AppColors.background(brightness),
+        child: SafeArea(
+          child: AppContentContainer.dashboard(
+            fillHeight: true,
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: _loading
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        AppLoadingState(label: 'organizando seu diário'),
                       ],
-                    ],
-                  ),
+                    )
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        0,
+                        24,
+                        0,
+                        MediaQuery.paddingOf(context).bottom + 140,
+                      ),
+                      children: [
+                        _header(brightness),
+                        const SizedBox(height: 18),
+                        if (_error == null) ...[
+                          DiaryReviewCard(
+                            reviewed: _entries
+                                .where((e) => e.isEligible && e.isReflected)
+                                .length,
+                            total: _entries.where((e) => e.isEligible).length,
+                            onReview: pending.isEmpty
+                                ? null
+                                : () => _reflect(pending.first),
+                            onTransactions: _openTransactions,
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+                        if (_error != null)
+                          _errorCard(brightness)
+                        else if (expanded)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: Column(
+                                  children: [
+                                    _summaryCard(summary, brightness),
+                                    const SizedBox(height: 18),
+                                    _pendingSection(pending, brightness),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 7,
+                                child: _timelineSection(
+                                  timeline,
+                                  pending,
+                                  brightness,
+                                ),
+                              ),
+                            ],
+                          )
+                        else ...[
+                          _pendingSection(pending, brightness),
+                          const SizedBox(height: 18),
+                          _summaryCard(summary, brightness),
+                          const SizedBox(height: 18),
+                          _timelineSection(timeline, pending, brightness),
+                        ],
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
@@ -223,7 +252,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
       children: [
         AppPageHeader(
           title: 'diário',
-          subtitle: 'como você tem se relacionado com seus gastos?',
+          subtitle: 'revise um gasto, entenda sua escolha e acompanhe seu mês',
           leading: IconButton(
             tooltip: 'voltar',
             onPressed: () => Navigator.of(context).maybePop(),
@@ -283,7 +312,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
           Text('seu mês', style: AppTypography.section(context, fontSize: 17)),
           const SizedBox(height: 4),
           Text(
-            'distribuição dos gastos que você já refletiu',
+            'só os gastos com reflexão: este resumo não representa todos os gastos do mês',
             style: AppTypography.body(
               context,
               fontSize: 11,
@@ -291,42 +320,46 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          Center(
-            child: SizedBox(
-              width: 188,
-              height: 188,
-              child: CustomPaint(
-                painter: _DiaryDonutPainter(summary: summary, brightness: brightness),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        summary.totalReflected <= 0
-                            ? 'seu mês'
-                            : Formatters.money(summary.totalReflected),
-                        textAlign: TextAlign.center,
-                        style: AppTypography.money(
-                          context,
-                          fontSize: summary.totalReflected <= 0 ? 15 : 17,
-                          color: AppColors.primaryText(brightness),
-                        ),
-                      ),
-                      if (summary.totalReflected > 0)
+          if (!FinancialPrivacy.hidden.value)
+            Center(
+              child: SizedBox(
+                width: 188,
+                height: 188,
+                child: CustomPaint(
+                  painter: _DiaryDonutPainter(
+                    summary: summary,
+                    brightness: brightness,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          'refletido',
-                          style: AppTypography.label(
+                          summary.totalReflected <= 0
+                              ? 'seu mês'
+                              : Formatters.money(summary.totalReflected),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.money(
                             context,
-                            fontSize: 9,
-                            color: AppColors.secondaryText(brightness),
+                            fontSize: summary.totalReflected <= 0 ? 15 : 17,
+                            color: AppColors.primaryText(brightness),
                           ),
                         ),
-                    ],
+                        if (summary.totalReflected > 0)
+                          Text(
+                            'refletido',
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 9,
+                              color: AppColors.secondaryText(brightness),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           const SizedBox(height: 18),
           ...ReflectionType.values.map(
             (type) => Padding(
@@ -342,7 +375,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
               borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: Text(
-              summary.insight,
+              FinancialPrivacy.hidden.value
+                  ? 'valores e proporções ocultos pelo modo de privacidade.'
+                  : summary.insight,
               style: AppTypography.body(
                 context,
                 fontSize: 12,
@@ -372,11 +407,17 @@ class _DiaryScreenState extends State<DiaryScreen> {
         Expanded(
           child: Text(
             type.label,
-            style: AppTypography.body(context, fontSize: 11, fontWeight: FontWeight.w600),
+            style: AppTypography.body(
+              context,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         Text(
-          '${(summary.percentage(type) * 100).round()}%',
+          FinancialPrivacy.hidden.value
+              ? '—'
+              : '${(summary.percentage(type) * 100).round()}%',
           style: AppTypography.label(
             context,
             fontSize: 10,
@@ -427,7 +468,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('suas reflexões', style: AppTypography.section(context, fontSize: 17)),
+          Text(
+            'suas reflexões',
+            style: AppTypography.section(context, fontSize: 17),
+          ),
           const SizedBox(height: 14),
           ...timeline.map((entry) => _timelineItem(entry, brightness)),
         ],
@@ -443,7 +487,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
       brightness: brightness,
     );
     final categoryIcon = CategoryVisuals.iconFor(category: family);
-    final reflectionColor = ReflectionVisuals.foreground(reflection.type, brightness);
+    final reflectionColor = ReflectionVisuals.foreground(
+      reflection.type,
+      brightness,
+    );
 
     return InkWell(
       onTap: () => _reflect(entry),
@@ -500,12 +547,21 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   ),
                   const SizedBox(height: 7),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: ReflectionVisuals.background(reflection.type, brightness),
+                      color: ReflectionVisuals.background(
+                        reflection.type,
+                        brightness,
+                      ),
                       borderRadius: BorderRadius.circular(99),
                       border: Border.all(
-                        color: ReflectionVisuals.border(reflection.type, brightness),
+                        color: ReflectionVisuals.border(
+                          reflection.type,
+                          brightness,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -546,7 +602,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('para refletir', style: AppTypography.section(context, fontSize: 16)),
+          Text(
+            'para refletir',
+            style: AppTypography.section(context, fontSize: 16),
+          ),
           const SizedBox(height: 4),
           Text(
             'alguns gastos recentes sem reflexão',
@@ -680,7 +739,13 @@ class _DiaryDonutPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 18
         ..strokeCap = StrokeCap.round;
-      canvas.drawArc(rect, start + gap, math.max(0, sweep - gap * 2), false, paint);
+      canvas.drawArc(
+        rect,
+        start + gap,
+        math.max(0, sweep - gap * 2),
+        false,
+        paint,
+      );
       start += sweep;
     }
   }

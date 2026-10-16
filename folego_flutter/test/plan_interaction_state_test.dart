@@ -43,7 +43,16 @@ void main() {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
     final parent = find.byKey(const ValueKey('plan-parent-food'));
-    await tester.ensureVisible(parent);
+    await tester.scrollUntilVisible(
+      parent,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('plan-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(parent);
     await tester.pump();
     expect(find.byKey(const ValueKey('plan-child-market')), findsNothing);
@@ -59,7 +68,16 @@ void main() {
     await _pumpPlan(tester, repository);
 
     final parent = find.byKey(const ValueKey('plan-parent-food'));
-    await tester.ensureVisible(parent);
+    await tester.scrollUntilVisible(
+      parent,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('plan-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(parent);
     await tester.pump();
     await tester.tap(parent);
@@ -105,7 +123,16 @@ void main() {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
     final parent = find.byKey(const ValueKey('plan-parent-food'));
-    await tester.ensureVisible(parent);
+    await tester.scrollUntilVisible(
+      parent,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('plan-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(parent);
     await tester.pump();
 
@@ -173,7 +200,16 @@ void main() {
     final repository = _FakePlanRepository(_fixture());
     await _pumpPlan(tester, repository);
     final parent = find.byKey(const ValueKey('plan-parent-food'));
-    await tester.ensureVisible(parent);
+    await tester.scrollUntilVisible(
+      parent,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('plan-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(parent);
     await tester.pump();
     expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
@@ -306,7 +342,16 @@ plan.PlanBudgetSaver _captureSaver(List<double> captured) {
 
 Future<void> _openAndSave(WidgetTester tester, {required String amount}) async {
   final parent = find.byKey(const ValueKey('plan-parent-food'));
-  await tester.ensureVisible(parent);
+  await tester.scrollUntilVisible(
+    parent,
+    300,
+    scrollable: find
+        .descendant(
+          of: find.byKey(const ValueKey('plan-scroll')),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
   await tester.tap(parent);
   await tester.pump();
 
