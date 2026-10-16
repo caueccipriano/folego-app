@@ -24,6 +24,26 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_sheet_handle.dart';
 
+Future<void> showBudgetCategorySpending({
+  required BuildContext context,
+  required FolegoRepository repository,
+  required String spaceId,
+  required DateTime month,
+  required BudgetOverviewItem category,
+}) {
+  final entries = repository.getBudgetImpactDetails(
+    spaceId: spaceId, periodMonth: month, categoryId: category.categoryId,
+  );
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _BudgetCategorySpendingSheet(
+      categoryName: category.categoryName,
+      entries: entries,
+    ),
+  );
+}
+
 typedef PlanBudgetLoader = Future<List<BudgetOverviewItem>> Function({
   required String spaceId,
   required DateTime periodMonth,
@@ -1442,21 +1462,11 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Future<void> _showCategorySpending(BudgetOverviewItem category) async {
-    final future = widget.repository.getBudgetImpactDetails(
-      spaceId: widget.spaceId,
-      periodMonth: _month,
-      categoryId: category.categoryId,
-    );
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _BudgetCategorySpendingSheet(
-        categoryName: category.categoryName,
-        entries: future,
-      ),
-    );
-  }
+  Future<void> _showCategorySpending(BudgetOverviewItem category) =>
+      showBudgetCategorySpending(
+        context: context, repository: widget.repository,
+        spaceId: widget.spaceId, month: _month, category: category,
+      );
 
   Widget _buildChildCard(
     BudgetOverviewItem parent,

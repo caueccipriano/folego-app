@@ -1004,6 +1004,32 @@ class _TransactionClassificationInboxState
                     ),
                   ),
                   IconButton(
+                    tooltip: 'como usar as sugestões',
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('categorias inteligentes'),
+                        content: const SingleChildScrollView(child: Text(
+                          '1. Abra um lançamento pendente. Quando houver uma sugestão, '
+                          'confira a categoria e o motivo indicado.\n\n'
+                          '2. Toque em aceitar sugestão para confirmar, ou escolha '
+                          'outra categoria manualmente. Sem um padrão seguro, o app '
+                          'prefere não sugerir.\n\n'
+                          '3. Para semelhantes ou lotes, confira a lista antes de aplicar. '
+                          'Uma sugestão não é uma regra automática.\n\n'
+                          'Categoria diz com o que você gastou. Fixo/variável diz '
+                          'se o valor costuma ser estável ou mudar: use o botão '
+                          'definir gastos fixos e variáveis em Lançamentos.',
+                        )),
+                        actions: [TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: const Text('entendi'),
+                        )],
+                      ),
+                    ),
+                    icon: Icon(AppIcons.info, color: secondaryText),
+                  ),
+                  IconButton(
                     tooltip: 'atualizar',
                     onPressed: _refreshing ? null : _refresh,
                     icon: _refreshing

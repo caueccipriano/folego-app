@@ -61,7 +61,7 @@ jobs:
       - name: Stable responsive preflight
         run: |
           flutter test \
-            test/financial_evolution_test.dart test/discovery_test.dart \
+            test/budget_spending_story_test.dart test/financial_evolution_test.dart test/discovery_test.dart \
             test/home_monthly_cards_drilldown_test.dart \
             test/home_financial_copy_test.dart \
             test/internal_polish_regression_test.dart \

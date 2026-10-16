@@ -903,6 +903,17 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                               ],
                             ),
                     ),
+                    if (widget.onClassificationRequested != null) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          key: const ValueKey('transactions-smart-categories-entry'),
+                          onPressed: widget.onClassificationRequested,
+                          icon: const Icon(AppIcons.categoryUnclassified, size: 18),
+                          label: const Text('categorias inteligentes · revisar sugestões'),
+                        ),
+                      ),
+                    ],
                     if (widget.onSpendingBehaviorRequested != null) ...[
                       const SizedBox(height: 8),
                       Align(
