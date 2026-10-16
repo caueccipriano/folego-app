@@ -350,7 +350,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     'forestclub': [
       FolegoColorWay(brand: Color(0xFF2A6543), background: Color(0xFFFBF2E1),
         surface: Color(0xFFFFF9ED), elevated: Color(0xFFE7E5C8),
-        foreground: Color(0xFF22362A), muted: Color(0xFF647A5A),
+        foreground: Color(0xFF22362A), muted: Color(0xFF5B6F51),
         border: Color(0xFFD7D7B4), hero: Color(0xFF28583B)),
       FolegoColorWay(brand: Color(0xFFB7DCB3), background: Color(0xFF14231C),
         surface: Color(0xFF203529), elevated: Color(0xFF2D4633),
