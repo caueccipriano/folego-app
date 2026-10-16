@@ -76,8 +76,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Como os gastos do orçamento se distribuem no mês selecionado. '
-                'Parcelas contam no mês do Plano; pagar a fatura não soma outra compra.',
+                'Veja como os gastos se distribuem neste mês.',
                 style: AppTypography.body(
                   context,
                   fontSize: 12,
@@ -97,78 +96,75 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                   style: AppTypography.body(context, fontSize: 12),
                 )
               else
-                Center(
-                  child: Semantics(
-                    label: 'Distribuição dos gastos por categoria; valores na lista abaixo',
-                    child: SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: CustomPaint(
-                        key: const ValueKey('category-donut-paint'),
-                        painter: _CategoryDonutPainter(
-                          values: rows.map((i) => i.actualAmount).toList(),
-                          colors: colors,
-                          track: AppColors.border(brightness),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                Formatters.money(total),
-                                style: AppTypography.money(
-                                  context,
-                                  fontSize: 17,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final diameter = math.min(200.0, constraints.maxWidth);
+                    return Center(
+                      child: Semantics(
+                        label: 'Distribuição dos gastos por categoria; valores na lista abaixo',
+                        child: SizedBox.square(
+                          dimension: diameter,
+                          child: CustomPaint(
+                            key: const ValueKey('category-donut-paint'),
+                            painter: _CategoryDonutPainter(
+                              values: rows.map((i) => i.actualAmount).toList(),
+                              colors: colors,
+                              track: AppColors.border(brightness),
+                            ),
+                            child: Center(
+                              child: SizedBox(
+                                key: const ValueKey('category-donut-center'),
+                                width: diameter * .60,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        Formatters.money(total),
+                                        maxLines: 1,
+                                        style: AppTypography.money(
+                                          context,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'neste gráfico',
+                                      textAlign: TextAlign.center,
+                                      style: AppTypography.body(
+                                        context,
+                                        fontSize: 11,
+                                        color: AppColors.secondaryText(
+                                          brightness,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'nas categorias acima de zero',
-                                textAlign: TextAlign.center,
-                                style: AppTypography.body(
-                                  context,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    );
+                  },
+                ),
+              if (rows.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Toque em uma categoria para ver os lançamentos.',
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 11,
+                    color: AppColors.secondaryText(brightness),
                   ),
                 ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 4),
+              ],
               for (final row in visible)
-                ListTile(
-                  key: ValueKey('category-donut-${row.categoryId}'),
-                  contentPadding: EdgeInsets.zero,
-                  onTap: () => widget.onCategory(row),
-                  leading: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: CategoryVisuals.colorFor(
-                        category: row.categoryName,
-                        brightness: brightness,
-                      ),
-                    ),
-                  ),
-                  title: Text(
-                    row.categoryName,
-                    style: AppTypography.body(context, fontSize: 13),
-                  ),
-                  subtitle: Text(
-                    hidden
-                        ? 'proporção oculta'
-                        : '${(row.actualAmount / total * 100).toStringAsFixed(1).replaceAll('.', ',')}% · ver lançamentos',
-                    style: AppTypography.body(context, fontSize: 11),
-                  ),
-                  trailing: Text(
-                    Formatters.money(row.actualAmount),
-                    style: AppTypography.money(context, fontSize: 13),
-                  ),
-                ),
+                _categoryRow(context, row, total, hidden, brightness),
               if (rows.length > 5)
                 TextButton(
                   onPressed: () => setState(() => _expanded = !_expanded),
@@ -181,26 +177,127 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
               if (credits > 0) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Categorias com créditos líquidos: ${Formatters.money(credits)}. '
-                  'Elas ficam fora da rosca; por isso o centro pode diferir do gasto líquido total do Plano.',
+                  'Há ${Formatters.money(credits)} em créditos líquidos fora do gráfico.',
                   style: AppTypography.body(context, fontSize: 11),
                 ),
               ],
-              const SizedBox(height: 6),
-              Text(
-                'A rosca inclui todas as categorias positivas, mesmo quando a lista está resumida. '
-                'Valores líquidos por categoria, incluindo estornos. Não representa saídas bancárias nem saldo disponível.',
-                style: AppTypography.body(
-                  context,
-                  fontSize: 11,
-                  color: AppColors.secondaryText(brightness),
+              const SizedBox(height: 8),
+              ExpansionTile(
+                key: const ValueKey('category-donut-explanation'),
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(bottom: 12),
+                dense: true,
+                shape: const Border(),
+                collapsedShape: const Border(),
+                title: Text(
+                  'Como esse gráfico é calculado',
+                  style: AppTypography.body(context, fontSize: 12),
                 ),
+                children: [
+                  Text(
+                    'Parcelas entram no mês do Plano. Pagar a fatura não conta como outra compra. '
+                    'O gráfico reúne os valores líquidos positivos de todas as categorias, incluindo estornos, '
+                    'mesmo quando a lista está resumida. Categorias com créditos líquidos ficam de fora; '
+                    'por isso o valor no centro pode diferir do gasto líquido do Plano. '
+                    'Não representa saídas bancárias nem saldo disponível.',
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 12,
+                      color: AppColors.secondaryText(brightness),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       );
     },
+  );
+
+  Widget _categoryRow(
+    BuildContext context,
+    BudgetOverviewItem row,
+    double total,
+    bool hidden,
+    Brightness brightness,
+  ) => InkWell(
+    key: ValueKey('category-donut-${row.categoryId}'),
+    borderRadius: BorderRadius.circular(AppRadii.control),
+    onTap: () => widget.onCategory(row),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: CategoryVisuals.colorFor(
+                category: row.categoryName,
+                brightness: brightness,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked =
+                    constraints.maxWidth < 260 ||
+                    MediaQuery.textScalerOf(context).scale(13) > 17;
+                final name = Text(
+                  row.categoryName,
+                  style: AppTypography.body(context, fontSize: 13),
+                );
+                final amount = Text(
+                  Formatters.money(row.actualAmount),
+                  style: AppTypography.money(context, fontSize: 13),
+                );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (stacked) ...[
+                      name,
+                      const SizedBox(height: 4),
+                      amount,
+                    ] else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: name),
+                          const SizedBox(width: 12),
+                          amount,
+                        ],
+                      ),
+                    const SizedBox(height: 3),
+                    Text(
+                      hidden
+                          ? 'proporção oculta'
+                          : '${(row.actualAmount / total * 100).toStringAsFixed(1).replaceAll('.', ',')}% do gráfico',
+                      style: AppTypography.body(
+                        context,
+                        fontSize: 11,
+                        color: AppColors.secondaryText(brightness),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 6),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: AppColors.secondaryText(brightness),
+          ),
+        ],
+      ),
+    ),
   );
 }
 
