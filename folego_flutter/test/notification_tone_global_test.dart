@@ -42,7 +42,7 @@ void main() {
   test('dispatcher aplica o estilo escolhido a todos os tipos de alerta', () {
     final dispatcher = File('../supabase/functions/folego-push-dispatch/index.ts')
         .readAsStringSync();
-    final shared = File('../supabase/functions/_shared/notification_tone.ts')
+    final shared = File('../supabase/functions/folego-push-dispatch/notification_tone.ts')
         .readAsStringSync();
     final daily = File('../supabase/migrations/20261009124552_habit_commitment.sql')
         .readAsStringSync();
