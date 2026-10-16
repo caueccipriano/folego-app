@@ -876,7 +876,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Text(
                       'próximos movimentos',
-                      style: AppTypography.section(
+                      style: AppTypography.cardTitle(
                         context,
                         fontSize: 16,
                         color: primaryText,

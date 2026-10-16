@@ -618,7 +618,7 @@ class _ThemeLivePreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('prévia no app',
-            style: Theme.of(context).textTheme.titleSmall),
+            style: AppTypography.cardTitle(context, fontSize: 15)),
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -631,23 +631,27 @@ class _ThemeLivePreview extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('seu dinheiro disponível',
-                  style: TextStyle(color: colors.marcaHeroSobre, fontSize: 12)),
+                  style: AppTypography.body(
+                    context, fontSize: 12, color: colors.marcaHeroSobre,
+                  )),
                 const SizedBox(height: 6),
                 Text(r'R$ 1.250,00',
-                  style: TextStyle(color: colors.acaoHero,
-                    fontSize: 26, fontWeight: FontWeight.w800)),
+                  style: AppTypography.money(
+                    context, fontSize: 26, color: colors.acaoHero,
+                  )),
                 const SizedBox(height: 5),
                 Text.rich(
                   TextSpan(children: [
                     TextSpan(text: 'em conta: ',
-                      style: TextStyle(color: colors.marcaHeroSobre)),
+                      style: AppTypography.body(
+                        context, fontSize: 12, color: colors.marcaHeroSobre,
+                      )),
                     TextSpan(text: r'R$ 62,90',
-                      style: TextStyle(
-                        color: colors.acaoHero,
-                        fontWeight: FontWeight.w800,
+                      style: AppTypography.money(
+                        context, fontSize: 13, color: colors.acaoHero,
                       )),
                   ]),
-                  style: const TextStyle(fontSize: 12),
+                  style: AppTypography.body(context, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -658,8 +662,10 @@ class _ThemeLivePreview extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text('simulação visual',
-                    style: TextStyle(color: colors.acaoSobre,
-                      fontSize: 11, fontWeight: FontWeight.w700)),
+                    style: AppTypography.label(
+                      context, fontSize: 11, fontWeight: FontWeight.w700,
+                      color: colors.acaoSobre,
+                    )),
                 ),
               ],
             ),

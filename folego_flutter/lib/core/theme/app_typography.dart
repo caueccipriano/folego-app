@@ -179,7 +179,7 @@ abstract final class AppTypography {
       ),
       labelMedium: _interface(
         textStyle: manrope.labelMedium,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
         height: 1.20,
         color: secondaryText,
@@ -224,19 +224,41 @@ abstract final class AppTypography {
     );
   }
 
+  /// Titles inside cards use Manrope; keep Unbounded for page/editorial
+  /// headings. This prevents display lettering from overpowering compact cards.
+  static TextStyle cardTitle(
+    BuildContext context, {
+    double fontSize = 16,
+    Color? color,
+  }) => _interface(
+    textStyle: Theme.of(context).textTheme.titleMedium,
+    fontSize: fontSize,
+    fontWeight: FontWeight.w700,
+    height: 1.22,
+    letterSpacing: -.25,
+    color: color,
+  );
+
   /// One numeric face at every size keeps amounts comparable across cards.
   static TextStyle money(
     BuildContext context, {
     double fontSize = 52,
     Color? color,
   }) {
+    final effectiveSize = fontSize < 13 ? 13.0 : fontSize;
+    final isHero = effectiveSize >= 28;
+    final isMetric = effectiveSize >= 20;
     return _interface(
       textStyle: Theme.of(context).textTheme.bodyMedium,
-      fontSize: fontSize < 13 ? 13 : fontSize,
-      fontWeight: FontWeight.w700,
-      height: 1.2,
-      letterSpacing: 0,
-      fontFeatures: const [FontFeature.tabularFigures()],
+      fontSize: effectiveSize,
+      fontWeight: isMetric ? FontWeight.w800 : FontWeight.w700,
+      // Compact amounts retain the existing >=1.20 reading-height contract.
+      height: isHero ? 1.08 : (isMetric ? 1.17 : 1.20),
+      letterSpacing: isHero ? -1.0 : (isMetric ? -.4 : 0),
+      fontFeatures: const [
+        FontFeature.tabularFigures(),
+        FontFeature.liningFigures(),
+      ],
       decoration: TextDecoration.none,
       color: color,
     );
