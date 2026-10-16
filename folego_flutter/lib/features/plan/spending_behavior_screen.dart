@@ -16,7 +16,7 @@ class SpendingBehaviorScreen extends StatefulWidget {
   const SpendingBehaviorScreen({
     super.key, required this.repository, required this.spaceId,
     required this.periodMonth, this.loadOverride, this.saveOverride,
-    this.incomeOverride,
+    this.incomeOverride, this.onChanged,
   });
   final FolegoRepository repository;
   final String spaceId;
@@ -24,6 +24,7 @@ class SpendingBehaviorScreen extends StatefulWidget {
   final SpendingLoader? loadOverride;
   final SpendingSaver? saveOverride;
   final RegisteredIncomeLoader? incomeOverride;
+  final VoidCallback? onChanged;
 
   @override
   State<SpendingBehaviorScreen> createState() => _SpendingBehaviorScreenState();
@@ -177,6 +178,7 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
       } else {
         await widget.saveOverride!(widget.spaceId, entry, selected);
       }
+      widget.onChanged?.call();
       if (!mounted) return;
       await _load();
       if (!mounted) return;

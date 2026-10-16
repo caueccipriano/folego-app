@@ -151,15 +151,15 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   }
 
   Future<void> _openFlexibleBudget() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
         builder: (_) => FlexibleBudgetScreen(
           repository: widget.repository,
           spaceId: widget.space.id,
         ),
       ),
     );
-    if (!mounted) return;
+    if (!mounted || changed != true) return;
     _realtimeCoordinator.invalidateDomains({
       AppRealtimeDomain.home,
       AppRealtimeDomain.plan,

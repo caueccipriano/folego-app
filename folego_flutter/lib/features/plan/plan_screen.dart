@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
+import '../../core/realtime/realtime_session.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'flexible_budget_screen.dart';
 import 'plan_screen_web2.dart' as base;
@@ -103,14 +104,13 @@ class _PlanScreenState extends State<PlanScreen> {
         onProjectionRequested: _openProjection,
         onPurchaseSimulationRequested: _openPurchaseProjection,
         onSpendingBehaviorRequested: _openSpendingBehavior,
-        onFlexibleBudgetRequested: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => FlexibleBudgetScreen(
-              repository: widget.repository,
-              spaceId: widget.spaceId,
-            ),
-          ),
-        ),
+        onFlexibleBudgetRequested: () async {
+          final changed = await Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
+            builder: (_) => FlexibleBudgetScreen(repository: widget.repository, spaceId: widget.spaceId),
+          ));
+          if (!mounted || changed != true) return;
+          AppRealtimeRegistry.coordinator?.invalidateDomains({AppRealtimeDomain.home, AppRealtimeDomain.plan});
+        },
       ),
     );
   }

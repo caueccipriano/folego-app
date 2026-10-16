@@ -1693,11 +1693,13 @@ class _BudgetCategorySpendingSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'lançamentos de $categoryName',
-                style: AppTypography.section(context,
-                  fontSize: 19, color: primary),
-              ),
+              Row(children: [
+                Expanded(child: Text(
+                  'lançamentos de $categoryName',
+                  style: AppTypography.section(context, fontSize: 19, color: primary),
+                )),
+                IconButton(tooltip: 'fechar lançamentos', onPressed: () => Navigator.of(context).pop(), icon: const Icon(AppIcons.close)),
+              ]),
               const SizedBox(height: 6),
               Text(
                 'valores que formam os gastos do Plano neste mês. '
