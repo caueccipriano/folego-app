@@ -108,7 +108,8 @@ function folegoScanEmailMercadoPagoV353_(dryRun) {
         summary.relevant++;
         // A stable Gmail-message fingerprint avoids repeated imports and does not expose mailbox IDs.
         var fp = sha256V3_('mercadopago-email:v353:'+(rec.providerTransactionId || msg.getId()));
-        if (findInputByHashV3_(ss,fp,0)) { summary.alreadySeen++; continue; }
+        var priorInput = findInputByHashV3_(ss,fp,0);
+        if (priorInput && (priorInput.status === FMP_EMAIL_V353.SHEET_STATUS_LINKED || priorInput.status === FMP_EMAIL_V353.SHEET_STATUS_REVIEW)) { summary.alreadySeen++; continue; }
         var mp = {isMercadoPagoEvent:true,mpDirection:rec.direction,value:rec.amount,eventDate:rec.date};
         var matched = findMercadoPagoExistingV352_(ss,mp) || {};
         // Existing matcher is only a hint. Backend reconciliation independently verifies
@@ -127,7 +128,8 @@ function folegoScanEmailMercadoPagoV353_(dryRun) {
           datahora:Utilities.formatDate(rec.date,CFG_V3.TZ,'dd/MM/yyyy HH:mm:ss'),
           canal:'gmail', id_email_hash:fp};
         var now = new Date();
-        var row = appendInputLogV3_(ss,safe,now,fp,CFG_V3.INPUT_STATUS.RECEIVED);
+        var row = priorInput && priorInput.row ? priorInput.row : appendInputLogV3_(ss,safe,now,fp,CFG_V3.INPUT_STATUS.RECEIVED);
+        if (status === FMP_EMAIL_V353.SHEET_STATUS_REVIEW) fmpEmlPrepareReviewValidationV353_(ss,row);
         updateInputLogV3_(ss,row,{eventDate:rec.date,status:status,
           parserResult:matched.ambiguous ? 'EMAIL MERCADO PAGO: revisão humana obrigatória ('+String(decision.review_reason || 'sem correspondência inequívoca')+'). Sem gravação financeira.' :
             matched.launchId ? 'EMAIL MERCADO PAGO: comprovante conciliado com lançamento existente '+matched.launchId+'; não lançar novamente.' :
@@ -262,4 +264,22 @@ function fmpEmlMimeTextV353_(root) {
   return html.join('\n').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ')
     .replace(/<[^>]*>/g,' ').replace(/&#(x[0-9a-f]+|\d+);/gi,function(_,n){var c=n[0].toLowerCase()==='x'?parseInt(n.slice(1),16):parseInt(n,10);return c>0 && c<=65535?String.fromCharCode(c):' ';})
     .replace(/&(?:nbsp|amp|lt|gt|quot|apos);/gi,function(entity){return {'&nbsp;':' ','&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"}[entity.toLowerCase()];});
+}
+
+/** Extend only this receipt's status cell, copying all validation options.
+ * Existing rows, trigger statuses and dropdown source ranges remain untouched.
+ */
+function fmpEmlPrepareReviewValidationV353_(ss,row) {
+  if (!row || row<1 || Math.floor(row)!==row) throw new Error('Linha de captura inválida.');
+  var cell=ss.getSheetByName(CFG_V3.SHEETS.INPUT).getRange(row,11);
+  var rule=cell.getDataValidation();
+  if (!rule) return; // Unrestricted cell already accepts isolated review status.
+  if (rule.getCriteriaType()!==SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST) {
+    throw new Error('Validação de status incompatível; revisão preservada no backend.');
+  }
+  var args=rule.getCriteriaValues();
+  var options=(args[0] || []).slice();
+  if (options.indexOf(FMP_EMAIL_V353.SHEET_STATUS_REVIEW)>=0) return;
+  options.push(FMP_EMAIL_V353.SHEET_STATUS_REVIEW);
+  cell.setDataValidation(rule.copy().requireValueInList(options,args.length>1?args[1]:true).build());
 }
