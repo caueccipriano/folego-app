@@ -56,7 +56,7 @@ class _SubscriptionInsightsCardState extends State<SubscriptionInsightsCard> {
                   for (final insight in changes) ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(insight.item.name),
-                    subtitle: Text('${insight.message}\n${_amounts(charges, insight.item.id)}'),
+                    subtitle: Text('${insight.message}\n${_amounts(charges, insight.item.id, hidden)}'),
                     onTap: () => widget.onEdit(insight.item),
                   ),
                   Text('${charges.length} cobranças realizadas consultadas, até 200. A comparação exige dois ciclos vinculados à mesma assinatura. Cobranças sem esse vínculo e fora da consulta não são analisadas.'),
@@ -71,13 +71,13 @@ class _SubscriptionInsightsCardState extends State<SubscriptionInsightsCard> {
     ),
   );
 
-  String _amounts(List<SubscriptionCharge> charges, String id) {
+  String _amounts(List<SubscriptionCharge> charges, String id, bool hidden) {
     final sorted = charges.where((c) => c.recurringId == id).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
     if (sorted.isEmpty) { return ''; }
     final latest = sorted.first;
     final previous = sorted.where((c) => c.date.isBefore(latest.date)).firstOrNull;
     if (previous == null) { return ''; }
-    return '${Formatters.fullDate.format(previous.date)}: ${Formatters.money(previous.amount)} → ${Formatters.fullDate.format(latest.date)}: ${Formatters.money(latest.amount)}';
+    return '${Formatters.fullDate.format(previous.date)}: ${hidden ? '••••' : Formatters.money(previous.amount)} → ${Formatters.fullDate.format(latest.date)}: ${hidden ? '••••' : Formatters.money(latest.amount)}';
   }
 }
