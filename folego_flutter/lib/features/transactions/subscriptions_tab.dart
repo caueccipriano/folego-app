@@ -273,7 +273,6 @@ class _SubscriptionCard extends StatelessWidget {
     required this.cardName,
     required this.onEdit,
     required this.onMoveToRecurring,
-    this.loadCharges,
     this.onEnd,
   });
 
