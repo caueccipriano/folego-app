@@ -256,7 +256,14 @@ class HomeFinancialHero extends StatelessWidget {
               ),
             ),
             SizedBox(height: compact ? 6 : 8),
-            FittedBox(
+            Semantics(
+              button: true,
+              label: 'me explica esse valor disponível',
+              child: InkWell(
+                key: const ValueKey('home-spendable-explain-tap'),
+                borderRadius: BorderRadius.circular(AppRadii.control),
+                onTap: () => _showExplanation(context),
+                child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: AnimatedSwitcher(
@@ -282,6 +289,8 @@ class HomeFinancialHero extends StatelessWidget {
                     color: heroValueColor,
                   ),
                 ),
+              ),
+            ),
               ),
             ),
             SizedBox(height: compact ? 8 : 10),
@@ -430,10 +439,7 @@ class HomeFinancialHero extends StatelessWidget {
                   ),
                   onPressed: () => _showExplanation(context),
                   icon: const Icon(AppIcons.info, size: 16),
-                  label: Text(
-                    spendable <= 0
-                        ? 'ver cálculo completo'
-                        : 'entenda o cálculo',
+                  label: const Text('me explica esse valor',
                   ),
                 ),
               )
@@ -465,7 +471,7 @@ class HomeFinancialHero extends StatelessWidget {
                     ),
                     onPressed: () => _showExplanation(context),
                     icon: const Icon(AppIcons.info, size: 16),
-                    label: const Text('como funciona'),
+                    label: const Text('me explica esse valor'),
                   ),
                 ],
               ),
@@ -609,6 +615,40 @@ class _FolegoExplanation extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
             const SizedBox(height: 4),
+            Container(
+              key: const ValueKey('home-explainer-simple-first'),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface(brightness),
+                borderRadius: BorderRadius.circular(AppRadii.compactCard),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('o que esse valor quer dizer?',
+                    style: AppTypography.label(context,
+                      fontSize: 14, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text('É quanto você ainda pode gastar até receber de novo, '
+                    'considerando seu dinheiro e os compromissos previstos. '
+                    'Não é todo o saldo bancário.',
+                    style: AppTypography.body(context, fontSize: 12)),
+                  const SizedBox(height: 9),
+                  Text(
+                    '1. Partimos do dinheiro nas suas contas.\n'
+                    '2. Consideramos reservas e compromissos até receber.\n'
+                    '3. Se houver limite flexível, usamos o menor espaço '
+                    'disponível. Não somamos esses limites.',
+                    style: AppTypography.body(context,
+                      fontSize: 12, color: secondary)),
+                  const SizedBox(height: 6),
+                  Text('Resultado: ${Formatters.money(snapshot.spendablePool)}',
+                    style: AppTypography.label(context, fontSize: 14,
+                      fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
               'Seu Fôlego considera o dinheiro livre após compromissos e reservas. Se houver orçamento flexível, vale o menor limite disponível. Entradas futuras não são saldo de hoje.',
               style: AppTypography.body(
