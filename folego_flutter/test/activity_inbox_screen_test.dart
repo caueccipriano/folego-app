@@ -119,6 +119,57 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('bulk read marks only loaded unread notifications and preserves review',
+      (tester) async {
+    var read = false;
+    final calls = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: NotificationHistoryScreen(
+        repository: _Repository(),
+        spaceId: 'space-a',
+        authenticatedUserId: () => 'user-a',
+        historyLoader: (_) async => [
+          NotificationHistoryItem(
+            id: 1, kind: 'newTransaction', title: 'novo lançamento',
+            body: 'teste', route: '/transactions/one',
+            stableKey: 'event:one', deliveredAt: DateTime.utc(2026, 10, 16),
+            seenAt: read ? DateTime.utc(2026, 10, 17) : null,
+          ),
+          NotificationHistoryItem(
+            id: 2, kind: 'captureNeedsReview', title: 'revisar comprovante',
+            body: 'continua em revisão', route: '/captures/two',
+            stableKey: 'capture:two', deliveredAt: DateTime.utc(2026, 10, 16),
+            seenAt: read ? DateTime.utc(2026, 10, 17) : null,
+          ),
+          NotificationHistoryItem(
+            id: 3, kind: 'newTransaction', title: 'anterior',
+            body: '', route: '/transactions/three',
+            stableKey: 'event:three', deliveredAt: DateTime.utc(2026, 10, 14),
+            seenAt: DateTime.utc(2026, 10, 16),
+          ),
+        ],
+        notificationReadWriter: (spaceId, stableKey) async {
+          calls.add('$spaceId/$stableKey');
+          if (calls.length == 2) read = true;
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('activity-mark-loaded-read')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('continuam exigindo revisão'), findsOneWidget);
+    expect(calls, isEmpty);
+    await tester.tap(find.widgetWithText(FilledButton, 'marcar como lidos'));
+    await tester.pumpAndSettle();
+    expect(calls.toSet(), {'space-a/event:one', 'space-a/capture:two'});
+    expect(find.byKey(const ValueKey('activity-mark-loaded-read')), findsNothing);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'pendentes'));
+    await tester.pumpAndSettle();
+    expect(find.text('revisar comprovante'), findsOneWidget);
+    expect(find.text('conferir comprovante'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets(
     'badge uses exact count and rejects late response from previous space',
     (tester) async {
