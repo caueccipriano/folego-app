@@ -20,6 +20,9 @@ import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_instrument_management.dart';
+import 'balance_comparison.dart';
+import '../../data/models/financial_space.dart';
+import '../transactions/transaction_detail_sheet_v2.dart';
 
 class WalletAccountDetailScreen extends StatelessWidget {
   const WalletAccountDetailScreen({
@@ -81,7 +84,8 @@ class _WalletAccountDetailPage extends StatefulWidget {
   final bool benefitMode;
 
   @override
-  State<_WalletAccountDetailPage> createState() => _WalletAccountDetailPageState();
+  State<_WalletAccountDetailPage> createState() =>
+      _WalletAccountDetailPageState();
 }
 
 class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
@@ -190,14 +194,18 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
                 supporting: benefit
                     ? 'benefício separado das contas bancárias'
                     : _account.availableForSpending
-                        ? 'incluída no dinheiro disponível'
-                        : 'saldo protegido do disponível',
+                    ? 'incluída no dinheiro disponível'
+                    : 'saldo protegido do disponível',
               ),
             ],
           ),
+          if (!_loading && _error == null)
+            BalanceComparison(balance: _account.balance),
           const SizedBox(height: 24),
           _SectionTitle(
-            benefit ? 'últimas movimentações do benefício' : 'últimas movimentações',
+            benefit
+                ? 'últimas movimentações do benefício'
+                : 'últimas movimentações',
             'o histórico permanece mesmo se a conta for arquivada',
           ),
           const SizedBox(height: 12),
@@ -208,7 +216,23 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
           else if (_movements.isEmpty)
             const _EmptyCard(text: 'nenhuma movimentação encontrada')
           else
-            ..._movements.map((item) => _MovementTile(item: item)),
+            ..._movements.map(
+              (item) => InkWell(
+                onTap: () async {
+                  await showTransactionDetail(
+                    context: context,
+                    space: FinancialSpace(
+                      id: widget.spaceId,
+                      name: 'Minhas finanças',
+                    ),
+                    repository: widget.repository,
+                    eventId: item.id,
+                  );
+                  if (mounted) await _load();
+                },
+                child: _MovementTile(item: item),
+              ),
+            ),
         ],
       ),
     );
@@ -248,10 +272,7 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
     _load();
   }
 
-  Future<T> _bestEffort<T>(
-    Future<T> Function() load,
-    T fallback,
-  ) async {
+  Future<T> _bestEffort<T>(Future<T> Function() load, T fallback) async {
     try {
       return await load();
     } catch (error) {
@@ -262,7 +283,9 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
 
   Future<void> _load() async {
     try {
-      final overview = await widget.repository.getWalletOverview(spaceId: widget.spaceId);
+      final overview = await widget.repository.getWalletOverview(
+        spaceId: widget.spaceId,
+      );
       final match = overview.cards.where((item) => item.id == _card.id);
       final card = match.isEmpty ? _card : match.first;
       final accountsFuture = _bestEffort(
@@ -380,7 +403,8 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
     final identity = [
       if (_card.issuer?.trim().isNotEmpty == true) _card.issuer!.trim(),
       if (_card.brand?.trim().isNotEmpty == true) _card.brand!.trim(),
-      if (_card.lastFour?.trim().isNotEmpty == true) '•••• ${_card.lastFour!.trim()}',
+      if (_card.lastFour?.trim().isNotEmpty == true)
+        '•••• ${_card.lastFour!.trim()}',
     ].join(' · ');
     final semantics = _invoiceSemantics;
     final semanticDue = semantics?.dueDate ?? _card.invoiceDueDate;
@@ -443,19 +467,25 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
                     ? 'não informado'
                     : Formatters.money(_card.effectiveLimit),
                 supporting: [
-                  if (_card.usedLimit != null) 'usado ${Formatters.money(_card.usedLimit)}',
-                  if (_card.availableLimit != null) 'disponível ${Formatters.money(_card.availableLimit)}',
+                  if (_card.usedLimit != null)
+                    'usado ${Formatters.money(_card.usedLimit)}',
+                  if (_card.availableLimit != null)
+                    'disponível ${Formatters.money(_card.availableLimit)}',
                 ].join(' · '),
               ),
               _DetailPanel(
                 label: 'conta pagadora',
                 value: _paymentAccountName ?? 'não resolvida',
-                supporting: 'benefícios nunca são elegíveis para pagamento de fatura',
+                supporting:
+                    'benefícios nunca são elegíveis para pagamento de fatura',
               ),
             ],
           ),
           const SizedBox(height: 24),
-          const _SectionTitle('compras da fatura', 'itens vinculados à fatura atual'),
+          const _SectionTitle(
+            'compras da fatura',
+            'itens vinculados à fatura atual',
+          ),
           const SizedBox(height: 12),
           if (_loading)
             const AppLoadingState(label: 'organizando este instrumento')
@@ -464,12 +494,14 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
           else if (_purchases.isEmpty)
             const _EmptyCard(text: 'nenhuma compra nesta fatura')
           else
-            ..._purchases.map((item) => _CardPurchaseTile(
-              key: ValueKey('card-purchase-note:${item.purchaseId}'),
-              item: item,
-              repository: widget.repository,
-              spaceId: widget.spaceId,
-            )),
+            ..._purchases.map(
+              (item) => _CardPurchaseTile(
+                key: ValueKey('card-purchase-note:${item.purchaseId}'),
+                item: item,
+                repository: widget.repository,
+                spaceId: widget.spaceId,
+              ),
+            ),
           const SizedBox(height: 24),
           const _SectionTitle(
             'parcelas futuras',
@@ -479,23 +511,23 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
           if (!_loading && _upcoming.isEmpty)
             const _EmptyCard(text: 'nenhuma parcela futura neste cartão')
           else if (!_loading)
-            ..._upcoming.map((item) => _UpcomingInstallmentTile(
-              key: ValueKey('upcoming-purchase-note:${item.purchaseId}'),
-              item: item,
-              repository: widget.repository,
-              spaceId: widget.spaceId,
-              showComment: !_purchases.any(
-                (current) => current.purchaseId == item.purchaseId,
+            ..._upcoming.map(
+              (item) => _UpcomingInstallmentTile(
+                key: ValueKey('upcoming-purchase-note:${item.purchaseId}'),
+                item: item,
+                repository: widget.repository,
+                spaceId: widget.spaceId,
+                showComment: !_purchases.any(
+                  (current) => current.purchaseId == item.purchaseId,
+                ),
               ),
-            )),
+            ),
           const SizedBox(height: 18),
           ExpansionTile(
             key: const ValueKey('wallet-purchase-history'),
             tilePadding: EdgeInsets.zero,
             title: const Text('outras compras e comentários'),
-            subtitle: const Text(
-              'compras anteriores, inclusive as já pagas',
-            ),
+            subtitle: const Text('compras anteriores, inclusive as já pagas'),
             onExpansionChanged: (expanded) {
               if (expanded && _purchaseHistory == null) {
                 setState(() {
@@ -514,10 +546,11 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
                     if (snapshot.hasError) {
                       return TextButton(
                         onPressed: () => setState(() {
-                          _purchaseHistory = widget.repository.listCardPurchaseHistory(
-                            spaceId: widget.spaceId,
-                            cardId: _card.id,
-                          );
+                          _purchaseHistory = widget.repository
+                              .listCardPurchaseHistory(
+                                spaceId: widget.spaceId,
+                                cardId: _card.id,
+                              );
                         }),
                         child: const Text('tentar carregar as compras'),
                       );
@@ -547,7 +580,8 @@ class _WalletCardDetailScreenState extends State<WalletCardDetailScreen> {
                             repository: widget.repository,
                             spaceId: widget.spaceId,
                             title: item.displayName,
-                            subtitle: 'compra parcelada em ${item.installmentsCount}x',
+                            subtitle:
+                                'compra parcelada em ${item.installmentsCount}x',
                             amount: Formatters.money(item.totalAmount),
                             icon: AppIcons.receipt,
                           ),
@@ -730,11 +764,7 @@ class _CompactInstrumentDetailHeader extends StatelessWidget {
             subtitle,
             maxLines: largerText ? 3 : 2,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.body(
-              context,
-              fontSize: 13,
-              color: secondary,
-            ),
+            style: AppTypography.body(context, fontSize: 13, color: secondary),
           ),
         ],
       ],
@@ -751,13 +781,17 @@ class _ResponsiveDetailGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final layout = AppBreakpoints.fromWidth(constraints.maxWidth);
-        final columns = layout == AppLayoutSize.compact ? 1 : children.length.clamp(1, 3);
+        final columns = layout == AppLayoutSize.compact
+            ? 1
+            : children.length.clamp(1, 3);
         const gap = 12.0;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
           spacing: gap,
           runSpacing: gap,
-          children: children.map((child) => SizedBox(width: width, child: child)).toList(growable: false),
+          children: children
+              .map((child) => SizedBox(width: width, child: child))
+              .toList(growable: false),
         );
       },
     );
@@ -813,7 +847,10 @@ class _DetailPanel extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
-                style: AppTypography.money(context, fontSize: compact ? 23 : 24),
+                style: AppTypography.money(
+                  context,
+                  fontSize: compact ? 23 : 24,
+                ),
               ),
             )
           else
@@ -821,7 +858,10 @@ class _DetailPanel extends StatelessWidget {
               value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.section(context, fontSize: compact ? 16 : 17),
+              style: AppTypography.section(
+                context,
+                fontSize: compact ? 16 : 17,
+              ),
             ),
           const SizedBox(height: 6),
           Text(
@@ -861,9 +901,14 @@ class _MovementTile extends StatelessWidget {
     return _RowSurface(
       icon: item.amount >= 0 ? AppIcons.income : AppIcons.expense,
       title: item.description,
-      subtitle: [if (item.categoryName != null) item.categoryName!, Formatters.shortDate.format(item.occurredAt)].join(' · '),
+      subtitle: [
+        if (item.categoryName != null) item.categoryName!,
+        Formatters.shortDate.format(item.occurredAt),
+      ].join(' · '),
       trailing: Formatters.money(item.amount),
-      trailingColor: item.amount >= 0 ? AppColors.positiveText(brightness) : AppColors.expenseText(brightness),
+      trailingColor: item.amount >= 0
+          ? AppColors.positiveText(brightness)
+          : AppColors.expenseText(brightness),
     );
   }
 }
@@ -1119,7 +1164,14 @@ class _EmptyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: AppColors.border(brightness)),
       ),
-      child: Text(text, style: AppTypography.body(context, fontSize: 11, color: AppColors.secondaryText(brightness))),
+      child: Text(
+        text,
+        style: AppTypography.body(
+          context,
+          fontSize: 11,
+          color: AppColors.secondaryText(brightness),
+        ),
+      ),
     );
   }
 }
@@ -1151,8 +1203,14 @@ Future<bool?> _confirmArchive(
       title: Text(title),
       content: Text(body),
       actions: [
-        TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('cancelar')),
-        FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('arquivar')),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('arquivar'),
+        ),
       ],
     ),
   );

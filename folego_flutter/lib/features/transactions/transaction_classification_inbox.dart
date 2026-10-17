@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'classification_review_overview.dart';
+import 'transaction_detail_sheet_v2.dart';
+import '../../data/models/financial_space.dart';
 
 import '../../core/entitlements/feature_entitlements.dart';
 import '../../core/layout/app_breakpoints.dart';
@@ -32,14 +34,17 @@ List<TransactionItem> matchingClassificationCandidates(
   if (!isSpecificAutomationDescription(name) || original.accountId == null) {
     return const <TransactionItem>[];
   }
-  return pending.where((candidate) =>
-      candidate.id != original.id &&
-      candidate.categoryId == original.categoryId &&
-      candidate.eventType == original.eventType &&
-      candidate.source == original.source &&
-      candidate.accountId == original.accountId &&
-      normalizeAutomationText(candidate.description) == name
-  ).toList(growable: false);
+  return pending
+      .where(
+        (candidate) =>
+            candidate.id != original.id &&
+            candidate.categoryId == original.categoryId &&
+            candidate.eventType == original.eventType &&
+            candidate.source == original.source &&
+            candidate.accountId == original.accountId &&
+            normalizeAutomationText(candidate.description) == name,
+      )
+      .toList(growable: false);
 }
 
 /// Suggest only reviewed exact-description rules. Never classify silently.
@@ -49,37 +54,43 @@ CategoryItem? reviewedCategorySuggestion({
   required List<CategoryItem> categories,
 }) {
   final description = normalizeAutomationText(item.description);
-  if (description.length < 4 || isGenericAutomationDescription(description)) return null;
+  if (description.length < 4 || isGenericAutomationDescription(description)) {
+    return null;
+  }
   final kind = transactionClassificationKind(item.eventType);
   if (kind == null) return null;
-  final matches = rules.where((rule) {
-    if (!rule.active ||
-        rule.categoryId == null ||
-        rule.matchField != AutomationMatchField.description ||
-        rule.matchType != AutomationMatchType.equals ||
-        rule.actionType == AutomationActionType.markRecognized ||
-        rule.executionMode == AutomationExecutionMode.automatic ||
-        normalizeAutomationText(rule.matchValue) != description) {
-      return false;
-    }
-    final debit = kind != 'income';
-    if (rule.direction == AutomationDirection.credit && debit) {
-      return false;
-    }
-    if (rule.direction == AutomationDirection.debit && !debit) {
-      return false;
-    }
-    if (rule.sourceScope == AutomationSourceScope.card ||
-        rule.sourceScope == AutomationSourceScope.benefit) {
-      return false;
-    }
-    if (rule.sourceScope == AutomationSourceScope.account &&
-        (item.accountId == null || rule.sourceAccountId != item.accountId)) {
-      return false;
-    }
-    return true;
-  }).toList(growable: false)
-    ..sort(compareAutomationRulesForPreview);
+  final matches =
+      rules
+          .where((rule) {
+            if (!rule.active ||
+                rule.categoryId == null ||
+                rule.matchField != AutomationMatchField.description ||
+                rule.matchType != AutomationMatchType.equals ||
+                rule.actionType == AutomationActionType.markRecognized ||
+                rule.executionMode == AutomationExecutionMode.automatic ||
+                normalizeAutomationText(rule.matchValue) != description) {
+              return false;
+            }
+            final debit = kind != 'income';
+            if (rule.direction == AutomationDirection.credit && debit) {
+              return false;
+            }
+            if (rule.direction == AutomationDirection.debit && !debit) {
+              return false;
+            }
+            if (rule.sourceScope == AutomationSourceScope.card ||
+                rule.sourceScope == AutomationSourceScope.benefit) {
+              return false;
+            }
+            if (rule.sourceScope == AutomationSourceScope.account &&
+                (item.accountId == null ||
+                    rule.sourceAccountId != item.accountId)) {
+              return false;
+            }
+            return true;
+          })
+          .toList(growable: false)
+        ..sort(compareAutomationRulesForPreview);
   if (matches.isEmpty) return null;
   final chosen = matches.first;
   for (final category in categories) {
@@ -122,11 +133,13 @@ Map<String, String> historicalCategorySuggestions({
   required Iterable<CategoryItem> categories,
 }) {
   final allowed = categories
-      .where((category) =>
-          category.active &&
-          category.isSelectable &&
-          (category.categoryRole == null ||
-              category.categoryRole == 'economic'))
+      .where(
+        (category) =>
+            category.active &&
+            category.isSelectable &&
+            (category.categoryRole == null ||
+                category.categoryRole == 'economic'),
+      )
       .map((category) => category.id)
       .toSet();
 
@@ -203,8 +216,7 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
 }) {
   final allowed = <String, CategoryItem>{
     for (final c in categories)
-      if (c.active && c.isSelectable && c.categoryRole == 'economic')
-        c.id: c,
+      if (c.active && c.isSelectable && c.categoryRole == 'economic') c.id: c,
   };
   final groups = <String, List<TransactionItem>>{};
   for (final item in history) {
@@ -236,29 +248,33 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
         ? AutomationDirection.credit
         : AutomationDirection.debit;
     final normalized = normalizeAutomationText(first.description);
-    final existing = existingRules.any((rule) =>
-        rule.active &&
-        rule.matchField == AutomationMatchField.description &&
-        rule.matchType == AutomationMatchType.equals &&
-        rule.sourceScope == AutomationSourceScope.account &&
-        rule.sourceAccountId == first.accountId &&
-        rule.direction == direction &&
-        normalizeAutomationText(rule.matchValue) == normalized);
+    final existing = existingRules.any(
+      (rule) =>
+          rule.active &&
+          rule.matchField == AutomationMatchField.description &&
+          rule.matchType == AutomationMatchType.equals &&
+          rule.sourceScope == AutomationSourceScope.account &&
+          rule.sourceAccountId == first.accountId &&
+          rule.direction == direction &&
+          normalizeAutomationText(rule.matchValue) == normalized,
+    );
     if (existing) {
       continue;
     }
-    proposals.add(AutopilotRuleProposal(
-      accountId: first.accountId!,
-      accountName: first.accountName,
-      description: first.description,
-      eventType: first.eventType,
-      categoryId: first.categoryId!,
-      categoryName: allowed[first.categoryId]!.breadcrumb,
-      sampleCount: rows.length,
-    ));
+    proposals.add(
+      AutopilotRuleProposal(
+        accountId: first.accountId!,
+        accountName: first.accountName,
+        description: first.description,
+        eventType: first.eventType,
+        categoryId: first.categoryId!,
+        categoryName: allowed[first.categoryId]!.breadcrumb,
+        sampleCount: rows.length,
+      ),
+    );
   }
-  proposals.sort((a,b) {
-    final count=b.sampleCount.compareTo(a.sampleCount);
+  proposals.sort((a, b) {
+    final count = b.sampleCount.compareTo(a.sampleCount);
     return count != 0 ? count : a.description.compareTo(b.description);
   });
   return proposals;
@@ -338,7 +354,8 @@ class _TransactionClassificationInboxState
       final values = await Future.wait<dynamic>([
         widget.repository.listExpenseCategoryCatalog(widget.spaceId),
         widget.repository.listIncomeCategoryCatalog(widget.spaceId),
-        widget.repository.listAutomationRules(widget.spaceId)
+        widget.repository
+            .listAutomationRules(widget.spaceId)
             .catchError((_) => <AutomationRule>[]),
         widget.repository
             .getTransactionsPage(widget.spaceId, pageSize: 400)
@@ -363,12 +380,11 @@ class _TransactionClassificationInboxState
     }
   }
 
-  Map<String, String> get _readySuggestions =>
-      historicalCategorySuggestions(
-        pending: _items,
-        history: _knownHistory,
-        categories: [..._expenseCategories, ..._incomeCategories],
-      );
+  Map<String, String> get _readySuggestions => historicalCategorySuggestions(
+    pending: _items,
+    history: _knownHistory,
+    categories: [..._expenseCategories, ..._incomeCategories],
+  );
 
   Future<void> _applyReviewedSuggestions() async {
     if (_savingEventId != null || _loading || _applyingSuggestions) return;
@@ -469,23 +485,28 @@ class _TransactionClassificationInboxState
         _changed = _changed || applied > 0;
         _batchDone += applied;
         if (widget.batchSize != null) {
-          _batchTarget = _batchDone + (_items.length < widget.batchSize!
-              ? _items.length
-              : widget.batchSize!);
+          _batchTarget =
+              _batchDone +
+              (_items.length < widget.batchSize!
+                  ? _items.length
+                  : widget.batchSize!);
         }
         if (failed) {
-          _error = '$applied sugestões aplicadas. '
+          _error =
+              '$applied sugestões aplicadas. '
               'Uma classificação falhou; as demais ficaram pendentes.';
         }
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('$applied categorias confirmadas e aplicadas'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$applied categorias confirmadas e aplicadas')),
+      );
     } catch (_) {
       if (mounted) {
-        setState(() =>
-            _error = 'Não foi possível atualizar as pendências. '
-                'Nada foi aplicado automaticamente.');
+        setState(
+          () => _error =
+              'Não foi possível atualizar as pendências. '
+              'Nada foi aplicado automaticamente.',
+        );
       }
     } finally {
       if (mounted) setState(() => _applyingSuggestions = false);
@@ -529,7 +550,8 @@ class _TransactionClassificationInboxState
     try {
       // Recheck catalog + examples immediately before enabling a rule.
       final history = await widget.repository.getTransactionsPage(
-        widget.spaceId, pageSize: 400,
+        widget.spaceId,
+        pageSize: 400,
       );
       final eligible = safeAutopilotRuleProposals(
         history: history.items,
@@ -537,15 +559,19 @@ class _TransactionClassificationInboxState
         existingRules: _reviewRules,
       );
       final normalized = normalizeAutomationText(proposal.description);
-      final trusted = eligible.any((candidate) =>
-          candidate.accountId == proposal.accountId &&
-          candidate.categoryId == proposal.categoryId &&
-          candidate.eventType == proposal.eventType &&
-          normalizeAutomationText(candidate.description) == normalized);
+      final trusted = eligible.any(
+        (candidate) =>
+            candidate.accountId == proposal.accountId &&
+            candidate.categoryId == proposal.categoryId &&
+            candidate.eventType == proposal.eventType &&
+            normalizeAutomationText(candidate.description) == normalized,
+      );
       if (!trusted) {
         if (mounted) {
-          setState(() => _error =
-              'O histórico mudou. Atualize antes de ativar a regra.');
+          setState(
+            () =>
+                _error = 'O histórico mudou. Atualize antes de ativar a regra.',
+          );
         }
         return;
       }
@@ -568,13 +594,16 @@ class _TransactionClassificationInboxState
       );
       if (!mounted) return;
       setState(() => _reviewRules = [..._reviewRules, created]);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Regra ativada. Aplicação na próxima conferência.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Regra ativada. Aplicação na próxima conferência.'),
+        ),
+      );
     } catch (_) {
       if (mounted) {
-        setState(() => _error =
-            'Não foi possível ativar a regra. Tente novamente.');
+        setState(
+          () => _error = 'Não foi possível ativar a regra. Tente novamente.',
+        );
       }
     } finally {
       if (mounted) setState(() => _creatingAutomaticRule = false);
@@ -617,7 +646,8 @@ class _TransactionClassificationInboxState
     final kind = transactionClassificationKind(item.eventType);
     if (kind == null) return null;
     final categories = kind == 'income'
-        ? _incomeCategories : _expenseCategories;
+        ? _incomeCategories
+        : _expenseCategories;
     if (_automationEnabled) {
       final reviewed = reviewedCategorySuggestion(
         item: item,
@@ -731,8 +761,8 @@ class _TransactionClassificationInboxState
       final remaining = _batchTarget - _batchDone;
       final matches = showOffers
           ? matchingClassificationCandidates(item, _items)
-              .take(remaining > 4 ? 4 : (remaining < 0 ? 0 : remaining))
-              .toList(growable: false)
+                .take(remaining > 4 ? 4 : (remaining < 0 ? 0 : remaining))
+                .toList(growable: false)
           : const <TransactionItem>[];
       final grouped = matches.isEmpty
           ? 0
@@ -810,9 +840,11 @@ class _TransactionClassificationInboxState
         });
       } catch (_) {
         if (mounted) {
-          setState(() => _error =
-              '$applied lançamento(s) adicionais classificados; houve uma '
-              'falha no próximo. Os restantes foram preservados.');
+          setState(
+            () => _error =
+                '$applied lançamento(s) adicionais classificados; houve uma '
+                'falha no próximo. Os restantes foram preservados.',
+          );
         }
         break;
       } finally {
@@ -835,16 +867,18 @@ class _TransactionClassificationInboxState
     final direction = transactionClassificationKind(item.eventType) == 'income'
         ? AutomationDirection.credit
         : AutomationDirection.debit;
-    final existing = _reviewRules.any((rule) =>
-        rule.active &&
-        rule.matchField == AutomationMatchField.description &&
-        rule.matchType == AutomationMatchType.equals &&
-        rule.sourceScope == AutomationSourceScope.account &&
-        rule.sourceAccountId == item.accountId &&
-        rule.direction == direction &&
-        rule.categoryId == category.id &&
-        normalizeAutomationText(rule.matchValue) ==
-            normalizeAutomationText(description));
+    final existing = _reviewRules.any(
+      (rule) =>
+          rule.active &&
+          rule.matchField == AutomationMatchField.description &&
+          rule.matchType == AutomationMatchType.equals &&
+          rule.sourceScope == AutomationSourceScope.account &&
+          rule.sourceAccountId == item.accountId &&
+          rule.direction == direction &&
+          rule.categoryId == category.id &&
+          normalizeAutomationText(rule.matchValue) ==
+              normalizeAutomationText(description),
+    );
     if (existing) return false;
 
     final confirmed = await showDialog<bool>(
@@ -852,7 +886,7 @@ class _TransactionClassificationInboxState
       builder: (dialogContext) => AlertDialog(
         title: const Text('lembrar esta categoria?'),
         content: Text(
-          'Quando aparecer uma descrição idêntica a “${_shortLabel(description)}”, sugerir ${category.breadcrumb}?\n\nVocê continua confirmando a classificação; valores e datas não são alterados.' ,
+          'Quando aparecer uma descrição idêntica a “${_shortLabel(description)}”, sugerir ${category.breadcrumb}?\n\nVocê continua confirmando a classificação; valores e datas não são alterados.',
         ),
         actions: [
           TextButton(
@@ -962,7 +996,9 @@ class _TransactionClassificationInboxState
     final remainingInBatch = _batchTarget - _batchDone;
     final displayedItems = widget.batchSize == null
         ? visibleItems
-        : visibleItems.take(remainingInBatch < 0 ? 0 : remainingInBatch).toList();
+        : visibleItems
+              .take(remainingInBatch < 0 ? 0 : remainingInBatch)
+              .toList();
 
     return Material(
       color: background,
@@ -991,9 +1027,8 @@ class _TransactionClassificationInboxState
                               ? 'tudo em dia por aqui'
                               : widget.batchSize != null
                               ? '$_batchDone/$_batchTarget neste lote • ${_items.length} pendentes no total'
-                              : ClassificationReviewOverview.fromItems(
-                                  _items,
-                                ).description,
+                              : ClassificationReviewOverview.fromItems(_items)
+                                    .description,
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
@@ -1009,22 +1044,26 @@ class _TransactionClassificationInboxState
                       context: context,
                       builder: (dialogContext) => AlertDialog(
                         title: const Text('categorias inteligentes'),
-                        content: const SingleChildScrollView(child: Text(
-                          '1. Abra um lançamento pendente. Quando houver uma sugestão, '
-                          'confira a categoria e o motivo indicado.\n\n'
-                          '2. Toque em aceitar sugestão para confirmar, ou escolha '
-                          'outra categoria manualmente. Sem um padrão seguro, o app '
-                          'prefere não sugerir.\n\n'
-                          '3. Para semelhantes ou lotes, confira a lista antes de aplicar. '
-                          'Uma sugestão não é uma regra automática.\n\n'
-                          'Categoria diz com o que você gastou. Fixo/variável diz '
-                          'se o valor costuma ser estável ou mudar: use o botão '
-                          'definir gastos fixos e variáveis em Lançamentos.',
-                        )),
-                        actions: [TextButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          child: const Text('entendi'),
-                        )],
+                        content: const SingleChildScrollView(
+                          child: Text(
+                            '1. Abra um lançamento pendente. Quando houver uma sugestão, '
+                            'confira a categoria e o motivo indicado.\n\n'
+                            '2. Toque em aceitar sugestão para confirmar, ou escolha '
+                            'outra categoria manualmente. Sem um padrão seguro, o app '
+                            'prefere não sugerir.\n\n'
+                            '3. Para semelhantes ou lotes, confira a lista antes de aplicar. '
+                            'Uma sugestão não é uma regra automática.\n\n'
+                            'Categoria diz com o que você gastou. Fixo/variável diz '
+                            'se o valor costuma ser estável ou mudar: use o botão '
+                            'definir gastos fixos e variáveis em Lançamentos.',
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            child: const Text('entendi'),
+                          ),
+                        ],
                       ),
                     ),
                     icon: Icon(AppIcons.info, color: secondaryText),
@@ -1058,7 +1097,8 @@ class _TransactionClassificationInboxState
                       key: const ValueKey('classification-filter-all'),
                       label: Text('todos (${_items.length})'),
                       selected: !_suggestionsOnly,
-                      onSelected: (_) => setState(() => _suggestionsOnly = false),
+                      onSelected: (_) =>
+                          setState(() => _suggestionsOnly = false),
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
@@ -1067,12 +1107,14 @@ class _TransactionClassificationInboxState
                         'com sugestão (${_items.where((i) => _suggestionForItem(i) != null).length})',
                       ),
                       selected: _suggestionsOnly,
-                      onSelected: (_) => setState(() => _suggestionsOnly = true),
+                      onSelected: (_) =>
+                          setState(() => _suggestionsOnly = true),
                     ),
                   ],
                 ),
               ),
-            if (!_loading && _automationEnabled &&
+            if (!_loading &&
+                _automationEnabled &&
                 safeAutopilotRuleProposals(
                   history: _knownHistory,
                   categories: [..._expenseCategories, ..._incomeCategories],
@@ -1110,7 +1152,8 @@ class _TransactionClassificationInboxState
                   ],
                 ),
               ),
-            if (!_loading && !_applyingSuggestions &&
+            if (!_loading &&
+                !_applyingSuggestions &&
                 _readySuggestions.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -1123,8 +1166,7 @@ class _TransactionClassificationInboxState
                   ),
                 ),
               ),
-            if (_applyingSuggestions)
-              const LinearProgressIndicator(),
+            if (_applyingSuggestions) const LinearProgressIndicator(),
             if (_error != null)
               Container(
                 width: double.infinity,
@@ -1201,9 +1243,27 @@ class _TransactionClassificationInboxState
                             suggestion: suggestion,
                             saving: _savingEventId == item.id,
                             onTap: () => _chooseCategory(item),
+                            onDetails: () async {
+                              await showTransactionDetail(
+                                context: context,
+                                space: FinancialSpace(
+                                  id: widget.spaceId,
+                                  name: 'Minhas finanças',
+                                ),
+                                repository: widget.repository,
+                                eventId: item.id,
+                              );
+                              if (mounted) {
+                                _changed = true;
+                                await _refresh();
+                              }
+                            },
                             onAcceptSuggestion: suggestion == null
                                 ? null
-                                : () => _acceptCategorySuggestion(item, suggestion),
+                                : () => _acceptCategorySuggestion(
+                                    item,
+                                    suggestion,
+                                  ),
                           );
                         },
                       ),
@@ -1258,6 +1318,7 @@ class _ClassificationCard extends StatelessWidget {
     required this.onAcceptSuggestion,
     required this.saving,
     required this.onTap,
+    required this.onDetails,
   });
 
   final TransactionItem item;
@@ -1265,6 +1326,7 @@ class _ClassificationCard extends StatelessWidget {
   final VoidCallback? onAcceptSuggestion;
   final bool saving;
   final VoidCallback onTap;
+  final VoidCallback onDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -1371,7 +1433,9 @@ class _ClassificationCard extends StatelessWidget {
                       Text(
                         'sugestão: ${suggestion!.category.breadcrumb} · '
                         '${suggestion!.reason}',
-                        key: ValueKey('classification-smart-suggestion:${item.id}'),
+                        key: ValueKey(
+                          'classification-smart-suggestion:${item.id}',
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
@@ -1385,13 +1449,21 @@ class _ClassificationCard extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: OutlinedButton.icon(
-                          key: ValueKey('classification-accept-suggestion:${item.id}'),
+                          key: ValueKey(
+                            'classification-accept-suggestion:${item.id}',
+                          ),
                           onPressed: saving ? null : onAcceptSuggestion,
                           icon: const Icon(AppIcons.check, size: 15),
                           label: const Text('aceitar sugestão'),
                         ),
                       ),
                     ],
+                    TextButton(
+                      onPressed: saving ? null : onDetails,
+                      child: const Text(
+                        'revisar descrição, fixo/variável e comentário',
+                      ),
+                    ),
                     const SizedBox(height: 9),
                     Row(
                       children: [

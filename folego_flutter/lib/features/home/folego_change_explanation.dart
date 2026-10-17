@@ -110,13 +110,28 @@ class FolegoChangeExplanation extends StatelessWidget {
             style: AppTypography.section(context, fontSize: 16),
           ),
           const SizedBox(height: 8),
+          Text('referência: ${Formatters.fullDate.format(current.asOfDate)}'),
+          Text(
+            current.nextIncomeDate == null
+                ? 'próximo recebimento: ainda não configurado'
+                : 'próximo recebimento: ${Formatters.fullDate.format(current.nextIncomeDate!)} · previsto ${money(current.nextIncomeAmount)}',
+          ),
+          const Text(
+            '1. confira o dinheiro registrado e o que está protegido.',
+          ),
           Text('saldo líquido registrado: ${money(current.liquidBalance)}'),
           Text('parte protegida: ${money(current.protectedBalance)}'),
           Text(
             'compromissos até a próxima entrada: ${money(current.mandatoryOutflowsUntilIncome)}',
           ),
+          const Text(
+            '2. os compromissos reduzem a margem de caixa; a renda prevista ainda não entra no saldo.',
+          ),
           Text('margem de caixa calculada: ${money(current.cashHeadroom)}'),
           if (current.budgetConfigured) ...[
+            const Text(
+              '3. o orçamento limita os gastos mesmo quando ainda há dinheiro na conta. as duas margens não devem ser somadas.',
+            ),
             Text(
               'teto flexível: ${money(current.monthlyBudgetPlanned)} · usado: ${money(current.monthlyBudgetUsed)}',
             ),
