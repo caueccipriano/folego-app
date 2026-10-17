@@ -33,6 +33,7 @@ Future<TransactionFilters?> showTransactionFilters({
   required BuildContext context,
   required TransactionFilters initial,
   required TransactionFilterOptions options,
+  ValueChanged<int>? onOpenReviewHub,
 }) {
   final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
   if (compact) {
@@ -43,7 +44,8 @@ Future<TransactionFilters?> showTransactionFilters({
       backgroundColor: AppColors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: .9,
-        child: TransactionFilterSheet(initial: initial, options: options),
+        child: TransactionFilterSheet(initial: initial, options: options,
+          onOpenReviewHub: onOpenReviewHub),
       ),
     );
   }
@@ -55,7 +57,8 @@ Future<TransactionFilters?> showTransactionFilters({
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
-        child: TransactionFilterSheet(initial: initial, options: options),
+        child: TransactionFilterSheet(initial: initial, options: options,
+          onOpenReviewHub: onOpenReviewHub),
       ),
     ),
   );
@@ -66,10 +69,12 @@ class TransactionFilterSheet extends StatefulWidget {
     super.key,
     required this.initial,
     required this.options,
+    this.onOpenReviewHub,
   });
 
   final TransactionFilters initial;
   final TransactionFilterOptions options;
+  final ValueChanged<int>? onOpenReviewHub;
 
   @override
   State<TransactionFilterSheet> createState() => _TransactionFilterSheetState();
@@ -87,6 +92,14 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
   void initState() {
     super.initState();
     _draft = widget.initial;
+  }
+
+  void _openFinancialHub(int tab) {
+    final onOpen = widget.onOpenReviewHub;
+    if (onOpen == null) return;
+    Navigator.of(context).pop();
+    // Route navigation uses the parent page context, not the closed sheet.
+    onOpen(tab);
   }
 
   Future<void> _pickPeriod() async {
@@ -339,6 +352,44 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
                         color: secondary,
                       ),
                     ),
+                    if (widget.onOpenReviewHub != null) ...[
+                      const SizedBox(height: 20),
+                      Divider(color: border),
+                      const SizedBox(height: 10),
+                      const _SectionLabel('organizar meu dinheiro'),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Consulte anotações e pendências financeiras '
+                        'sem alterar os filtros desta lista.',
+                        style: AppTypography.body(
+                          context, fontSize: 11, color: secondary,
+                        ),
+                      ),
+                      ListTile(
+                        key: const ValueKey('transactions-review-comments'),
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.comment_outlined),
+                        title: const Text('meus comentários'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openFinancialHub(0),
+                      ),
+                      ListTile(
+                        key: const ValueKey('transactions-review-pending'),
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.rule_folder_outlined),
+                        title: const Text('pendências financeiras'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openFinancialHub(1),
+                      ),
+                      ListTile(
+                        key: const ValueKey('transactions-review-others'),
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.category_outlined),
+                        title: const Text('organizar Outros'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openFinancialHub(2),
+                      ),
+                    ],
                   ],
                 ),
               ),
