@@ -149,7 +149,7 @@ void main() {
           ),
         ],
         notificationReadWriter: (spaceId, stableKey) async {
-          calls.add(spaceId + '/' + stableKey);
+          calls.add('$spaceId/$stableKey');
           if (calls.length == 2) read = true;
         },
       ),
