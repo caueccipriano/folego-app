@@ -50,11 +50,11 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const MaterialApp(
+    await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: TransactionFilterSheet(
-          initial: TransactionFilters(),
-          options: TransactionFilterOptions(),
+          initial: TransactionFilters.empty(),
+          options: TransactionFilterOptions.empty(),
         ),
       ),
     ));
