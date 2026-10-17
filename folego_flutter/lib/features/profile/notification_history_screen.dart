@@ -290,7 +290,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       ),
     );
     if (confirmed != true || !mounted || spaceId != widget.spaceId ||
-        userId != _currentUserId()) return;
+        userId != _currentUserId()) {
+        return;
+      }
     setState(() => _markingAll = true);
     try {
       final writer = widget.notificationReadWriter;
@@ -299,15 +301,21 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       } else {
         for (final key in keys) {
           if (!mounted || widget.spaceId != spaceId ||
-              userId != _currentUserId()) return;
+              userId != _currentUserId()) {
+        return;
+      }
           await writer(spaceId, key);
         }
       }
       if (!mounted || widget.spaceId != spaceId ||
-          userId != _currentUserId()) return;
+          userId != _currentUserId()) {
+        return;
+      }
       await _load(quiet: true);
       if (!mounted || widget.spaceId != spaceId ||
-          userId != _currentUserId()) return;
+          userId != _currentUserId()) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('avisos exibidos marcados como lidos. pendências continuam abertas.'),
       ));
