@@ -15,6 +15,9 @@ import 'monthly_category_donut.dart';
 import '../home/upcoming_events_screen.dart';
 import '../goals/goals_screen.dart';
 import 'plan_insights_section.dart';
+import '../../data/models/financial_space.dart';
+import '../../data/models/transaction_filters.dart';
+import '../transactions/transactions_screen.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
 import '../../shared/widgets/category_icon_badge.dart';
@@ -686,9 +689,119 @@ class _PlanScreenState extends State<PlanScreen> {
   ]);
 
   Widget _goalButton() => OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GoalsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.flag_outlined),label:const Text('3 · planejar metas'));
+  Future<void> _openMetricTransactions(String metric) async {
+    final month = _month;
+    final start = DateTime(month.year, month.month);
+    final end = DateTime(month.year, month.month + 1, 0);
+    final types = switch (metric) {
+      'spending' || 'tracked' => <String>{
+        'expense', 'card_purchase', 'benefit_expense', 'debt_payment',
+      },
+      _ => <String>{},
+    };
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => TransactionsScreen(
+        repository: widget.repository,
+        space: FinancialSpace(id: widget.spaceId, name: 'Minhas finanças'),
+        initialFilters: TransactionFilters(
+          startDate: start, endDate: end, eventTypes: types,
+        ),
+      ),
+    ));
+  }
+
+  Future<void> _showInsightExplanation(String metric) async {
+    final info = switch (metric) {
+      'spending' => (
+        'despesas do mês',
+        'Compras, parcelas atribuídas ao mês e benefícios utilizados. '
+        'O pagamento da fatura do cartão não entra como segunda despesa.',
+      ),
+      'cash' => (
+        'dinheiro que saiu das contas',
+        'Fluxos de saída registrados nas contas. Pode incluir transferências, '
+        'faturas e dívidas; não é o mesmo que despesa econômica ou orçamento.',
+      ),
+      _ => (
+        'disponível estimado',
+        'Estimativa baseada nos movimentos registrados no FÔLEGO. '
+        'Não substitui saldo confirmado pelo banco. '
+        'Conciliações pendentes podem explicar divergências.',
+      ),
+    };
+    await _metricExplanationSheet(metric, info.$1, info.$2);
+  }
+
+  Future<void> _showPlanMetricExplanation(String metric) async {
+    final summary = _summary;
+    final info = switch (metric) {
+      'planned' => (
+        'planejado',
+        'Soma dos limites das subcategorias: '
+        '${Formatters.money(summary.plannedAmount)}. '
+        'Limite definido não representa dinheiro disponível em conta.',
+      ),
+      'tracked' => (
+        'gastos + dívidas pagas',
+        'Total acompanhado: ${Formatters.money(summary.actualAmount)}. '
+        'Inclui despesas, parcelas do período, benefícios e dívidas pagas. '
+        'Pagar a fatura não duplica a compra.',
+      ),
+      _ => (
+        'percentual consumido',
+        '${Formatters.money(summary.actualAmount)} acompanhados divididos '
+        'por ${Formatters.money(summary.plannedAmount)} planejados. '
+        'Sem limites configurados não existe percentual comparável.',
+      ),
+    };
+    await _metricExplanationSheet(metric, info.$1, info.$2);
+  }
+
+  Future<void> _metricExplanationSheet(
+      String metric, String title, String description) async {
+    final showTransactions = metric != 'planned' && metric != 'percent';
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 26),
+          child: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: Theme.of(sheetContext).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            Text(description),
+            const SizedBox(height: 10),
+            const Text(
+              'A lista serve para conferir movimentos relacionados, mas '
+              'não necessariamente reproduz o total calculado. '
+              'Não some pagamentos de fatura como novas despesas.'),
+            const SizedBox(height: 18),
+            if (showTransactions)
+              FilledButton.icon(
+                key: const ValueKey('plan-insight-open-transactions'),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('conferir movimentações do mês'),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  _openMetricTransactions(metric);
+                },
+              ),
+            TextButton(
+              onPressed: () => Navigator.of(sheetContext).pop(),
+              child: const Text('fechar'),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInsights() {
     return PlanInsightsSection(
       insights: _insightsFuture!,
+      onOpenMetric: _showInsightExplanation,
       allowEditing: !_isPastMonth,
       onReviewSuggestion: (suggestion) {
         final candidates = _items.where((item) =>
@@ -991,6 +1104,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   label: 'planejado',
                   value: Formatters.money(summary.plannedAmount),
                   brightness: brightness,
+                  onTap: () => _showPlanMetricExplanation('planned'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -999,6 +1113,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   label: 'gastos + dívidas pagas',
                   value: Formatters.money(summary.actualAmount),
                   brightness: brightness,
+                  onTap: () => _showPlanMetricExplanation('tracked'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1007,6 +1122,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   label: 'consumido',
                   value: summary.plannedAmount > 0 ? '$percentage%' : '—',
                   brightness: brightness,
+                  onTap: () => _showPlanMetricExplanation('percent'),
                 ),
               ),
             ],
@@ -1806,16 +1922,21 @@ class _Metric extends StatelessWidget {
     required this.label,
     required this.value,
     required this.brightness,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final Brightness brightness;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border(brightness);
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      child: Container(
       constraints: const BoxConstraints(minWidth: 118),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
@@ -1847,9 +1968,12 @@ class _Metric extends StatelessWidget {
               ),
             ),
           ),
+          if (onTap != null)
+            Icon(Icons.info_outline, size: 12,
+              color: AppColors.secondaryText(brightness)),
         ],
       ),
-    );
+    ));
   }
 }
 
