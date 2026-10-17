@@ -66,6 +66,7 @@ class TransactionsScreenV3 extends StatefulWidget {
     this.onImportRequested,
     this.onClassificationRequested,
     this.onSpendingBehaviorRequested,
+    this.onReviewHubRequested,
     this.pendingClassificationCount = 0,
     this.pendingClassificationLoading = false,
     this.pendingClassificationUnavailable = false,
@@ -80,6 +81,7 @@ class TransactionsScreenV3 extends StatefulWidget {
   final VoidCallback? onImportRequested;
   final VoidCallback? onClassificationRequested;
   final VoidCallback? onSpendingBehaviorRequested;
+  final ValueChanged<int>? onReviewHubRequested;
   final int pendingClassificationCount;
   final bool pendingClassificationLoading;
   final bool pendingClassificationUnavailable;
@@ -415,6 +417,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
       context: context,
       initial: _filters,
       options: _filterOptions,
+      onOpenReviewHub: widget.onReviewHubRequested,
     );
     if (result == null || !mounted) return;
     _applyFilters(result, syncSearchField: true);
