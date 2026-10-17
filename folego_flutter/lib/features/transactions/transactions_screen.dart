@@ -283,49 +283,21 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       onImportRequested: _openImport,
       onClassificationRequested: _openClassificationInbox,
       onSpendingBehaviorRequested: _openExpenseBehaviors,
+      onReviewHubRequested: _openReviewHub,
       pendingClassificationCount: _pending.length,
       pendingClassificationLoading: _loadingPending,
       pendingClassificationUnavailable: _pendingUnavailable,
     );
 
-    final reviewTools = Column(children: [
-      SizedBox(
-        height: 43,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          children: [
-            TextButton.icon(
-              key: const ValueKey('transactions-review-comments'),
-              onPressed: () => _openReviewHub(0),
-              icon: const Icon(Icons.comment_outlined, size: 17),
-              label: const Text('meus comentários'),
-            ),
-            TextButton.icon(
-              key: const ValueKey('transactions-review-pending'),
-              onPressed: () => _openReviewHub(1),
-              icon: const Icon(Icons.rule_folder_outlined, size: 17),
-              label: const Text('pendências'),
-            ),
-            TextButton.icon(
-              key: const ValueKey('transactions-review-others'),
-              onPressed: () => _openReviewHub(2),
-              icon: const Icon(Icons.category_outlined, size: 17),
-              label: const Text('organizar Outros'),
-            ),
-          ],
-        ),
-      ),
-      Expanded(child: content),
-    ]);
-
-    if (!desktop) return reviewTools;
+    // Keep the established page header and scrolling layout unchanged.
+    // The three review destinations now live behind the existing filter sheet.
+    if (!desktop) return content;
 
     return Theme(
       data: Theme.of(context).copyWith(visualDensity: VisualDensity.compact),
       child: KeyedSubtree(
         key: const ValueKey('transactions-desktop-layout'),
-        child: reviewTools,
+        child: content,
       ),
     );
   }
