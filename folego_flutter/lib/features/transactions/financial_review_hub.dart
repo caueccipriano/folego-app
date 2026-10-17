@@ -345,14 +345,17 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
       Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
         future: _future,
         builder: (context, snapshot) {
-          if (snapshot.hasError) return Center(
-            child: TextButton(
-              onPressed: _refresh,
-              child: const Text('Não consegui consultar. Tentar novamente'),
-            ),
-          );
-          if (!snapshot.hasData) return const Center(
-            child: CircularProgressIndicator());
+          if (snapshot.hasError) {
+            return Center(
+              child: TextButton(
+                onPressed: _refresh,
+                child: const Text('Não consegui consultar. Tentar novamente'),
+              ),
+            );
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
           final q = _search.text.trim().toLowerCase();
           final all = snapshot.data!;
           final rows = _tab != 0 ? all : all.where((n) =>
