@@ -7,6 +7,7 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/monthly_money_summary.dart';
+import 'home_value_explanation.dart';
 
 const monthlyCardSemanticsTooltip =
     'Aqui você vê o que recebeu e o que gastou neste mês, não o saldo do banco. '
@@ -33,6 +34,16 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
   final VoidCallback? onOpenClosing;
   final void Function(MonthlyMoneyTransactionKind, DateTime)?
   onOpenTransactions;
+
+  void _explain(BuildContext context, MonthlyMoneySummary value,
+      HomeValueKind kind, {MonthlyMoneyTransactionKind? transactions}) {
+    showHomeValueExplanation(
+      context, summary: value, kind: kind,
+      onOpenTransactions: transactions == null || onOpenTransactions == null
+          ? null
+          : () => onOpenTransactions!(transactions, value.periodMonth),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,14 +127,10 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                 icon: AppIcons.income,
                 value: Formatters.money(value.realIncome),
                 valueColor: AppColors.positiveText(brightness),
-                hint: 'receitas do mês · ver transações',
+                hint: 'toque para entender o valor',
                 tapKey: const ValueKey('monthly-income-open-transactions'),
-                onTap: onOpenTransactions == null
-                    ? null
-                    : () => onOpenTransactions!(
-                        MonthlyMoneyTransactionKind.income,
-                        value.periodMonth,
-                      ),
+                onTap: () => _explain(context, value, HomeValueKind.income,
+                    transactions: MonthlyMoneyTransactionKind.income),
               ),
               _MonthlyHeadlineData(
                 label: 'quanto gastei?',
@@ -131,14 +138,10 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
                 value: Formatters.money(value.spendingMade),
                 valueColor: primary,
                 valueKey: const ValueKey('monthly-spending-net'),
-                hint: 'compras e gastos · ver transações',
+                hint: 'toque para entender o valor',
                 tapKey: const ValueKey('monthly-spending-open-transactions'),
-                onTap: onOpenTransactions == null
-                    ? null
-                    : () => onOpenTransactions!(
-                        MonthlyMoneyTransactionKind.spending,
-                        value.periodMonth,
-                      ),
+                onTap: () => _explain(context, value, HomeValueKind.spending,
+                    transactions: MonthlyMoneyTransactionKind.spending),
               ),
             ],
           ),
@@ -148,7 +151,10 @@ class HomeMonthlyMoneyCard extends StatelessWidget {
             style: AppTypography.body(context, fontSize: 11, color: secondary),
           ),
           const SizedBox(height: 10),
-          _EconomicResultTile(summary: value),
+          _EconomicResultTile(
+            summary: value,
+            onExplain: () => _explain(context, value, HomeValueKind.economic),
+          ),
           const SizedBox(height: 15),
           Text(
             'onde os gastos aconteceram',
@@ -342,9 +348,10 @@ class _MonthlyHeadlineTile extends StatelessWidget {
 }
 
 class _EconomicResultTile extends StatelessWidget {
-  const _EconomicResultTile({required this.summary});
+  const _EconomicResultTile({required this.summary, required this.onExplain});
 
   final MonthlyMoneySummary summary;
+  final VoidCallback onExplain;
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +360,13 @@ class _EconomicResultTile extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final difference = summary.competenceExpenses - summary.spendingMade;
 
-    return Container(
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+      key: const ValueKey('monthly-economic-explain'),
+      onTap: onExplain,
+      borderRadius: BorderRadius.circular(AppRadii.compactCard),
+      child: Container(
       key: const ValueKey('monthly-economic-result'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -378,6 +391,7 @@ class _EconomicResultTile extends StatelessWidget {
                   ),
                 ),
               ),
+              const Icon(Icons.info_outline, size: 16),
             ],
           ),
           const SizedBox(height: 5),
@@ -414,7 +428,8 @@ class _EconomicResultTile extends StatelessWidget {
           ],
         ],
       ),
-    );
+    )),
+  );
   }
 }
 

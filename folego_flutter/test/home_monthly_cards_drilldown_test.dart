@@ -4,7 +4,7 @@ import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/features/home/home_monthly_money_card.dart';
 
 void main() {
-  testWidgets('monthly income and spending cards open the correct drilldown',
+  testWidgets('monthly cards explain first and then open the correct drilldown',
       (tester) async {
     final summary = MonthlyMoneySummary.fromJson({
       'period_month': '2026-10-01',
@@ -38,11 +38,25 @@ void main() {
     await tester.tap(find.byKey(
       const ValueKey('monthly-income-open-transactions'),
     ));
+    await tester.pumpAndSettle();
+    expect(find.text('me explica esse valor'), findsOneWidget);
+    expect(selections, isEmpty);
+    await tester.tap(find.byKey(
+      const ValueKey('home-explain-open-transactions'),
+    ));
+    await tester.pumpAndSettle();
     expect(selections, [MonthlyMoneyTransactionKind.income]);
 
     await tester.tap(find.byKey(
       const ValueKey('monthly-spending-open-transactions'),
     ));
+    await tester.pumpAndSettle();
+    expect(find.text('me explica esse valor'), findsOneWidget);
+    expect(selections.length, 1);
+    await tester.tap(find.byKey(
+      const ValueKey('home-explain-open-transactions'),
+    ));
+    await tester.pumpAndSettle();
     expect(selections, [
       MonthlyMoneyTransactionKind.income,
       MonthlyMoneyTransactionKind.spending,
@@ -53,7 +67,7 @@ void main() {
     }
   });
 
-  testWidgets('monthly cards have no dead tap action without navigation',
+  testWidgets('monthly cards still explain values without navigation callback',
       (tester) async {
     final summary = MonthlyMoneySummary.fromJson({
       'period_month': '2026-10-01',
@@ -72,6 +86,14 @@ void main() {
     final incomeTap = tester.widget<InkWell>(
       find.byKey(const ValueKey('monthly-income-open-transactions')),
     );
-    expect(incomeTap.onTap, isNull);
+    expect(incomeTap.onTap, isNotNull);
+    await tester.tap(find.byKey(
+      const ValueKey('monthly-income-open-transactions'),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('me explica esse valor'), findsOneWidget);
+    expect(find.text('de onde veio esse número?'), findsOneWidget);
+    expect(find.byKey(
+      const ValueKey('home-explain-open-transactions')), findsNothing);
   });
 }
