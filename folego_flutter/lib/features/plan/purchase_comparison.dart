@@ -159,14 +159,14 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Horizonte: ${widget.horizonMonths} meses. Sem a compra, o menor saldo projetado é ${Formatters.money(base.summary.minimumBalance)}.',
+                  'Horizonte: ${widget.horizonMonths} meses. Sem a compra, o menor saldo projetado é ${hidden ? '••••' : Formatters.money(base.summary.minimumBalance)}.',
                 ),
                 const Text(
                   'Comparação com os compromissos conhecidos. Não inclui juros futuros ou novas despesas ainda não registradas. Adiar mantém o preço à vista informado.',
                 ),
                 const SizedBox(height: 12),
                 for (var i = 0; i < widget.options.length; i++)
-                  _option(widget.options[i], snapshot.data![i + 1], base),
+                  _option(widget.options[i], snapshot.data![i + 1], base, hidden),
                 const Text(
                   'Parcelas além do horizonte continuam devidas, mesmo quando não aparecem no saldo final. Escolher um cenário altera apenas a simulação.',
                 ),
@@ -184,24 +184,24 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
     ],
     ),
   );
-  Widget _option(PurchaseOption option, ProjectionResult result, ProjectionResult base) => Card(
+  Widget _option(PurchaseOption option, ProjectionResult result, ProjectionResult base, bool hidden) => Card(
     child: Padding(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(option.name, style: Theme.of(context).textTheme.titleMedium),
-          Text('total: ${Formatters.money(option.totalCents / 100)}'),
-          Text('diferença de preço frente à opção à vista: ${Formatters.money((option.totalCents - widget.options.first.totalCents) / 100)}'),
-          Text('mudança no menor saldo frente a não comprar: ${Formatters.money(result.summary.minimumBalance - base.summary.minimumBalance)}'),
-          Text('meses com saldo negativo neste horizonte: ${result.months.where((month) => month.isCritical).length}'),
+          Text('total: ${hidden ? '••••' : Formatters.money(option.totalCents / 100)}'),
+          Text('diferença de preço frente à opção à vista: ${hidden ? '••••' : Formatters.money((option.totalCents - widget.options.first.totalCents) / 100)}'),
+          Text('mudança no menor saldo frente a não comprar: ${hidden ? '••••' : Formatters.money(result.summary.minimumBalance - base.summary.minimumBalance)}'),
+          Text('meses com saldo negativo neste horizonte: ${hidden ? '••••' : result.months.where((month) => month.isCritical).length}'),
           if (result.months.isNotEmpty)
-            Text('pagamentos depois do horizonte: ${Formatters.money(purchaseCentsBeyondHorizon(option, result.months.last.month) / 100)}'),
+            Text('pagamentos depois do horizonte: ${hidden ? '••••' : Formatters.money(purchaseCentsBeyondHorizon(option, result.months.last.month) / 100)}'),
           Text(
-            'menor saldo: ${Formatters.money(result.summary.minimumBalance)}',
+            'menor saldo: ${hidden ? '••••' : Formatters.money(result.summary.minimumBalance)}',
           ),
           Text(
-            'saldo final: ${Formatters.money(result.summary.endingBalance)}',
+            'saldo final: ${hidden ? '••••' : Formatters.money(result.summary.endingBalance)}',
           ),
           Text(
             result.summary.criticalMonth == null
