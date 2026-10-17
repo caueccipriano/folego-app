@@ -16,6 +16,7 @@ import 'statement_import_screen.dart';
 import 'transaction_classification_inbox.dart';
 import 'transaction_pending_guard.dart';
 import 'transactions_screen_base.dart' as impl;
+import 'financial_review_hub.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({
@@ -255,6 +256,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (mounted) await _loadPending();
   }
 
+  Future<void> _openReviewHub(int tab) async {
+    final space = await _resolveSpace();
+    if (space == null || !mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => FinancialReviewHub(
+        repository: widget.repository,
+        spaceId: space.id,
+        initialTab: tab,
+      ),
+    ));
+    if (mounted) await _loadPending();
+  }
+
   @override
   Widget build(BuildContext context) {
     final layout = AppBreakpoints.of(context);
@@ -274,13 +288,44 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       pendingClassificationUnavailable: _pendingUnavailable,
     );
 
-    if (!desktop) return content;
+    final reviewTools = Column(children: [
+      SizedBox(
+        height: 43,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          children: [
+            TextButton.icon(
+              key: const ValueKey('transactions-review-comments'),
+              onPressed: () => _openReviewHub(0),
+              icon: const Icon(Icons.comment_outlined, size: 17),
+              label: const Text('meus comentários'),
+            ),
+            TextButton.icon(
+              key: const ValueKey('transactions-review-pending'),
+              onPressed: () => _openReviewHub(1),
+              icon: const Icon(Icons.rule_folder_outlined, size: 17),
+              label: const Text('pendências'),
+            ),
+            TextButton.icon(
+              key: const ValueKey('transactions-review-others'),
+              onPressed: () => _openReviewHub(2),
+              icon: const Icon(Icons.category_outlined, size: 17),
+              label: const Text('organizar Outros'),
+            ),
+          ],
+        ),
+      ),
+      Expanded(child: content),
+    ]);
+
+    if (!desktop) return reviewTools;
 
     return Theme(
       data: Theme.of(context).copyWith(visualDensity: VisualDensity.compact),
       child: KeyedSubtree(
         key: const ValueKey('transactions-desktop-layout'),
-        child: content,
+        child: reviewTools,
       ),
     );
   }

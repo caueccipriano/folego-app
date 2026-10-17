@@ -556,6 +556,47 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
             if (source != null) _DetailRow('origem', source),
           ],
         ),
+        const SizedBox(height: 12),
+        _Section(
+          title: 'me explica este valor',
+          children: [
+            _DetailRow('valor do registro', Formatters.money(detail.amount)),
+            Text(
+              detail.status == 'confirmed'
+                  ? 'Este lançamento está confirmado. Veja abaixo como ele '
+                    'afeta as contas e compromissos registrados.'
+                  : 'Este lançamento ainda não está confirmado. '
+                    'Não considere este valor como saldo disponível.',
+            ),
+            if (detail.isCardPurchase)
+              const Text(
+                'Compra no cartão: o valor integral representa a despesa '
+                'econômica. Parcelas distribuem a cobrança nas faturas; '
+                'pagar a fatura não cria a mesma despesa outra vez.',
+              ),
+            if (detail.isCardPayment)
+              const Text(
+                'Pagamento de fatura: transfere dinheiro da conta para quitar '
+                'uma obrigação do cartão. Não é uma segunda compra.',
+              ),
+            if (detail.impacts.isEmpty)
+              const Text(
+                'Não há desdobramento de contas disponível para este registro.',
+              )
+            else
+              for (final impact in detail.impacts)
+                _DetailRow(
+                  impact.accountName ?? 'movimento sem conta identificada',
+                  Formatters.money(impact.amount),
+                ),
+            const Text(
+              'Os movimentos acima podem representar dimensões distintas '
+              '(conta, cartão ou orçamento). Não devem ser somados entre si '
+              'como se fossem novas despesas.',
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         if (canClassifyExpenseBehavior(detail)) ...[
           const SizedBox(height: 16),
           _Section(

@@ -12,6 +12,29 @@ typedef SpendingLoader = Future<List<SpendingBehaviorEntry>> Function(String, Da
 typedef SpendingSaver = Future<void> Function(String, SpendingBehaviorEntry, ExpenseBehavior);
 typedef RegisteredIncomeLoader = Future<double> Function(String, DateTime);
 
+/// Suggestions are intentionally limited to recognisable, specific names.
+/// They are never automatically written to financial events.
+ExpenseBehavior? suggestExpenseBehavior(SpendingBehaviorEntry entry) {
+  if (entry.behavior != ExpenseBehavior.unclassified) return null;
+  final text = entry.description.toLowerCase().trim();
+  const fixed = [
+    'wellhub', 'spotify', 'amazon music', 'chatgpt plus',
+    'claro móvel', 'mensalidade de seguro', 'seguro superprotegido',
+    'tarifa mensalidade pacote serviços', 'pagamento empréstimo clt',
+    'amazon kindle unltd',
+  ];
+  const variable = [
+    'uber ', 'uberbr', 'supermercado ', 'atacadao ', 'covabra ',
+    'tauste ', 'ifood', 'ifd*', 'auto posto ', 'burger king',
+    'outback', 'farmacia ', 'padaria ', 'posto vibra ', 'oba hortifruti',
+  ];
+  if (fixed.any((v) => text == v || text.startsWith('$v '))) {
+    return ExpenseBehavior.fixed;
+  }
+  if (variable.any(text.startsWith)) return ExpenseBehavior.variable;
+  return null;
+}
+
 class SpendingBehaviorScreen extends StatefulWidget {
   const SpendingBehaviorScreen({
     super.key, required this.repository, required this.spaceId,
@@ -202,6 +225,98 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
     }
   }
 
+  Future<void> _reviewBatchSuggestions() async {
+    if (_loading || _savingId != null) return;
+    final candidates = _entries.where((entry) =>
+      suggestExpenseBehavior(entry) != null).toList();
+    if (candidates.isEmpty) return;
+    final selected = candidates.map((entry) => entry.id).toSet();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, rebuild) => AlertDialog(
+          title: const Text('classificar em lote?'),
+          content: SizedBox(
+            width: 440,
+            height: MediaQuery.sizeOf(dialogContext).height * .5,
+            child: Column(children: [
+              const Text(
+                'Sugestões de descrições específicas. Revise cada item. '
+                'Nada será alterado antes da confirmação.'),
+              const SizedBox(height: 12),
+              Expanded(child: ListView(
+                children: [
+                  for (final item in candidates)
+                    CheckboxListTile(
+                      value: selected.contains(item.id),
+                      title: Text(item.description),
+                      subtitle: Text(
+                        suggestExpenseBehavior(item) == ExpenseBehavior.fixed
+                            ? 'sugestão: fixo' : 'sugestão: variável'),
+                      onChanged: (yes) => rebuild(() {
+                        if (yes == true) {
+                          selected.add(item.id);
+                        } else {
+                          selected.remove(item.id);
+                        }
+                      }),
+                    ),
+                ],
+              )),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('cancelar')),
+            FilledButton(
+              onPressed: selected.isEmpty ? null :
+                () => Navigator.pop(dialogContext, true),
+              child: Text('confirmar ${selected.length}'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted || selected.isEmpty) return;
+    setState(() => _savingId = '__batch__');
+    var changed = 0;
+    var failed = 0;
+    try {
+      for (final entry in candidates) {
+        if (!selected.contains(entry.id)) {
+          continue;
+        }
+        final proposal = suggestExpenseBehavior(entry);
+        if (proposal == null) {
+          continue;
+        }
+        try {
+          if (widget.saveOverride != null) {
+            await widget.saveOverride!(widget.spaceId, entry, proposal);
+          } else {
+            await widget.repository.setSpendingBehavior(
+              spaceId: widget.spaceId, entry: entry, behavior: proposal);
+          }
+          changed++;
+        } catch (_) {
+          failed++;
+        }
+      }
+      if (mounted) {
+        widget.onChanged?.call();
+        await _load();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$changed gasto(s) classificados. '
+              '$failed precisam de revisão manual.'),
+          ));
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _savingId = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
@@ -253,6 +368,18 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
                               style: AppTypography.body(context,
                                   fontSize: 11, color: secondary)),
                           const SizedBox(height: 14),
+                          if (!_loading && _savingId == null &&
+                              _entries.any((e) => suggestExpenseBehavior(e) != null))
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: OutlinedButton.icon(
+                                key: const ValueKey('spending-batch-suggestions'),
+                                icon: const Icon(Icons.auto_awesome),
+                                label: Text('revisar ${_entries.where((e) =>
+                                  suggestExpenseBehavior(e) != null).length} sugestões em lote'),
+                                onPressed: _reviewBatchSuggestions,
+                              ),
+                            ),
                           if (_loading) const LinearProgressIndicator(),
                           if (_error != null) ...[
                             Text(_error!, style: AppTypography.body(

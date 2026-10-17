@@ -35,6 +35,45 @@ void main() {
     ),
   ];
 
+  test('batch proposals need specific merchants and never guess Pix', () {
+    SpendingBehaviorEntry entry(String description) => SpendingBehaviorEntry(
+      id: description, description: description, amount: 30,
+      occurredAt: DateTime(2026, 10, 17),
+      behavior: ExpenseBehavior.unclassified,
+    );
+    expect(suggestExpenseBehavior(entry('Spotify')),
+        ExpenseBehavior.fixed);
+    expect(suggestExpenseBehavior(entry('Wellhub')),
+        ExpenseBehavior.fixed);
+    expect(suggestExpenseBehavior(entry('UBER * PENDING')),
+        ExpenseBehavior.variable);
+    expect(suggestExpenseBehavior(entry('IFD*BR JUNDIAI')),
+        ExpenseBehavior.variable);
+    expect(suggestExpenseBehavior(entry('PIX enviada - Santander')), isNull);
+    expect(suggestExpenseBehavior(entry('AMAZON BR')), isNull);
+    expect(suggestExpenseBehavior(entry('MERCADOLIVRE*ME')), isNull);
+    expect(suggestExpenseBehavior(entry('Motortech')), isNull);
+    expect(suggestExpenseBehavior(entry('Seguro carro talvez')), isNull);
+  });
+
+  test('review tools link from transactions and preserve read-only defaults', () {
+    final source = File('lib/features/transactions/transactions_screen.dart')
+        .readAsStringSync();
+    final hub = File('lib/features/transactions/financial_review_hub.dart')
+        .readAsStringSync();
+    final detail = File('lib/features/transactions/transaction_detail_sheet_v2.dart')
+        .readAsStringSync();
+    expect(source, contains('transactions-review-comments'));
+    expect(source, contains('transactions-review-pending'));
+    expect(source, contains('transactions-review-others'));
+    expect(hub, contains('financial_notes'));
+    expect(hub, contains('financial_capture_inbox'));
+    expect(hub, contains('classifyFinancialEvent'));
+    expect(hub, contains('confirmar a categoria?'));
+    expect(detail, contains('me explica este valor'));
+    expect(detail, contains('não cria a mesma despesa outra vez'));
+  });
+
   test('totals keep unclassified values visible, no default guessing', () {
     final s = SpendingBehaviorSummary.fromEntries(sample);
     expect(s.fixed, 1000);
