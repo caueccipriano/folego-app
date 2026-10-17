@@ -28,7 +28,7 @@ ExpenseBehavior? suggestExpenseBehavior(SpendingBehaviorEntry entry) {
     'tauste ', 'ifood', 'ifd*', 'auto posto ', 'burger king',
     'outback', 'farmacia ', 'padaria ', 'posto vibra ', 'oba hortifruti',
   ];
-  if (fixed.any((v) => text == v || text.startsWith(v + ' '))) {
+  if (fixed.any((v) => text == v || text.startsWith('$v '))) {
     return ExpenseBehavior.fixed;
   }
   if (variable.any(text.startsWith)) return ExpenseBehavior.variable;
@@ -271,7 +271,7 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
             FilledButton(
               onPressed: selected.isEmpty ? null :
                 () => Navigator.pop(dialogContext, true),
-              child: Text('confirmar ' + selected.length.toString()),
+              child: Text('confirmar ${selected.length}'),
             ),
           ],
         ),
@@ -283,9 +283,13 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
     var failed = 0;
     try {
       for (final entry in candidates) {
-        if (!selected.contains(entry.id)) continue;
+        if (!selected.contains(entry.id)) {
+          continue;
+        }
         final proposal = suggestExpenseBehavior(entry);
-        if (proposal == null) continue;
+        if (proposal == null) {
+          continue;
+        }
         try {
           if (widget.saveOverride != null) {
             await widget.saveOverride!(widget.spaceId, entry, proposal);
@@ -302,8 +306,8 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
         widget.onChanged?.call();
         await _load();
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(changed.toString() + ' gasto(s) classificados. ' +
-            failed.toString() + ' precisam de revisão manual.'),
+          content: Text('$changed gasto(s) classificados. '
+            '$failed precisam de revisão manual.'),
         ));
       }
     } finally {
@@ -369,9 +373,8 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
                               child: OutlinedButton.icon(
                                 key: const ValueKey('spending-batch-suggestions'),
                                 icon: const Icon(Icons.auto_awesome),
-                                label: Text('revisar ' +
-                                  _entries.where((e) => suggestExpenseBehavior(e) != null)
-                                    .length.toString() + ' sugestões em lote'),
+                                label: Text('revisar ${_entries.where((e) =>
+                                  suggestExpenseBehavior(e) != null).length} sugestões em lote'),
                                 onPressed: _reviewBatchSuggestions,
                               ),
                             ),
