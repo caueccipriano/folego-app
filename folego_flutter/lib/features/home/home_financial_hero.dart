@@ -259,7 +259,9 @@ class HomeFinancialHero extends StatelessWidget {
             Semantics(
               button: true,
               label: 'me explica esse valor disponível',
-              child: InkWell(
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
                 key: const ValueKey('home-spendable-explain-tap'),
                 borderRadius: BorderRadius.circular(AppRadii.control),
                 onTap: () => _showExplanation(context),
@@ -291,6 +293,7 @@ class HomeFinancialHero extends StatelessWidget {
                 ),
               ),
             ),
+              ),
               ),
             ),
             SizedBox(height: compact ? 8 : 10),
