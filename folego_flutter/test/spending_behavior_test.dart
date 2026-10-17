@@ -60,13 +60,19 @@ void main() {
   test('review tools link from transactions and preserve read-only defaults', () {
     final source = File('lib/features/transactions/transactions_screen.dart')
         .readAsStringSync();
+    final filters = File('lib/features/transactions/transaction_filter_sheet.dart')
+        .readAsStringSync();
     final hub = File('lib/features/transactions/financial_review_hub.dart')
         .readAsStringSync();
     final detail = File('lib/features/transactions/transaction_detail_sheet_v2.dart')
         .readAsStringSync();
-    expect(source, contains('transactions-review-comments'));
-    expect(source, contains('transactions-review-pending'));
-    expect(source, contains('transactions-review-others'));
+    expect(source, isNot(contains('reviewTools = Column')));
+    expect(source, contains('if (!desktop) return content;'));
+    expect(source, contains('onReviewHubRequested: _openReviewHub'));
+    expect(filters, contains('transactions-review-comments'));
+    expect(filters, contains('transactions-review-pending'));
+    expect(filters, contains('transactions-review-others'));
+    expect(filters, contains('organizar meu dinheiro'));
     expect(hub, contains('financial_notes'));
     expect(hub, contains('financial_capture_inbox'));
     expect(hub, contains('classifyFinancialEvent'));
