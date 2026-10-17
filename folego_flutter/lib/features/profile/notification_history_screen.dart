@@ -60,6 +60,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   List<NotificationHistoryItem> _items = const [];
   bool _loading = true;
   bool _usingOfflineCache = false;
+  bool _markingAll = false;
   String? _error;
 
   @override
@@ -259,6 +260,70 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     }
   }
 
+  Future<void> _markLoadedAsRead() async {
+    if (_markingAll || _loading || _error != null || _usingOfflineCache) return;
+    final userId = _currentUserId();
+    final spaceId = widget.spaceId;
+    if (userId == null) return;
+    final keys = _items.where((item) => item.isUnread)
+        .map((item) => item.readKey).toSet().toList();
+    if (keys.isEmpty || keys.length > 100) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('marcar avisos como lidos?'),
+        content: Text(
+          'Marcar ${keys.length} aviso(s) exibidos como lidos. '
+          'Comprovantes e lançamentos pendentes continuam exigindo revisão. '
+          'Isso não cria nem altera movimentos financeiros.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('marcar como lidos'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || spaceId != widget.spaceId ||
+        userId != _currentUserId()) return;
+    setState(() => _markingAll = true);
+    try {
+      final writer = widget.notificationReadWriter;
+      if (writer == null) {
+        await widget.repository.markNotificationsReadBatch(spaceId, keys);
+      } else {
+        for (final key in keys) {
+          if (!mounted || widget.spaceId != spaceId ||
+              userId != _currentUserId()) return;
+          await writer(spaceId, key);
+        }
+      }
+      if (!mounted || widget.spaceId != spaceId ||
+          userId != _currentUserId()) return;
+      await _load(quiet: true);
+      if (!mounted || widget.spaceId != spaceId ||
+          userId != _currentUserId()) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('avisos exibidos marcados como lidos. pendências continuam abertas.'),
+      ));
+    } catch (_) {
+      if (mounted && widget.spaceId == spaceId &&
+          userId == _currentUserId()) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('não consegui concluir. atualize e tente novamente.'),
+        ));
+        await _load(quiet: true);
+      }
+    } finally {
+      if (mounted) setState(() => _markingAll = false);
+    }
+  }
+
   Future<void> _open(NotificationHistoryItem item) async {
     if (_usingOfflineCache) return;
     await _markRead(item);
@@ -393,6 +458,17 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                     )
                     .toList(),
               ),
+              if (!_loading && _error == null && !_usingOfflineCache &&
+                  _items.any((item) => item.isUnread))
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    key: const ValueKey('activity-mark-loaded-read'),
+                    onPressed: _markingAll ? null : _markLoadedAsRead,
+                    icon: const Icon(Icons.done_all_rounded, size: 18),
+                    label: const Text('marcar avisos exibidos como lidos'),
+                  ),
+                ),
               if (_usingOfflineCache)
                 const Padding(
                   padding: EdgeInsets.all(8),
