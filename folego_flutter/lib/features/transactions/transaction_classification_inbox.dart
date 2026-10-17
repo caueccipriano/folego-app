@@ -54,8 +54,9 @@ CategoryItem? reviewedCategorySuggestion({
   required List<CategoryItem> categories,
 }) {
   final description = normalizeAutomationText(item.description);
-  if (description.length < 4 || isGenericAutomationDescription(description))
+  if (description.length < 4 || isGenericAutomationDescription(description)) {
     return null;
+  }
   final kind = transactionClassificationKind(item.eventType);
   if (kind == null) return null;
   final matches =

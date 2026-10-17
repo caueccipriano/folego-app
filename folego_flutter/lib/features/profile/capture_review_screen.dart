@@ -170,7 +170,7 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
                       )
                     else ...[
                       Text('lançamento: ${candidate.description}'),
-                      Text('tipo registrado: ${candidate.eventType}'),
+                      Text('tipo registrado: ${switch (candidate.eventType) { 'income' => 'receita', 'expense' => 'despesa', 'transfer' => 'transferência', 'card_purchase' => 'compra no cartão', _ => 'movimentação' }}'),
                       Text(
                         'conta registrada: ${candidate.impacts.map((i) => i.accountName).whereType<String>().toSet().join(', ')}',
                       ),
