@@ -107,9 +107,11 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         note['title'] = found?['description'] ??
             (note['target_type'] == 'invoice_snapshot'
                 ? 'comentário da fatura' : 'lançamento antigo');
-        note['event_id'] = purchase ? found?['event_id'] :
-            (found == null ? null : note['target_id']);
-        note['amount'] = found?[purchase ? 'total_amount' : 'amount'];
+        note['event_id'] = purchase
+            ? (found == null ? null : found['event_id'])
+            : (found == null ? null : note['target_id']);
+        note['amount'] = found == null ? null :
+            found[purchase ? 'total_amount' : 'amount'];
       }
       return notes;
     }
@@ -204,12 +206,16 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         ),
       ));
     } else {
+      final pending = await widget.repository.listPendingTransactionClassifications(
+        widget.spaceId);
+      if (!mounted) return;
       await showModalBottomSheet<bool>(
         context: context, useSafeArea: true, isScrollControlled: true,
         builder: (_) => FractionallySizedBox(
           heightFactor: .92,
           child: TransactionClassificationInbox(
             repository: widget.repository, spaceId: widget.spaceId,
+            initialItems: pending,
           ),
         ),
       );
@@ -241,7 +247,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           if (suggestion != null)
             ListTile(
               key: const ValueKey('others-suggested'),
-              title: Text('sugestão: ' + suggestion.category.breadcrumb),
+              title: Text('sugestão: ${suggestion.category.breadcrumb}'),
               subtitle: Text(suggestion.reason),
               onTap: () => Navigator.pop(ctx, suggestion.category),
             ),
@@ -257,13 +263,15 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         ]),
       ),
     );
-    if (selected == null || !mounted) return;
+    if (selected == null || !mounted) {
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('confirmar a categoria?'),
-        content: Text('Trocar Outros por ' + selected.breadcrumb +
-          '. O valor e o saldo não serão modificados.'),
+        content: Text('Trocar Outros por ${selected.breadcrumb}. '
+          'O valor e o saldo não serão modificados.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),
               child: const Text('cancelar')),
@@ -272,17 +280,23 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted) {
+      return;
+    }
     try {
       await widget.repository.classifyFinancialEvent(
         spaceId: widget.spaceId,
         eventId: row['id'].toString(),
         categoryId: selected.id,
       );
-      if (mounted) _refresh();
+      if (mounted) {
+        _refresh();
+      }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não consegui salvar. Tente novamente.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não consegui salvar. Tente novamente.')));
+      }
     }
   }
 
@@ -377,7 +391,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                           : 'categoria pendente')
                       : 'toque para revisar a categoria';
                     return ListTile(
-                      key: ValueKey('financial-review-' + row['id'].toString()),
+                      key: ValueKey('financial-review-${row['id']}'),
                       title: Text(title),
                       subtitle: Text(subtitle, maxLines: 3,
                           overflow: TextOverflow.ellipsis),
