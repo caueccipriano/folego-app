@@ -111,11 +111,11 @@ class _BalanceComparisonState extends State<BalanceComparison> {
           ),
           const SizedBox(height: 12),
           Text(
-            'saldo registrado no Fôlego: ${Formatters.money(widget.balance)}',
+            'saldo registrado no Fôlego: ${hidden ? '••••' : Formatters.money(widget.balance)}',
           ),
           if (difference != null) ...[
             Text(
-              'diferença (banco − Fôlego): ${Formatters.money(difference / 100)}',
+              'diferença (banco − Fôlego): ${hidden ? '••••' : Formatters.money(difference / 100)}',
             ),
             Text(
               difference == 0 ? 'os valores coincidem nesta comparação.' : 'confira as movimentações abaixo: podem faltar registros, existir duplicidades ou haver diferença de horário. nenhuma taxa ou ajuste foi criado.',
