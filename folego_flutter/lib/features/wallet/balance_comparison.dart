@@ -25,7 +25,9 @@ class BalanceComparison extends StatefulWidget {
 
 class _BalanceComparisonState extends State<BalanceComparison> {
   final _input = TextEditingController();
-  final _preferences = SharedPreferencesAsync();
+  // Instantiate the platform store only when a review key is actually used.
+  // Read-only balance comparison must also work in tests without a plugin.
+  SharedPreferencesAsync get _preferences => SharedPreferencesAsync();
   DateTime? _reviewedAt;
   bool _reviewError = false;
   bool _saving = false;
