@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../data/models/projection_model.dart';
 
 class PurchaseOption {
@@ -73,6 +74,27 @@ List<PurchaseOption> buildPurchaseOptions({
   ];
 }
 
+/// Exact cents still scheduled after the displayed projection horizon.
+int purchaseCentsBeyondHorizon(PurchaseOption option, DateTime lastMonth) {
+  final boundary = DateTime(lastMonth.year, lastMonth.month + 1);
+  var cents = 0;
+  for (final change in option.adjustments) {
+    if (change.frequency == 'once') {
+      if (!DateTime(change.startsOn.year, change.startsOn.month).isBefore(boundary)) {
+        cents += (change.amountDelta * 100).round();
+      }
+    } else if (change.frequency == 'monthly' && change.endsOn != null) {
+      var month = DateTime(change.startsOn.year, change.startsOn.month);
+      final end = DateTime(change.endsOn!.year, change.endsOn!.month);
+      while (!month.isAfter(end)) {
+        if (!month.isBefore(boundary)) { cents += (change.amountDelta * 100).round(); }
+        month = DateTime(month.year, month.month + 1);
+      }
+    }
+  }
+  return cents;
+}
+
 class PurchaseComparisonDialog extends StatefulWidget {
   const PurchaseComparisonDialog({
     super.key,
@@ -101,7 +123,9 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
     ...widget.options.map((o) => widget.load(o.adjustments)),
   ]);
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: FinancialPrivacy.hidden,
+    builder: (context, hidden, _) => AlertDialog(
     title: const Text('qual cenário cabe melhor?'),
     content: SizedBox(
       width: 760,
@@ -142,7 +166,7 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
                 ),
                 const SizedBox(height: 12),
                 for (var i = 0; i < widget.options.length; i++)
-                  _option(widget.options[i], snapshot.data![i + 1]),
+                  _option(widget.options[i], snapshot.data![i + 1], base),
                 const Text(
                   'Parcelas além do horizonte continuam devidas, mesmo quando não aparecem no saldo final. Escolher um cenário altera apenas a simulação.',
                 ),
@@ -158,8 +182,9 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
         child: const Text('voltar'),
       ),
     ],
+    ),
   );
-  Widget _option(PurchaseOption option, ProjectionResult result) => Card(
+  Widget _option(PurchaseOption option, ProjectionResult result, ProjectionResult base) => Card(
     child: Padding(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -167,6 +192,11 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
         children: [
           Text(option.name, style: Theme.of(context).textTheme.titleMedium),
           Text('total: ${Formatters.money(option.totalCents / 100)}'),
+          Text('diferença de preço frente à opção à vista: ${Formatters.money((option.totalCents - widget.options.first.totalCents) / 100)}'),
+          Text('mudança no menor saldo frente a não comprar: ${Formatters.money(result.summary.minimumBalance - base.summary.minimumBalance)}'),
+          Text('meses com saldo negativo neste horizonte: ${result.months.where((month) => month.isCritical).length}'),
+          if (result.months.isNotEmpty)
+            Text('pagamentos depois do horizonte: ${Formatters.money(purchaseCentsBeyondHorizon(option, result.months.last.month) / 100)}'),
           Text(
             'menor saldo: ${Formatters.money(result.summary.minimumBalance)}',
           ),

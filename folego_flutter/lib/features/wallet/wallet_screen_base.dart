@@ -22,6 +22,7 @@ import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import 'card_invoice_payment_sheet.dart';
+import 'installment_relief_card.dart';
 import 'wallet_detail_screen.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -801,6 +802,8 @@ class _WalletScreenState extends State<WalletScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                InstallmentReliefCard(items: items, onOpen: _openInstallment),
+                const SizedBox(height: 12),
                 if (ending.count > 0) ...[
                   Container(
                     key: const ValueKey('wallet-ending-installments'),

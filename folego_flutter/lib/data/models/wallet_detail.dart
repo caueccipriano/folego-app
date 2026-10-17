@@ -158,7 +158,7 @@ class WalletDebtInstallment {
 }
 
 class WalletInstallmentPosition {
-  const WalletInstallmentPosition({required this.purchaseId, required this.description, required this.cardId, required this.cardName, required this.installmentAmount, required this.currentInstallment, required this.totalInstallments, required this.completed, this.merchant, this.categoryName, this.nextDueDate, this.confirmedPaidCount, this.outstandingCount, this.outstandingAmount});
+  const WalletInstallmentPosition({required this.purchaseId, required this.description, required this.cardId, required this.cardName, required this.installmentAmount, required this.currentInstallment, required this.totalInstallments, required this.completed, this.merchant, this.categoryName, this.nextDueDate, this.confirmedPaidCount, this.outstandingCount, this.outstandingAmount, this.endingOn, this.lastInstallmentAmount});
   final String purchaseId;
   final String description;
   final String? merchant;
@@ -173,6 +173,8 @@ class WalletInstallmentPosition {
   final int? confirmedPaidCount;
   final int? outstandingCount;
   final double? outstandingAmount;
+  final DateTime? endingOn;
+  final double? lastInstallmentAmount;
   int get paidCount => confirmedPaidCount ?? (completed ? totalInstallments : (currentInstallment-1).clamp(0,totalInstallments));
   int get remainingCount => outstandingCount ?? (totalInstallments-paidCount).clamp(0,totalInstallments);
   String get displayName {
@@ -204,6 +206,17 @@ class WalletInstallmentPosition {
     final total = (json['installments_count'] as num).toInt();
     final current = selected == null ? total : (selected['installment_number'] as num).toInt();
     final invoice = selected == null ? null : _map(selected['invoice']);
+    final completeSchedule = total > 0 && valid.length == total &&
+        List.generate(total, (index) => index + 1).every((number) =>
+          valid.where((row) => row['installment_number'] == number).length == 1);
+    final last = completeSchedule ? valid.last : null;
+    final lastInvoice = last == null ? null : _map(last['invoice']);
+    final lastDue = _date(lastInvoice?['due_date']);
+    final verifiedEnd = last != null && isOutstanding(last) && lastDue != null &&
+        valid.every((row) {
+          final due = _date(_map(row['invoice'])?['due_date']);
+          return due != null && !due.isAfter(lastDue);
+        });
     return WalletInstallmentPosition(
       purchaseId: json['id'] as String,
       description: json['description'] as String,
@@ -219,6 +232,8 @@ class WalletInstallmentPosition {
       confirmedPaidCount: valid.length-outstanding.length,
       outstandingCount: outstanding.length,
       outstandingAmount: outstanding.fold<double>(0,(sum,item)=>sum+_number(item['amount'])),
+      endingOn: completed || !verifiedEnd ? null : lastDue,
+      lastInstallmentAmount: last == null ? null : _number(last['amount']),
     );
   }
 }

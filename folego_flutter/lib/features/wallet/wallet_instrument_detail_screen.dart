@@ -95,6 +95,12 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
   List<WalletMovement> _movements = const [];
 
   String get _dimension => widget.benefitMode ? 'benefit' : 'cash';
+  String? get _reviewKey {
+    try {
+      final user = widget.repository.commentsUserId;
+      return user == null ? null : accountReviewKey(user, widget.spaceId, _account.id);
+    } catch (_) { return null; }
+  }
 
   @override
   void initState() {
@@ -200,7 +206,7 @@ class _WalletAccountDetailPageState extends State<_WalletAccountDetailPage> {
             ],
           ),
           if (!_loading && _error == null)
-            BalanceComparison(balance: _account.balance),
+            BalanceComparison(balance: _account.balance, reviewKey: _reviewKey, benefit: benefit),
           const SizedBox(height: 24),
           _SectionTitle(
             benefit
