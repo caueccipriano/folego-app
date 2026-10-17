@@ -154,6 +154,30 @@ extension FolegoRepositoryNotifications on FolegoRepository {
     );
   }
 
+  /// Mark only the supplied, user-owned notification keys as read.
+  /// RLS checks each key against notification_history for this user and space.
+  /// This never resolves receipts or modifies financial events.
+  Future<int> markNotificationsReadBatch(String spaceId, List<String> keys) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) throw StateError('Sessão necessária.');
+    final distinct = keys.where((key) => key.trim().isNotEmpty).toSet().toList();
+    if (distinct.length > 100) {
+      throw ArgumentError.value(distinct.length, 'keys', 'Máximo de 100 por lote.');
+    }
+    if (distinct.isEmpty) return 0;
+    final now = DateTime.now().toUtc().toIso8601String();
+    await Supabase.instance.client.from('financial_activity_read_state').upsert(
+      [for (final key in distinct) {
+        'user_id': userId,
+        'space_id': spaceId,
+        'stable_key': key,
+        'seen_at': now,
+      }],
+      onConflict: 'user_id,stable_key',
+    );
+    return distinct.length;
+  }
+
   Future<Map<String, dynamic>?> getCaptureForReview(
     String spaceId,
     String id,
