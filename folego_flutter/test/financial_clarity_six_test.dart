@@ -62,7 +62,7 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).obscureText,
         isTrue,
       );
-      expect(find.textContaining('635,00'), findsNothing);
+      expect(find.textContaining('saldo registrado no Fôlego: R\$ ••••'), findsOneWidget);
     },
   );
 }
