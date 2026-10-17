@@ -151,10 +151,16 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
             Text('beneficiário: ${data['counterparty'] ?? 'não identificado'}'),
             const SizedBox(height: 20),
             Text(
-              captureReviewReason(
-                data['review_reason']?.toString(),
-                metadata['difference'],
-              ),
+              data['review_reason'] == 'amount_mismatch' &&
+                      candidate != null && amount != null &&
+                      (candidate.amount * 100).round() == (amount * 100).round()
+                  ? 'os valores agora coincidem. confira também conta, data e beneficiário. o comprovante continua pendente; a comparação não confirma o vínculo.'
+                  : captureReviewReason(
+                      data['review_reason']?.toString(),
+                      candidate != null && amount != null
+                          ? ((amount * 100).round() - (candidate.amount * 100).round()) / 100
+                          : metadata['difference'],
+                    ),
             ),
             if (eventId != null) ...[
               const SizedBox(height: 16),
