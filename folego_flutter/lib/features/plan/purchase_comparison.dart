@@ -159,7 +159,7 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Horizonte: ${widget.horizonMonths} meses. Sem a compra, o menor saldo projetado é ${hidden ? '••••' : Formatters.money(base.summary.minimumBalance)}.',
+                  'Horizonte: ${widget.horizonMonths} meses. Sem a compra, o menor saldo projetado é ${hidden ? 'R\$ ••••' : Formatters.money(base.summary.minimumBalance)}.',
                 ),
                 const Text(
                   'Comparação com os compromissos conhecidos. Não inclui juros futuros ou novas despesas ainda não registradas. Adiar mantém o preço à vista informado.',
@@ -191,17 +191,17 @@ class _PurchaseComparisonDialogState extends State<PurchaseComparisonDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(option.name, style: Theme.of(context).textTheme.titleMedium),
-          Text('total: ${hidden ? '••••' : Formatters.money(option.totalCents / 100)}'),
-          Text('diferença de preço frente à opção à vista: ${hidden ? '••••' : Formatters.money((option.totalCents - widget.options.first.totalCents) / 100)}'),
-          Text('mudança no menor saldo frente a não comprar: ${hidden ? '••••' : Formatters.money(result.summary.minimumBalance - base.summary.minimumBalance)}'),
-          Text('meses com saldo negativo neste horizonte: ${hidden ? '••••' : result.months.where((month) => month.isCritical).length}'),
+          Text('total: ${hidden ? 'R\$ ••••' : Formatters.money(option.totalCents / 100)}'),
+          Text('diferença de preço frente à opção à vista: ${hidden ? 'R\$ ••••' : Formatters.money((option.totalCents - widget.options.first.totalCents) / 100)}'),
+          Text('mudança no menor saldo frente a não comprar: ${hidden ? 'R\$ ••••' : Formatters.money(result.summary.minimumBalance - base.summary.minimumBalance)}'),
+          Text('meses com saldo negativo neste horizonte: ${hidden ? 'R\$ ••••' : result.months.where((month) => month.isCritical).length}'),
           if (result.months.isNotEmpty)
-            Text('pagamentos depois do horizonte: ${hidden ? '••••' : Formatters.money(purchaseCentsBeyondHorizon(option, result.months.last.month) / 100)}'),
+            Text('pagamentos depois do horizonte: ${hidden ? 'R\$ ••••' : Formatters.money(purchaseCentsBeyondHorizon(option, result.months.last.month) / 100)}'),
           Text(
-            'menor saldo: ${hidden ? '••••' : Formatters.money(result.summary.minimumBalance)}',
+            'menor saldo: ${hidden ? 'R\$ ••••' : Formatters.money(result.summary.minimumBalance)}',
           ),
           Text(
-            'saldo final: ${hidden ? '••••' : Formatters.money(result.summary.endingBalance)}',
+            'saldo final: ${hidden ? 'R\$ ••••' : Formatters.money(result.summary.endingBalance)}',
           ),
           Text(
             result.summary.criticalMonth == null
