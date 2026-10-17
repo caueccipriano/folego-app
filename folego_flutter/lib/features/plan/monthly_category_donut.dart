@@ -23,6 +23,22 @@ List<BudgetOverviewItem> monthlyCategorySlices(
         .toList()
       ..sort((a, b) => b.actualAmount.compareTo(a.actualAmount));
 
+/// Match the painted ring, excluding its center and outside area.
+int? monthlyCategoryHit(Offset position, double diameter, List<double> values) {
+  final delta = position - Offset(diameter / 2, diameter / 2);
+  final radius = diameter / 2 - 13;
+  if ((delta.distance - radius).abs() > 11) return null;
+  final total = values.fold<double>(0, (sum, value) => sum + value);
+  if (total <= 0 || !total.isFinite) return null;
+  final angle = (math.atan2(delta.dy, delta.dx) + math.pi / 2) % (2 * math.pi);
+  var end = 0.0;
+  for (var index = 0; index < values.length; index++) {
+    end += values[index] / total * 2 * math.pi;
+    if (angle < end) return index;
+  }
+  return null;
+}
+
 class MonthlyCategoryDonut extends StatefulWidget {
   const MonthlyCategoryDonut({
     super.key,
@@ -104,44 +120,56 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                         label: 'Distribuição dos gastos por categoria; valores na lista abaixo',
                         child: SizedBox.square(
                           dimension: diameter,
-                          child: CustomPaint(
-                            key: const ValueKey('category-donut-paint'),
-                            painter: _CategoryDonutPainter(
-                              values: rows.map((i) => i.actualAmount).toList(),
-                              colors: colors,
-                              track: AppColors.border(brightness),
-                            ),
-                            child: Center(
-                              child: SizedBox(
-                                key: const ValueKey('category-donut-center'),
-                                width: diameter * .60,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        Formatters.money(total),
-                                        maxLines: 1,
-                                        style: AppTypography.money(
+                          child: GestureDetector(
+                            onTapUp: (event) {
+                              final index = monthlyCategoryHit(
+                                event.localPosition,
+                                diameter,
+                                rows.map((i) => i.actualAmount).toList(),
+                              );
+                              if (index != null) widget.onCategory(rows[index]);
+                            },
+                            child: CustomPaint(
+                              key: const ValueKey('category-donut-paint'),
+                              painter: _CategoryDonutPainter(
+                                values: rows
+                                    .map((i) => i.actualAmount)
+                                    .toList(),
+                                colors: colors,
+                                track: AppColors.border(brightness),
+                              ),
+                              child: Center(
+                                child: SizedBox(
+                                  key: const ValueKey('category-donut-center'),
+                                  width: diameter * .60,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          Formatters.money(total),
+                                          maxLines: 1,
+                                          style: AppTypography.money(
+                                            context,
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'neste gráfico',
+                                        textAlign: TextAlign.center,
+                                        style: AppTypography.body(
                                           context,
-                                          fontSize: 20,
+                                          fontSize: 11,
+                                          color: AppColors.secondaryText(
+                                            brightness,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'neste gráfico',
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.body(
-                                        context,
-                                        fontSize: 11,
-                                        color: AppColors.secondaryText(
-                                          brightness,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

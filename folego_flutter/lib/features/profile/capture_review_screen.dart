@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../core/privacy/financial_privacy.dart';
+import '../../data/models/transaction_detail.dart';
+import '../../data/repositories/folego_repository_transaction_detail.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/smart_category_suggestion.dart';
@@ -69,7 +72,21 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
         // even if the category catalog or history is temporarily unavailable.
       }
     }
-    return {...data, 'metadata': metadata};
+    TransactionDetail? candidate;
+    final eventId =
+        data['linked_event_id']?.toString() ??
+        metadata['candidate_event_id']?.toString();
+    if (eventId != null && eventId.isNotEmpty) {
+      try {
+        candidate = await widget.repository.getTransactionDetail(
+          spaceId: widget.spaceId,
+          eventId: eventId,
+        );
+      } catch (_) {
+        // The receipt remains reviewable when its candidate is unavailable.
+      }
+    }
+    return {...data, 'metadata': metadata, '_candidate': candidate};
   }
 
   @override
@@ -103,6 +120,7 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
         final eventId =
             data['linked_event_id']?.toString() ??
             metadata['candidate_event_id']?.toString();
+        final candidate = data['_candidate'] as TransactionDetail?;
         final amount = num.tryParse(data['amount']?.toString() ?? '');
         return ListView(
           padding: const EdgeInsets.all(24),
@@ -138,20 +156,59 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
                 metadata['difference'],
               ),
             ),
+            if (eventId != null) ...[
+              const SizedBox(height: 16),
+              ValueListenableBuilder<bool>(
+                valueListenable: FinancialPrivacy.hidden,
+                builder: (context, _, child) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('comparação com o registro atual'),
+                    if (candidate == null)
+                      const Text(
+                        'não consegui consultar o lançamento. abra a revisão para conferir; nenhum valor foi inferido.',
+                      )
+                    else ...[
+                      Text('lançamento: ${candidate.description}'),
+                      Text('tipo registrado: ${candidate.eventType}'),
+                      Text(
+                        'conta registrada: ${candidate.impacts.map((i) => i.accountName).whereType<String>().toSet().join(', ')}',
+                      ),
+                      Text(
+                        'valor registrado: ${Formatters.money(candidate.amount)}',
+                      ),
+                      Text(
+                        'data registrada: ${captureDateLabel(candidate.occurredAt.toIso8601String())}',
+                      ),
+                      if (amount != null)
+                        Text(
+                          'diferença (comprovante − registro): ${Formatters.money((amount * 100).round() / 100 - (candidate.amount * 100).round() / 100)}',
+                        ),
+                      const Text(
+                        'compare também conta e beneficiário ao abrir o lançamento. a correspondência sugerida precisa ser conferida.',
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             if (metadata['suggested_category'] != null)
               Text('sugestão de categoria: ${metadata['suggested_category']}'),
             const SizedBox(height: 24),
             if (eventId != null)
               FilledButton(
-                onPressed: () => showTransactionDetail(
-                  context: context,
-                  space: FinancialSpace(
-                    id: widget.spaceId,
-                    name: 'Minhas finanças',
-                  ),
-                  repository: widget.repository,
-                  eventId: eventId,
-                ),
+                onPressed: () async {
+                  await showTransactionDetail(
+                    context: context,
+                    space: FinancialSpace(
+                      id: widget.spaceId,
+                      name: 'Minhas finanças',
+                    ),
+                    repository: widget.repository,
+                    eventId: eventId,
+                  );
+                  if (mounted) setState(() => _capture = _loadCapture());
+                },
                 child: const Text('revisar lançamento correspondente'),
               ),
             OutlinedButton(

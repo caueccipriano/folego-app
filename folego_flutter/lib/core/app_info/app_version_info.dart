@@ -13,15 +13,20 @@ class AppVersionInfo {
   final String version;
   final String buildNumber;
 
+  static const release = String.fromEnvironment('FOLEGO_RELEASE');
+  String get releaseLabel => release.isEmpty
+      ? ''
+      : ' · edição ${release.length > 7 ? release.substring(0, 7) : release}';
+
   String get versionLabel {
     final versionText = version.trim().isEmpty ? '—' : version.trim();
     final build = buildNumber.trim();
 
     if (build.isEmpty || build == '0') {
-      return 'versão $versionText';
+      return 'versão $versionText$releaseLabel';
     }
 
-    return 'versão $versionText · build $build';
+    return 'versão $versionText · build $build$releaseLabel';
   }
 
   static Future<AppVersionInfo> load({PackageInfoLoader? loader}) async {

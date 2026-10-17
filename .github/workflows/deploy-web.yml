@@ -61,7 +61,7 @@ jobs:
       - name: Stable responsive preflight
         run: |
           flutter test \
-            test/navigation_money_guidance_test.dart test/activity_inbox_models_test.dart test/activity_inbox_screen_test.dart test/diary_category_visuals_test.dart test/diary_desktop_test.dart test/financial_diary_test.dart test/budget_spending_story_test.dart test/financial_evolution_test.dart test/discovery_test.dart \
+            test/financial_clarity_six_test.dart test/navigation_money_guidance_test.dart test/activity_inbox_models_test.dart test/activity_inbox_screen_test.dart test/diary_category_visuals_test.dart test/diary_desktop_test.dart test/financial_diary_test.dart test/budget_spending_story_test.dart test/financial_evolution_test.dart test/discovery_test.dart \
             test/home_monthly_cards_drilldown_test.dart \
             test/home_financial_copy_test.dart \
             test/internal_polish_regression_test.dart \
@@ -99,7 +99,7 @@ jobs:
             --browser-name=chrome
 
       - name: Build web app
-        run: flutter build web --release --base-href "/folego-app/"
+        run: flutter build web --release --base-href "/folego-app/" --dart-define=FOLEGO_RELEASE=${{ github.sha }}
 
       - name: Version PWA cache and app shell
         run: |
