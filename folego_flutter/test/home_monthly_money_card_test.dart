@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/data/models/monthly_money_summary.dart';
 import 'package:folego/features/home/home_monthly_money_card.dart';
+import 'package:folego/features/home/home_value_explanation.dart';
+import 'package:folego/core/privacy/financial_privacy.dart';
 
 void main() {
   final summary = MonthlyMoneySummary(
@@ -34,6 +36,84 @@ void main() {
     movementReserveInvestment: 250,
     movementReconciliation: 25,
   );
+
+
+  test('main card explanations keep real economic and cash concepts distinct', () {
+    final income = HomeValueExplanation.fromSummary(
+      summary, HomeValueKind.income);
+    final spending = HomeValueExplanation.fromSummary(
+      summary, HomeValueKind.spending);
+    final economic = HomeValueExplanation.fromSummary(
+      summary, HomeValueKind.economic);
+    expect(income.amount, 5000);
+    expect(income.lines.single.amount, 5000);
+    expect(spending.amount, 4731.89);
+    expect(spending.lines.map((line) => line.amount),
+      [2165.96, 2232.63, 365.30, 32]);
+    expect(spending.lines.last.subtract, isTrue);
+    expect(economic.amount, closeTo(4432.36, .001));
+    expect(economic.lines.last.amount, closeTo(567.64, .001));
+    expect(economic.meaning, contains('Não é o dinheiro no banco'));
+    expect(spending.excluded, contains('Pagar a fatura'));
+  });
+
+  testWidgets('tapping each main amount explains before opening transactions',
+      (tester) async {
+    FinancialPrivacy.hidden.value = false;
+    addTearDown(() => FinancialPrivacy.hidden.value = false);
+    final opened = <MonthlyMoneyTransactionKind>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: SingleChildScrollView(
+        child: HomeMonthlyMoneyCard(
+          summary: summary, unavailable: false,
+          onOpenTransactions: (kind, _) => opened.add(kind),
+        ),
+      )),
+    ));
+    await tester.tap(find.byKey(
+      const ValueKey('monthly-income-open-transactions')));
+    await tester.pumpAndSettle();
+    expect(find.text('me explica esse valor'), findsOneWidget);
+    expect(find.text('de onde veio esse número?'), findsOneWidget);
+    expect(opened, isEmpty);
+    await tester.tap(find.byKey(
+      const ValueKey('home-explain-open-transactions')));
+    await tester.pumpAndSettle();
+    expect(opened, [MonthlyMoneyTransactionKind.income]);
+
+    await tester.tap(find.byKey(
+      const ValueKey('monthly-spending-open-transactions')));
+    await tester.pumpAndSettle();
+    expect(find.text('conta, débito e PIX'), findsOneWidget);
+    expect(find.text('estornos e reembolsos'), findsOneWidget);
+    expect(opened.length, 1);
+    await tester.tap(find.byTooltip('fechar explicação'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(
+      const ValueKey('monthly-economic-explain')));
+    await tester.pumpAndSettle();
+    expect(find.text('resultado do mês'), findsOneWidget);
+    expect(find.textContaining('Não é o dinheiro no banco'), findsOneWidget);
+    expect(find.byKey(
+      const ValueKey('home-explain-open-transactions')), findsNothing);
+  });
+
+  testWidgets('explanation respects hide money preference', (tester) async {
+    FinancialPrivacy.hidden.value = true;
+    addTearDown(() => FinancialPrivacy.hidden.value = false);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: SingleChildScrollView(
+        child: HomeMonthlyMoneyCard(summary: summary, unavailable: false),
+      )),
+    ));
+    await tester.tap(find.byKey(
+      const ValueKey('monthly-spending-open-transactions')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('home-explained-value')), findsOneWidget);
+    expect(find.text(FinancialPrivacy.maskMoney()), findsWidgets);
+    expect(find.text('de onde veio esse número?'), findsOneWidget);
+  });
 
   testWidgets('shows spending made breakdown without calling cash movement spending', (
     tester,
