@@ -72,7 +72,7 @@ class _InstallmentReliefCardState extends State<InstallmentReliefCard> {
                 ),
               ]),
               const SizedBox(height: 8),
-              Text('valor de referência das últimas parcelas: ${hidden ? '••••' : Formatters.money(total / 100)}'),
+              Text('valor de referência das últimas parcelas: ${hidden ? 'R\$ ••••' : Formatters.money(total / 100)}'),
               const Text('É a soma dos valores das últimas parcelas das compras abaixo. Pode aliviar compromissos futuros; não é dinheiro disponível hoje, limite do cartão ou economia acumulada no período.'),
               if (visible.isEmpty) const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
@@ -82,7 +82,7 @@ class _InstallmentReliefCardState extends State<InstallmentReliefCard> {
                 contentPadding: EdgeInsets.zero,
                 title: Text(row.item.displayName),
                 subtitle: Text('${row.item.cardName} · última parcela em ${Formatters.fullDate.format(row.item.endingOn!)}\nsem nova parcela a partir de ${Formatters.monthYear.format(row.fromMonth)}'),
-                trailing: Text(hidden ? '••••' : Formatters.money(row.cents / 100)),
+                trailing: Text(hidden ? 'R\$ ••••' : Formatters.money(row.cents / 100)),
                 onTap: () => widget.onOpen(row.item),
               ),
               Text('Consulta baseada nas ${widget.items.length} compras carregadas (até 60). Compras fora da consulta, cronogramas incompletos e parcelas vencidas não entram nesta projeção. Novas compras podem ocupar o espaço previsto.'),
