@@ -1,8 +1,26 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'folego_repository.dart';
+import '../models/subscription_insights.dart';
 
 extension FolegoRepositorySubscriptions on FolegoRepository {
+  Future<List<SubscriptionCharge>> listSubscriptionCharges(String spaceId, List<String> ids) async {
+    if (ids.isEmpty) { return const []; }
+    final client = _subscriptionsClientOrNull;
+    if (client == null) { throw StateError('Histórico indisponível.'); }
+    final rows = await client.from('recurring_occurrences')
+        .select('id,recurring_item_id,due_date,actual_amount,event:financial_events!inner(status)')
+        .eq('space_id', spaceId)
+        .inFilter('recurring_item_id', ids)
+        .eq('status', 'realized')
+        .eq('event.status', 'confirmed')
+        .gt('actual_amount', 0)
+        .order('due_date', ascending: false)
+        .limit(200);
+    return List<Map<String, dynamic>>.from(rows)
+        .map(SubscriptionCharge.fromJson).toList(growable: false);
+  }
+
   SupabaseClient? get _subscriptionsClientOrNull {
     try {
       return Supabase.instance.client;

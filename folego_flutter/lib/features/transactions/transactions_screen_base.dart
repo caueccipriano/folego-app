@@ -1006,6 +1006,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                         ),
                         SubscriptionsTab(
                           items: subscriptions,
+                          loadCharges: () => widget.repository.listSubscriptionCharges(
+                            _space!.id, subscriptions.map((item) => item.id).toList()),
                           recurringCandidates: regularRecurring,
                           cardNames: _recurringCardNames,
                           onRefresh: _refreshRecurring,

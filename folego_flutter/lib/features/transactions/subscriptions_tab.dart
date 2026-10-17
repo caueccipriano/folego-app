@@ -8,6 +8,8 @@ import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/recurring_item.dart';
+import '../../data/models/subscription_insights.dart';
+import 'subscription_insights_card.dart';
 
 typedef SubscriptionItemAction = Future<void> Function(RecurringItem item);
 
@@ -22,6 +24,7 @@ class SubscriptionsTab extends StatelessWidget {
     required this.onEnd,
     required this.onClassify,
     required this.onMoveToRecurring,
+    this.loadCharges,
   });
 
   final List<RecurringItem> items;
@@ -32,6 +35,7 @@ class SubscriptionsTab extends StatelessWidget {
   final SubscriptionItemAction onEnd;
   final SubscriptionItemAction onClassify;
   final SubscriptionItemAction onMoveToRecurring;
+  final Future<List<SubscriptionCharge>> Function()? loadCharges;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,7 @@ class SubscriptionsTab extends StatelessWidget {
               onClassify: () => _pickRecurring(context),
             ),
             const SizedBox(height: 10),
+            if (active.isNotEmpty) SubscriptionInsightsCard(items: active, onEdit: onEdit, load: loadCharges),
             if (items.isEmpty)
               _EmptyState(
                 canClassify: recurringCandidates.any((item) => item.isExpense),
