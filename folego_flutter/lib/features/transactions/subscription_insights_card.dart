@@ -78,6 +78,6 @@ class _SubscriptionInsightsCardState extends State<SubscriptionInsightsCard> {
     final latest = sorted.first;
     final previous = sorted.where((c) => c.date.isBefore(latest.date)).firstOrNull;
     if (previous == null) { return ''; }
-    return '${Formatters.fullDate.format(previous.date)}: ${hidden ? '••••' : Formatters.money(previous.amount)} → ${Formatters.fullDate.format(latest.date)}: ${hidden ? '••••' : Formatters.money(latest.amount)}';
+    return '${Formatters.fullDate.format(previous.date)}: ${hidden ? 'R\$ ••••' : Formatters.money(previous.amount)} → ${Formatters.fullDate.format(latest.date)}: ${hidden ? 'R\$ ••••' : Formatters.money(latest.amount)}';
   }
 }
