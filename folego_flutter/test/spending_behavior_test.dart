@@ -7,6 +7,7 @@ import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/data/models/spending_behavior.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/plan/spending_behavior_screen.dart';
+import 'package:folego/features/transactions/financial_review_hub.dart';
 
 class _Repository implements FolegoRepository {
   @override
@@ -72,6 +73,43 @@ void main() {
     expect(hub, contains('confirmar a categoria?'));
     expect(detail, contains('me explica este valor'));
     expect(detail, contains('não cria a mesma despesa outra vez'));
+  });
+
+  test('comments: month, category, account, type filters use linked source', () {
+    final note = <String, dynamic>{
+      'content': 'reembolso da mãe',
+      'title': 'compra teste',
+      'note_month': '2026-10',
+      'target_type': 'card_purchase',
+      'note_category_id': 'c1',
+      'note_category_name': 'presentes',
+      'note_account_id': 'a1',
+      'note_account_name': 'minha conta',
+    };
+    expect(financialNoteMonth('2026-10-15T10:00:00Z'), '2026-10');
+    expect(financialNoteMonth(null), '');
+    expect(financialNoteMatchesFilters(note,
+      query: 'reembolso', targetType: 'card_purchase',
+      month: '2026-10', categoryId: 'c1', accountId: 'a1'), isTrue);
+    expect(financialNoteMatchesFilters(note, month: '2026-09'), isFalse);
+    expect(financialNoteMatchesFilters(note, categoryId: 'c2'), isFalse);
+    expect(financialNoteMatchesFilters(note, accountId: 'a2'), isFalse);
+    expect(financialNoteMatchesFilters(note, targetType: 'event'), isFalse);
+    expect(financialNoteMatchesFilters(note, query: 'outra pessoa'), isFalse);
+  });
+
+  test('review hub includes older unclassified expense queue, not just October', () {
+    final hub = File('lib/features/transactions/financial_review_hub.dart')
+        .readAsStringSync();
+    final plan = File('lib/features/plan/plan_screen_web2.dart')
+        .readAsStringSync();
+    expect(hub, contains(".isFilter('behavior_class', null)"));
+    expect(hub, contains("'kind': 'behavior'"));
+    expect(hub, contains('comments-month-filter'));
+    expect(hub, contains('comments-category-filter'));
+    expect(hub, contains('comments-account-filter'));
+    expect(plan, contains('plan-insight-open-transactions'));
+    expect(plan, contains('_showPlanMetricExplanation'));
   });
 
   test('totals keep unclassified values visible, no default guessing', () {

@@ -15,6 +15,32 @@ import '../profile/capture_review_screen.dart';
 import 'transaction_detail_sheet_v2.dart';
 import 'transaction_classification_inbox.dart';
 
+
+String financialNoteMonth(Object? date) {
+  final value = DateTime.tryParse(date?.toString() ?? '');
+  if (value == null) return '';
+  return '${value.year}-${value.month.toString().padLeft(2, '0')}';
+}
+
+/// Pure filter used by the comments hub. A missing account is explicitly
+/// unknown, never guessed from a card's billing relationship.
+bool financialNoteMatchesFilters(
+  Map<String, dynamic> note, {
+  String query = '',
+  String targetType = '',
+  String month = '',
+  String categoryId = '',
+  String accountId = '',
+}) {
+  final text = [note['content'], note['title'], note['note_category_name'],
+      note['note_account_name']].join(' ').toLowerCase();
+  return (query.isEmpty || text.contains(query.toLowerCase())) &&
+      (targetType.isEmpty || note['target_type'] == targetType) &&
+      (month.isEmpty || note['note_month'] == month) &&
+      (categoryId.isEmpty || note['note_category_id'] == categoryId) &&
+      (accountId.isEmpty || note['note_account_id'] == accountId);
+}
+
 /// Read-only queues, with explicit user confirmation for category changes.
 /// Notification reads never modify pending financial evidence.
 class FinancialReviewHub extends StatefulWidget {
@@ -33,6 +59,10 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
   late int _tab;
   late Future<List<Map<String, dynamic>>> _future;
   final _search = TextEditingController();
+  String _noteType = '';
+  String _noteMonth = '';
+  String _noteCategory = '';
+  String _noteAccount = '';
   List<CategoryItem> _categories = const [];
   List<TransactionItem> _history = const [];
   int _epoch = 0;
@@ -49,6 +79,10 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spaceId != widget.spaceId) {
       _search.clear();
+      _noteType = '';
+      _noteMonth = '';
+      _noteCategory = '';
+      _noteAccount = '';
       _refresh();
     }
   }
@@ -90,13 +124,55 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           .map((n) => n['target_id'].toString()).toSet().toList();
       final events = eventIds.isEmpty ? <Map<String, dynamic>>[] :
           List<Map<String, dynamic>>.from(await client
-            .from('financial_events').select('id,description,amount')
+            .from('financial_events')
+            .select('id,description,amount,category_id,occurred_at')
             .eq('space_id', space).inFilter('id', eventIds));
       final purchases = purchaseIds.isEmpty ? <Map<String, dynamic>>[] :
           List<Map<String, dynamic>>.from(await client
             .from('card_purchases')
-            .select('id,event_id,description,total_amount')
+            .select('id,event_id,description,total_amount,category_id,purchase_at,card_id')
             .eq('space_id', space).inFilter('id', purchaseIds));
+      // Every lookup is scoped to the selected space and existing RLS.
+      final allEventIds = <String>{
+        ...eventIds,
+        for (final p in purchases)
+          if (p['event_id'] != null) p['event_id'].toString(),
+      }.toList();
+      final impacts = allEventIds.isEmpty ? <Map<String, dynamic>>[] :
+          List<Map<String, dynamic>>.from(await client
+            .from('financial_impacts').select('event_id,account_id,dimension')
+            .eq('space_id', space).inFilter('event_id', allEventIds));
+      final accountIds = impacts.where((i) => i['account_id'] != null)
+          .map((i) => i['account_id'].toString()).toSet().toList();
+      final accounts = accountIds.isEmpty ? <Map<String, dynamic>>[] :
+          List<Map<String, dynamic>>.from(await client
+            .from('accounts').select('id,name')
+            .eq('space_id', space).inFilter('id', accountIds));
+      final accountNames = {
+        for (final a in accounts) a['id'].toString(): a['name'].toString(),
+      };
+      final accountByEvent = <String, String>{};
+      for (final impact in impacts) {
+        final eventId = impact['event_id']?.toString();
+        final accountId = impact['account_id']?.toString();
+        if (eventId != null && accountId != null &&
+            impact['dimension'] != 'budget' && accountNames.containsKey(accountId)) {
+          accountByEvent.putIfAbsent(eventId, () => accountId);
+        }
+      }
+      final categoryIds = <String>{
+        for (final e in events)
+          if (e['category_id'] != null) e['category_id'].toString(),
+        for (final p in purchases)
+          if (p['category_id'] != null) p['category_id'].toString(),
+      }.toList();
+      final categories = categoryIds.isEmpty ? <Map<String, dynamic>>[] :
+          List<Map<String, dynamic>>.from(await client
+            .from('categories').select('id,name')
+            .eq('space_id', space).inFilter('id', categoryIds));
+      final categoryNames = {
+        for (final c in categories) c['id'].toString(): c['name'].toString(),
+      };
       final eventMap = {for (final e in events) e['id'].toString(): e};
       final purchaseMap = {for (final p in purchases) p['id'].toString(): p};
       for (final note in notes) {
@@ -112,6 +188,17 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
             : (found == null ? null : note['target_id']);
         note['amount'] = found == null ? null :
             found[purchase ? 'total_amount' : 'amount'];
+        note['note_date'] = found == null
+            ? note['updated_at']
+            : found[purchase ? 'purchase_at' : 'occurred_at'];
+        final categoryId = found?['category_id']?.toString() ?? '';
+        note['note_category_id'] = categoryId;
+        note['note_category_name'] = categoryNames[categoryId] ?? 'sem categoria';
+        final linkedEvent = note['event_id']?.toString() ?? '';
+        final accountId = accountByEvent[linkedEvent] ?? '';
+        note['note_account_id'] = accountId;
+        note['note_account_name'] = accountNames[accountId] ?? '';
+        note['note_month'] = financialNoteMonth(note['note_date']);
       }
       return notes;
     }
@@ -128,9 +215,19 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         .eq('space_id', space).eq('status', 'confirmed')
         .eq('metadata->>needs_classification', 'true')
         .order('occurred_at', ascending: false).limit(100));
+      final unclassified = List<Map<String, dynamic>>.from(await client
+        .from('financial_events')
+        .select('id,description,amount,occurred_at')
+        .eq('space_id', space).eq('status', 'confirmed')
+        .inFilter('event_type', const [
+          'expense', 'card_purchase', 'benefit_expense',
+        ])
+        .isFilter('behavior_class', null)
+        .order('occurred_at', ascending: false).limit(500));
       return [
         for (final c in captures) {...c, 'kind': 'capture'},
         for (final e in pending) {...e, 'kind': 'classification'},
+        for (final e in unclassified) {...e, 'kind': 'behavior'},
       ];
     }
     final otherCats = List<Map<String, dynamic>>.from(await client
@@ -156,6 +253,86 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
       _history = history;
     }
     return events;
+  }
+
+
+  Widget _noteFilterControls(List<Map<String, dynamic>> notes) {
+    List<DropdownMenuItem<String>> options(
+      Map<String, String> values, String emptyLabel,
+    ) => [
+      DropdownMenuItem(value: '', child: Text(emptyLabel)),
+      for (final entry in values.entries)
+        DropdownMenuItem(value: entry.key,
+          child: Text(entry.value, overflow: TextOverflow.ellipsis)),
+    ];
+    final months = <String, String>{};
+    final categories = <String, String>{};
+    final accounts = <String, String>{};
+    for (final note in notes) {
+      final month = note['note_month']?.toString() ?? '';
+      if (month.isNotEmpty) {
+        months[month] = '${month.substring(5, 7)}/${month.substring(0, 4)}';
+      }
+      final cat = note['note_category_id']?.toString() ?? '';
+      if (cat.isNotEmpty) {
+        categories[cat] = note['note_category_name']?.toString() ?? cat;
+      }
+      final account = note['note_account_id']?.toString() ?? '';
+      if (account.isNotEmpty) {
+        accounts[account] = note['note_account_name']?.toString() ?? account;
+      }
+    }
+    final sortedMonths = Map.fromEntries(months.entries.toList()
+      ..sort((a, b) => b.key.compareTo(a.key)));
+    Widget selector(
+      String key, String value, List<DropdownMenuItem<String>> items,
+      ValueChanged<String> change,
+    ) => SizedBox(
+      width: 154,
+      child: DropdownButtonFormField<String>(
+        key: ValueKey(key),
+        initialValue: items.any((item) => item.value == value) ? value : '',
+        isExpanded: true,
+        decoration: const InputDecoration(isDense: true,
+          border: OutlineInputBorder()),
+        items: items,
+        onChanged: (next) => change(next ?? ''),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          selector('comments-type-filter', _noteType, options(const {
+            'event': 'lançamento', 'card_purchase': 'compra',
+            'invoice_snapshot': 'fatura',
+          }, 'todos os tipos'), (v) => setState(() => _noteType = v)),
+          selector('comments-month-filter', _noteMonth,
+            options(sortedMonths, 'todos os meses'),
+            (v) => setState(() => _noteMonth = v)),
+          selector('comments-category-filter', _noteCategory,
+            options(categories, 'todas categorias'),
+            (v) => setState(() => _noteCategory = v)),
+          selector('comments-account-filter', _noteAccount,
+            options(accounts, 'todas as contas'),
+            (v) => setState(() => _noteAccount = v)),
+        ]),
+        if (_noteType.isNotEmpty || _noteMonth.isNotEmpty ||
+            _noteCategory.isNotEmpty || _noteAccount.isNotEmpty ||
+            _search.text.isNotEmpty)
+          Align(alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => setState(() {
+                _noteType = '';
+                _noteMonth = '';
+                _noteCategory = '';
+                _noteAccount = '';
+                _search.clear();
+              }),
+              child: const Text('limpar filtros'),
+            )),
+      ]),
+    );
   }
 
   Future<void> _openNote(Map<String, dynamic> note) async {
@@ -205,6 +382,13 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           captureId: row['id'].toString(),
         ),
       ));
+    } else if (row['kind'] == 'behavior') {
+      await showTransactionDetail(
+        context: context,
+        space: FinancialSpace(id: widget.spaceId, name: 'Minhas finanças'),
+        repository: widget.repository,
+        eventId: row['id'].toString(),
+      );
     } else {
       final pending = await widget.repository.listPendingTransactionClassifications(
         widget.spaceId);
@@ -359,19 +543,24 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           final q = _search.text.trim().toLowerCase();
           final all = snapshot.data!;
           final rows = _tab != 0 ? all : all.where((n) =>
-              q.isEmpty || (n['content']?.toString() ?? '').toLowerCase().contains(q)
-              || (n['title']?.toString() ?? '').toLowerCase().contains(q)).toList();
+              financialNoteMatchesFilters(n, query: q, targetType: _noteType,
+                month: _noteMonth, categoryId: _noteCategory,
+                accountId: _noteAccount)).toList();
           return RefreshIndicator(
             onRefresh: () async { _refresh(); await _future; },
             child: ListView(children: [
+              if (_tab == 0) _noteFilterControls(all),
               ListTile(
                 title: Text(_tab == 0 ? 'Meus comentários' :
                     _tab == 1 ? 'Pendências financeiras' : 'organizar Outros'),
                 subtitle: Text(_tab == 0
-                  ? 'Compras, lançamentos e faturas · até 300 notas recentes.'
+                  ? '${rows.length} de ${all.length} comentários encontrados. '
+                    'Compras, lançamentos e faturas.'
                   : _tab == 1
-                  ? 'Ler uma notificação não resolve um comprovante ou lançamento.'
-                  : 'Até 200 despesas. Sugestões só com evidência; toda alteração requer confirmação.'),
+                  ? 'Comprovantes, categorias e gastos sem fixo/variável '
+                    'de todos os meses. ${all.length} itens nesta consulta.'
+                  : 'Até 200 despesas. Sugestões só com evidência; '
+                    'toda alteração requer confirmação.'),
               ),
               if (rows.isEmpty) const ListTile(
                 title: Text('nada encontrado nesta consulta')),
@@ -391,6 +580,8 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                       : _tab == 1
                       ? (row['kind'] == 'capture'
                           ? 'comprovante aguardando conciliação'
+                          : row['kind'] == 'behavior'
+                          ? 'sem tipo fixo/variável · toque para classificar'
                           : 'categoria pendente')
                       : 'toque para revisar a categoria';
                     return ListTile(
@@ -399,7 +590,9 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                       subtitle: Text(subtitle, maxLines: 3,
                           overflow: TextOverflow.ellipsis),
                       trailing: raw == null ? const Icon(Icons.chevron_right)
-                          : Text(Formatters.money(raw)),
+                          : Text(hidden
+                              ? FinancialPrivacy.maskMoney()
+                              : Formatters.money(raw)),
                       onTap: () => _tab == 0
                         ? _openNote(row)
                         : _tab == 1 ? _openPending(row) : _reviewOther(row),
