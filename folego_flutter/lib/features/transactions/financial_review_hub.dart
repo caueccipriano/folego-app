@@ -215,9 +215,19 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         .eq('space_id', space).eq('status', 'confirmed')
         .eq('metadata->>needs_classification', 'true')
         .order('occurred_at', ascending: false).limit(100));
+      final unclassified = List<Map<String, dynamic>>.from(await client
+        .from('financial_events')
+        .select('id,description,amount,occurred_at')
+        .eq('space_id', space).eq('status', 'confirmed')
+        .inFilter('event_type', const [
+          'expense', 'card_purchase', 'benefit_expense',
+        ])
+        .isFilter('behavior_class', null)
+        .order('occurred_at', ascending: false).limit(500));
       return [
         for (final c in captures) {...c, 'kind': 'capture'},
         for (final e in pending) {...e, 'kind': 'classification'},
+        for (final e in unclassified) {...e, 'kind': 'behavior'},
       ];
     }
     final otherCats = List<Map<String, dynamic>>.from(await client
@@ -372,6 +382,13 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           captureId: row['id'].toString(),
         ),
       ));
+    } else if (row['kind'] == 'behavior') {
+      await showTransactionDetail(
+        context: context,
+        space: FinancialSpace(id: widget.spaceId, name: 'Minhas finanças'),
+        repository: widget.repository,
+        eventId: row['id'].toString(),
+      );
     } else {
       final pending = await widget.repository.listPendingTransactionClassifications(
         widget.spaceId);
@@ -537,10 +554,13 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                 title: Text(_tab == 0 ? 'Meus comentários' :
                     _tab == 1 ? 'Pendências financeiras' : 'organizar Outros'),
                 subtitle: Text(_tab == 0
-                  ? 'Compras, lançamentos e faturas · até 300 notas recentes.'
+                  ? '${rows.length} de ${all.length} comentários encontrados. '
+                    'Compras, lançamentos e faturas.'
                   : _tab == 1
-                  ? 'Ler uma notificação não resolve um comprovante ou lançamento.'
-                  : 'Até 200 despesas. Sugestões só com evidência; toda alteração requer confirmação.'),
+                  ? 'Comprovantes, categorias e gastos sem fixo/variável '
+                    'de todos os meses. ${all.length} itens nesta consulta.'
+                  : 'Até 200 despesas. Sugestões só com evidência; '
+                    'toda alteração requer confirmação.'),
               ),
               if (rows.isEmpty) const ListTile(
                 title: Text('nada encontrado nesta consulta')),
@@ -560,6 +580,8 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                       : _tab == 1
                       ? (row['kind'] == 'capture'
                           ? 'comprovante aguardando conciliação'
+                          : row['kind'] == 'behavior'
+                          ? 'sem tipo fixo/variável · toque para classificar'
                           : 'categoria pendente')
                       : 'toque para revisar a categoria';
                     return ListTile(
@@ -568,7 +590,9 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                       subtitle: Text(subtitle, maxLines: 3,
                           overflow: TextOverflow.ellipsis),
                       trailing: raw == null ? const Icon(Icons.chevron_right)
-                          : Text(Formatters.money(raw)),
+                          : Text(hidden
+                              ? FinancialPrivacy.maskMoney()
+                              : Formatters.money(raw)),
                       onTap: () => _tab == 0
                         ? _openNote(row)
                         : _tab == 1 ? _openPending(row) : _reviewOther(row),
