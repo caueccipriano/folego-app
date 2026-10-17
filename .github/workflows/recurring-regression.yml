@@ -1,0 +1,25 @@
+name: Recurring schedule regression
+on:
+  push:
+    paths:
+      - 'folego_flutter/lib/features/transactions/recurring_form_sheet.dart'
+      - 'folego_flutter/lib/features/home/quick_register_sheet_v3.dart'
+      - 'folego_flutter/test/recurring_month_end_regression_test.dart'
+      - '.github/workflows/recurring-regression.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test test/recurring_month_end_regression_test.dart -r expanded

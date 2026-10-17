@@ -1,0 +1,275 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+
+import 'package:folego/core/privacy/financial_privacy.dart';
+import 'package:folego/data/models/wallet_overview.dart';
+import 'package:folego/data/repositories/folego_repository.dart';
+import 'package:folego/features/wallet/wallet_screen_base.dart';
+
+class _WalletQaRepository implements FolegoRepository {
+  @override
+  Future<WalletOverview> getWalletOverview({required String spaceId}) async {
+    return WalletOverview(
+      summary: const WalletSummary(
+        totalCash: 12345678.91,
+        availableCash: -987654.32,
+        totalBenefit: 12345.67,
+        totalCardInvoice: 13500.90,
+        totalDebtRemaining: 9876543.21,
+      ),
+      accounts: const [
+        WalletAccount(
+          id: 'acc-1',
+          name: 'Conta principal com um nome propositalmente muito longo',
+          institution: 'Instituição Financeira Extremamente Longa',
+          type: 'checking',
+          availableForSpending: true,
+          balance: -987654.32,
+        ),
+        WalletAccount(
+          id: 'benefit-1',
+          name: 'Benefício alimentação corporativo com nome longo',
+          institution: 'Flash',
+          type: 'benefit',
+          availableForSpending: false,
+          balance: 12345.67,
+        ),
+      ],
+      cards: [
+        WalletCard(
+          id: 'card-1',
+          name: 'Cartão principal internacional nome muito longo',
+          issuer: 'Banco emissor com nome longo',
+          brand: 'Mastercard',
+          lastFour: '1234',
+          closingDay: 5,
+          dueDay: 10,
+          invoiceBalance: 13500.90,
+          personalLimit: 10000,
+          issuerLimit: 15000,
+          availableLimit: -3500.90,
+          invoiceId: 'invoice-1',
+          invoiceDueDate: DateTime(2026, 10, 10),
+        ),
+      ],
+      debts: [
+        WalletDebt(
+          id: 'debt-1',
+          name: 'Empréstimo pessoal com descrição extremamente comprida',
+          creditor: 'Instituição credora muito longa',
+          originalAmount: 12000000,
+          openingBalance: 12000000,
+          remainingBalance: 9876543.21,
+          nextAmount: 876543.21,
+          paidInstallments: 3,
+          totalInstallments: 24,
+          nextDueDate: DateTime(2026, 10, 15),
+        ),
+      ],
+      installments: const [],
+    );
+  }
+
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('pt_BR');
+  });
+
+  setUp(() {
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
+    FinancialPrivacy.hidden.value = false;
+  });
+
+  testWidgets('wallet survives narrow iPhones and extreme values across sections', (
+    tester,
+  ) async {
+    for (final width in <double>[320, 375, 390]) {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WalletScreen(
+            repository: _WalletQaRepository(),
+            spaceId: 'space-qa',
+            onAddRequested: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('carteira'), findsOneWidget, reason: 'width $width');
+      expect(tester.takeException(), isNull, reason: 'accounts at $width');
+
+      for (final section in <String>['cartões', 'benefícios', 'dívidas']) {
+        final chip = find.text(section).first;
+        await tester.ensureVisible(chip);
+        await tester.pumpAndSettle();
+        await tester.tap(chip);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '$section at $width');
+      }
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+  testWidgets('over-limit card keeps usage visible instead of clipping the value', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WalletScreen(
+          repository: _WalletQaRepository(),
+          spaceId: 'space-qa',
+          onAddRequested: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('cartões').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('135%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('wallet explains available cash and eye updates without reload', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WalletScreen(
+          repository: _WalletQaRepository(),
+          spaceId: 'space-qa',
+          onAddRequested: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('disponível agora').first);
+    await tester.pumpAndSettle();
+    expect(find.text('de onde vem seu disponível'), findsOneWidget);
+    expect(find.text('como cada conta entra no cálculo'), findsOneWidget);
+    expect(find.text('diferença entre total e disponível'), findsOneWidget);
+    Navigator.of(tester.element(find.text('de onde vem seu disponível'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
+    await tester.pumpAndSettle();
+    expect(FinancialPrivacy.hidden.value, isTrue);
+    expect(find.byTooltip('mostrar valores'), findsOneWidget);
+    expect(find.text('R\$ ••••'), findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-privacy-toggle')));
+    await tester.pumpAndSettle();
+    expect(FinancialPrivacy.hidden.value, isFalse);
+    expect(find.byTooltip('ocultar valores'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('compact financial rows navigate to matching Wallet sections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WalletScreen(
+          repository: _WalletQaRepository(),
+          spaceId: 'space-qa',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('wallet-summary-benefits')), findsOneWidget);
+    expect(find.byKey(const ValueKey('wallet-summary-invoices')), findsOneWidget);
+    expect(find.byKey(const ValueKey('wallet-summary-debts')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-summary-invoices')));
+    await tester.pumpAndSettle();
+    expect(find.text('seus cartões'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wallet-summary-debts')));
+    await tester.pumpAndSettle();
+    expect(find.text('suas dívidas'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wallet mobile hierarchy keeps debt readable and bank identified', (
+    tester,
+  ) async {
+    for (final width in <double>[320, 375, 390, 430]) {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WalletScreen(
+            repository: _WalletQaRepository(),
+            spaceId: 'space-qa',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final available = find.byKey(
+        const ValueKey('wallet-summary-available'),
+      );
+      final benefits = find.byKey(
+        const ValueKey('wallet-summary-benefits'),
+      );
+      final invoices = find.byKey(
+        const ValueKey('wallet-summary-invoices'),
+      );
+      final debts = find.byKey(const ValueKey('wallet-summary-debts'));
+      expect(available, findsOneWidget);
+      expect(benefits, findsOneWidget);
+      expect(invoices, findsOneWidget);
+      expect(debts, findsOneWidget);
+
+      expect(tester.getSize(debts).width,
+          closeTo(tester.getSize(invoices).width, 2));
+      expect(tester.getSize(benefits).width,
+          closeTo(tester.getSize(invoices).width, 2));
+      expect(find.text(
+        'disponível negativo · confira as contas antes de gastar',
+      ), findsOneWidget);
+      expect(find.textContaining('Instituição Financeira Extremamente Longa'),
+          findsOneWidget);
+      expect(find.textContaining('conta corrente'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'width $width');
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+}

@@ -1,0 +1,10 @@
+{
+  "@@locale": "es",
+  "appName": "Fôlego",
+  "home": "Inicio",
+  "transactions": "Movimientos",
+  "plan": "Plan",
+  "wallet": "Cartera",
+  "profile": "Perfil",
+  "newExpense": "Nuevo gasto"
+}

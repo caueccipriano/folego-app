@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_typography.dart';
+
+/// Estado vazio oficial do Fôlego para listas e seções sem conteúdo.
+class AppEmptyState extends StatelessWidget {
+  const AppEmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.description,
+    this.accentColor,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? description;
+  final Color? accentColor;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final accent = accentColor ?? AppColors.primaryPurple(brightness);
+    final primary = AppColors.primaryText(brightness);
+    final secondary = AppColors.secondaryText(brightness);
+
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      child: Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 520),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      decoration: BoxDecoration(
+        color: AppColors.surface(brightness),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: AppColors.border(brightness)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: .11),
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
+            child: Icon(icon, color: accent, size: 22),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: AppTypography.body(
+              context,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: primary,
+            ),
+          ),
+          if (description?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 7),
+            Text(
+              description!,
+              textAlign: TextAlign.center,
+              style: AppTypography.body(
+                context,
+                fontSize: 13,
+                color: secondary,
+              ),
+            ),
+          ],
+          if (action != null) ...[
+            const SizedBox(height: 15),
+            action!,
+          ],
+        ],
+      ),
+    ),
+    );
+  }
+}

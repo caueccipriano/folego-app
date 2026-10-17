@@ -1,0 +1,9 @@
+-- Historical alignment marker.
+--
+-- Supabase Dev already recorded version 20260916235122 for the notification
+-- schedule projection. The replayable definition is intentionally installed
+-- by the later reconcile_notification_automation_foundation migration so the
+-- repository can preserve the concurrent b93f81a history without rewriting an
+-- already-applied migration.
+--
+-- Do not rewrite or remove this version.
