@@ -12,11 +12,13 @@ class PlanInsightsSection extends StatelessWidget {
     required this.insights,
     this.onReviewSuggestion,
     this.allowEditing = true,
+    this.onOpenMetric,
   });
 
   final Future<PlanInsights> insights;
   final ValueChanged<PlanSuggestion>? onReviewSuggestion;
   final bool allowEditing;
+  final ValueChanged<String>? onOpenMetric;
 
   @override
   Widget build(BuildContext context) {
@@ -68,16 +70,19 @@ class PlanInsightsSection extends StatelessWidget {
                 children: [
                   _MoneyView(
                     label: 'despesas do mês',
+                    onTap: onOpenMetric == null ? null : () => onOpenMetric!('spending'),
                     amount: data.economicSpending,
                     detail: 'compras, parcelas e benefícios atribuídos ao mês',
                   ),
                   _MoneyView(
                     label: 'dinheiro que saiu das contas',
+                    onTap: onOpenMetric == null ? null : () => onOpenMetric!('cash'),
                     amount: data.cashOutflows,
                     detail: 'inclui PIX, faturas, parcelas e transferências',
                   ),
                   _MoneyView(
                     label: 'disponível estimado agora',
+                    onTap: onOpenMetric == null ? null : () => onOpenMetric!('available'),
                     amount: data.estimatedAvailableNow,
                     detail: 'calculado pelos registros; não é extrato bancário',
                   ),
@@ -214,16 +219,21 @@ class _MoneyView extends StatelessWidget {
     required this.label,
     required this.amount,
     required this.detail,
+    this.onTap,
   });
 
   final String label;
   final double amount;
   final String detail;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(13),
+      child: Container(
       width: 198,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
@@ -241,8 +251,11 @@ class _MoneyView extends StatelessWidget {
           const SizedBox(height: 4),
           Text(detail, style: TextStyle(fontSize: 10,
             color: scheme.onSurfaceVariant)),
+          if (onTap != null)
+            Text('entender e conferir ›', style: TextStyle(fontSize: 10,
+              fontWeight: FontWeight.w600, color: scheme.primary)),
         ],
       ),
-    );
+    ));
   }
 }
