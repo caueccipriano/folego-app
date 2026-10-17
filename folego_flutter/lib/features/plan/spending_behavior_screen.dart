@@ -305,10 +305,12 @@ class _SpendingBehaviorScreenState extends State<SpendingBehaviorScreen> {
       if (mounted) {
         widget.onChanged?.call();
         await _load();
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('$changed gasto(s) classificados. '
-            '$failed precisam de revisão manual.'),
-        ));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$changed gasto(s) classificados. '
+              '$failed precisam de revisão manual.'),
+          ));
+        }
       }
     } finally {
       if (mounted) setState(() => _savingId = null);
