@@ -119,6 +119,207 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('bulk read clears displayed unread without resolving a receipt',
+      (tester) async {
+    var read = false;
+    final calls = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: NotificationHistoryScreen(
+        repository: _Repository(),
+        spaceId: 'space-a',
+        authenticatedUserId: () => 'user-a',
+        historyLoader: (_) async => [
+          NotificationHistoryItem(
+            id: 1, kind: 'newTransaction', title: 'novo lançamento',
+            body: 'teste', route: '/transactions/one',
+            stableKey: 'event:one', deliveredAt: DateTime.utc(2026, 10, 16),
+            seenAt: read ? DateTime.utc(2026, 10, 17) : null,
+          ),
+          NotificationHistoryItem(
+            id: 2, kind: 'captureNeedsReview', title: 'revisar comprovante',
+            body: 'continua em revisão', route: '/captures/two',
+            stableKey: 'capture:two', deliveredAt: DateTime.utc(2026, 10, 16),
+            seenAt: read ? DateTime.utc(2026, 10, 17) : null,
+          ),
+          NotificationHistoryItem(
+            id: 3, kind: 'newTransaction', title: 'anterior',
+            body: '', route: '/transactions/three',
+            stableKey: 'event:three', deliveredAt: DateTime.utc(2026, 10, 14),
+            seenAt: DateTime.utc(2026, 10, 16),
+          ),
+        ],
+        notificationReadWriter: (spaceId, stableKey) async {
+          calls.add('
+    (tester) async {
+      final requests = {
+        'space-a': Completer<int>(),
+        'space-b': Completer<int>(),
+      };
+      final repository = _Repository();
+      Future<int> load(String space) => requests[space]!.future;
+      String? user() => 'user-a';
+      Widget bell(String space) => MaterialApp(
+        home: Scaffold(
+          body: ActivityInboxBell(
+            repository: repository,
+            spaceId: space,
+            unreadLoader: load,
+            authenticatedUserId: user,
+            onOpen: (_) async {},
+          ),
+        ),
+      );
+      await tester.pumpWidget(bell('space-a'));
+      await tester.pumpWidget(bell('space-b'));
+      requests['space-b']!.complete(281);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('notificações · 281 não lidas'), findsOneWidget);
+      expect(find.text('99+'), findsOneWidget);
+      requests['space-a']!.complete(0);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('notificações · 281 não lidas'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('bell tolerates screens without initialized Supabase', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ActivityInboxBell(repository: _Repository(), spaceId: 'demo'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('all backend receipt reasons have human copy and unknown reasons stay neutral', () {
+    for (final reason in [
+      'multiple_compatible_events',
+      'direction_unknown',
+      'scan_limit',
+      'existing_confirmed_event',
+      'counterparty_mismatch',
+      'context_unknown',
+      'future_machine_code',
+    ]) {
+      expect(captureReviewReason(reason, null), isNot(contains(reason)));
+    }
+  });
+  test('receipt direction maps backend in/out and excludes unknown or internal transfer', () {
+    expect(captureSuggestionEventType('in', {}), 'income');
+    expect(captureSuggestionEventType('out', {}), 'expense');
+    expect(captureSuggestionEventType('unknown', {}), isNull);
+    expect(
+      captureSuggestionEventType('in', {'is_internal_transfer': true}),
+      isNull,
+    );
+    expect(
+      captureSuggestionEventType('out', {'event_type': 'transfer'}),
+      isNull,
+    );
+  });
+}
++'spaceId/
+    (tester) async {
+      final requests = {
+        'space-a': Completer<int>(),
+        'space-b': Completer<int>(),
+      };
+      final repository = _Repository();
+      Future<int> load(String space) => requests[space]!.future;
+      String? user() => 'user-a';
+      Widget bell(String space) => MaterialApp(
+        home: Scaffold(
+          body: ActivityInboxBell(
+            repository: repository,
+            spaceId: space,
+            unreadLoader: load,
+            authenticatedUserId: user,
+            onOpen: (_) async {},
+          ),
+        ),
+      );
+      await tester.pumpWidget(bell('space-a'));
+      await tester.pumpWidget(bell('space-b'));
+      requests['space-b']!.complete(281);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('notificações · 281 não lidas'), findsOneWidget);
+      expect(find.text('99+'), findsOneWidget);
+      requests['space-a']!.complete(0);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('notificações · 281 não lidas'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('bell tolerates screens without initialized Supabase', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ActivityInboxBell(repository: _Repository(), spaceId: 'demo'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('all backend receipt reasons have human copy and unknown reasons stay neutral', () {
+    for (final reason in [
+      'multiple_compatible_events',
+      'direction_unknown',
+      'scan_limit',
+      'existing_confirmed_event',
+      'counterparty_mismatch',
+      'context_unknown',
+      'future_machine_code',
+    ]) {
+      expect(captureReviewReason(reason, null), isNot(contains(reason)));
+    }
+  });
+  test('receipt direction maps backend in/out and excludes unknown or internal transfer', () {
+    expect(captureSuggestionEventType('in', {}), 'income');
+    expect(captureSuggestionEventType('out', {}), 'expense');
+    expect(captureSuggestionEventType('unknown', {}), isNull);
+    expect(
+      captureSuggestionEventType('in', {'is_internal_transfer': true}),
+      isNull,
+    );
+    expect(
+      captureSuggestionEventType('out', {'event_type': 'transfer'}),
+      isNull,
+    );
+  });
+}
++'stableKey');
+          if (calls.length == 2) read = true;
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('activity-mark-loaded-read')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('continuam exigindo revisão'), findsOneWidget);
+    expect(calls, isEmpty);
+    await tester.tap(find.widgetWithText(FilledButton, 'marcar como lidos'));
+    await tester.pumpAndSettle();
+    expect(calls.toSet(), {'space-a/event:one', 'space-a/capture:two'});
+    expect(find.byKey(const ValueKey('activity-mark-loaded-read')), findsNothing);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'pendentes'));
+    await tester.pumpAndSettle();
+    expect(find.text('revisar comprovante'), findsOneWidget);
+    expect(find.text('conferir comprovante'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets(
     'badge uses exact count and rejects late response from previous space',
     (tester) async {
