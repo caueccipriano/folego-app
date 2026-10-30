@@ -23,9 +23,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/activity_inbox_bell.dart';
 import '../../shared/widgets/app_error_state.dart';
-import '../diary/diary_screen.dart';
 import '../onboarding/getting_started_screen.dart';
-import '../goals/goals_screen.dart';
 import 'daily_review_card.dart';
 import 'financial_review_screen.dart';
 import 'folego_change_explanation.dart';
@@ -320,27 +318,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _openGoals() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => GoalsScreen(
-          repository: widget.repository,
-          spaceId: widget.space.id,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openDiary() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => DiaryScreen(
-          repository: widget.repository,
-          spaceId: widget.space.id,
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -419,7 +396,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final quickActions = _buildQuickActions(
       surface: surface,
       border: border,
-      primaryText: primaryText,
       brightness: brightness,
     );
     final upcoming = _buildUpcomingCard(
@@ -796,10 +772,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildQuickActions({
     required Color surface,
     required Color border,
-    required Color primaryText,
     required Brightness brightness,
   }) {
-    final positive = AppColors.positiveText(brightness);
+    // Only the two everyday actions belong on Home; goals and journal remain
+    // available from secondary tools without competing with fast capture.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -808,45 +784,21 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'gasto',
             semanticLabel: 'registrar gasto',
             icon: AppIcons.expense,
-            background: AppColors.action(Theme.of(context).brightness),
-            foreground: AppColors.onAction(Theme.of(context).brightness),
+            background: AppColors.action(brightness),
+            foreground: AppColors.onAction(brightness),
             onTap: () => _openRegister('expense'),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
           child: _QuickAction(
             label: 'receita',
             semanticLabel: 'registrar receita',
             icon: AppIcons.income,
             background: surface,
-            foreground: positive,
+            foreground: AppColors.positiveText(brightness),
             borderColor: border,
             onTap: () => _openRegister('income'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _QuickAction(
-            label: 'metas',
-            semanticLabel: 'abrir metas',
-            icon: AppIcons.goals,
-            background: surface,
-            foreground: AppColors.primaryPurple(brightness),
-            borderColor: border,
-            onTap: _openGoals,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _QuickAction(
-            label: 'diário',
-            semanticLabel: 'abrir diário',
-            icon: AppIcons.journal,
-            background: surface,
-            foreground: primaryText,
-            borderColor: border,
-            onTap: _openDiary,
           ),
         ),
       ],

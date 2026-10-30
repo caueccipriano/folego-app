@@ -431,10 +431,11 @@ String financialNotificationStableKey({
 /// Política central para todos os avisos gerados pelo cliente, sem alterar
 /// nomes de contas, valores, datas, rotas ou prioridade dos alertas.
 String applyNotificationTone(String factualText, String style) {
+  // The fact should be the message. Tone adds at most two short words.
   final prefix = switch (style) {
-    'welcoming' => 'Vamos cuidar disso com calma. ',
-    'firm' => 'Atenção: confira este aviso agora. ',
-    'aggressive' => 'Porra, presta atenção nisso: ',
+    'welcoming' => 'Olha só: ',
+    'firm' => 'Atenção: ',
+    'aggressive' => 'Porra: ',
     _ => '',
   };
   return '$prefix$factualText';
@@ -449,32 +450,30 @@ String notificationBody(
   int reminderOffsetDays = 0,
   String reminderStyle = 'normal',
 }) {
+  // The notification title already contains the commitment name.
+  // Do not repeat it in the body or imply an expected income was received.
   if (event.overdue || event.dayOffset < 0) {
-    return applyNotificationTone('${event.title} está atrasado', reminderStyle);
+    return applyNotificationTone('Vencimento passou. Confira.', reminderStyle);
   }
   final leadDays = event.dayOffset < reminderOffsetDays
       ? event.dayOffset
       : reminderOffsetDays;
   if (leadDays <= 0) {
     return applyNotificationTone(
-      event.isRecurringIncome
-          ? '${event.title} está previsto para hoje'
-          : '${event.title} vence hoje',
+      event.isRecurringIncome ? 'Entrada prevista hoje.' : 'Vence hoje.',
       reminderStyle,
     );
   }
   if (leadDays == 1) {
     return applyNotificationTone(
-      event.isRecurringIncome
-          ? '${event.title} está previsto para amanhã'
-          : '${event.title} vence amanhã',
+      event.isRecurringIncome ? 'Entrada prevista amanhã.' : 'Vence amanhã.',
       reminderStyle,
     );
   }
   return applyNotificationTone(
     event.isRecurringIncome
-        ? '${event.title} está previsto em $leadDays dias'
-        : '${event.title} vence em $leadDays dias',
+        ? 'Entrada prevista em $leadDays dias.'
+        : 'Vence em $leadDays dias.',
     reminderStyle,
   );
 }

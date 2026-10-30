@@ -5,7 +5,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
-import '../../l10n/app_localizations.dart';
 import 'liquid_glass_navigation_bar.dart';
 
 /// Responsive application chrome. The content stack stays in the same branch of
@@ -17,11 +16,13 @@ class ResponsiveNavigationShell extends StatelessWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.pages,
+    this.onOpenTools,
   }) : assert(pages.length == 5);
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final List<Widget> pages;
+  final VoidCallback? onOpenTools;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +42,7 @@ class ResponsiveNavigationShell extends StatelessWidget {
               selectedIndex: selectedIndex,
               onDestinationSelected: onDestinationSelected,
               compact: layout == AppLayoutSize.expanded,
+              onOpenTools: onOpenTools,
             ),
           Expanded(
             key: const ValueKey('shell-content'),
@@ -55,6 +57,7 @@ class ResponsiveNavigationShell extends StatelessWidget {
               child: LiquidGlassNavigationBar(
                 selectedIndex: selectedIndex,
                 onDestinationSelected: onDestinationSelected,
+                onOpenTools: onOpenTools,
               ),
             ),
     );
@@ -67,27 +70,20 @@ class DesktopNavigationSidebar extends StatelessWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.compact,
+    this.onOpenTools,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final bool compact;
+  final VoidCallback? onOpenTools;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final items = <_DesktopNavItem>[
-      _DesktopNavItem(icon: AppIcons.home, label: l10n.home.toLowerCase()),
-      _DesktopNavItem(
-        icon: AppIcons.transactions,
-        label: l10n.transactions.toLowerCase(),
-      ),
-      _DesktopNavItem(icon: AppIcons.plan, label: l10n.plan.toLowerCase()),
-      _DesktopNavItem(icon: AppIcons.wallet, label: l10n.wallet.toLowerCase()),
-      _DesktopNavItem(
-        icon: AppIcons.profile,
-        label: l10n.profile.toLowerCase(),
-      ),
+      _DesktopNavItem(icon: AppIcons.home, label: 'hoje'),
+      _DesktopNavItem(icon: AppIcons.transactions, label: 'movimentos'),
+      _DesktopNavItem(icon: AppIcons.plan, label: 'futuro'),
     ];
 
     final brightness = Theme.of(context).brightness;
@@ -214,6 +210,16 @@ class DesktopNavigationSidebar extends StatelessWidget {
                   },
                 ),
               ),
+              if (onOpenTools != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('desktop-tools-button'),
+                    onPressed: onOpenTools,
+                    icon: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text('contas e ajustes'),
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                 child: Text(

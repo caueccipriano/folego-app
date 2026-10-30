@@ -420,8 +420,16 @@ void main() {
 
       await tester.pumpWidget(_notificationApp(data, adapter));
       await tester.pumpAndSettle();
-      // O seletor global de tom ganhou sua própria seção acima dos tipos.
-      // Localize pelo identificador, não por deslocamentos fixos na lista.
+      // Advanced controls remain editable after deliberately opening them.
+      await tester.scrollUntilVisible(
+        find.text('ver mais opções'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('ver mais opções'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ver mais opções'));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('notification-toggle-invoices')),
         180,
@@ -459,7 +467,20 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await _scrollNotifications(tester, -1200);
+      await tester.scrollUntilVisible(
+        find.text('ver mais opções'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('ver mais opções'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ver mais opções'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('notification-time')),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.byKey(const ValueKey('notification-time')));
       await tester.pumpAndSettle();
 
@@ -530,14 +551,6 @@ Future<void> _switchOrganizationTab(WidgetTester tester, String label) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump();
-}
-
-Future<void> _scrollNotifications(WidgetTester tester, double dy) async {
-  await tester.drag(
-    find.byKey(const ValueKey('notification-settings-list')),
-    Offset(0, dy),
-  );
-  await tester.pumpAndSettle();
 }
 
 Widget _organizationApp(FinancialOrganizationDataSource source) => MaterialApp(

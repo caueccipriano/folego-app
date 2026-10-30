@@ -5,7 +5,6 @@ import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
-import '../../l10n/app_localizations.dart';
 
 /// Mobile navigation with a glass-like visual treatment.
 ///
@@ -18,26 +17,22 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
+    this.onOpenTools,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
+  final VoidCallback? onOpenTools;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
-
+    // Three everyday destinations; advanced tasks live behind tools.
     final items = <_NavItem>[
-      _NavItem(icon: AppIcons.home, label: l10n.home.toLowerCase()),
-      _NavItem(
-        icon: AppIcons.transactions,
-        label: l10n.transactions.toLowerCase(),
-      ),
-      _NavItem(icon: AppIcons.plan, label: l10n.plan.toLowerCase()),
-      _NavItem(icon: AppIcons.wallet, label: l10n.wallet.toLowerCase()),
-      _NavItem(icon: AppIcons.profile, label: l10n.profile.toLowerCase()),
+      _NavItem(icon: AppIcons.home, label: 'hoje'),
+      _NavItem(icon: AppIcons.transactions, label: 'movimentos'),
+      _NavItem(icon: AppIcons.plan, label: 'futuro'),
     ];
 
     final tokens = FolegoColorTokens.of(context);
@@ -86,7 +81,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: List.generate(items.length, (index) {
+                    children: [
+                      ...List.generate(items.length, (index) {
                       return Expanded(
                         child: _Destination(
                           key: ValueKey('mobile-nav-destination-$index'),
@@ -96,6 +92,17 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                         ),
                       );
                     }),
+                    if (onOpenTools != null)
+                      SizedBox(
+                        width: 52,
+                        child: IconButton(
+                          key: const ValueKey('mobile-tools-button'),
+                          tooltip: 'contas, metas e ajustes',
+                          onPressed: onOpenTools,
+                          icon: const Icon(Icons.tune_rounded, size: 22),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

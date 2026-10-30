@@ -61,6 +61,8 @@ void main() {
     expect(intent.entityType, 'subscription');
     expect(intent.route, '/transactions/subscriptions/source-1');
     expect(intent.body, isNot(contains('25')));
+    expect(intent.title, 'Internet');
+    expect(intent.body, isNot(contains('Internet')));
   });
 
   test('invoice, debt and recurrence routes remain deterministic', () {
@@ -103,7 +105,7 @@ void main() {
     );
 
     expect(intent!.kind, FinancialNotificationKind.recurringIncome);
-    expect(intent.body, 'Internet está previsto em 3 dias');
+    expect(intent.body, 'Entrada prevista em 3 dias.');
   });
 
   test('overdue wins over source kind and respects overdue preference', () {
@@ -124,7 +126,7 @@ void main() {
     );
 
     expect(intent!.kind, FinancialNotificationKind.overdue);
-    expect(intent.body, 'Internet está atrasado');
+    expect(intent.body, 'Vencimento passou. Confira.');
     expect(disabled, isNull);
   });
 
@@ -136,21 +138,21 @@ void main() {
         event: futureEvent,
         preferences: enabled.copyWith(reminderOffsetDays: 0),
       )!.body,
-      'Internet vence hoje',
+      'Vence hoje.',
     );
     expect(
       FinancialNotificationIntent.fromUpcoming(
         event: futureEvent,
         preferences: enabled.copyWith(reminderOffsetDays: 1),
       )!.body,
-      'Internet vence amanhã',
+      'Vence amanhã.',
     );
     expect(
       FinancialNotificationIntent.fromUpcoming(
         event: futureEvent,
         preferences: enabled.copyWith(reminderOffsetDays: 3),
       )!.body,
-      'Internet vence em 3 dias',
+      'Vence em 3 dias.',
     );
   });
 
@@ -160,7 +162,7 @@ void main() {
       event: tomorrow,
       preferences: enabled.copyWith(reminderOffsetDays: 3),
     );
-    expect(intent!.body, 'Internet vence amanhã');
+    expect(intent!.body, 'Vence amanhã.');
   });
 
   test('individual notification preferences suppress their event kinds', () {
