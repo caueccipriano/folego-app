@@ -4,6 +4,12 @@ import '../../core/utils/formatters.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../data/models/projection_model.dart';
 
+/// A description is optional when someone only wants to check affordability.
+String purchaseSimulationName(String value) {
+  final name = value.trim();
+  return name.isEmpty ? 'compra simulada' : name;
+}
+
 class PurchaseOption {
   const PurchaseOption({
     required this.name,

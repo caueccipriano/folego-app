@@ -70,7 +70,7 @@ jobs:
         run: flutter test test/folego_admin_layout_test.dart
 
       - name: Purchase simulation and entry safety
-        run: flutter test test/purchase_simulation_test.dart test/purchase_entry_wiring_test.dart
+        run: flutter test test/purchase_simulation_test.dart test/purchase_entry_wiring_test.dart test/purchase_quick_entry_test.dart
 
       - name: Agenda month view regression
         run: flutter test test/agenda_monthly_view_wiring_test.dart
