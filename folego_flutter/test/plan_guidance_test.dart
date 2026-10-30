@@ -120,7 +120,7 @@ void main() {
         PlanGuidanceCard(
           items: [category('Grupo', actual: 45)],
           canEdit: false,
-          onEdit: (_, __) => fail('should not edit past months'),
+          onEdit: (_, _) => fail('should not edit past months'),
           onReviewSpending: (_) {},
         ),
       ])),
