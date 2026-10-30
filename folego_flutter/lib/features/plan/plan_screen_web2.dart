@@ -15,6 +15,7 @@ import 'monthly_category_donut.dart';
 import '../home/upcoming_events_screen.dart';
 import '../goals/goals_screen.dart';
 import 'plan_insights_section.dart';
+import 'plan_guidance_card.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_filters.dart';
 import '../transactions/transactions_screen.dart';
@@ -188,9 +189,6 @@ class _PlanScreenState extends State<PlanScreen> {
 
   BudgetMonthSummary get _summary => BudgetMonthSummary.fromItems(_items);
 
-  int get _budgetedCount =>
-      _items.where((item) => item.isSubcategory && item.hasBudget).length;
-
   bool get _isPastMonth {
     final now = DateTime.now();
     return _month.isBefore(DateTime(now.year, now.month));
@@ -261,16 +259,6 @@ class _PlanScreenState extends State<PlanScreen> {
         _expandedCategoryIds.remove(categoryId);
       }
     });
-  }
-
-  void _startPlanning() {
-    for (final parent in _parents) {
-      final children = _childrenOf(parent);
-      if (children.isNotEmpty) {
-        _editBudget(children.first);
-        return;
-      }
-    }
   }
 
   Future<void> _saveBudget({
@@ -680,15 +668,38 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _planningPaths() => Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-    OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>UpcomingEventsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.event_note_outlined),label:const Text('1 · conferir compromissos')),
-    const SizedBox(height:8),
-    Text('2 · definir limites de gastos',style:Theme.of(context).textTheme.titleSmall),
-    const Text('Use o resumo e as categorias abaixo para distribuir seu orçamento.'),
+  Widget _extraPlanningTools() => Material(
+    color: AppColors.surface(Theme.of(context).brightness),
+    borderRadius: BorderRadius.circular(AppRadii.control),
+    child: Theme(
+      data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
+      child: ExpansionTile(
+      key: const ValueKey('plan-more-tools'),
+      title: const Text('contas e metas'),
+      subtitle: const Text('mais ferramentas, quando precisar'),
+      tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+      children: [
+        ListTile(
+          leading: const Icon(Icons.event_note_outlined),
+          title: const Text('conferir próximos compromissos'),
+          onTap: () => Navigator.of(context).push<void>(
+            MaterialPageRoute(builder: (_) => UpcomingEventsScreen(
+              repository: widget.repository, spaceId: widget.spaceId)),
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.flag_outlined),
+          title: const Text('acompanhar minhas metas'),
+          onTap: () => Navigator.of(context).push<void>(
+            MaterialPageRoute(builder: (_) => GoalsScreen(
+              repository: widget.repository, spaceId: widget.spaceId)),
+          ),
+        ),
+      ],
+      ),
+    ),
+  );
 
-  ]);
-
-  Widget _goalButton() => OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GoalsScreen(repository:widget.repository,spaceId:widget.spaceId))),icon:const Icon(Icons.flag_outlined),label:const Text('3 · planejar metas'));
   Future<void> _openMetricTransactions(String metric) async {
     final month = _month;
     final start = DateTime(month.year, month.month);
@@ -798,6 +809,15 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  Widget _buildGuidance() => PlanGuidanceCard(
+    items: _items,
+    insights: _insightsFuture,
+    canEdit: !_isPastMonth,
+    onEdit: (item, suggestion) =>
+      _editBudget(item, suggestedAmount: suggestion),
+    onReviewSpending: _showCategorySpending,
+  );
+
   Widget _buildInsights() {
     return PlanInsightsSection(
       insights: _insightsFuture!,
@@ -840,8 +860,8 @@ class _PlanScreenState extends State<PlanScreen> {
             const LinearProgressIndicator(minHeight: 2),
           ],
           const SizedBox(height: 12),
-          _planningPaths(),
-          const SizedBox(height:12),
+          _buildGuidance(),
+          const SizedBox(height: 12),
           _buildSummary(brightness),
                       const SizedBox(height: 16),
                       MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
@@ -853,14 +873,10 @@ class _PlanScreenState extends State<PlanScreen> {
             const SizedBox(height: 12),
             _purchaseSimulationButton(),
           ],
-          if (_budgetedCount == 0) ...[
-            const SizedBox(height: 12),
-            _buildNoPlan(brightness),
-          ],
           const SizedBox(height: 10),
           _buildCategories(brightness),
-          const SizedBox(height:16),
-          _goalButton(),
+          const SizedBox(height: 16),
+          _extraPlanningTools(),
         ],
       ),
     );
@@ -891,8 +907,8 @@ class _PlanScreenState extends State<PlanScreen> {
                   child: Column(
                     key: const ValueKey('plan-summary-column'),
                     children: [
-                      _planningPaths(),
-                      const SizedBox(height:12),
+                      _buildGuidance(),
+                      const SizedBox(height: 12),
                       _buildSummary(brightness),
                       const SizedBox(height: 16),
                       MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
@@ -904,12 +920,8 @@ class _PlanScreenState extends State<PlanScreen> {
                         const SizedBox(height: 12),
                         _purchaseSimulationButton(),
                       ],
-                      if (_budgetedCount == 0) ...[
-                        const SizedBox(height: 16),
-                        _buildNoPlan(brightness),
-                      ],
-                      const SizedBox(height:16),
-                      _goalButton(),
+                      const SizedBox(height: 16),
+                      _extraPlanningTools(),
                     ],
                   ),
                 ),
@@ -1279,55 +1291,6 @@ class _PlanScreenState extends State<PlanScreen> {
                 icon: const Icon(AppIcons.plan, size: 17),
                 label: const Text('teto flexível'),
               ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoPlan(Brightness brightness) {
-    final primaryText = AppColors.primaryText(brightness);
-    final secondaryText = AppColors.secondaryText(brightness);
-    final purple = AppColors.primaryPurple(brightness);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: purple.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: purple.withValues(alpha: .18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(AppIcons.plan, color: purple, size: 24),
-          const SizedBox(height: 10),
-          Text(
-            'nenhum limite definido para ${_monthLabel(_month)}',
-            style: AppTypography.body(
-              context,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: primaryText,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'gastos realizados continuam aparecendo mesmo sem limite.',
-            style: AppTypography.body(
-              context,
-              fontSize: 11,
-              color: secondaryText,
-            ),
-          ),
-          if (!_isPastMonth) ...[
-            const SizedBox(height: 14),
-            OutlinedButton.icon(
-              onPressed: _startPlanning,
-              icon: const Icon(AppIcons.add, size: 18),
-              label: const Text('começar planejamento'),
             ),
           ],
         ],
