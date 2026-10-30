@@ -42,6 +42,8 @@ import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
 import 'quick_register_sheet.dart';
+import '../transactions/financial_review_hub.dart';
+import '../transactions/resolver_queue.dart';
 import 'upcoming_events_screen.dart';
 import '../plan/projection_navigation_scope.dart';
 
@@ -710,9 +712,12 @@ class _HomeScreenState extends State<HomeScreen> {
       onSearch: () => openDiscovery(
         context, space: widget.space, repository: widget.repository,
       ),
-      onPending: () => openDiscovery(
-        context, space: widget.space, repository: widget.repository,
-        pendingOnly: true,
+      onPending: () => Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => FinancialReviewHub(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+          initialTab: resolverTabIndex,
+        )),
       ),
       onSetup: _snapshot?.needsIncomeSetup == true
           ? () => Navigator.of(context).push<void>(

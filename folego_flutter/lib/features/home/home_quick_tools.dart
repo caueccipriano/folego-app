@@ -58,7 +58,7 @@ class HomeQuickTools extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 13),
                 ),
                 icon: const Icon(AppIcons.transactions, size: 18),
-                label: const Text('pendências'),
+                label: const Text('resolver'),
               ),
             ],
           ),

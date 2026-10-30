@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/privacy/financial_privacy.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
@@ -14,6 +15,7 @@ import '../plan/spending_behavior_screen.dart';
 import '../profile/capture_review_screen.dart';
 import 'transaction_detail_sheet_v2.dart';
 import 'transaction_classification_inbox.dart';
+import 'resolver_queue.dart';
 
 
 String financialNoteMonth(Object? date) {
@@ -70,7 +72,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
   @override
   void initState() {
     super.initState();
-    _tab = widget.initialTab.clamp(0, 2);
+    _tab = widget.initialTab.clamp(0, resolverTabIndex);
     _refresh();
   }
 
@@ -83,6 +85,8 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
       _noteMonth = '';
       _noteCategory = '';
       _noteAccount = '';
+      _categories = const [];
+      _history = const [];
       _refresh();
     }
   }
@@ -111,6 +115,13 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
     final client = Supabase.instance.client;
     if (client.auth.currentUser == null) {
       throw StateError('Faça login para consultar suas finanças.');
+    }
+    if (tab == resolverTabIndex) {
+      final queues = await Future.wait([
+        _load(1, space, epoch),
+        _load(2, space, epoch),
+      ]);
+      return mergeResolverTasks(pending: queues[0], other: queues[1]);
     }
     if (tab == 0) {
       final notes = List<Map<String, dynamic>>.from(await client
@@ -374,6 +385,118 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
     if (mounted) _refresh();
   }
 
+  Future<void> _openResolverTask(Map<String, dynamic> row) async {
+    if (row['kind'] == 'other') {
+      await _reviewOther(row);
+    } else {
+      await _openPending(row);
+    }
+  }
+
+  Widget _resolverTile(Map<String, dynamic> row, {bool featured = false}) {
+    final kind = row['kind']?.toString() ?? '';
+    final title = resolverTaskLabel(kind);
+    final action = resolverTaskAction(kind);
+    final description = (kind == 'capture'
+        ? row['counterparty']
+        : row['description'])?.toString().trim() ?? '';
+    final amount = num.tryParse(row['amount']?.toString() ?? '');
+    return ValueListenableBuilder<bool>(
+      valueListenable: FinancialPrivacy.hidden,
+      builder: (context, hidden, _) => ListTile(
+        key: ValueKey('resolver-item-$kind-${row['id']}'),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        leading: Icon(
+          switch (kind) {
+            'capture' => Icons.receipt_long_outlined,
+            'classification' => Icons.sell_outlined,
+            'other' => Icons.category_outlined,
+            _ => Icons.tune_outlined,
+          },
+          size: 22,
+        ),
+        title: Text(title, maxLines: 2,
+          overflow: TextOverflow.ellipsis),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (description.isNotEmpty)
+              Text(hidden ? 'descrição oculta' : description,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+            if (amount != null)
+              Text(hidden ? FinancialPrivacy.maskMoney() : Formatters.money(amount)),
+            if (featured)
+              Text(action, style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600)),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 18),
+        onTap: () => _openResolverTask(row),
+      ),
+    );
+  }
+
+  Widget _resolverSection(List<Map<String, dynamic>> tasks) {
+    final scheme = Theme.of(context).colorScheme;
+    if (tasks.isEmpty) {
+      return Padding(
+        key: const ValueKey('resolver-empty'),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 34),
+        child: Column(children: [
+          Icon(Icons.check_circle_outline, size: 34, color: scheme.primary),
+          const SizedBox(height: 10),
+          const Text('nada para resolver agora',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+          const SizedBox(height: 5),
+          Text('Nenhuma pendência encontrada nas filas consultadas. '
+            'Seus registros continuam disponíveis em Movimentos.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+        ]),
+      );
+    }
+    return Padding(
+      key: const ValueKey('resolver-center'),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('uma coisa por vez',
+            style: TextStyle(fontWeight: FontWeight.w700,
+              fontSize: 19, color: scheme.onSurface)),
+          const SizedBox(height: 4),
+          Text('${tasks.length} pendência(s) nos registros consultados. '
+            'Revisar não altera valores automaticamente.',
+            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+          const SizedBox(height: 14),
+          Material(
+            color: scheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+            child: _resolverTile(tasks.first, featured: true),
+          ),
+          if (tasks.length > 1) ...[
+            const SizedBox(height: 12),
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
+              child: ExpansionTile(
+                key: const ValueKey('resolver-more'),
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                initiallyExpanded: false,
+                title: Text('outras ${tasks.length - 1} pendências',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('abrir somente quando quiser'),
+                children: [
+                  for (final row in tasks.skip(1)) _resolverTile(row),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Future<void> _openPending(Map<String, dynamic> row) async {
     if (row['kind'] == 'capture') {
       await Navigator.of(context).push(MaterialPageRoute<void>(
@@ -486,18 +609,25 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('organizar meu dinheiro')),
+    appBar: AppBar(title: Text(_tab == resolverTabIndex
+      ? 'resolver.' : 'organizar meu dinheiro')),
     body: Column(children: [
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(children: [
-          for (var i = 0; i < 3; i++)
+          for (final tab in const [resolverTabIndex, 0, 1, 2])
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 3),
               child: ChoiceChip(
-                label: Text(const ['comentários', 'pendências', 'Outros'][i]),
-                selected: _tab == i,
-                onSelected: (_) => _selectTab(i),
+                key: ValueKey('financial-hub-tab-$tab'),
+                label: Text(switch (tab) {
+                  resolverTabIndex => 'resolver',
+                  0 => 'comentários',
+                  1 => 'pendências',
+                  _ => 'Outros',
+                }),
+                selected: _tab == tab,
+                onSelected: (_) => _selectTab(tab),
               ),
             ),
         ]),
@@ -537,7 +667,10 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
               ),
             );
           }
-          if (!snapshot.hasData) {
+          // FutureBuilder may retain the previous space's result while a
+          // new request is connecting. Never show stale financial records.
+          if (snapshot.connectionState != ConnectionState.done ||
+              !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           final q = _search.text.trim().toLowerCase();
@@ -549,6 +682,9 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           return RefreshIndicator(
             onRefresh: () async { _refresh(); await _future; },
             child: ListView(children: [
+              if (_tab == resolverTabIndex)
+                _resolverSection(rows)
+              else ...[
               if (_tab == 0) _noteFilterControls(all),
               ListTile(
                 title: Text(_tab == 0 ? 'Meus comentários' :
@@ -599,6 +735,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                     );
                   },
                 ),
+              ],
             ]),
           );
         },
