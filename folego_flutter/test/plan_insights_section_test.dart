@@ -107,6 +107,12 @@ void main() {
   });
   testWidgets('privacy hides balances and detailed audit amounts',
       (tester) async {
+    // Formatters.money also respects privacy: snapshot the visible strings.
+    FinancialPrivacy.hidden.value = false;
+    final debt = Formatters.money(insights.debtPayments);
+    final spending = Formatters.money(insights.economicSpending);
+    final issue = Formatters.money(insights.issues.first.amount);
+    final suggestion = Formatters.money(insights.suggestions.first.suggestedLimit);
     FinancialPrivacy.hidden.value = true;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -117,22 +123,21 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.textContaining('R\$ ••••'), findsWidgets);
-    expect(find.textContaining(Formatters.money(insights.debtPayments)),
+    expect(find.textContaining(debt),
       findsNothing);
-    expect(find.textContaining(Formatters.money(insights.economicSpending)),
+    expect(find.textContaining(spending),
       findsNothing);
     final audit = find.byKey(const ValueKey('plan-insights-audit'));
     await tester.ensureVisible(audit);
     await tester.tap(audit);
     await tester.pumpAndSettle();
-    expect(find.textContaining(Formatters.money(insights.issues.first.amount)),
+    expect(find.textContaining(issue),
       findsNothing);
     final suggestions = find.byKey(const ValueKey('plan-insights-suggestions'));
     await tester.ensureVisible(suggestions);
     await tester.tap(suggestions);
     await tester.pumpAndSettle();
-    expect(find.textContaining(
-      Formatters.money(insights.suggestions.first.suggestedLimit)),
+    expect(find.textContaining(suggestion),
       findsNothing);
   });
 
