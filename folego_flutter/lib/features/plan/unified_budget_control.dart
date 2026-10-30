@@ -173,7 +173,9 @@ class _UnifiedBudgetControlState extends State<UnifiedBudgetControl> {
         );
       },
     );
-    controller.dispose();
+    // The bottom sheet keeps painting during its reverse animation after
+    // its Future resolves. The route owns this short-lived controller until
+    // it becomes unreachable; disposing here can race Flutter animations.
     if (result == null || !mounted) return;
 
     final spaceId = widget.spaceId;
