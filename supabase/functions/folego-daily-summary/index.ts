@@ -1,6 +1,6 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
-import { formatDailyPush } from "../folego-push-dispatch/notification_tone.ts";
+import { formatDailyPush } from "../_shared/notification_copy.ts";
 
 type Candidate = {
   user_id: string;
