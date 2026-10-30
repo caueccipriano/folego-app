@@ -668,9 +668,12 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _extraPlanningTools() => Theme(
-    data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
-    child: ExpansionTile(
+  Widget _extraPlanningTools() => Material(
+    color: AppColors.surface(Theme.of(context).brightness),
+    borderRadius: BorderRadius.circular(AppRadii.control),
+    child: Theme(
+      data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
+      child: ExpansionTile(
       key: const ValueKey('plan-more-tools'),
       title: const Text('contas e metas'),
       subtitle: const Text('mais ferramentas, quando precisar'),
@@ -693,6 +696,7 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
         ),
       ],
+      ),
     ),
   );
 
