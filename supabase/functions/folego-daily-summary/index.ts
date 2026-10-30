@@ -1,5 +1,6 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { formatDailyPush } from "../folego-push-dispatch/notification_tone.ts";
 
 type Candidate = {
   user_id: string;
@@ -116,6 +117,8 @@ Deno.serve(async (req: Request) => {
   let failed = 0;
 
   for (const candidate of candidates) {
+    const styled = formatDailyPush(candidate.title, candidate.body);
+    const outgoing = { ...candidate, ...styled };
     const { data: subscriptionsData, error: subscriptionsError } = await supabase
       .from("web_push_subscriptions")
       .select("id,endpoint,p256dh,auth_secret")
@@ -131,8 +134,8 @@ Deno.serve(async (req: Request) => {
     let delivered = false;
 
     const pushPayload = JSON.stringify({
-      title: candidate.title,
-      body: candidate.body,
+      title: outgoing.title,
+      body: outgoing.body,
       route: candidate.route,
       tag: candidate.stable_key,
       icon: "icons/Icon-192.png",
@@ -188,7 +191,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (delivered) await recordDelivery(candidate);
+    if (delivered) await recordDelivery(outgoing);
   }
 
   return json(200, {
