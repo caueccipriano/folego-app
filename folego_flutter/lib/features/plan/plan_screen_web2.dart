@@ -12,8 +12,6 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
 import 'budget_pace_context.dart';
 import 'monthly_category_donut.dart';
-import '../home/upcoming_events_screen.dart';
-import '../goals/goals_screen.dart';
 import 'plan_insights_section.dart';
 import 'category_period_comparison.dart';
 import '../transactions/transaction_classification_inbox.dart';
@@ -677,38 +675,6 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _extraPlanningTools() => Material(
-    color: AppColors.surface(Theme.of(context).brightness),
-    borderRadius: BorderRadius.circular(AppRadii.control),
-    child: Theme(
-      data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
-      child: ExpansionTile(
-      key: const ValueKey('plan-more-tools'),
-      title: const Text('contas e metas'),
-      subtitle: const Text('mais ferramentas, quando precisar'),
-      tilePadding: const EdgeInsets.symmetric(horizontal: 4),
-      children: [
-        ListTile(
-          leading: const Icon(Icons.event_note_outlined),
-          title: const Text('conferir próximos compromissos'),
-          onTap: () => Navigator.of(context).push<void>(
-            MaterialPageRoute(builder: (_) => UpcomingEventsScreen(
-              repository: widget.repository, spaceId: widget.spaceId)),
-          ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.flag_outlined),
-          title: const Text('acompanhar minhas metas'),
-          onTap: () => Navigator.of(context).push<void>(
-            MaterialPageRoute(builder: (_) => GoalsScreen(
-              repository: widget.repository, spaceId: widget.spaceId)),
-          ),
-        ),
-      ],
-      ),
-    ),
-  );
-
   Future<void> _openMetricTransactions(String metric) async {
     final month = _month;
     final start = DateTime(month.year, month.month);
@@ -925,8 +891,6 @@ class _PlanScreenState extends State<PlanScreen> {
           ],
           const SizedBox(height: 10),
           _buildCategories(brightness),
-          const SizedBox(height: 16),
-          _extraPlanningTools(),
         ],
       ),
     );
@@ -970,8 +934,6 @@ class _PlanScreenState extends State<PlanScreen> {
                         const SizedBox(height: 12),
                         _purchaseSimulationButton(),
                       ],
-                      const SizedBox(height: 16),
-                      _extraPlanningTools(),
                     ],
                   ),
                 ),
