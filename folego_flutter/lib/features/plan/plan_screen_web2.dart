@@ -23,6 +23,7 @@ import '../../data/models/transaction_filters.dart';
 import '../transactions/transactions_screen.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_budget.dart';
+import '../../data/repositories/folego_repository_transaction_classification.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
