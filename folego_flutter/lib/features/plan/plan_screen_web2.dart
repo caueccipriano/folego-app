@@ -15,6 +15,8 @@ import 'monthly_category_donut.dart';
 import '../home/upcoming_events_screen.dart';
 import '../goals/goals_screen.dart';
 import 'plan_insights_section.dart';
+import 'category_period_comparison.dart';
+import '../transactions/transaction_classification_inbox.dart';
 import 'plan_guidance_card.dart';
 import '../../data/models/financial_space.dart';
 import '../../data/models/transaction_filters.dart';
@@ -115,6 +117,7 @@ class _PlanScreenState extends State<PlanScreen> {
   bool _loading = true;
   bool _refreshing = false;
   bool _saving = false;
+  bool _openingClassification = false;
   bool _hasLoadedOnce = false;
   String? _error;
   int _loadGeneration = 0;
@@ -192,6 +195,11 @@ class _PlanScreenState extends State<PlanScreen> {
   bool get _isPastMonth {
     final now = DateTime.now();
     return _month.isBefore(DateTime(now.year, now.month));
+  }
+
+  bool get _isCurrentMonth {
+    final now = DateTime.now();
+    return _month.year == now.year && _month.month == now.month;
   }
 
   Future<List<BudgetOverviewItem>> _fetchBudgetOverview() {
@@ -809,6 +817,44 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  Future<void> _openPendingClassification() async {
+    if (_openingClassification || _isPastMonth) return;
+    setState(() => _openingClassification = true);
+    try {
+      final pending = await widget.repository
+          .listPendingTransactionClassifications(widget.spaceId);
+      if (!mounted) return;
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (_) => TransactionClassificationInbox(
+            repository: widget.repository,
+            spaceId: widget.spaceId,
+            initialItems: pending,
+          ),
+        ),
+      );
+      if (changed == true && mounted) await _load();
+    } catch (_) {
+      if (mounted) {
+        AppSnackbars.show(context, 'não consegui abrir as pendências. tente novamente.');
+      }
+    } finally {
+      if (mounted) setState(() => _openingClassification = false);
+    }
+  }
+
+  void _openMonthComparison() {
+    if (!_isCurrentMonth) return;
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => CategoryPeriodComparison(
+          repository: widget.repository,
+          spaceId: widget.spaceId,
+        ),
+      ),
+    );
+  }
+
   Widget _buildGuidance() => PlanGuidanceCard(
     items: _items,
     insights: _insightsFuture,
@@ -816,6 +862,9 @@ class _PlanScreenState extends State<PlanScreen> {
     onEdit: (item, suggestion) =>
       _editBudget(item, suggestedAmount: suggestion),
     onReviewSpending: _showCategorySpending,
+    onEditReviewCategory: (item) => _editBudget(item),
+    onClassify: _openingClassification ? null : _openPendingClassification,
+    onCompareMonths: _isCurrentMonth ? _openMonthComparison : null,
   );
 
   Widget _buildInsights() {
