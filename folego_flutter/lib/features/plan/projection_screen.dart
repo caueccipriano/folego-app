@@ -1966,6 +1966,7 @@ class _ProjectionSimulationSheetState
   final _debtName = TextEditingController();
   final _debtPayment = TextEditingController();
 
+  bool _purchaseDetailsExpanded = false;
   bool _freeRecurring = true;
   String _freeComponent = 'direct_expense';
   RecurringItem? _subscription;
@@ -2047,10 +2048,10 @@ class _ProjectionSimulationSheetState
     final cash=_cashPrice.text.trim().isEmpty?total:(_money(_cashPrice.text)*100).round();
     final payments=int.tryParse(_purchasePayments.text)??0;
     final delay=int.tryParse(_delayMonths.text)??0;
-    if(_name.text.trim().isEmpty||total<=0||cash<=0||payments<1||payments>120||total<payments||delay<1||delay>24){
+    if(total<=0||cash<=0||payments<1||payments>120||total<payments||delay<1||delay>24){
       _invalid('informe valores válidos, de 1 a 120 parcelas e adiamento de 1 a 24 meses');return;
     }
-    final options=buildPurchaseOptions(name:_name.text,cashCents:cash,installmentCents:total,payments:payments,firstPayment:_startsOn,delayMonths:delay,categoryId:_category?.id,categoryName:_category?.name);
+    final options=buildPurchaseOptions(name:purchaseSimulationName(_name.text),cashCents:cash,installmentCents:total,payments:payments,firstPayment:_startsOn,delayMonths:delay,categoryId:_category?.id,categoryName:_category?.name);
     final chosen=await showDialog<List<ProjectionAdjustment>>(context:context,builder:(_)=>PurchaseComparisonDialog(options:options,load:widget.compareLoader,horizonMonths:widget.horizonMonths));
     if(chosen!=null&&mounted)Navigator.pop(context,chosen);
   }
@@ -2063,8 +2064,7 @@ class _ProjectionSimulationSheetState
       case _SimulationTemplate.purchase:
         final total = (_money(_amount.text) * 100).round();
         final payments = int.tryParse(_purchasePayments.text.trim()) ?? 0;
-        if (_name.text.trim().isEmpty ||
-            total <= 0 ||
+        if (total <= 0 ||
             payments < 1 ||
             payments > 120 ||
             total < payments) {
@@ -2073,7 +2073,7 @@ class _ProjectionSimulationSheetState
         }
         result = buildPurchaseSimulation(
           id: idBase,
-          name: _name.text,
+          name: purchaseSimulationName(_name.text),
           totalCents: total,
           payments: payments,
           firstPayment: _startsOn,
@@ -2329,13 +2329,15 @@ class _ProjectionSimulationSheetState
                 const SizedBox(height: 18),
                 ..._fieldsForTemplate(),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _pickStart,
-                  icon: const Icon(AppIcons.calendar, size: 17),
-                  label: Text(
-                    'começa em ${Formatters.fullDate.format(_startsOn)}',
+                if (_template != _SimulationTemplate.purchase ||
+                    _purchaseDetailsExpanded)
+                  OutlinedButton.icon(
+                    onPressed: _pickStart,
+                    icon: const Icon(AppIcons.calendar, size: 17),
+                    label: Text(
+                      'começa em ${Formatters.fullDate.format(_startsOn)}',
+                    ),
                   ),
-                ),
                 if (_template == _SimulationTemplate.purchase) ...[
                   const SizedBox(height:12),
                   OutlinedButton.icon(key:const ValueKey('purchase-compare-options'),onPressed:_comparePurchase,
@@ -2354,7 +2356,11 @@ class _ProjectionSimulationSheetState
                   ),
                   onPressed: _submit,
                   icon: const Icon(AppIcons.chartLine, size: 18),
-                  label: const Text('ver impacto'),
+                  label: Text(
+                    _template == _SimulationTemplate.purchase
+                        ? 'ver impacto da compra'
+                        : 'ver impacto',
+                  ),
                 ),
               ],
             ),
@@ -2379,30 +2385,60 @@ class _ProjectionSimulationSheetState
     switch (_template) {
       case _SimulationTemplate.purchase:
         return [
-          TextField(
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'o que quero comprar'),
+          _moneyField(_amount, 'valor da compra'),
+          const SizedBox(height: 6),
+          const Text(
+            'Comece pelo valor. A simulação à vista usa a data de hoje. '
+            'Parcelas, preços diferentes e outras datas ficam nas opções.',
           ),
-          const SizedBox(height: 10),
-          _moneyField(_amount, 'valor total, incluindo juros e taxas'),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _purchasePayments,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'parcelas (1 para à vista)',
+          const SizedBox(height: 8),
+          TextButton.icon(
+            key: const ValueKey('purchase-advanced-toggle'),
+            onPressed: () => setState(
+              () => _purchaseDetailsExpanded = !_purchaseDetailsExpanded,
+            ),
+            icon: Icon(
+              _purchaseDetailsExpanded ? Icons.expand_less : Icons.tune,
+            ),
+            label: Text(
+              _purchaseDetailsExpanded
+                  ? 'menos opções'
+                  : 'parcelas e outros detalhes',
             ),
           ),
-          const SizedBox(height: 10),
-          _moneyField(_cashPrice, 'preço à vista (opcional; usa o total acima)'),
-          const SizedBox(height:10),
-          TextField(controller:_delayMonths,keyboardType:TextInputType.number,
-            decoration:const InputDecoration(labelText:'adiar por quantos meses? (1 a 24)')),
-          const SizedBox(height:10),
-          _categoryDropdown(optional: true),
-          const Text(
-            'Escolha abaixo a data do primeiro pagamento. A simulação distribui o valor informado; não cria compra nem calcula juros adicionais. Parcelas além do horizonte não aparecem no gráfico.',
-          ),
+          if (_purchaseDetailsExpanded) ...[
+            const SizedBox(height: 8),
+            TextField(
+              controller: _name,
+              decoration: const InputDecoration(
+                labelText: 'o que quero comprar (opcional)',
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _purchasePayments,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'parcelas (1 para à vista)',
+              ),
+            ),
+            const SizedBox(height: 10),
+            _moneyField(_cashPrice, 'preço à vista (opcional)'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _delayMonths,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'adiar quantos meses? (1 a 24)',
+              ),
+            ),
+            const SizedBox(height: 10),
+            _categoryDropdown(optional: true),
+            const Text(
+              'O valor informado é total, incluindo juros e taxas. '
+              'A comparação não cria compras e não calcula juros adicionais.',
+            ),
+          ],
         ];
       case _SimulationTemplate.car:
         return [
