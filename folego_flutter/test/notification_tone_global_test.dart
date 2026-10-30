@@ -14,9 +14,9 @@ void main() {
       expect(output, contains('R\$ 260,40'));
       expect(output, contains('amanhã'));
     }
-    expect(outputs[0], startsWith('Vamos cuidar disso com calma.'));
+    expect(outputs[0], startsWith('Olha só:'));
     expect(outputs[1], original);
-    expect(outputs[2], startsWith('Atenção: confira'));
+    expect(outputs[2], startsWith('Atenção:'));
     expect(outputs[3], contains('Porra'));
   });
 
@@ -30,7 +30,8 @@ void main() {
   test('tela tem um seletor global sem label flutuante sobre divisória', () {
     final ui = File('lib/features/profile/notification_settings_screen.dart')
         .readAsStringSync();
-    expect(ui, contains("title: 'tom das notificações'"));
+    expect(ui, contains("title: 'jeito de avisar'"));
+    expect(ui, contains("ValueKey('notification-advanced-options')"));
     expect(ui, contains('_toneSection(prefs)'));
     expect(ui, contains("key: const ValueKey('notification-tone-preview')"));
     expect(ui, contains('notificationTonePreview(prefs.reminderStyle)'));
@@ -42,7 +43,7 @@ void main() {
   test('dispatcher aplica o estilo escolhido a todos os tipos de alerta', () {
     final dispatcher = File('../supabase/functions/folego-push-dispatch/index.ts')
         .readAsStringSync();
-    final shared = File('../supabase/functions/folego-push-dispatch/notification_tone.ts')
+    final shared = File('../supabase/functions/_shared/notification_copy.ts')
         .readAsStringSync();
     final daily = File('../supabase/migrations/20261009124552_habit_commitment.sql')
         .readAsStringSync();
@@ -50,12 +51,17 @@ void main() {
     expect(dispatcher, contains('select("user_id,space_id,reminder_style")'));
     expect(dispatcher, contains('recordDelivery(outgoing)'));
     expect(dispatcher, contains('tone_query_failed'));
-    expect(shared, contains('reminderStyle === "aggressive"'));
-    expect(shared, contains('reminderStyle === "firm"'));
-    expect(shared, contains('reminderStyle === "welcoming"'));
+    expect(shared, contains('case "aggressive"'));
+    expect(shared, contains('case "firm"'));
+    expect(shared, contains('case "welcoming"'));
+    expect(shared, contains('formatDailyPush'));
     // Revisão diária e segunda chamada já são estilizadas no SQL,
     // para evitar empilhar o mesmo tom duas vezes na entrega do push.
     expect(shared, contains('kind === "dailySummary"'));
+    final dayDispatcher = File('../supabase/functions/folego-daily-summary/index.ts')
+        .readAsStringSync();
+    expect(dayDispatcher, contains('formatDailyPush(candidate.title, candidate.body)'));
+    expect(dayDispatcher, contains('recordDelivery(outgoing)'));
     expect(daily, contains('case pref.reminder_style'));
     expect(daily, contains('if is_followup then'));
   });
