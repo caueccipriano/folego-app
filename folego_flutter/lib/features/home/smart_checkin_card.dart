@@ -289,7 +289,7 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
               valueListenable: FinancialPrivacy.hidden,
               builder: (context, hidden, child) => Text(
                 hidden
-                    ? 'Valores ocultos.'
+                    ? 'R\$ •••• · valores ocultos'
                     : wallet == null
                         ? 'Saldos não consultados.'
                         : '${wallet.paymentAccounts.length} conta(s) no Fôlego · '
