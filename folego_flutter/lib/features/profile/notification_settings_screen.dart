@@ -342,7 +342,7 @@ class _NotificationSettingsScreenState
                 padding: const EdgeInsets.only(top: 20, bottom: 12),
                 child: AppPageHeader(
                   title: 'notificações',
-                  subtitle: 'lembretes, horários e alertas do seu dinheiro',
+                  subtitle: 'avisos curtos, só do que importa',
                   leading: IconButton(
                     tooltip: 'voltar',
                     onPressed: () => Navigator.of(context).maybePop(),
@@ -377,37 +377,49 @@ class _NotificationSettingsScreenState
                           const SizedBox(height: 16),
                           _masterSection(prefs),
                           const SizedBox(height: 16),
+                          _dailySummarySection(prefs),
+                          const SizedBox(height: 16),
                           _toneSection(prefs),
                           const SizedBox(height: 16),
                           _SettingsSection(
-                            title: 'movimentações no aplicativo',
-                            subtitle: 'avisos na central do Fôlego; não ativa push no iPhone',
-                            child: _toggle(
-                              keyName: 'transactionActivity',
-                              icon: AppIcons.notifications,
-                              title: 'notificações de lançamentos',
-                              value: prefs.transactionActivityEnabled,
-                              onChanged: (value) => _save(
-                                prefs.copyWith(
-                                  transactionActivityEnabled: value,
+                            title: 'personalizar mais',
+                            subtitle: 'tipos de alerta, horários e histórico',
+                            child: ExpansionTile(
+                              key: const ValueKey('notification-advanced-options'),
+                              tilePadding: EdgeInsets.zero,
+                              initiallyExpanded: false,
+                              title: const Text('ver mais opções'),
+                              children: [
+                                _SettingsSection(
+                                  title: 'movimentações no aplicativo',
+                                  subtitle: 'avisos na central do Fôlego; não ativa push no iPhone',
+                                  child: _toggle(
+                                    keyName: 'transactionActivity',
+                                    icon: AppIcons.notifications,
+                                    title: 'avisos de lançamentos',
+                                    value: prefs.transactionActivityEnabled,
+                                    onChanged: (value) => _save(
+                                      prefs.copyWith(
+                                        transactionActivityEnabled: value,
+                                      ),
+                                      key: 'transactionActivity',
+                                      label: 'os avisos de lançamentos',
+                                    ),
+                                  ),
                                 ),
-                                key: 'transactionActivity',
-                                label: 'os avisos de lançamentos',
-                              ),
+                                const SizedBox(height: 12),
+                                _typesSection(prefs),
+                                const SizedBox(height: 12),
+                                _realtimeSection(prefs),
+                                const SizedBox(height: 12),
+                                _timingSection(prefs),
+                                const SizedBox(height: 12),
+                                _quietHoursSection(prefs),
+                                const SizedBox(height: 12),
+                                _historySection(),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          _typesSection(prefs),
-                          const SizedBox(height: 16),
-                          _realtimeSection(prefs),
-                          const SizedBox(height: 16),
-                          _timingSection(prefs),
-                          const SizedBox(height: 16),
-                          _dailySummarySection(prefs),
-                          const SizedBox(height: 16),
-                          _quietHoursSection(prefs),
-                          const SizedBox(height: 16),
-                          _historySection(),
                         ],
                       ),
               ),
@@ -430,7 +442,7 @@ class _NotificationSettingsScreenState
       activeThumbColor: FolegoColorTokens.of(context).acaoSobre,
       activeTrackColor: FolegoColorTokens.of(context).acao,
       title: const Text('lembretes financeiros'),
-      subtitle: const Text('controle geral de todas as notificações'),
+      subtitle: const Text('liga ou pausa os lembretes financeiros'),
       value: prefs.financialRemindersEnabled,
       onChanged: _savingThis('master') ? null : _toggleMaster,
     ),
@@ -572,8 +584,8 @@ class _NotificationSettingsScreenState
   );
 
   Widget _toneSection(NotificationPreferences prefs) => _SettingsSection(
-    title: 'tom das notificações',
-    subtitle: 'uma escolha para todos os avisos: faturas, contas, limites, gastos, revisões e próximos recebimentos',
+    title: 'jeito de avisar',
+    subtitle: 'direto, sem mensagens longas',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -681,15 +693,15 @@ class _NotificationSettingsScreenState
 
   Widget _dailySummarySection(NotificationPreferences prefs) =>
       _SettingsSection(
-        title: 'revisão e hábito',
-        subtitle: 'uma revisão curta para manter suas finanças em dia',
+        title: 'resumo do dia',
+        subtitle: 'um convite leve para conferir seu dinheiro',
         child: Column(
           children: [
             _toggle(
               keyName: 'daily-summary',
               icon: AppIcons.calendar,
-              title: 'Seu Fôlego de hoje',
-              subtitle: 'pendências, gastos do dia e próximas contas',
+              title: 'Seu Fôlego hoje',
+              subtitle: 'seu dia financeiro em poucas palavras',
               value: prefs.dailySummaryEnabled,
               onChanged: (value) => _save(
                 prefs.copyWith(dailySummaryEnabled: value),
@@ -700,8 +712,8 @@ class _NotificationSettingsScreenState
             _toggle(
               keyName: 'commitment',
               icon: AppIcons.notifications,
-              title: 'Modo compromisso',
-              subtitle: 'Segunda chamada após 90 minutos, só se a revisão não foi concluída',
+              title: 'lembrar de novo',
+              subtitle: 'após 90 minutos, só se a revisão estiver pendente',
               value: prefs.commitmentEnabled,
               onChanged: (value) => _save(
                 prefs.copyWith(commitmentEnabled: value),
@@ -712,9 +724,8 @@ class _NotificationSettingsScreenState
             _toggle(
               keyName: 'weekly-review',
               icon: AppIcons.calendar,
-              title: 'Revisão de domingo',
-              subtitle:
-                  'A revisão diária lembra também das contas da próxima semana',
+              title: 'resumo da semana',
+              subtitle: 'também conferir as contas da próxima semana',
               value: prefs.weeklyReviewEnabled,
               onChanged: (value) => _save(
                 prefs.copyWith(weeklyReviewEnabled: value),
