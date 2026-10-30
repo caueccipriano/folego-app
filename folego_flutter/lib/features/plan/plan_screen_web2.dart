@@ -669,7 +669,7 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _extraPlanningTools() => Theme(
-    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+    data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
     child: ExpansionTile(
       key: const ValueKey('plan-more-tools'),
       title: const Text('contas e metas'),
