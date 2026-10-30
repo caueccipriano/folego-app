@@ -91,14 +91,18 @@ class _UnifiedBudgetControlState extends State<UnifiedBudgetControl> {
             periodMonth: month,
           ));
       if (!mounted || request != _request || widget.spaceId != spaceId ||
-          !_sameMonth(widget.periodMonth, month)) return;
+          !_sameMonth(widget.periodMonth, month)) {
+        return;
+      }
       setState(() {
         _overview = overview;
         _loading = false;
       });
     } catch (_) {
       if (!mounted || request != _request || widget.spaceId != spaceId ||
-          !_sameMonth(widget.periodMonth, month)) return;
+          !_sameMonth(widget.periodMonth, month)) {
+        return;
+      }
       setState(() {
         _overview = null;
         _error = 'não foi possível consultar o teto flexível';
@@ -190,7 +194,9 @@ class _UnifiedBudgetControlState extends State<UnifiedBudgetControl> {
         );
       }
       if (!mounted || widget.spaceId != spaceId ||
-          !_sameMonth(widget.periodMonth, month)) return;
+          !_sameMonth(widget.periodMonth, month)) {
+        return;
+      }
       AppSnackbars.show(context, 'teto atualizado para este mês');
       await _load();
       if (mounted) widget.onSaved?.call();
