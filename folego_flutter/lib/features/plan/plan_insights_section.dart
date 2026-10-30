@@ -26,7 +26,7 @@ class PlanInsightsSection extends StatefulWidget {
 }
 
 class _PlanInsightsSectionState extends State<PlanInsightsSection> {
-  final ExpansionTileController _auditController = ExpansionTileController();
+  final ExpansibleController _auditController = ExpansibleController();
 
   @override
   void dispose() {
