@@ -81,7 +81,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: List.generate(items.length, (index) {
+                    children: [
+                      ...List.generate(items.length, (index) {
                       return Expanded(
                         child: _Destination(
                           key: ValueKey('mobile-nav-destination-$index'),
@@ -101,7 +102,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                           icon: const Icon(Icons.tune_rounded, size: 22),
                         ),
                       ),
-                  ),
+                    ],
                 ),
               ),
             ),
