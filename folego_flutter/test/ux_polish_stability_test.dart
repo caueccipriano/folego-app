@@ -553,14 +553,6 @@ Future<void> _switchOrganizationTab(WidgetTester tester, String label) async {
   await tester.pump();
 }
 
-Future<void> _scrollNotifications(WidgetTester tester, double dy) async {
-  await tester.drag(
-    find.byKey(const ValueKey('notification-settings-list')),
-    Offset(0, dy),
-  );
-  await tester.pumpAndSettle();
-}
-
 Widget _organizationApp(FinancialOrganizationDataSource source) => MaterialApp(
   home: FinancialOrganizationScreen(
     repository: _TestRepositoryHolder.repository,
