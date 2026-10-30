@@ -14,6 +14,7 @@ class HomePulseInsight {
     this.actionLabel,
     this.amount,
     this.requiresAttention = false,
+    this.showCard = true,
   });
 
   final String eyebrow;
@@ -23,6 +24,7 @@ class HomePulseInsight {
   final String? actionLabel;
   final num? amount;
   final bool requiresAttention;
+  final bool showCard;
 }
 
 HomePulseInsight selectHomePulse({
@@ -158,5 +160,6 @@ HomePulseInsight selectHomePulse({
         'Sem contas próximas pendentes nos registros atuais.',
     action: HomePulseAction.upcoming,
     actionLabel: 'consultar agenda',
+    showCard: false,
   );
 }
