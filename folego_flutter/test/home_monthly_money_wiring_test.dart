@@ -26,7 +26,9 @@ void main() {
     expect(mobile.indexOf('home-monthly-details'), lessThan(mobile.indexOf('monthlyMoney')));
     expect(mobile, contains('projectionInsight'));
     expect(mobile, contains('latestSection'));
-    expect(mobile, contains('optionalReview'));
+    // Daily review was removed from the everyday Home in Fôlego 3.0.
+    expect(mobile, isNot(contains('optionalReview')));
+    expect(mobile.indexOf('home-monthly-details'), lessThan(mobile.indexOf('latestSection')));
   });
 }
 
