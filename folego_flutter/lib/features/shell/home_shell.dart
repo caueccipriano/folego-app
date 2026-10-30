@@ -214,6 +214,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     switch (target) {
       case 0:
         setState(() => _index = 3);
+        return;
       case 1:
         await Navigator.of(context).push<void>(
           MaterialPageRoute<void>(
@@ -226,6 +227,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             ),
           ),
         );
+        return;
       case 2:
         await Navigator.of(context).push<void>(
           MaterialPageRoute<void>(
@@ -235,8 +237,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             ),
           ),
         );
+        return;
       case 3:
         setState(() => _index = 4);
+        return;
     }
   }
 
