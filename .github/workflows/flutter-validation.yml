@@ -81,6 +81,9 @@ jobs:
       - name: Import mobile review safety
         run: flutter test test/statement_import_sticky_review_test.dart test/statement_import_ui_test.dart
 
+      - name: Fôlego Resolver review queue and privacy
+        run: flutter test test/resolver_center_test.dart test/home_quick_tools_test.dart test/transaction_classification_test.dart
+
       - name: Quiet notifications and one actionable financial insight
         run: flutter test test/folego3_quiet_insights_test.dart test/plan_insights_section_test.dart test/notification_preferences_hardening_test.dart
 
