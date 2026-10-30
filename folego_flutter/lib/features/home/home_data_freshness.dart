@@ -5,19 +5,24 @@ String homeDataFreshnessLabel(
   DateTime? lastLoadedAt, {
   required bool failed,
   bool loading = false,
+  bool partial = false,
 }) {
   if (failed) {
     return lastLoadedAt == null
         ? 'não foi possível consultar seus dados'
         : 'mostrando dados anteriores · atualização falhou';
   }
-  if (loading) return 'consultando dados do Fôlego…';
-  if (lastLoadedAt == null) return 'aguardando consulta ao Fôlego';
+  if (loading) return 'atualizando…';
+  if (lastLoadedAt == null) {
+    return partial ? 'parte do resumo indisponível' : 'ainda não atualizado';
+  }
 
   final local = lastLoadedAt.toLocal();
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
-  return 'Fôlego consultado às $hour:$minute';
+  return partial
+      ? 'dados parciais · $hour:$minute'
+      : 'atualizado às $hour:$minute';
 }
 
 class HomeDataFreshness extends StatelessWidget {
@@ -39,16 +44,25 @@ class HomeDataFreshness extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final partial = !failed && sourceFailures.isNotEmpty;
     final color = failed ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
         children: [
           Icon(
-            failed ? Icons.cloud_off_outlined : Icons.cloud_done_outlined,
+            failed
+                ? Icons.cloud_off_outlined
+                : partial
+                    ? Icons.info_outline_rounded
+                    : Icons.check_circle_outline_rounded,
             color: color,
             size: 15,
-            semanticLabel: failed ? 'consulta falhou' : 'consulta realizada',
+            semanticLabel: failed
+                ? 'consulta falhou'
+                : partial
+                    ? 'algumas seções estão incompletas'
+                    : 'consulta realizada',
           ),
           const SizedBox(width: 7),
           Expanded(
@@ -59,6 +73,7 @@ class HomeDataFreshness extends StatelessWidget {
                   lastLoadedAt,
                   failed: failed,
                   loading: loading,
+                  partial: partial,
                 ),
                 key: const ValueKey('home-data-freshness'),
                 maxLines: 2,
@@ -72,7 +87,8 @@ class HomeDataFreshness extends StatelessWidget {
             onPressed:()=>showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
               title:const Text('fontes e atualização'),
               content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-                Text(homeDataFreshnessLabel(lastLoadedAt,failed:failed,loading:loading)),
+                Text(homeDataFreshnessLabel(lastLoadedAt,
+                  failed:failed, loading:loading, partial:partial)),
                 const SizedBox(height:12),
                 const Text('Saldo e compromissos: registros deste espaço no Fôlego. Valores de bancos e cartões dependem dos registros e importações disponíveis.'),
                 const SizedBox(height:12),

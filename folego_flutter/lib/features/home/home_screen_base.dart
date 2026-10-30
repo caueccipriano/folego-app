@@ -30,6 +30,7 @@ import 'folego_change_explanation.dart';
 import '../discovery/discovery_navigation.dart';
 import 'home_pulse_card.dart';
 import 'home_data_freshness.dart';
+import 'home_quick_tools.dart';
 import 'home_load_guard.dart';
 import 'home_pulse_insight.dart';
 import 'smart_checkin_card.dart';
@@ -740,18 +741,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     ),
     const SizedBox(height: 12),
-    Wrap(spacing: 10, runSpacing: 8, children: [
-      OutlinedButton.icon(
-        key: const ValueKey('home-global-search'),
-        onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository),
-        icon: const Icon(AppIcons.search, size: 18), label: const Text('buscar no Fôlego')),
-      OutlinedButton.icon(
-        key: const ValueKey('home-pending-center'),
-        onPressed: () => openDiscovery(context, space: widget.space, repository: widget.repository, pendingOnly: true),
-        icon: const Icon(AppIcons.transactions, size: 18), label: const Text('pendências')),
-      if (_snapshot?.needsIncomeSetup == true)
-        OutlinedButton.icon(onPressed:()=>Navigator.of(context).push<void>(MaterialPageRoute(builder:(_)=>GettingStartedScreen(repository:widget.repository,spaceId:widget.space.id))),icon:const Icon(Icons.route_outlined,size:18),label:const Text('começar do meu jeito')),
-    ]),
+    HomeQuickTools(
+      onSearch: () => openDiscovery(
+        context, space: widget.space, repository: widget.repository,
+      ),
+      onPending: () => openDiscovery(
+        context, space: widget.space, repository: widget.repository,
+        pendingOnly: true,
+      ),
+      onSetup: _snapshot?.needsIncomeSetup == true
+          ? () => Navigator.of(context).push<void>(
+              MaterialPageRoute(
+                builder: (_) => GettingStartedScreen(
+                  repository: widget.repository, spaceId: widget.space.id,
+                ),
+              ),
+            )
+          : null,
+    ),
     ]);
   }
 
