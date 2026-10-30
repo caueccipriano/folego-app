@@ -15,6 +15,8 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
+import '../goals/goals_screen.dart';
+import '../diary/diary_screen.dart';
 import '../home/home_wallet_navigation_scope.dart';
 import '../plan/flexible_budget_navigation_scope.dart';
 import '../plan/flexible_budget_screen.dart';
@@ -166,6 +168,78 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     });
   }
 
+  /// Secondary destinations remain available without competing with the
+  /// everyday Hoje / Movimentos / Futuro navigation.
+  Future<void> _openTools() async {
+    final target = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              title: Text('se precisar de mais'),
+              subtitle: Text('as ferramentas continuam aqui, sem ocupar sua rotina'),
+            ),
+            ListTile(
+              key: const ValueKey('tools-wallet'),
+              leading: const Icon(Icons.account_balance_wallet_outlined),
+              title: const Text('contas, cartões e dívidas'),
+              onTap: () => Navigator.pop(sheetContext, 0),
+            ),
+            ListTile(
+              key: const ValueKey('tools-goals'),
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('metas'),
+              onTap: () => Navigator.pop(sheetContext, 1),
+            ),
+            ListTile(
+              key: const ValueKey('tools-diary'),
+              leading: const Icon(Icons.auto_stories_outlined),
+              title: const Text('diário'),
+              onTap: () => Navigator.pop(sheetContext, 2),
+            ),
+            ListTile(
+              key: const ValueKey('tools-profile'),
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('perfil, automações e ajustes'),
+              onTap: () => Navigator.pop(sheetContext, 3),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || target == null) return;
+    switch (target) {
+      case 0:
+        setState(() => _index = 3);
+      case 1:
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('metas')),
+              body: GoalsScreen(
+                repository: widget.repository,
+                spaceId: widget.space.id,
+              ),
+            ),
+          ),
+        );
+      case 2:
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => DiaryScreen(
+              repository: widget.repository,
+              spaceId: widget.space.id,
+            ),
+          ),
+        );
+      case 3:
+        setState(() => _index = 4);
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -222,6 +296,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                 setState(() => _index = value);
               },
               pages: pages,
+              onOpenTools: () => unawaited(_openTools()),
             ),
           ),
           ),
