@@ -422,13 +422,13 @@ void main() {
       await tester.pumpAndSettle();
       // Advanced controls remain editable after deliberately opening them.
       await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('notification-advanced-options')),
+        find.text('ver mais opções'),
         180,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(
-        find.byKey(const ValueKey('notification-advanced-options')),
-      );
+      await tester.ensureVisible(find.text('ver mais opções'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ver mais opções'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('notification-toggle-invoices')),
@@ -468,13 +468,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('notification-advanced-options')),
+        find.text('ver mais opções'),
         180,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(
-        find.byKey(const ValueKey('notification-advanced-options')),
-      );
+      await tester.ensureVisible(find.text('ver mais opções'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ver mais opções'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('notification-time')),
