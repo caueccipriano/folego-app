@@ -60,6 +60,15 @@ void main() {
     expect(nextPlanCategory([category('parent')]), isNull);
   });
 
+  test('healthy established limits do not demand another edit', () {
+    final entries = [
+      category('Pai', planned: 200, actual: 40),
+      category('Filho', parent: 'Pai', planned: 200, actual: 40),
+    ];
+    expect(nextPlanCategory(entries), isNull);
+    expect(spendingReviewTargets(entries), isEmpty);
+  });
+
   test('monthly read only amounts never create artificial warnings', () {
     final entries = [
       category('A', planned: 500, actual: 140),
