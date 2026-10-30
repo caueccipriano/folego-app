@@ -165,7 +165,9 @@ class PlanGuidanceCard extends StatelessWidget {
                   const SizedBox(height: 9),
                   for (final target in targets) ...[
                     const Divider(height: 17),
-                    ListTile(
+                    Material(
+                      type: MaterialType.transparency,
+                      child: ListTile(
                       key: ValueKey('plan-focus-${target.category.categoryId}'),
                       contentPadding: EdgeInsets.zero,
                       dense: true,
@@ -175,6 +177,7 @@ class PlanGuidanceCard extends StatelessWidget {
                         style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () => onReviewSpending(target.category),
+                      ),
                     ),
                   ],
                   const SizedBox(height: 4),
