@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/layout/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -22,9 +23,14 @@ class HomePulseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // When there is no actionable insight, leave Home visually calm.
-    // The agenda remains available through the Home header.
-    if (!insight.showCard) return const SizedBox.shrink();
+    // Compact Home needs only actionable cards. The wider dashboard keeps
+    // this column occupied so that its two-column layout stays aligned.
+    final layout = AppBreakpoints.of(context);
+    if (!insight.showCard &&
+        (layout == AppLayoutSize.compact ||
+            layout == AppLayoutSize.medium)) {
+      return const SizedBox.shrink();
+    }
     final brightness = Theme.of(context).brightness;
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
