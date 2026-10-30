@@ -13,6 +13,22 @@ import '../../data/repositories/folego_repository_transaction_classification.dar
 import '../transactions/transaction_classification_inbox.dart';
 import '../wallet/wallet_screen.dart';
 
+/// A quiet home does not ask for another review when there is nothing
+/// actionable. Keep the full check-in available when an exception appears.
+bool shouldShowSmartCheckin({
+  required bool loading,
+  required int? pending,
+  required int autopilotApplied,
+  required bool autopilotUnavailable,
+  required String? error,
+}) {
+  if (loading) return false;
+  return (pending ?? 0) > 0 ||
+      autopilotApplied > 0 ||
+      autopilotUnavailable ||
+      error != null;
+}
+
 /// Runs a read-only daily preflight. Bank-app balances are NOT bank-verified:
 /// they reflect the ledger in Supabase until bank data is connected/imported.
 class SmartCheckinCard extends StatefulWidget {
@@ -186,6 +202,18 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
     final wallet = _wallet;
     final pending = _pending;
 
+    // Most days no manual review is necessary. The automatic check still runs
+    // on load; only meaningful exceptions or recently automated work surface.
+    if (!shouldShowSmartCheckin(
+      loading: _loading,
+      pending: pending,
+      autopilotApplied: _autopilotApplied,
+      autopilotUnavailable: _autopilotUnavailable,
+      error: _error,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       key: const ValueKey('home-smart-checkin'),
       padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
@@ -260,10 +288,12 @@ class _SmartCheckinCardState extends State<SmartCheckinCard> {
             ValueListenableBuilder<bool>(
               valueListenable: FinancialPrivacy.hidden,
               builder: (context, hidden, child) => Text(
-                wallet == null
-                    ? 'Saldos não consultados.'
-                    : '${wallet.paymentAccounts.length} conta(s) no Fôlego · '
-                        '${Formatters.money(wallet.summary.totalCash)} registrados.',
+                hidden
+                    ? 'Valores ocultos.'
+                    : wallet == null
+                        ? 'Saldos não consultados.'
+                        : '${wallet.paymentAccounts.length} conta(s) no Fôlego · '
+                            '${Formatters.money(wallet.summary.totalCash)} registrados.',
                 key: const ValueKey('smart-checkin-ledger'),
                 style: AppTypography.body(context,
                     fontSize: 12, color: secondary),
