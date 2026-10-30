@@ -10,6 +10,7 @@ import '../../core/theme/category_visuals.dart';
 import '../../core/ui/app_snackbars.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
+import 'unified_budget_control.dart';
 import 'budget_pace_context.dart';
 import 'monthly_category_donut.dart';
 import 'plan_insights_section.dart';
@@ -1293,18 +1294,15 @@ class _PlanScreenState extends State<PlanScreen> {
                 context, fontSize: 10, color: secondaryText),
             ),
           ],
-          if (widget.onFlexibleBudgetRequested != null) ...[
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: const ValueKey('plan-open-flex-budget'),
-                onPressed: widget.onFlexibleBudgetRequested,
-                icon: const Icon(AppIcons.plan, size: 17),
-                label: const Text('teto flexível'),
-              ),
+          if (widget.onFlexibleBudgetRequested != null)
+            UnifiedBudgetControl(
+              repository: widget.repository,
+              spaceId: widget.spaceId,
+              periodMonth: _month,
+              refreshToken: _items,
+              onOpenDetails: widget.onFlexibleBudgetRequested!,
+              onSaved: () { _load(); },
             ),
-          ],
         ],
       ),
     );
