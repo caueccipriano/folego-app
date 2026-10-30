@@ -22,6 +22,9 @@ class HomePulseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // When there is no actionable insight, leave Home visually calm.
+    // The agenda remains available through the Home header.
+    if (!insight.showCard) return const SizedBox.shrink();
     final brightness = Theme.of(context).brightness;
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
@@ -56,7 +59,7 @@ class HomePulseCard extends StatelessWidget {
                   Icon(AppIcons.chartLine, color: purple, size: 17),
                   const SizedBox(width: 7),
                   Text(
-                    'fôlego pulso',
+                    'seu momento',
                     style: AppTypography.label(
                       context,
                       color: purple,
