@@ -435,6 +435,10 @@ void main() {
         180,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('notification-toggle-invoices')),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(
         find.byKey(const ValueKey('notification-toggle-invoices')),
       );
@@ -448,6 +452,8 @@ void main() {
         170,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(find.text('3 dias antes'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('3 dias antes'));
       await tester.pumpAndSettle();
       expect(data.current.reminderOffsetDays, 3);
@@ -481,6 +487,8 @@ void main() {
         180,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(find.byKey(const ValueKey('notification-time')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('notification-time')));
       await tester.pumpAndSettle();
 
