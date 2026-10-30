@@ -175,6 +175,40 @@ void main() {
     expect(find.text('cancelar assinatura'), findsOneWidget);
     expect(find.text('reduzir categoria'), findsOneWidget);
   });
+
+  testWidgets('quick purchase hides advanced fields until requested', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: ProjectionScreen(
+          repository: _ProjectionRepository(),
+          spaceId: 'space',
+          onBack: () {},
+          startWithPurchase: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('valor da compra'), findsOneWidget);
+    expect(find.text('o que quero comprar (opcional)'), findsNothing);
+    final toggle = find.byKey(const ValueKey('purchase-advanced-toggle'));
+    expect(toggle, findsOneWidget);
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+
+    expect(find.text('o que quero comprar (opcional)'), findsOneWidget);
+    expect(find.text('parcelas (1 para à vista)'), findsOneWidget);
+    expect(find.text('menos opções'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
 
 class _DelayedProjectionRepository implements FolegoRepository {
