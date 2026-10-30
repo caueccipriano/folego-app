@@ -7,7 +7,7 @@ import '../../data/models/budget_overview_item.dart';
 
 /// Plan intelligence: read-only checks, three distinct money concepts and
 /// optional proposed limits. No action applies a limit without the edit modal.
-class PlanInsightsSection extends StatelessWidget {
+class PlanInsightsSection extends StatefulWidget {
   const PlanInsightsSection({
     super.key,
     required this.insights,
@@ -22,10 +22,23 @@ class PlanInsightsSection extends StatelessWidget {
   final ValueChanged<String>? onOpenMetric;
 
   @override
+  State<PlanInsightsSection> createState() => _PlanInsightsSectionState();
+}
+
+class _PlanInsightsSectionState extends State<PlanInsightsSection> {
+  final ExpansionTileController _auditController = ExpansionTileController();
+
+  @override
+  void dispose() {
+    _auditController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return FutureBuilder<PlanInsights>(
-      future: insights,
+      future: widget.insights,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Padding(
@@ -69,6 +82,77 @@ class PlanInsightsSection extends StatelessWidget {
               const SizedBox(height: 5),
               Text('três contas diferentes — sem misturar orçamento e banco',
                 style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+              if (data.issues.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  key: const ValueKey('plan-one-next-step'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    color: scheme.surfaceContainerLow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('uma coisa para conferir',
+                        style: TextStyle(color: scheme.onSurfaceVariant,
+                          fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 5),
+                      Text(data.issues.first.title,
+                        style: TextStyle(color: scheme.onSurface,
+                          fontSize: 15, fontWeight: FontWeight.w700)),
+                      Text(
+                        '${data.issues.first.count} ocorrência(s) nos registros',
+                        style: TextStyle(color: scheme.onSurfaceVariant,
+                          fontSize: 12)),
+                      const SizedBox(height: 6),
+                      TextButton.icon(
+                        key: const ValueKey('plan-next-step-action'),
+                        onPressed: () => _auditController.expand(),
+                        icon: const Icon(Icons.fact_check_outlined, size: 17),
+                        label: const Text('ver pendências'),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (widget.allowEditing &&
+                widget.onReviewSuggestion != null &&
+                data.suggestions.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  key: const ValueKey('plan-one-next-step'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    color: scheme.surfaceContainerLow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('uma sugestão para seu orçamento',
+                        style: TextStyle(color: scheme.onSurfaceVariant,
+                          fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 5),
+                      Text(data.suggestions.first.categoryName,
+                        style: TextStyle(color: scheme.onSurface,
+                          fontSize: 15, fontWeight: FontWeight.w700)),
+                      Text(
+                        'limite sugerido: ${displayAmount(data.suggestions.first.suggestedLimit)} · você decide',
+                        style: TextStyle(color: scheme.onSurfaceVariant,
+                          fontSize: 12)),
+                      const SizedBox(height: 6),
+                      TextButton.icon(
+                        key: const ValueKey('plan-next-step-action'),
+                        onPressed: () => widget.onReviewSuggestion!(data.suggestions.first),
+                        icon: const Icon(Icons.tune_rounded, size: 17),
+                        label: const Text('revisar limite'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 14),
               Wrap(
                 runSpacing: 9,
@@ -77,21 +161,21 @@ class PlanInsightsSection extends StatelessWidget {
                   _MoneyView(
                     hidden: hidden,
                     label: 'despesas do mês',
-                    onTap: onOpenMetric == null ? null : () => onOpenMetric!('spending'),
+                    onTap: widget.onOpenMetric == null ? null : () => widget.onOpenMetric!('spending'),
                     amount: data.economicSpending,
                     detail: 'compras, parcelas e benefícios atribuídos ao mês',
                   ),
                   _MoneyView(
                     hidden: hidden,
                     label: 'dinheiro que saiu das contas',
-                    onTap: onOpenMetric == null ? null : () => onOpenMetric!('cash'),
+                    onTap: widget.onOpenMetric == null ? null : () => widget.onOpenMetric!('cash'),
                     amount: data.cashOutflows,
                     detail: 'inclui PIX, faturas, parcelas e transferências',
                   ),
                   _MoneyView(
                     hidden: hidden,
                     label: 'disponível estimado agora',
-                    onTap: onOpenMetric == null ? null : () => onOpenMetric!('available'),
+                    onTap: widget.onOpenMetric == null ? null : () => widget.onOpenMetric!('available'),
                     amount: data.estimatedAvailableNow,
                     detail: 'calculado pelos registros; não é extrato bancário',
                   ),
@@ -111,6 +195,7 @@ class PlanInsightsSection extends StatelessWidget {
                 data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
                 child: ExpansionTile(
                   key: const ValueKey('plan-insights-audit'),
+                  controller: _auditController,
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
                   leading: const Icon(Icons.fact_check_outlined),
@@ -199,10 +284,10 @@ class PlanInsightsSection extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            if (allowEditing && onReviewSuggestion != null)
+                            if (widget.allowEditing && widget.onReviewSuggestion != null)
                               TextButton(
                                 key: ValueKey('plan-review-suggestion-${suggestion.categoryId}'),
-                                onPressed: () => onReviewSuggestion!(suggestion),
+                                onPressed: () => widget.onReviewSuggestion!(suggestion),
                                 child: const Text('revisar'),
                               ),
                           ],
