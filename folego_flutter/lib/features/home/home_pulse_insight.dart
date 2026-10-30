@@ -48,9 +48,9 @@ HomePulseInsight selectHomePulse({
   if (nearest != null && daysUntil(nearest.dueDate) < 0) {
     return HomePulseInsight(
       eyebrow: 'merece uma conferência',
-      title: 'Um compromisso passou do vencimento',
+      title: 'Um vencimento passou',
       description:
-          '${nearest.name} está marcado como pendente. Confira se já foi pago.',
+          '${nearest.name} segue pendente no Fôlego. Confira se já foi pago.',
       action: HomePulseAction.upcoming,
       actionLabel: 'ver compromisso',
       amount: nearest.amount,
@@ -67,8 +67,8 @@ HomePulseInsight selectHomePulse({
             : 'em $days dias';
     return HomePulseInsight(
       eyebrow: 'seu próximo compromisso',
-      title: 'Você tem uma conta prevista para $when',
-      description: '${nearest.name} · confira o valor e a situação na agenda.',
+      title: 'Conta prevista para $when',
+      description: '${nearest.name} · confira na agenda.',
       action: HomePulseAction.upcoming,
       actionLabel: 'ver compromisso',
       amount: nearest.amount,
@@ -79,10 +79,9 @@ HomePulseInsight selectHomePulse({
   if (snapshot.needsIncomeSetup) {
     return const HomePulseInsight(
       eyebrow: 'para planejar melhor',
-      title: 'Seu próximo recebimento ainda não está definido',
+      title: 'Próximo recebimento não informado',
       description:
-          'Com a previsão de entrada atualizada, o Fôlego consegue calcular '
-          'melhor seus próximos dias.',
+          'Cadastre a previsão para calcular seus próximos dias.',
       action: HomePulseAction.none,
     );
   }
@@ -91,10 +90,9 @@ HomePulseInsight selectHomePulse({
   if (snapshot.spendablePool <= 0) {
     return const HomePulseInsight(
       eyebrow: 'vale olhar seu plano',
-      title: 'Não há folga prevista para novos gastos',
+      title: 'Não há folga para novos gastos',
       description:
-          'Confira seu orçamento e compromissos antes de assumir novas despesas. '
-          'Isso não significa que sua conta bancária esteja negativa.',
+          'Confira orçamento e contas. Isso não significa que sua conta bancária esteja negativa.',
       action: HomePulseAction.budget,
       actionLabel: 'rever planejamento',
       requiresAttention: true,
@@ -104,9 +102,8 @@ HomePulseInsight selectHomePulse({
   if (nearest != null && daysUntil(nearest.dueDate) <= 7) {
     return HomePulseInsight(
       eyebrow: 'nos próximos dias',
-      title: 'Um compromisso está chegando',
-      description: '${nearest.name} · previsto para ${daysUntil(nearest.dueDate)} '
-          'dias. Veja os detalhes antes de pagar.',
+      title: 'Próxima conta em ${daysUntil(nearest.dueDate)} dias',
+      description: '${nearest.name} · valor e data na agenda.',
       action: HomePulseAction.upcoming,
       actionLabel: 'ver agenda',
       amount: nearest.amount,
@@ -118,9 +115,9 @@ HomePulseInsight selectHomePulse({
       snapshot.monthlyBudgetUsed / snapshot.monthlyBudgetPlanned >= .9) {
     return const HomePulseInsight(
       eyebrow: 'olho no orçamento',
-      title: 'Seu orçamento flexível está perto do limite',
+      title: 'Orçamento perto do limite',
       description:
-          'Vale conferir as categorias antes de planejar outra compra.',
+          'Confira as categorias antes de comprar.',
       action: HomePulseAction.budget,
       actionLabel: 'ver meu orçamento',
       requiresAttention: true,
@@ -132,8 +129,7 @@ HomePulseInsight selectHomePulse({
       eyebrow: 'resumo parcial',
       title: 'Ainda não consegui consultar as próximas contas',
       description:
-          'Seu saldo está disponível acima. Atualize a página para '
-          'conferir os compromissos mais recentes.',
+          'Atualize para conferir os próximos compromissos.',
       action: HomePulseAction.none,
     );
   }
@@ -146,11 +142,11 @@ HomePulseInsight selectHomePulse({
     return HomePulseInsight(
       eyebrow: 'olhando à frente',
       title: days == 0
-          ? 'Seu recebimento está previsto para hoje'
-          : 'Seu próximo recebimento está chegando',
+          ? 'Recebimento previsto para hoje'
+          : 'Recebimento previsto em $days dias',
       description: days == 0
           ? 'Confira o lançamento antes de contar com o valor.'
-          : 'Faltam $days dias pela previsão atual. Confira quando entrar.',
+          : 'Confira quando entrar. A data é uma previsão.',
       action: HomePulseAction.none,
     );
   }
@@ -159,8 +155,7 @@ HomePulseInsight selectHomePulse({
     eyebrow: 'tudo acompanhado',
     title: 'Nada urgente identificado agora',
     description:
-        'O resumo não mostra compromissos próximos marcados como pendentes. '
-        'O Fôlego continua acompanhando as próximas datas.',
+        'Sem contas próximas pendentes nos registros atuais.',
     action: HomePulseAction.upcoming,
     actionLabel: 'consultar agenda',
   );
