@@ -24,7 +24,6 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/activity_inbox_bell.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../onboarding/getting_started_screen.dart';
-import 'daily_review_card.dart';
 import 'financial_review_screen.dart';
 import 'folego_change_explanation.dart';
 import '../discovery/discovery_navigation.dart';
@@ -359,37 +358,6 @@ class _HomeScreenState extends State<HomeScreen> {
       onOpenUpcoming: _openUpcomingEvents,
       onOpenBudget: FlexibleBudgetNavigationScope.maybeOf(context)?.open,
     );
-    final optionalReview = Material(
-      color: background,
-      child: ExpansionTile(
-        key: const ValueKey('home-optional-review'),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 2),
-        title: Text(
-          'revisar minhas finanças',
-          style: AppTypography.body(
-            context,
-            fontSize: 13,
-            color: primaryText,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(
-          'opcional · use quando quiser conferir seus registros',
-          style: AppTypography.body(
-            context,
-            fontSize: 11,
-            color: secondaryText,
-          ),
-        ),
-        children: [
-          DailyReviewCard(
-            refreshToken: _snapshot,
-            space: widget.space,
-            repository: widget.repository,
-          ),
-        ],
-      ),
-    );
     final smartCheckin = SmartCheckinCard(
       spaceId: widget.space.id,
       repository: widget.repository,
@@ -483,7 +451,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   quickActions,
                   const SizedBox(height: 12),
                   hero,
-                  if(showLatest) ...[const SizedBox(height:12),latestSection],
                   const SizedBox(height: 12),
                   pulse,
                   if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
@@ -518,12 +485,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         monthlyMoney,
                         const SizedBox(height: 10),
                         projectionInsight,
+                        if (showLatest) ...[
+                          const SizedBox(height: 10),
+                          latestSection,
+                        ],
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 18),
-                  optionalReview,
                 ] else if (layout == AppLayoutSize.medium) ...[
                   quickActions,
                   const SizedBox(height:12),
@@ -542,8 +511,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 14),
                   projectionInsight,
 
-                  const SizedBox(height: 20),
-                  optionalReview,
                 ] else ...[
                   quickActions,
                   const SizedBox(height:16),
@@ -585,8 +552,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  optionalReview,
                 ],
               ],
             ),
