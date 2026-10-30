@@ -36,6 +36,15 @@ jobs:
       - name: Flutter analyze
         run: flutter analyze
 
+      - name: Set up Deno for notification copy unit tests
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Short notification copy unit tests
+        working-directory: .
+        run: deno test --no-check supabase/tests/notification_copy_test.ts
+
       - name: Typography themes and notification contracts
         run: flutter test test/theme_palette_test.dart test/theme_preference_test.dart test/notification_models_test.dart test/notification_service_test.dart test/notification_runtime_test.dart test/notification_preferences_hardening_test.dart test/notification_history_account_isolation_test.dart
 
