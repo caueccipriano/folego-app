@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:folego/core/theme/app_colors.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../data/models/budget_overview_item.dart';
 
 /// Plan intelligence: read-only checks, three distinct money concepts and
@@ -44,7 +45,12 @@ class PlanInsightsSection extends StatelessWidget {
           );
         }
         final data = snapshot.data!;
-        return Container(
+        return ValueListenableBuilder<bool>(
+          valueListenable: FinancialPrivacy.hidden,
+          builder: (context, hidden, _) {
+            String displayAmount(double value) =>
+                hidden ? 'R\$ ••••' : Formatters.money(value);
+            return Container(
           key: const ValueKey('plan-intelligence'),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -69,18 +75,21 @@ class PlanInsightsSection extends StatelessWidget {
                 spacing: 9,
                 children: [
                   _MoneyView(
+                    hidden: hidden,
                     label: 'despesas do mês',
                     onTap: onOpenMetric == null ? null : () => onOpenMetric!('spending'),
                     amount: data.economicSpending,
                     detail: 'compras, parcelas e benefícios atribuídos ao mês',
                   ),
                   _MoneyView(
+                    hidden: hidden,
                     label: 'dinheiro que saiu das contas',
                     onTap: onOpenMetric == null ? null : () => onOpenMetric!('cash'),
                     amount: data.cashOutflows,
                     detail: 'inclui PIX, faturas, parcelas e transferências',
                   ),
                   _MoneyView(
+                    hidden: hidden,
                     label: 'disponível estimado agora',
                     onTap: onOpenMetric == null ? null : () => onOpenMetric!('available'),
                     amount: data.estimatedAvailableNow,
@@ -91,9 +100,9 @@ class PlanInsightsSection extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 'no controle do orçamento, também entram '
-                '${Formatters.money(data.debtPayments)} em pagamentos de dívidas '
+                '${displayAmount(data.debtPayments)} em pagamentos de dívidas '
                 'confirmados. total acompanhado: '
-                '${Formatters.money(data.budgetTracked)}.',
+                '${displayAmount(data.budgetTracked)}.',
                 key: const ValueKey('plan-insights-budget-total'),
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
               ),
@@ -132,7 +141,7 @@ class PlanInsightsSection extends StatelessWidget {
                             Text('${issue.title} · ${issue.count} ocorrência(s)',
                               style: TextStyle(fontSize: 12,
                                 fontWeight: FontWeight.w600, color: scheme.onSurface)),
-                            Text('${Formatters.money(issue.amount)} · '
+                            Text('${displayAmount(issue.amount)} · '
                               '${issue.description}',
                               style: TextStyle(fontSize: 11,
                                 color: scheme.onSurfaceVariant)),
@@ -181,9 +190,9 @@ class PlanInsightsSection extends StatelessWidget {
                                       fontWeight: FontWeight.w600,
                                       color: scheme.onSurface)),
                                   Text(
-                                    'média: ${Formatters.money(suggestion.historicalAverage)} '
+                                    'média: ${displayAmount(suggestion.historicalAverage)} '
                                     'em ${suggestion.sampleMonths} meses · '
-                                    'sugestão: ${Formatters.money(suggestion.suggestedLimit)}',
+                                    'sugestão: ${displayAmount(suggestion.suggestedLimit)}',
                                     style: TextStyle(fontSize: 11,
                                       color: scheme.onSurfaceVariant),
                                   ),
@@ -209,6 +218,8 @@ class PlanInsightsSection extends StatelessWidget {
             ),
           ),
         );
+          },
+        );
       },
     );
   }
@@ -218,12 +229,14 @@ class _MoneyView extends StatelessWidget {
   const _MoneyView({
     required this.label,
     required this.amount,
+    required this.hidden,
     required this.detail,
     this.onTap,
   });
 
   final String label;
   final double amount;
+  final bool hidden;
   final String detail;
   final VoidCallback? onTap;
 
@@ -246,7 +259,7 @@ class _MoneyView extends StatelessWidget {
           Text(label, style: TextStyle(fontSize: 11,
             fontWeight: FontWeight.w600, color: scheme.onSurfaceVariant)),
           const SizedBox(height: 4),
-          Text(Formatters.money(amount), style: TextStyle(fontSize: 17,
+          Text(hidden ? 'R\$ ••••' : Formatters.money(amount), style: TextStyle(fontSize: 17,
             fontWeight: FontWeight.w700, color: scheme.onSurface)),
           const SizedBox(height: 4),
           Text(detail, style: TextStyle(fontSize: 10,

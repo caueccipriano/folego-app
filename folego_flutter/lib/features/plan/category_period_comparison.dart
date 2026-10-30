@@ -147,6 +147,9 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
                 return const Center(child: CircularProgressIndicator());
               }
               final rows = state.data!;
+              final increases = rows.where((row) => row.$2 > row.$3).toList()
+                ..sort((a, b) => (b.$2 - b.$3).compareTo(a.$2 - a.$3));
+              final largestIncrease = increases.isEmpty ? null : increases.first;
               final maximum = rows.fold<double>(
                 0,
                 (value, row) => math.max(value, math.max(row.$2, row.$3)),
@@ -164,17 +167,64 @@ class _CategoryPeriodComparisonState extends State<CategoryPeriodComparison> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'mesmo número de dias nos dois meses, pela data de impacto no orçamento. parcelas entram no mês da parcela; créditos e estornos reduzem o total. pagamento de fatura não vira uma segunda compra.',
+                    Text(
+                      'Mesmo período, meses diferentes. Comparação dos gastos registrados, não previsão.',
+                      style: AppTypography.body(context, fontSize: 12),
                     ),
-                    const Text(
-                      'inclui o dia de hoje, que ainda pode estar incompleto. em meses mais curtos, os dias sem equivalente ficam fora. valores dependem do que já foi registrado; sem registros não significa que você não gastou. gastos ainda sem categoria não aparecem nesta comparação; revise as categorias pendentes.',
+                    if (largestIncrease != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        key: const ValueKey('category-biggest-increase'),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface(Theme.of(context).brightness),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.border(Theme.of(context).brightness),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('maior alta registrada',
+                              style: AppTypography.label(context, fontSize: 12)),
+                            const SizedBox(height: 5),
+                            Text(largestIncrease.$1,
+                              style: AppTypography.section(context, fontSize: 17)),
+                            const SizedBox(height: 4),
+                            Text(
+                              hidden
+                                ? 'R\$ •••• a mais'
+                                : '${Formatters.money(largestIncrease.$2 - largestIncrease.$3)} a mais',
+                              style: AppTypography.body(
+                                context, fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('até o dia $days, conforme os registros.',
+                              style: AppTypography.body(context, fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        dividerColor: AppColors.transparent,
+                      ),
+                      child: ExpansionTile(
+                        key: const ValueKey('category-compare-explainer'),
+                        tilePadding: EdgeInsets.zero,
+                        title: const Text('como comparamos'),
+                        children: const [
+                          Text('Mesmo número de dias nos dois meses, pela data de impacto no orçamento. Parcelas entram no mês da parcela; estornos reduzem gastos e pagamentos de fatura não são somados duas vezes.'),
+                          SizedBox(height: 8),
+                          Text('O dia de hoje pode estar incompleto. Meses curtos limitam a janela. Sem registros não significa gasto zero; lançamentos sem categoria ficam fora do detalhamento.'),
+                          SizedBox(height: 8),
+                          Text('Primeira barra: mês atual. Segunda: mês anterior. Créditos líquidos negativos aparecem no valor, sem barra.'),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'primeira barra: mês atual; segunda: mês anterior. todas usam a mesma escala. créditos líquidos negativos aparecem nos valores, sem barra.',
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     if (rows.isEmpty)
                       const Text(
                         'ainda não há categorias com atividade para comparar.',

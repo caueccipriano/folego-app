@@ -80,3 +80,24 @@ BudgetOverviewItem? nextPlanCategory(Iterable<BudgetOverviewItem> items) {
   });
   return children.first;
 }
+
+
+/// Parent-level spending includes its children, so only recommend a specific
+/// editable child. A technical pending bucket and direct unallocated postings
+/// must not be mistaken for categories that can receive a limit.
+BudgetOverviewItem? editableChildForReview(
+  BudgetOverviewItem parent,
+  Iterable<BudgetOverviewItem> items,
+) {
+  if (!parent.isParent || parent.isPending) return null;
+  final children = items.where(
+    (item) => item.parentId == parent.categoryId &&
+        !item.isPending && !item.hasBudget,
+  ).toList();
+  children.sort((a, b) {
+    final spending = b.actualAmount.compareTo(a.actualAmount);
+    if (spending != 0) return spending;
+    return a.categoryName.compareTo(b.categoryName);
+  });
+  return children.isEmpty ? null : children.first;
+}

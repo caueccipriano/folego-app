@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/data/models/budget_overview_item.dart';
 import 'package:folego/core/utils/formatters.dart';
+import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/features/plan/plan_insights_section.dart';
 
 void main() {
+  tearDown(() => FinancialPrivacy.hidden.value = false);
+
   final insights = PlanInsights.fromJson({
     'economic_spending': 3313.04,
     'debt_payments': 1476.51,
@@ -102,4 +105,40 @@ void main() {
       const ValueKey('plan-review-suggestion-school'),
     ), findsNothing);
   });
+  testWidgets('privacy hides balances and detailed audit amounts',
+      (tester) async {
+    // Formatters.money also respects privacy: snapshot the visible strings.
+    FinancialPrivacy.hidden.value = false;
+    final debt = Formatters.money(insights.debtPayments);
+    final spending = Formatters.money(insights.economicSpending);
+    final issue = Formatters.money(insights.issues.first.amount);
+    final suggestion = Formatters.money(insights.suggestions.first.suggestedLimit);
+    FinancialPrivacy.hidden.value = true;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ListView(children: [
+          PlanInsightsSection(insights: Future.value(insights)),
+        ]),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('R\$ ••••'), findsWidgets);
+    expect(find.textContaining(debt),
+      findsNothing);
+    expect(find.textContaining(spending),
+      findsNothing);
+    final audit = find.byKey(const ValueKey('plan-insights-audit'));
+    await tester.ensureVisible(audit);
+    await tester.tap(audit);
+    await tester.pumpAndSettle();
+    expect(find.textContaining(issue),
+      findsNothing);
+    final suggestions = find.byKey(const ValueKey('plan-insights-suggestions'));
+    await tester.ensureVisible(suggestions);
+    await tester.tap(suggestions);
+    await tester.pumpAndSettle();
+    expect(find.textContaining(suggestion),
+      findsNothing);
+  });
+
 }
