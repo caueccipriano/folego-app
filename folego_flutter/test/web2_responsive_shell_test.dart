@@ -218,7 +218,8 @@ void main() {
     final expenses = tester.getTopLeft(find.byType(HomeMonthlyMoneyCard));
     final upcoming = tester.getTopLeft(find.text('próximos movimentos'));
     expect(action.dx, greaterThan(hero.dx));
-    expect((action.dy - hero.dy).abs(), lessThan(140));
+    // Two larger quick actions replace the former four-button toolbar.
+    expect((action.dy - hero.dy).abs(), lessThan(175));
     expect(upcoming.dx, greaterThan(expenses.dx));
     expect((upcoming.dy - expenses.dy).abs(), lessThan(140));
   });
