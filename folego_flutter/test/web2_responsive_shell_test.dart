@@ -25,7 +25,7 @@ void main() {
     expect(nav, findsOneWidget);
     final navRect = tester.getRect(nav);
 
-    for (var index = 0; index < 5; index++) {
+    for (var index = 0; index < 3; index++) {
       final target = find.byKey(ValueKey('mobile-nav-destination-$index'));
       final rect = tester.getRect(target);
       expect(rect.width, greaterThanOrEqualTo(44));
@@ -36,6 +36,22 @@ void main() {
       expect(find.byKey(ValueKey('page-$index')), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
+  });
+
+  testWidgets('daily navigation has only three tabs and tools are secondary', (tester) async {
+    await _pumpShell(tester, const Size(390, 844));
+    expect(find.byKey(const ValueKey('mobile-nav-destination-3')), findsNothing);
+    expect(find.byKey(const ValueKey('mobile-nav-destination-4')), findsNothing);
+    expect(find.text('hoje'), findsOneWidget);
+    expect(find.text('movimentos'), findsOneWidget);
+    expect(find.text('futuro'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('mobile-tools-button')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('page-3')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-0')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('page-0')), findsOneWidget);
   });
 
   testWidgets('width below 600 keeps bottom navigation', (tester) async {
@@ -67,8 +83,6 @@ void main() {
     final destinations = <({IconData icon, int page})>[
       (icon: AppIcons.transactions, page: 1),
       (icon: AppIcons.plan, page: 2),
-      (icon: AppIcons.wallet, page: 3),
-      (icon: AppIcons.profile, page: 4),
       (icon: AppIcons.home, page: 0),
     ];
 
@@ -101,6 +115,14 @@ void main() {
     await _pumpShell(tester, const Size(1024, 820));
     expect(find.byKey(const ValueKey('desktop-sidebar')), findsOneWidget);
     expect(find.byKey(const ValueKey('mobile-bottom-navigation')), findsNothing);
+  });
+
+  testWidgets('desktop sidebar can still open secondary tools', (tester) async {
+    await _pumpShell(tester, const Size(1366, 820));
+    expect(find.byKey(const ValueKey('desktop-nav-3')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('desktop-tools-button')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('page-3')), findsOneWidget);
   });
 
   testWidgets('desktop sidebar keeps selected tab', (tester) async {
@@ -253,6 +275,7 @@ class _ShellHarnessState extends State<_ShellHarness> {
   Widget build(BuildContext context) => ResponsiveNavigationShell(
     selectedIndex: index,
     onDestinationSelected: (value) => setState(() => index = value),
+    onOpenTools: () => setState(() => index = 3),
     pages: List.generate(5, (page) => _ProbePage(
       key: ValueKey('probe-$page'),
       index: page,
