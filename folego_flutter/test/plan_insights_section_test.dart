@@ -80,6 +80,11 @@ void main() {
       const ValueKey('plan-review-suggestion-school'),
     );
     await tester.ensureVisible(review);
+    await tester.pumpAndSettle();
+    // The priority insight adds height above the legacy suggestions section.
+    // Scroll the real ListView instead of tapping a button outside the viewport.
+    await tester.drag(find.byType(ListView), const Offset(0, -230));
+    await tester.pumpAndSettle();
     await tester.tap(review);
     await tester.pump();
     expect(reviewed?.categoryId, 'school');

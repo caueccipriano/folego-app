@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import 'notification_essentials.dart';
 import 'notification_history_screen.dart';
 import 'notification_settings_data_source.dart';
 
@@ -376,10 +377,8 @@ class _NotificationSettingsScreenState
                           ],
                           const SizedBox(height: 16),
                           _masterSection(prefs),
-                          const SizedBox(height: 16),
-                          _dailySummarySection(prefs),
-                          const SizedBox(height: 16),
-                          _toneSection(prefs),
+                          const SizedBox(height: 12),
+                          _essentialSection(prefs),
                           const SizedBox(height: 16),
                           _SettingsSection(
                             title: 'personalizar mais',
@@ -390,6 +389,10 @@ class _NotificationSettingsScreenState
                               initiallyExpanded: false,
                               title: const Text('ver mais opções'),
                               children: [
+                                _dailySummarySection(prefs),
+                                const SizedBox(height: 12),
+                                _toneSection(prefs),
+                                const SizedBox(height: 12),
                                 _SettingsSection(
                                   title: 'movimentações no aplicativo',
                                   subtitle: 'avisos na central do Fôlego; não ativa push no iPhone',
@@ -425,6 +428,53 @@ class _NotificationSettingsScreenState
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _essentialSection(NotificationPreferences prefs) {
+    final quiet = essentialNotificationsOnly(prefs);
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('só o que importa',
+              style: AppTypography.section(context, fontSize: 16)),
+            const SizedBox(height: 4),
+            Text(
+              quiet
+                ? 'sem resumos automáticos ou chamadas repetidas'
+                : 'menos notificações, sem perder vencimentos e alertas importantes',
+              style: AppTypography.body(context, fontSize: 12),
+            ),
+            if (!quiet) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  key: const ValueKey('notifications-essentials-action'),
+                  onPressed: _saving ? null : () => _save(
+                    reduceNotificationNoise(prefs),
+                    key: 'essentials',
+                    label: 'seus avisos essenciais',
+                    successMessage: 'avisos repetitivos desativados',
+                  ),
+                  icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                  label: const Text('usar só avisos essenciais'),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 6),
+              Text('você pode personalizar cada tipo em “ver mais opções”',
+                style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+            ],
+          ],
         ),
       ),
     );
