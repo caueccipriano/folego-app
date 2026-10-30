@@ -23,6 +23,18 @@ O FÔLEGO deve calcular e classificar sem exigir que a pessoa administre o aplic
 5. **Recompensas informativas:** mostrar quanto já foi preservado, objetivos e melhorias reais, sem contadores artificiais nem notificações para forçar uso.
 6. **Importação invisível quando confiável:** conciliação protegida, jamais criar/alterar valores em silêncio quando houver incerteza.
 
+## Linguagem e notificações (segunda rodada)
+
+- Avisos financeiros: **título = conta/compromisso**, **corpo = o que aconteceu ou quando vence**. Não repetir o nome no corpo.
+- Resumo diário: uma ação baseada em dados reais, por exemplo "2 lançamentos para organizar"; convite curto quando não há classificação pendente.
+- Tom escolhido continua respeitado, mas sem frases de abertura longas; o tom agressivo continua apenas com ativação explícita.
+- Não truncar nomes, datas, valores ou fatos para forçar um limite de caracteres. Mensagens desconhecidas mantêm seu conteúdo.
+- O texto abre a rota original: contas, cartões, dívidas, assinaturas e agenda.
+- Configurações: controle geral, resumo diário e tom à vista; detalhes de frequência, horários, categorias e histórico em **ver mais opções**.
+- A Home mostra apenas os atalhos de gasto/receita e a conferência automática continua aparecendo só diante de exceções.
+- Para a entrega efetiva dos avisos no iPhone PWA, ambas as Edge Functions (`folego-push-dispatch` e `folego-daily-summary`) precisam ser publicadas separadamente após QA.
+- O FÔLEGO não altera saldo, gasto, pagamento ou recorrência ao enviar notificações.
+
 ## Entregas por fase
 
 - **Fase 1 — em branch de desenvolvimento:** três destinos principais em celular e desktop; acesso secundário a contas/cartões/dívidas, metas, diário, perfil/automações/ajustes; rotas de notificação e cálculos existentes preservados.
