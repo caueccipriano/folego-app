@@ -112,7 +112,10 @@ class PlanGuidanceCard extends StatelessWidget {
                   ),
                 ] else if (next == null) ...[
                   const SizedBox(height: 9),
-                  Text('nenhuma subcategoria disponível para ajustar agora.',
+                  Text(
+                    items.any((item) => item.isSubcategory && item.hasBudget)
+                        ? 'seus limites estão configurados. acompanhe os gastos abaixo.'
+                        : 'nenhuma subcategoria disponível para ajustar agora.',
                     style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
                 ],
               ],
