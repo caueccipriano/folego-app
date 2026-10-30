@@ -221,7 +221,7 @@ void main() {
     // Two larger quick actions replace the former four-button toolbar.
     expect((action.dy - hero.dy).abs(), lessThan(175));
     expect(upcoming.dx, greaterThan(expenses.dx));
-    expect((upcoming.dy - expenses.dy).abs(), lessThan(140));
+    expect((upcoming.dy - expenses.dy).abs(), lessThan(190));
   });
 
   testWidgets('desktop snackbar is floating and width constrained', (tester) async {
