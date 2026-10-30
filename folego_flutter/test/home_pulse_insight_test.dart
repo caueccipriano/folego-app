@@ -111,6 +111,7 @@ void main() {
     );
     expect(insight.requiresAttention, isFalse);
     expect(insight.title, contains('Nada urgente'));
+    expect(insight.showCard, isFalse);
   });
 
   test('budget risk is secondary to impending payments', () {
@@ -130,6 +131,20 @@ void main() {
     );
     expect(insight.eyebrow, 'resumo parcial');
     expect(insight.title, contains('não consegui'));
+  });
+
+  testWidgets('Home stays clean when there is no actionable insight',
+      (tester) async {
+    final insight = selectHomePulse(
+      snapshot: snapshot(),
+      upcoming: [],
+      upcomingAvailable: true,
+    );
+    expect(insight.showCard, isFalse);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: HomePulseCard(insight: insight)),
+    ));
+    expect(find.byKey(const ValueKey('home-pulse')), findsNothing);
   });
 
   testWidgets('Pulse respects privacy and opens the relevant agenda', (
