@@ -13,6 +13,9 @@ class PlanGuidanceCard extends StatelessWidget {
     required this.canEdit,
     required this.onEdit,
     required this.onReviewSpending,
+    this.onClassify,
+    this.onEditReviewCategory,
+    this.onCompareMonths,
     this.insights,
   });
 
@@ -21,6 +24,10 @@ class PlanGuidanceCard extends StatelessWidget {
   final bool canEdit;
   final void Function(BudgetOverviewItem category, double? suggestedAmount) onEdit;
   final ValueChanged<BudgetOverviewItem> onReviewSpending;
+  final VoidCallback? onClassify;
+  final ValueChanged<BudgetOverviewItem>? onEditReviewCategory;
+  /// Navigates to a calendar-day-matched comparison; no network call until tapped.
+  final VoidCallback? onCompareMonths;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +155,7 @@ class PlanGuidanceCard extends StatelessWidget {
                   Text(
                     'maior grupo: ${largest.categoryName} · '
                     '${hidden ? "R\$ ••••" : Formatters.money(largest.actualAmount)} '
-                    '(${(largest.actualAmount / total * 100).round()}% do total acompanhado)',
+                    '${hidden ? "" : "(${(largest.actualAmount / total * 100).round()}% do total acompanhado)"}',
                     key: const ValueKey('plan-largest-category'),
                     style: TextStyle(color: scheme.onSurface, fontSize: 12,
                       fontWeight: FontWeight.w600)),
@@ -175,13 +182,31 @@ class PlanGuidanceCard extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.w600, color: scheme.onSurface)),
                       subtitle: Text(_reason(target, hidden),
                         style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
-                      trailing: const Icon(Icons.chevron_right_rounded),
+                      trailing: _reviewAction(target) == null
+                          ? const Icon(Icons.chevron_right_rounded)
+                          : TextButton(
+                              key: ValueKey('plan-focus-action-${target.category.categoryId}'),
+                              onPressed: _reviewAction(target),
+                              child: Text(_reviewActionLabel(target)),
+                            ),
                       onTap: () => onReviewSpending(target.category),
                       ),
                     ),
                   ],
                   const SizedBox(height: 4),
-                  Text('toque para ver os lançamentos. um gasto alto pode ser necessário.',
+                  Text('toque na categoria para conferir os lançamentos. gastar mais não significa desperdiçar.',
+                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11)),
+                ],
+                if (onCompareMonths != null) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    key: const ValueKey('plan-compare-months'),
+                    onPressed: onCompareMonths,
+                    icon: const Icon(Icons.compare_arrows_rounded, size: 18),
+                    label: const Text('comparar com mês passado'),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('compara o mesmo número de dias dos dois meses; o dia de hoje pode estar incompleto.',
                     style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11)),
                 ],
               ],
@@ -190,6 +215,24 @@ class PlanGuidanceCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  VoidCallback? _reviewAction(PlanReviewTarget target) {
+    if (!canEdit) return null;
+    if (target.reason == PlanReviewReason.uncategorized) return onClassify;
+    if (target.reason == PlanReviewReason.noLimit &&
+        onEditReviewCategory != null) {
+      final child = editableChildForReview(target.category, items);
+      if (child != null) return () => onEditReviewCategory!(child);
+    }
+    return null;
+  }
+
+  String _reviewActionLabel(PlanReviewTarget target) {
+    if (target.reason == PlanReviewReason.uncategorized) {
+      return 'classificar';
+    }
+    return 'definir limite';
   }
 
   String _reason(PlanReviewTarget target, bool hidden) {
