@@ -88,7 +88,7 @@ void main() {
     final home = File('lib/features/home/home_screen_base.dart')
         .readAsStringSync();
     expect(hub, contains('mergeResolverTasks(pending: queues[0], other: queues[1])'));
-    expect(hub, contains("initiallyExpanded: false"));
+    expect(hub, contains('initiallyExpanded: false'));
     expect(hub, contains("ValueKey('resolver-center')"));
     expect(hub, contains("ValueKey('resolver-empty')"));
     expect(hub, contains('_reviewOther(row)'));
