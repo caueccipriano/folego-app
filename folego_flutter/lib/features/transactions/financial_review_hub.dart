@@ -404,7 +404,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
       builder: (context, hidden, _) => ListTile(
-        key: ValueKey('resolver-item-${kind}-${row['id']}'),
+        key: ValueKey('resolver-item-$kind-${row['id']}'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         leading: Icon(
           switch (kind) {
