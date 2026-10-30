@@ -44,28 +44,28 @@ class PlanGuidanceCard extends StatelessWidget {
       builder: (context, hidden, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
+          if (next != null || !canEdit) Container(
             key: const ValueKey('plan-guided-start'),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: scheme.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: scheme.outlineVariant),
+              color: scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: scheme.outlineVariant.withValues(alpha: .55)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Icon(Icons.auto_awesome_outlined, color: scheme.primary, size: 21),
+                  Icon(Icons.tune_rounded, color: scheme.primary, size: 20),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('planeje aos poucos',
+                  Expanded(child: Text('seu próximo passo',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
                       color: scheme.onSurface))),
                 ]),
                 const SizedBox(height: 5),
                 Text(
                   canEdit
-                    ? 'um limite por vez. você decide o valor; nada é salvo sozinho.'
+                    ? 'uma decisão por vez. você confirma cada limite.'
                     : 'este mês está disponível apenas para consulta.',
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
                 ),
@@ -89,7 +89,7 @@ class PlanGuidanceCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(next.hasBudget
-                            ? 'próximo ajuste: ${next.categoryName}'
+                            ? 'rever: ${next.categoryName}'
                             : 'comece por: ${next.categoryName}',
                             style: TextStyle(color: scheme.onSurface,
                               fontWeight: FontWeight.w600)),
@@ -101,9 +101,9 @@ class PlanGuidanceCard extends StatelessWidget {
                                 'limite sugerido: '
                                 '${hidden ? "R\$ ••••" : Formatters.money(proposed.suggestedLimit)}.'
                               : next.hasActivity
-                                ? 'já registrado neste mês: '
+                                ? 'gastos no mês: '
                                   '${hidden ? "R\$ ••••" : Formatters.money(next.actualAmount)}. '
-                                  'use isso para decidir um limite.'
+                                  'escolha seu limite.'
                                 : 'defina um valor que faça sentido para você.',
                             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
                           const SizedBox(height: 12),
@@ -111,7 +111,7 @@ class PlanGuidanceCard extends StatelessWidget {
                             key: const ValueKey('plan-guided-edit'),
                             onPressed: () => onEdit(next, proposed?.suggestedLimit),
                             icon: const Icon(Icons.edit_outlined, size: 18),
-                            label: Text(next.hasBudget ? 'rever este limite' : 'definir este limite'),
+                            label: Text(next.hasBudget ? 'ajustar limite' : 'definir limite'),
                           ),
                         ],
                       );
@@ -133,22 +133,22 @@ class PlanGuidanceCard extends StatelessWidget {
             key: const ValueKey('plan-review-focus'),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: scheme.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: scheme.outlineVariant),
+              color: scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: scheme.outlineVariant.withValues(alpha: .55)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Icon(Icons.insights_outlined, color: scheme.primary, size: 21),
+                  Icon(Icons.lightbulb_outline_rounded, color: scheme.primary, size: 20),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('onde vale olhar',
+                  Expanded(child: Text('gastos em foco',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
                       color: scheme.onSurface))),
                 ]),
                 const SizedBox(height: 4),
-                Text('prioridades com base nos lançamentos deste mês.',
+                Text('até três pontos para conferir neste mês.',
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
                 if (largest != null && total > 0) ...[
                   const SizedBox(height: 10),
@@ -165,7 +165,7 @@ class PlanGuidanceCard extends StatelessWidget {
                   Text(
                     total == 0
                       ? 'quando houver gastos, mostro onde vale conferir primeiro.'
-                      : 'nenhum excesso ou gasto sem limite identificado nos registros.',
+                      : 'nenhum gasto acima do limite ou sem orçamento identificado.',
                     style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
                   ),
                 ] else ...[
@@ -194,7 +194,7 @@ class PlanGuidanceCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 4),
-                  Text('toque na categoria para conferir os lançamentos. gastar mais não significa desperdiçar.',
+                  Text('toque para conferir. gasto alto não significa desperdício.',
                     style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11)),
                 ],
                 if (onCompareMonths != null) ...[
@@ -203,10 +203,10 @@ class PlanGuidanceCard extends StatelessWidget {
                     key: const ValueKey('plan-compare-months'),
                     onPressed: onCompareMonths,
                     icon: const Icon(Icons.compare_arrows_rounded, size: 18),
-                    label: const Text('comparar com mês passado'),
+                    label: const Text('comparar meses'),
                   ),
                   const SizedBox(height: 4),
-                  Text('compara o mesmo número de dias dos dois meses; o dia de hoje pode estar incompleto.',
+                  Text('mesmos dias dos dois meses, com base nos registros.',
                     style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11)),
                 ],
               ],
