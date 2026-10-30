@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/privacy/financial_privacy.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/financial_space.dart';
@@ -477,7 +478,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
           if (tasks.length > 1) ...[
             const SizedBox(height: 12),
             Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
               child: ExpansionTile(
                 key: const ValueKey('resolver-more'),
                 tilePadding: const EdgeInsets.symmetric(horizontal: 4),
