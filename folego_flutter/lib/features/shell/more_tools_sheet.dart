@@ -115,7 +115,7 @@ class _ToolTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, size: 23, color: scheme.primary),
-              const Spacer(),
+              const SizedBox(height: 16),
               Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: AppTypography.body(context, fontSize: 13,
                   fontWeight: FontWeight.w700, color: scheme.onSurface)),
