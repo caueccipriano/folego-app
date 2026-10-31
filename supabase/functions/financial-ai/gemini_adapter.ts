@@ -21,5 +21,5 @@ export function readGeminiAnswer(value: unknown): string {
   if (!Array.isArray(parts)) return '';
   return parts
     .filter((part) => part && typeof part.text === 'string' && part.thought !== true)
-    .map((part) => part.text as string).join('\n').trim();
+    .map((part) => part.text as string).join('').trim();
 }
