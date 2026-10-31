@@ -27,6 +27,7 @@ import '../../shared/widgets/app_sheet_handle.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/category_search_picker.dart';
 import 'quick_register_payment_state.dart';
+import 'quick_capture_parser.dart';
 
 typedef QuickRegisterCatalog = ({
   List<AccountItem> accounts,
@@ -91,6 +92,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   bool _loading = true;
   bool _saving = false;
   bool _showMore = false;
+  bool _capturedShorthand = false;
   String? _error;
 
   bool get _isExpense => widget.initialType == 'expense';
@@ -785,13 +787,41 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         const SizedBox(height: 12),
                         _header(brightness),
                         const SizedBox(height: 16),
-                        _moneyField(),
-                        if (_suggestions.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          _suggestionRow(brightness),
-                        ],
-                        const SizedBox(height: 12),
                         _detailsSection(),
+
+                        const SizedBox(height: 12),
+
+                        _moneyField(),
+
+                        if (_capturedShorthand) ...[
+
+                          const SizedBox(height: 6),
+
+                          Text(
+
+                            'valor preenchido · confira antes de registrar',
+
+                            style: AppTypography.body(
+
+                              context,
+
+                              fontSize: 11,
+
+                              color: AppColors.secondaryText(brightness),
+
+                            ),
+
+                          ),
+
+                        ],
+
+                        if (_suggestions.isNotEmpty) ...[
+
+                          const SizedBox(height: 10),
+
+                          _suggestionRow(brightness),
+
+                        ],
                         if (_suggestedCategory != null) ...[
                           const SizedBox(height: 8),
                           _smartCategoryHint(brightness),
@@ -891,7 +921,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   Widget _moneyField() {
     return TextField(
       controller: _amount,
-      autofocus: true,
+      autofocus: !_isExpense,
+      onChanged: (_) {
+        if (_capturedShorthand) setState(() => _capturedShorthand = false);
+      },
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       style: AppTypography.money(context, fontSize: 30),
       decoration: const InputDecoration(
@@ -1159,11 +1192,29 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   Widget _detailsSection() {
     return TextField(
       controller: _description,
-      onChanged: (_) => setState(() {}),
+      autofocus: _isExpense,
+      onChanged: (value) {
+        final draft = _amount.text.trim().isEmpty
+            ? QuickCaptureDraft.parse(value)
+            : null;
+        if (draft != null) {
+          _description.value = TextEditingValue(
+            text: draft.description,
+            selection: TextSelection.collapsed(
+              offset: draft.description.length,
+            ),
+          );
+          _amount.text = draft.amountText;
+        }
+        setState(() {
+          _capturedShorthand = draft != null;
+          _error = null;
+        });
+      },
       textCapitalization: TextCapitalization.sentences,
       decoration: const InputDecoration(
         labelText: 'o que foi?',
-        hintText: 'ex.: almoço, mercado, curso',
+        hintText: 'ex.: Uber 27,90',
       ),
     );
   }
