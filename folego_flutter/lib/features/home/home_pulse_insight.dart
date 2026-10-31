@@ -135,7 +135,9 @@ HomePulseInsight selectHomePulse({
       snapshot.monthlyBudgetUsed / snapshot.monthlyBudgetPlanned >= .9) {
     return HomePulseInsight(
       eyebrow: 'olho no orçamento',
-      title: 'Orçamento perto do limite',
+      title: snapshot.monthlyBudgetUsed > snapshot.monthlyBudgetPlanned
+          ? 'Orçamento passou do planejado'
+          : 'Orçamento perto do limite',
       description: 'Confira as categorias antes de comprar.',
       action: HomePulseAction.budget,
       actionLabel: 'revisar categorias',
