@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
+import 'more_tools_sheet.dart';
 import '../goals/goals_screen.dart';
 import '../diary/diary_screen.dart';
 import '../home/home_wallet_navigation_scope.dart';
@@ -174,42 +175,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     final target = await showModalBottomSheet<int>(
       context: context,
       showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ListTile(
-              title: Text('mais'),
-              subtitle: Text('seu dinheiro e suas configurações'),
-            ),
-            ListTile(
-              key: const ValueKey('tools-wallet'),
-              leading: const Icon(Icons.account_balance_wallet_outlined),
-              title: const Text('contas e cartões'),
-              subtitle: const Text('saldos, faturas e dívidas'),
-              onTap: () => Navigator.pop(sheetContext, 0),
-            ),
-            ListTile(
-              key: const ValueKey('tools-goals'),
-              leading: const Icon(Icons.flag_outlined),
-              title: const Text('metas'),
-              onTap: () => Navigator.pop(sheetContext, 1),
-            ),
-            ListTile(
-              key: const ValueKey('tools-diary'),
-              leading: const Icon(Icons.auto_stories_outlined),
-              title: const Text('diário'),
-              onTap: () => Navigator.pop(sheetContext, 2),
-            ),
-            ListTile(
-              key: const ValueKey('tools-profile'),
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('configurações'),
-              subtitle: const Text('perfil e automações'),
-              onTap: () => Navigator.pop(sheetContext, 3),
-            ),
-          ],
-        ),
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) => MoreToolsSheet(
+        onSelected: (destination) => Navigator.pop(sheetContext, destination),
       ),
     );
     if (!mounted || target == null) return;
