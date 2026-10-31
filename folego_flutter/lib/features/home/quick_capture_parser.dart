@@ -21,7 +21,24 @@ class QuickCaptureDraft {
     if (description.isEmpty ||
         description.endsWith('-') ||
         description.endsWith('+') ||
-        description.endsWith('R$')) {
+        description.endsWith('R\) {
+      return null;
+    }
+
+    final token = match.group(2)!;
+    final normalized = token.contains(',')
+        ? token.replaceAll('.', '').replaceAll(',', '.')
+        : token;
+    final amount = double.tryParse(normalized);
+    if (amount == null || !amount.isFinite || amount <= 0) return null;
+
+    return QuickCaptureDraft(
+      description: description,
+      amountText: amount.toStringAsFixed(2).replaceAll('.', ','),
+    );
+  }
+}
+)) {
       return null;
     }
 
