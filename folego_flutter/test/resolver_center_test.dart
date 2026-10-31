@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/features/home/home_quick_tools.dart';
 import 'package:folego/features/transactions/resolver_queue.dart';
+import 'package:folego/data/models/category_item.dart';
+import 'package:folego/data/models/transaction_item.dart';
 
 Map<String, dynamic> task(String kind, String id, {String? date}) => {
   'id': id,
@@ -58,6 +60,39 @@ void main() {
     expect(merged.map((row) => row['id']).toList(), ['new', 'old']);
   });
 
+  test('Resolver suggests only evidence for Outros, never guesses', () {
+    final transport = CategoryItem(
+      id: 'ride', name: 'Transporte', essential: false,
+      kind: 'expense', active: true,
+    );
+    final other = CategoryItem(
+      id: 'other', name: 'Outros', essential: false,
+      kind: 'expense', active: true,
+    );
+    final history = [TransactionItem(
+      id: 'history-one', eventType: 'expense', description: 'Uber centro',
+      amount: 28, occurredAt: DateTime(2026, 10, 20),
+      status: 'confirmed', source: 'test', categoryId: 'ride',
+    )];
+    final row = <String, dynamic>{
+      'kind': 'other', 'description': 'Uber centro', 'event_type': 'expense',
+    };
+    expect(resolverOtherSuggestion(
+      task: row, categories: [transport, other], history: history,
+    )?.category.id, 'ride');
+    expect(resolverOtherSuggestion(
+      task: {...row, 'kind': 'classification'},
+      categories: [transport, other], history: history,
+    ), isNull);
+    expect(resolverOtherSuggestion(
+      task: {...row, 'description': 'Pix'},
+      categories: [transport, other], history: history,
+    ), isNull);
+    expect(resolverOtherSuggestion(
+      task: row, categories: [other], history: history,
+    ), isNull);
+  });
+
   test('read-only action descriptions do not imply automatic financial changes', () {
     expect(resolverTaskAction('classification'), 'organizar categoria');
     expect(resolverTaskAction('capture'), 'conferir comprovante');
@@ -95,6 +130,12 @@ void main() {
     expect(hub, contains('_openPending(row)'));
     expect(hub, contains('FinancialPrivacy.hidden'));
     expect(hub, contains('snapshot.connectionState != ConnectionState.done'));
+    expect(hub, contains("ValueKey('resolver-evidence-suggestion')"));
+    expect(hub, contains('if (suggestion != null && !hidden)'));
+    expect(hub, contains('await _reviewOther(row)'));
     expect(home, contains('initialTab: resolverTabIndex'));
+    expect(home, contains("ValueKey('home-spending-increase')"));
+    expect(home, contains('CategoryPeriodComparison('));
+    expect(home, contains('onPressed: _openSpendingIncrease'));
   });
 }

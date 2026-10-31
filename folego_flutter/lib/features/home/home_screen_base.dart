@@ -46,6 +46,7 @@ import '../transactions/financial_review_hub.dart';
 import '../transactions/resolver_queue.dart';
 import 'upcoming_events_screen.dart';
 import '../plan/projection_navigation_scope.dart';
+import '../plan/category_period_comparison.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.space, required this.repository});
@@ -305,6 +306,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Reuse the existing read-only comparison, loading data only when opened.
+  void _openSpendingIncrease() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => CategoryPeriodComparison(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+        ),
+      ),
+    );
+  }
+
   Future<void> _openUpcomingEvents() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -488,6 +501,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         monthlyMoney,
                         const SizedBox(height: 10),
                         projectionInsight,
+                        if (_monthlyMoney != null) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              key: const ValueKey('home-spending-increase'),
+                              onPressed: _openSpendingIncrease,
+                              icon: const Icon(Icons.trending_up, size: 18),
+                              label: const Text('onde meus gastos aumentaram?'),
+                            ),
+                          ),
+                        ],
                         // The Pulse already highlights urgent bills. Keep the
                         // full upcoming list in one optional place instead of
                         // repeating commitments above the fold.

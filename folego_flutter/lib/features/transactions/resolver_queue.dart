@@ -1,3 +1,7 @@
+import '../../data/models/category_item.dart';
+import '../../data/models/transaction_item.dart';
+import '../../data/smart_category_suggestion.dart';
+
 /// The Resolver combines existing read-only queues. The financial event is
 /// shown once even if it is simultaneously pending category, behavior and
 /// "Outros" review; the most actionable workflow takes priority.
@@ -67,4 +71,26 @@ List<Map<String, dynamic>> mergeResolverTasks({
     if (seen.add(identity)) tasks.add(row);
   }
   return tasks;
+}
+
+
+/// Advice only for an explicit "Outros" review, using this space's
+/// confirmed history. Never writes or auto-approves any category.
+SmartCategorySuggestion? resolverOtherSuggestion({
+  required Map<String, dynamic> task,
+  required Iterable<CategoryItem> categories,
+  required Iterable<TransactionItem> history,
+}) {
+  if (task['kind']?.toString() != 'other') return null;
+  final eligible = categories.where((category) =>
+      category.name != 'Outros' &&
+      category.active &&
+      category.isSelectable &&
+      (category.kind == null || category.kind == 'expense'));
+  return suggestSmartCategory(
+    description: task['description']?.toString() ?? '',
+    eventType: task['event_type']?.toString() ?? '',
+    history: history,
+    categories: eligible,
+  );
 }
