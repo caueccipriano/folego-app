@@ -479,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         onAttention: pulseInsight.action == HomePulseAction.budget
           ? (FlexibleBudgetNavigationScope.maybeOf(context)?.open
-              ?? _openUpcomingEvents)
+              ?? _openSpendingIncrease)
           : _openUpcomingEvents,
         onDetails: () => _openFixedDetails(
           hero: hero, monthlyMoney: monthlyMoney,
@@ -767,21 +767,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         visualDensity: VisualDensity.compact,
                         title: Text(pulseInsight.title, maxLines: 1,
                           overflow: TextOverflow.ellipsis),
+                        subtitle: Text(
+                          homePulseShortDetail(pulseInsight, hidden: privacy),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                         leading: const Icon(Icons.bolt_outlined),
-                        trailing: const Icon(Icons.chevron_right, size: 18),
-                        onTap: () {
-                          if (pulseInsight.action == HomePulseAction.upcoming) {
-                            _openUpcomingEvents();
-                          } else if (pulseInsight.action == HomePulseAction.budget) {
-                            FlexibleBudgetNavigationScope.maybeOf(context)?.open();
-                          } else {
-                            _openFixedMobileDetails(
-                              monthlyMoney: monthlyMoney,
-                              projectionInsight: projectionInsight,
-                              upcoming: upcoming, latest: latest,
-                              smartCheckin: smartCheckin);
-                          }
-                        },
+                        trailing: pulseInsight.action == HomePulseAction.none
+                            ? null : const Icon(Icons.chevron_right, size: 18),
+                        onTap: pulseInsight.action == HomePulseAction.none
+                            ? null
+                            : () {
+                                if (pulseInsight.action == HomePulseAction.upcoming) {
+                                  _openUpcomingEvents();
+                                } else if (pulseInsight.action == HomePulseAction.budget) {
+                                  final open = FlexibleBudgetNavigationScope
+                                      .maybeOf(context)?.open;
+                                  if (open != null) {
+                                    open();
+                                  } else {
+                                    _openSpendingIncrease();
+                                  }
+                                }
+                              },
                       ),
                     ),
                   ],

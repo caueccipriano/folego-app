@@ -15,6 +15,7 @@ class HomePulseInsight {
     this.amount,
     this.requiresAttention = false,
     this.showCard = true,
+    this.budgetPercentUsed,
   });
 
   final String eyebrow;
@@ -25,6 +26,21 @@ class HomePulseInsight {
   final num? amount;
   final bool requiresAttention;
   final bool showCard;
+  /// Percentage from the server's current monthly budget totals; never a balance.
+  final int? budgetPercentUsed;
+}
+
+/// The compact Home exposes one next step, without leaking budget usage when
+/// financial values are hidden. No extra query or daily check-in is required.
+String homePulseShortDetail(HomePulseInsight insight, {required bool hidden}) {
+  if (insight.budgetPercentUsed != null) {
+    return hidden
+        ? 'revisar categorias'
+        : '${insight.budgetPercentUsed}% usado · revisar categorias';
+  }
+  return insight.action == HomePulseAction.none
+      ? insight.description
+      : (insight.actionLabel ?? insight.description);
 }
 
 HomePulseInsight selectHomePulse({
@@ -114,14 +130,19 @@ HomePulseInsight selectHomePulse({
 
   if (snapshot.budgetConfigured &&
       snapshot.monthlyBudgetPlanned > 0 &&
+      snapshot.monthlyBudgetUsed.isFinite &&
+      snapshot.monthlyBudgetUsed >= 0 &&
       snapshot.monthlyBudgetUsed / snapshot.monthlyBudgetPlanned >= .9) {
-    return const HomePulseInsight(
+    return HomePulseInsight(
       eyebrow: 'olho no orçamento',
       title: 'Orçamento perto do limite',
-      description:
-          'Confira as categorias antes de comprar.',
+      description: 'Confira as categorias antes de comprar.',
       action: HomePulseAction.budget,
-      actionLabel: 'ver meu orçamento',
+      actionLabel: 'revisar categorias',
+      budgetPercentUsed: (snapshot.monthlyBudgetUsed /
+              snapshot.monthlyBudgetPlanned *
+              100)
+          .round(),
       requiresAttention: true,
     );
   }

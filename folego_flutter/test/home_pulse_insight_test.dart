@@ -123,6 +123,48 @@ void main() {
     expect(insight.action, HomePulseAction.budget);
   });
 
+  test('budget alert has a precise next step without leaking usage', () {
+    final insight = selectHomePulse(
+      snapshot: snapshot(budgetUsed: 930),
+      upcoming: [],
+      upcomingAvailable: true,
+    );
+    expect(insight.action, HomePulseAction.budget);
+    expect(insight.budgetPercentUsed, 93);
+    expect(homePulseShortDetail(insight, hidden: false),
+        '93% usado · revisar categorias');
+    expect(homePulseShortDetail(insight, hidden: true),
+        'revisar categorias');
+  });
+
+  test('budget can exceed 100%, but is not a cash balance', () {
+    final insight = selectHomePulse(
+      snapshot: snapshot(budgetUsed: 1250),
+      upcoming: [],
+      upcomingAvailable: true,
+    );
+    expect(insight.budgetPercentUsed, 125);
+    expect(insight.description, isNot(contains('saldo negativo')));
+  });
+
+  testWidgets('budget percentage is concealed by the privacy eye',
+      (tester) async {
+    final insight = selectHomePulse(
+      snapshot: snapshot(budgetUsed: 930),
+      upcoming: [],
+      upcomingAvailable: true,
+    );
+    Widget card() => MaterialApp(
+      home: Scaffold(body: HomePulseCard(insight: insight)),
+    );
+    await tester.pumpWidget(card());
+    expect(find.textContaining('93% usado'), findsOneWidget);
+    FinancialPrivacy.hidden.value = true;
+    await tester.pumpWidget(card());
+    expect(find.textContaining('93% usado'), findsNothing);
+    expect(find.text('revisar categorias'), findsWidgets);
+  });
+
   test('missing agenda does not claim no urgent commitments', () {
     final insight = selectHomePulse(
       snapshot: snapshot(),
