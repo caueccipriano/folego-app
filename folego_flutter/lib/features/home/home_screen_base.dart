@@ -691,15 +691,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Text(
                                   snapshot.dailyFolego == null
                                     ? 'projeção disponível em meu mês'
-                                    : 'por dia: ' + (privacy
-                                        ? FinancialPrivacy.maskMoney()
-                                        : Formatters.money(snapshot.dailyFolego)),
+                                    : 'por dia: ${privacy ? FinancialPrivacy.maskMoney() : Formatters.money(snapshot.dailyFolego)}',
                                   key: const ValueKey('home-fixed-daily'),
                                   style: AppTypography.body(context,
                                     fontSize: 14, color: secondaryText)),
                                 if (snapshot.daysUntilIncome != null)
-                                  Text(snapshot.daysUntilIncome.toString() +
-                                    ' dias até o próximo recebimento',
+                                  Text('${snapshot.daysUntilIncome} dias até o próximo recebimento',
                                     style: AppTypography.body(context,
                                       fontSize: 12, color: secondaryText)),
                                 const SizedBox(height: 8),
