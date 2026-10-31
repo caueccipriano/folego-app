@@ -42,6 +42,7 @@ import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
 import 'home_fixed_dashboard.dart';
+import 'home_mobile_summary_strip.dart';
 import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
 import '../transactions/resolver_queue.dart';
@@ -693,8 +694,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onRefresh: _load,
                   ),
                   const SizedBox(height: 6),
-                  Expanded(
-                    child: Center(
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Align(
+                      alignment: Alignment.topCenter,
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: SizedBox(
@@ -754,6 +757,33 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+                  if (constraints.maxHeight >= 590) ...[
+                    const SizedBox(height: 8),
+                    HomeMobileSummaryStrip(
+                      snapshot: snapshot,
+                      monthly: _monthlyMoney,
+                      upcoming: _upcomingEvents,
+                      upcomingAvailable: !_upcomingUnavailable,
+                      hidden: privacy,
+                      showTiles: constraints.maxHeight >= 695,
+                      onBudget: () {
+                        final open = FlexibleBudgetNavigationScope
+                            .maybeOf(context)?.open;
+                        if (open != null) {
+                          open();
+                        } else {
+                          _openSpendingIncrease();
+                        }
+                      },
+                      onMonthly: () => _openFixedMobileDetails(
+                        monthlyMoney: monthlyMoney,
+                        projectionInsight: projectionInsight,
+                        upcoming: upcoming,
+                        latest: latest,
+                        smartCheckin: smartCheckin),
+                      onUpcoming: _openUpcomingEvents,
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   quickActions,
                   if (pulseInsight.showCard) ...[
@@ -814,6 +844,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: const Text('meu mês'),
                     )),
                   ]),
+                  const Spacer(),
                 ],
               ),
             ),
