@@ -31,11 +31,11 @@ void main() {
     expect(importer, contains('statement-import-confirm'));
   });
 
-  test('home keeps transaction entry above summary and attention cards', () {
+  test('home prioritizes spendable while keeping transaction entry before attention cards', () {
     final home = File('lib/features/home/home_screen_base.dart').readAsStringSync();
     final compact = home.split('if (layout == AppLayoutSize.compact) ...[').last
         .split('] else if (layout == AppLayoutSize.medium)')[0];
-    expect(compact.indexOf('quickActions,'), lessThan(compact.indexOf('hero,')));
+    expect(compact.indexOf('hero,'), lessThan(compact.indexOf('quickActions,')));
     expect(compact.indexOf('quickActions,'), lessThan(compact.indexOf('smartCheckin,')));
     final pulse = File('lib/features/home/home_pulse_card.dart').readAsStringSync();
     expect(pulse, contains('insight.requiresAttention'));

@@ -450,12 +450,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (layout == AppLayoutSize.compact) ...[
-                  quickActions,
-                  const SizedBox(height: 12),
+                  // The user's spendable amount is the first useful answer
+                  // on mobile. Capturing a transaction stays one tap away.
                   hero,
                   const SizedBox(height: 12),
+                  quickActions,
+                  const SizedBox(height: 12),
                   pulse,
-                  if (showUpcoming) ...[const SizedBox(height: 12), upcoming],
                   const SizedBox(height: 12),
                   smartCheckin,
                   const SizedBox(height: 14),
@@ -467,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       tilePadding: const EdgeInsets.symmetric(horizontal: 2),
                       childrenPadding: const EdgeInsets.only(bottom: 4),
                       title: Text(
-                        'seu mês em detalhes',
+                        'ver mais do mês',
                         style: AppTypography.body(
                           context,
                           fontSize: 13,
@@ -476,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        'receitas, gastos e projeções',
+                        'entradas, gastos e próximas contas',
                         style: AppTypography.body(
                           context,
                           fontSize: 11,
@@ -487,6 +488,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         monthlyMoney,
                         const SizedBox(height: 10),
                         projectionInsight,
+                        // The Pulse already highlights urgent bills. Keep the
+                        // full upcoming list in one optional place instead of
+                        // repeating commitments above the fold.
+                        if (showUpcoming) ...[
+                          const SizedBox(height: 10),
+                          upcoming,
+                        ],
                         if (showLatest) ...[
                           const SizedBox(height: 10),
                           latestSection,
