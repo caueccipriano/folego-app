@@ -38,6 +38,27 @@ extension FolegoRepositoryTransactionActions on FolegoRepository {
     );
   }
 
+  /// Metadata-only update; allowed for paid invoices without changing amounts,
+  /// installment plans, dates, cards or payment records.
+  Future<void> updateCardPurchaseLabels({
+    required String spaceId,
+    required String eventId,
+    required String description,
+    required String? categoryId,
+    required String merchant,
+  }) async {
+    await Supabase.instance.client.rpc(
+      'update_card_purchase_labels',
+      params: {
+        'p_space_id': spaceId,
+        'p_event_id': eventId,
+        'p_description': description,
+        'p_category_id': categoryId,
+        'p_merchant': merchant,
+      },
+    );
+  }
+
   Future<void> cancelCardPurchase({required String spaceId, required String eventId}) async {
     await Supabase.instance.client.rpc(
       'cancel_card_purchase',

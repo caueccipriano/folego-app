@@ -69,7 +69,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
   }
 
   Future<void> _pickCategory() async {
-    if (!_financialEditable || _categories.isEmpty) return;
+    if (_categories.isEmpty) return;
     final dialog = AppBreakpoints.of(context) != AppLayoutSize.compact;
     final selected = dialog
         ? await showDialog<CategoryItem>(
@@ -98,29 +98,43 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
 
   Future<void> _save() async {
     if (_saving) return;
-    final amount = _money(_amount.text);
-    if (amount == null || amount <= 0 || _description.text.trim().isEmpty) {
-      setState(() => _error = 'preencha valor e descrição corretamente.');
+    if (_description.text.trim().isEmpty) {
+      setState(() => _error = 'informe uma descrição.');
       return;
     }
-    final cardId = widget.detail.cardId;
-    final purchaseAt = widget.detail.cardPurchaseAt;
-    if (cardId == null || purchaseAt == null) {
-      setState(() => _error = 'o backing desta compra está incompleto.');
+    // Never pass amount/card/date to the labels-only RPC on a paid invoice.
+    final amount = _financialEditable ? _money(_amount.text) : null;
+    if (_financialEditable && (amount == null || amount <= 0)) {
+      setState(() => _error = 'informe um valor válido.');
       return;
     }
     setState(() { _saving = true; _error = null; });
     try {
-      await widget.repository.updateCardPurchase(
-        spaceId: widget.detail.spaceId,
-        eventId: widget.detail.id,
-        totalAmount: amount,
-        description: _description.text.trim(),
-        categoryId: _categoryId,
-        merchant: _merchant.text,
-        cardId: cardId,
-        purchaseAt: purchaseAt,
-      );
+      if (_financialEditable) {
+        final cardId = widget.detail.cardId;
+        final purchaseAt = widget.detail.cardPurchaseAt;
+        if (cardId == null || purchaseAt == null) {
+          throw StateError('O vínculo desta compra está incompleto.');
+        }
+        await widget.repository.updateCardPurchase(
+          spaceId: widget.detail.spaceId,
+          eventId: widget.detail.id,
+          totalAmount: amount!,
+          description: _description.text.trim(),
+          categoryId: _categoryId,
+          merchant: _merchant.text,
+          cardId: cardId,
+          purchaseAt: purchaseAt,
+        );
+      } else {
+        await widget.repository.updateCardPurchaseLabels(
+          spaceId: widget.detail.spaceId,
+          eventId: widget.detail.id,
+          description: _description.text.trim(),
+          categoryId: _categoryId,
+          merchant: _merchant.text,
+        );
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
@@ -150,7 +164,7 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
           TextField(controller: _merchant, decoration: const InputDecoration(labelText: 'estabelecimento', hintText: 'opcional')),
           const SizedBox(height: 12),
           InkWell(
-            onTap: _financialEditable ? _pickCategory : null,
+            onTap: _pickCategory,
             child: InputDecorator(
               decoration: const InputDecoration(labelText: 'categoria'),
               child: Text(_categoryLabel()),
@@ -173,7 +187,9 @@ class _CardPurchaseEditSheetState extends State<CardPurchaseEditSheet> {
           ),
           if (!_financialEditable && restriction != null) ...[
             const SizedBox(height: 12),
-            _InfoBox(restriction),
+            _InfoBox('Fatura protegida: você pode editar descrição, '
+              'estabelecimento e categoria. Valor, parcelas e pagamento '
+              'continuam bloqueados.'),
           ] else ...[
             const SizedBox(height: 12),
             const _InfoBox('cartão, data e quantidade de parcelas ficam protegidos para não reescrever faturas já estruturadas.'),
