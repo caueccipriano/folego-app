@@ -1,0 +1,26 @@
+name: Gemini adapter safety
+on:
+  pull_request:
+    branches: [feat/transactions-recurring]
+    paths:
+      - 'supabase/functions/financial-ai/**'
+      - 'supabase/tests/gemini_adapter_test.ts'
+      - '.github/workflows/financial-ai-gemini.yml'
+  push:
+    branches: [feat/transactions-recurring]
+    paths:
+      - 'supabase/functions/financial-ai/**'
+      - 'supabase/tests/gemini_adapter_test.ts'
+      - '.github/workflows/financial-ai-gemini.yml'
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno test --no-check supabase/tests/gemini_adapter_test.ts
+      - run: deno check supabase/functions/financial-ai/index.ts
