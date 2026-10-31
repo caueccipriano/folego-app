@@ -401,6 +401,11 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
         ? row['counterparty']
         : row['description'])?.toString().trim() ?? '';
     final amount = num.tryParse(row['amount']?.toString() ?? '');
+    // Still opens the manual category selector and confirmation dialog.
+    final suggestion = featured
+        ? resolverOtherSuggestion(
+            task: row, categories: _categories, history: _history)
+        : null;
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
       builder: (context, hidden, _) => ListTile(
@@ -425,6 +430,18 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
                 maxLines: 1, overflow: TextOverflow.ellipsis),
             if (amount != null)
               Text(hidden ? FinancialPrivacy.maskMoney() : Formatters.money(amount)),
+            if (suggestion != null && !hidden) ...[
+              const SizedBox(height: 4),
+              Text('sugestão: ${suggestion.category.breadcrumb}',
+                key: const ValueKey('resolver-evidence-suggestion'),
+                maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                )),
+              Text('${suggestion.reason} · você confirma antes de alterar',
+                maxLines: 2, overflow: TextOverflow.ellipsis),
+            ],
             if (featured)
               Text(action, style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
