@@ -144,6 +144,7 @@ void main() {
       upcomingAvailable: true,
     );
     expect(insight.budgetPercentUsed, 125);
+    expect(insight.title, 'Orçamento passou do planejado');
     expect(insight.description, isNot(contains('saldo negativo')));
   });
 
