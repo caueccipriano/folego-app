@@ -41,6 +41,7 @@ import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
+import 'home_fixed_dashboard.dart';
 import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
 import '../transactions/resolver_queue.dart';
@@ -364,12 +365,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final header = _buildHeader(primaryText: primaryText);
     final hero = _buildHero(snapshot: snapshot);
+    final pulseInsight = selectHomePulse(
+      snapshot: snapshot,
+      upcoming: _upcomingEvents,
+      upcomingAvailable: !_upcomingUnavailable,
+    );
     final pulse = HomePulseCard(
-      insight: selectHomePulse(
-        snapshot: snapshot,
-        upcoming: _upcomingEvents,
-        upcomingAvailable: !_upcomingUnavailable,
-      ),
+      insight: pulseInsight,
       onOpenUpcoming: _openUpcomingEvents,
       onOpenBudget: FlexibleBudgetNavigationScope.maybeOf(context)?.open,
     );
@@ -453,6 +455,38 @@ class _HomeScreenState extends State<HomeScreen> {
         upcoming: showUpcoming ? upcoming : null,
         latest: showLatest ? latestSection : null,
         smartCheckin: smartCheckin,
+      );
+    }
+
+    if (layout == AppLayoutSize.compact) {
+      return HomeFixedDashboard(
+        name: _name,
+        snapshot: snapshot,
+        insight: pulseInsight,
+        notificationBell: ActivityInboxBell(
+          repository: widget.repository, spaceId: widget.space.id),
+        onPrivacy: FinancialPrivacy.toggle,
+        hidden: FinancialPrivacy.hidden.value,
+        onAgenda: _openUpcomingEvents,
+        onExpense: () => _openRegister('expense'),
+        onIncome: () => _openRegister('income'),
+        onSearch: () => openDiscovery(context,
+          space: widget.space, repository: widget.repository),
+        onResolve: () => Navigator.of(context).push<void>(
+          MaterialPageRoute(builder: (_) => FinancialReviewHub(
+            repository: widget.repository, spaceId: widget.space.id,
+            initialTab: resolverTabIndex)),
+        ),
+        onAttention: pulseInsight.action == HomePulseAction.budget
+          ? (FlexibleBudgetNavigationScope.maybeOf(context)?.open
+              ?? _openUpcomingEvents)
+          : _openUpcomingEvents,
+        onDetails: () => _openFixedDetails(
+          hero: hero, monthlyMoney: monthlyMoney,
+          projection: projectionInsight, smartCheckin: smartCheckin,
+          upcoming: showUpcoming ? upcoming : null,
+          latest: showLatest ? latestSection : null,
+        ),
       );
     }
 
@@ -825,6 +859,69 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           )),
         ]),
+      ),
+    );
+  }
+
+  Future<void> _openFixedDetails({
+    required Widget hero,
+    required Widget monthlyMoney,
+    required Widget projection,
+    required Widget smartCheckin,
+    Widget? upcoming,
+    Widget? latest,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: .88,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            Text('seu mês em detalhes',
+              style: AppTypography.section(sheetContext, fontSize: 18)),
+            const SizedBox(height: 12),
+            HomeDataFreshness(
+              lastLoadedAt: _lastSuccessfulSnapshotAt,
+              sourceFailures: [
+                if (_monthlyMoneyUnavailable) 'resumo mensal',
+                if (_projectionUnavailable) 'projeção',
+                if (_recentUnavailable) 'lançamentos recentes',
+                if (_upcomingUnavailable) 'agenda',
+              ],
+              failed: _error != null,
+              loading: _loading,
+              onRefresh: _load,
+            ),
+            if (!FinancialPrivacy.hidden.value)
+              hero
+            else
+              const Text('valores ocultos · use o olho da Home para mostrar'),
+            const SizedBox(height: 12),
+            monthlyMoney,
+            const SizedBox(height: 12),
+            projection,
+            TextButton.icon(
+              key: const ValueKey('home-fixed-spending-comparison'),
+              onPressed: () {
+                Navigator.of(sheetContext).pop();
+                _openSpendingIncrease();
+              },
+              icon: const Icon(Icons.trending_up, size: 18),
+              label: const Text('onde meus gastos aumentaram?'),
+            ),
+            if (upcoming != null) ...[
+              const SizedBox(height: 10), upcoming,
+            ],
+            if (latest != null) ...[
+              const SizedBox(height: 10), latest,
+            ],
+            const SizedBox(height: 12), smartCheckin,
+          ],
+        ),
       ),
     );
   }

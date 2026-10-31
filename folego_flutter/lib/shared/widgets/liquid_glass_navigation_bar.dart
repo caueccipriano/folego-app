@@ -38,12 +38,12 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     final surface = tokens.superficie;
     // Solid, calm mobile navigation; no glass gradient or blur.
     final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
-    final navigationHeight = 64.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
+    final navigationHeight = 58.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
       top: false,
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 5),
+      minimum: const EdgeInsets.fromLTRB(14, 0, 14, 3),
       child: SizedBox(
         height: navigationHeight,
         child: Row(
@@ -80,7 +80,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                     if (onOpenTools != null)
                       Expanded(
                         child: Semantics(
-                          button: true, label: 'mais',
+                          button: true, selected: selectedIndex >= 3,
+                          label: 'mais',
                           child: InkWell(
                             key: const ValueKey('mobile-tools-button'),
                             onTap: onOpenTools,
@@ -88,11 +89,14 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.grid_view_rounded, size: 21),
+                                Icon(Icons.grid_view_rounded, size: 21,
+                                  color: selectedIndex >= 3
+                                    ? tokens.marca : tokens.textoSecundario),
                                 const SizedBox(height: 4),
                                 Text('mais',
                                   style: AppTypography.label(context,
-                                    fontSize: 11, color: tokens.textoSecundario)),
+                                    fontSize: 11, color: selectedIndex >= 3
+                                      ? tokens.marca : tokens.textoSecundario)),
                               ],
                             ),
                           ),
