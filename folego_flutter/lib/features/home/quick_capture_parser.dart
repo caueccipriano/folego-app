@@ -1,12 +1,15 @@
-/// Rascunho visual: não registra nem altera lançamentos.
+/// Preenchimento apenas visual. Nunca registra lançamentos automaticamente.
 class QuickCaptureDraft {
-  const QuickCaptureDraft({required this.description, required this.amountText});
+  const QuickCaptureDraft({
+    required this.description,
+    required this.amountText,
+  });
 
   final String description;
   final String amountText;
 
   /// Exemplos: "Uber 27,90" e "mercado R$ 1.234,56".
-  /// Só aceita duas casas decimais, sem confundir anos ou endereços.
+  /// Só interpreta preços com duas casas decimais.
   static QuickCaptureDraft? parse(String input) {
     final value = input.trim();
     if (value.isEmpty || value.length > 180) return null;
@@ -21,24 +24,7 @@ class QuickCaptureDraft {
     if (description.isEmpty ||
         description.endsWith('-') ||
         description.endsWith('+') ||
-        description.endsWith('R\) {
-      return null;
-    }
-
-    final token = match.group(2)!;
-    final normalized = token.contains(',')
-        ? token.replaceAll('.', '').replaceAll(',', '.')
-        : token;
-    final amount = double.tryParse(normalized);
-    if (amount == null || !amount.isFinite || amount <= 0) return null;
-
-    return QuickCaptureDraft(
-      description: description,
-      amountText: amount.toStringAsFixed(2).replaceAll('.', ','),
-    );
-  }
-}
-)) {
+        description.endsWith('R\$')) {
       return null;
     }
 
