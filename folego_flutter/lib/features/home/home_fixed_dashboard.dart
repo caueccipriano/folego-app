@@ -143,9 +143,17 @@ class HomeFixedDashboard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(context,
                           fontSize: 12, fontWeight: FontWeight.w700)),
-                      subtitle: const Text('toque para conferir'),
-                      trailing: const Icon(Icons.chevron_right_rounded, size: 17),
-                      onTap: onAttention,
+                      subtitle: Text(
+                        homePulseShortDetail(insight, hidden: hidden),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: insight.action == HomePulseAction.none
+                          ? null
+                          : const Icon(Icons.chevron_right_rounded, size: 17),
+                      onTap: insight.action == HomePulseAction.none
+                          ? null
+                          : onAttention,
                     ),
                   ),
                 ],

@@ -126,7 +126,12 @@ class HomePulseCard extends StatelessWidget {
               ],
               const SizedBox(height: 8),
               Text(
-                insight.description,
+                insight.budgetPercentUsed == null
+                    ? insight.description
+                    : homePulseShortDetail(
+                        insight,
+                        hidden: FinancialPrivacy.hidden.value,
+                      ),
                 key: const ValueKey('home-pulse-description'),
                 style: AppTypography.body(
                   context,
