@@ -25,10 +25,13 @@ void main() {
 
     expect(plan, isNot(contains('plan-more-tools')));
     expect(plan, isNot(contains('_extraPlanningTools')));
-    expect(shell, contains("ValueKey('tools-wallet')"));
-    expect(shell, contains("ValueKey('tools-goals')"));
-    expect(shell, contains("ValueKey('tools-diary')"));
-    expect(shell, contains("ValueKey('tools-profile')"));
+    final more = File('lib/features/shell/more_tools_sheet.dart')
+        .readAsStringSync();
+    expect(shell, contains('MoreToolsSheet('));
+    expect(more, contains("ValueKey('tools-wallet')"));
+    expect(more, contains("ValueKey('tools-goals')"));
+    expect(more, contains("ValueKey('tools-diary')"));
+    expect(more, contains("ValueKey('tools-profile')"));
     expect(plan, contains("ValueKey('plan-can-i-buy')"));
   });
 
