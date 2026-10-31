@@ -56,7 +56,7 @@ class HomeFixedDashboard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: 46, child: Row(children: [
-                  Expanded(child: Text('e aí, ' + name.toLowerCase(),
+                  Expanded(child: Text('e aí, ${name.toLowerCase()}',
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: AppTypography.display(context,
                       fontSize: 21, color: scheme.onSurface))),
