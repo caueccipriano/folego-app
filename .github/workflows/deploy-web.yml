@@ -80,7 +80,8 @@ jobs:
             test/sheet_reconciliation_audit_test.dart \
             test/onboarding_commercial_safety_test.dart \
             test/transaction_pending_guard_test.dart \
-            test/projection_screen_test.dart
+            test/projection_screen_test.dart \
+            test/home_mobile_summary_strip_test.dart
 
       - name: Verify live Home privacy masking
         working-directory: folego_flutter
