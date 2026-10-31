@@ -896,7 +896,10 @@ class _HomeScreenState extends State<HomeScreen> {
               loading: _loading,
               onRefresh: _load,
             ),
-            hero,
+            if (!FinancialPrivacy.hidden.value)
+              hero
+            else
+              const Text('valores ocultos · use o olho da Home para mostrar'),
             const SizedBox(height: 12),
             monthlyMoney,
             const SizedBox(height: 12),
