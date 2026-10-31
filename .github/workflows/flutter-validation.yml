@@ -57,8 +57,8 @@ jobs:
       - name: Wallet commitment and spending clarity
         run: flutter test test/wallet_commitment_insights_test.dart
 
-      - name: Smart category suggestions (quick register and classification)
-        run: flutter test test/smart_category_suggestion_test.dart
+      - name: Smart category suggestions and natural quick capture
+        run: flutter test test/smart_category_suggestion_test.dart test/quick_capture_parser_test.dart test/home_pulse_insight_test.dart
 
       - name: Folego 3.0 streamlined navigation contract
         run: flutter test test/folego3_less_routine_test.dart

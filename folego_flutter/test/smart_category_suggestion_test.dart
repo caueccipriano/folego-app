@@ -169,7 +169,9 @@ void main() {
         .readAsStringSync();
     expect(quick, contains('quick-register-smart-category-suggestion'));
     expect(inbox, contains('classification-smart-suggestion:'));
-    expect(quick, contains('onChanged: (_) => setState(() {})'));
+    expect(quick, contains('onChanged: (value) {'));
+    expect(quick, contains('QuickCaptureDraft.parse(value)'));
+    expect(quick, contains('setState(() {'));
     expect(inbox, contains('selected = suggestion.category'));
     expect(inbox, contains('classification-filter-suggested'));
     expect(inbox, contains('classification-accept-suggestion:'));

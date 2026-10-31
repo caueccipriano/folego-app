@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -112,7 +113,9 @@ class HomePulseCard extends StatelessWidget {
               if (insight.amount != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  Formatters.money(insight.amount),
+                  FinancialPrivacy.hidden.value
+                      ? FinancialPrivacy.maskMoney()
+                      : Formatters.money(insight.amount),
                   key: const ValueKey('home-pulse-amount'),
                   style: AppTypography.money(
                     context,
