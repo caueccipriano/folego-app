@@ -37,8 +37,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
     final tokens = FolegoColorTokens.of(context);
     final surface = tokens.superficie;
-    final highlight = tokens.superficieAlta.withValues(alpha: isDark ? .42 : .72);
-    final lower = surface.withValues(alpha: isDark ? .98 : .94);
+    // Solid, calm mobile navigation; no glass gradient or blur.
     final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
     final navigationHeight = 64.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
@@ -59,25 +58,12 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                   height: navigationHeight,
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [highlight, surface, lower],
-                      stops: const [0, .30, 1],
-                    ),
-                    borderRadius: BorderRadius.circular(AppRadii.navigation),
+                    color: surface,
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: AppColors.border(theme.brightness),
-                      width: .85,
+                      width: .8,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: tokens.textoPrincipal.withValues(alpha: isDark ? .24 : .09),
-                        blurRadius: 28,
-                        spreadRadius: -9,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -93,13 +79,24 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                       );
                     }),
                     if (onOpenTools != null)
-                      SizedBox(
-                        width: 52,
-                        child: IconButton(
-                          key: const ValueKey('mobile-tools-button'),
-                          tooltip: 'contas, metas e ajustes',
-                          onPressed: onOpenTools,
-                          icon: const Icon(Icons.tune_rounded, size: 22),
+                      Expanded(
+                        child: Semantics(
+                          button: true, label: 'mais',
+                          child: InkWell(
+                            key: const ValueKey('mobile-tools-button'),
+                            onTap: onOpenTools,
+                            borderRadius: BorderRadius.circular(14),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.grid_view_rounded, size: 21),
+                                const SizedBox(height: 4),
+                                Text('mais',
+                                  style: AppTypography.label(context,
+                                    fontSize: 11, color: tokens.textoSecundario)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],

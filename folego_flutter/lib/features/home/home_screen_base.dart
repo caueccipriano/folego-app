@@ -437,6 +437,25 @@ class _HomeScreenState extends State<HomeScreen> {
       secondaryText: secondaryText,
     );
 
+    if (layout == AppLayoutSize.compact &&
+        MediaQuery.sizeOf(context).height >= 540 &&
+        MediaQuery.textScalerOf(context).scale(16) <= 20) {
+      return _buildFixedMobileHome(
+        snapshot: snapshot,
+        background: background, surface: surface, border: border,
+        primaryText: primaryText, secondaryText: secondaryText,
+        quickActions: quickActions,
+        pulseInsight: selectHomePulse(
+          snapshot: snapshot, upcoming: _upcomingEvents,
+          upcomingAvailable: !_upcomingUnavailable),
+        monthlyMoney: monthlyMoney,
+        projectionInsight: projectionInsight,
+        upcoming: showUpcoming ? upcoming : null,
+        latest: showLatest ? latestSection : null,
+        smartCheckin: smartCheckin,
+      );
+    }
+
     return ColoredBox(
       color: background,
       child: SafeArea(
@@ -596,6 +615,223 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // A one-screen dashboard; expanded content is available in a separate sheet.
+  // For very short viewports/large accessible text, retain scrollable fallback.
+  Widget _buildFixedMobileHome({
+    required FolegoSnapshot snapshot,
+    required Color background,
+    required Color surface,
+    required Color border,
+    required Color primaryText,
+    required Color secondaryText,
+    required Widget quickActions,
+    required HomePulseInsight pulseInsight,
+    required Widget monthlyMoney,
+    required Widget projectionInsight,
+    required Widget? upcoming,
+    required Widget? latest,
+    required Widget smartCheckin,
+  }) {
+    final privacy = FinancialPrivacy.hidden.value;
+    return ColoredBox(
+      color: background,
+      child: SafeArea(
+        child: AppContentContainer.dashboard(
+          fillHeight: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) => Padding(
+              padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+              child: Column(
+                key: const ValueKey('home-fixed-mobile'),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(primaryText: primaryText, showTools: false),
+                  const SizedBox(height: 4),
+                  HomeDataFreshness(
+                    lastLoadedAt: _lastSuccessfulSnapshotAt,
+                    sourceFailures: [
+                      if (_monthlyMoneyUnavailable) 'resumo mensal',
+                      if (_projectionUnavailable) 'projeção',
+                      if (_recentUnavailable) 'lançamentos recentes',
+                      if (_upcomingUnavailable) 'agenda',
+                    ],
+                    failed: _error != null, loading: _loading,
+                    onRefresh: _load,
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SizedBox(
+                          width: constraints.maxWidth > 30
+                              ? constraints.maxWidth - 20 : constraints.maxWidth,
+                          child: Container(
+                            key: const ValueKey('home-fixed-spendable'),
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: surface,
+                              border: Border.all(color: border),
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('disponível até receber',
+                                  style: AppTypography.body(context,
+                                    fontSize: 13, color: secondaryText)),
+                                const SizedBox(height: 8),
+                                Text(privacy ? FinancialPrivacy.maskMoney()
+                                  : Formatters.money(snapshot.spendablePool),
+                                  key: const ValueKey('home-fixed-amount'),
+                                  maxLines: 1,
+                                  style: AppTypography.money(context,
+                                    fontSize: 38, color: primaryText)),
+                                const SizedBox(height: 10),
+                                Text(
+                                  snapshot.dailyFolego == null
+                                    ? 'projeção disponível em meu mês'
+                                    : 'por dia: ' + (privacy
+                                        ? FinancialPrivacy.maskMoney()
+                                        : Formatters.money(snapshot.dailyFolego)),
+                                  key: const ValueKey('home-fixed-daily'),
+                                  style: AppTypography.body(context,
+                                    fontSize: 14, color: secondaryText)),
+                                if (snapshot.daysUntilIncome != null)
+                                  Text(snapshot.daysUntilIncome.toString() +
+                                    ' dias até o próximo recebimento',
+                                    style: AppTypography.body(context,
+                                      fontSize: 12, color: secondaryText)),
+                                const SizedBox(height: 8),
+                                TextButton.icon(
+                                  key: const ValueKey('home-fixed-explain'),
+                                  onPressed: () => Navigator.of(context).push<void>(
+                                    MaterialPageRoute<void>(builder: (_) =>
+                                      FinancialReviewScreen(
+                                        repository: widget.repository,
+                                        space: widget.space,
+                                        snapshot: snapshot,
+                                        previous: _previousSnapshot,
+                                        summary: _monthlyMoney))),
+                                  icon: const Icon(Icons.info_outline, size: 17),
+                                  label: const Text('entenda esse valor'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  quickActions,
+                  if (pulseInsight.showCard) ...[
+                    const SizedBox(height: 6),
+                    Material(
+                      color: surface,
+                      borderRadius: BorderRadius.circular(14),
+                      child: ListTile(
+                        key: const ValueKey('home-fixed-insight'),
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        title: Text(pulseInsight.title, maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                        leading: const Icon(Icons.bolt_outlined),
+                        trailing: const Icon(Icons.chevron_right, size: 18),
+                        onTap: () {
+                          if (pulseInsight.action == HomePulseAction.upcoming) {
+                            _openUpcomingEvents();
+                          } else if (pulseInsight.action == HomePulseAction.budget) {
+                            FlexibleBudgetNavigationScope.maybeOf(context)?.open();
+                          } else {
+                            _openFixedMobileDetails(
+                              monthlyMoney: monthlyMoney,
+                              projectionInsight: projectionInsight,
+                              upcoming: upcoming, latest: latest,
+                              smartCheckin: smartCheckin);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    Expanded(child: TextButton.icon(
+                      key: const ValueKey('home-fixed-resolver'),
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(builder: (_) =>
+                          FinancialReviewHub(repository: widget.repository,
+                            spaceId: widget.space.id,
+                            initialTab: resolverTabIndex))),
+                      icon: const Icon(Icons.fact_check_outlined, size: 18),
+                      label: const Text('resolver'),
+                    )),
+                    Expanded(child: TextButton.icon(
+                      key: const ValueKey('home-fixed-details'),
+                      onPressed: () => _openFixedMobileDetails(
+                        monthlyMoney: monthlyMoney,
+                        projectionInsight: projectionInsight,
+                        upcoming: upcoming, latest: latest,
+                        smartCheckin: smartCheckin),
+                      icon: const Icon(Icons.grid_view_rounded, size: 18),
+                      label: const Text('meu mês'),
+                    )),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openFixedMobileDetails({
+    required Widget monthlyMoney,
+    required Widget projectionInsight,
+    required Widget? upcoming,
+    required Widget? latest,
+    required Widget smartCheckin,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true, isScrollControlled: true, showDragHandle: true,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: .87,
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 2, 18, 12),
+            child: Row(children: [
+              const Expanded(child: Text('meu mês',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700))),
+              IconButton(tooltip: 'fechar', icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(sheetContext).pop()),
+            ]),
+          ),
+          Expanded(child: ListView(
+            key: const ValueKey('home-monthly-details-scroll'),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+            children: [
+              monthlyMoney, const SizedBox(height: 12), projectionInsight,
+              TextButton.icon(
+                key: const ValueKey('home-fixed-compare'),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  _openSpendingIncrease();
+                },
+                icon: const Icon(Icons.trending_up),
+                label: const Text('onde meus gastos aumentaram?'),
+              ),
+              if (upcoming != null) ...[const SizedBox(height: 12), upcoming],
+              if (latest != null) ...[const SizedBox(height: 12), latest],
+              const SizedBox(height: 12), smartCheckin,
+            ],
+          )),
+        ]),
+      ),
+    );
+  }
+
   Widget _buildHomeSkeleton() {
     final brightness = Theme.of(context).brightness;
     final background = AppColors.background(brightness);
@@ -685,7 +921,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader({required Color primaryText}) {
+  Widget _buildHeader({required Color primaryText, bool showTools = true}) {
     final brightness = Theme.of(context).brightness;
     final secondary = AppColors.secondaryText(brightness);
     final surface = AppColors.surface(brightness);
@@ -741,7 +977,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     ),
     const SizedBox(height: 12),
-    HomeQuickTools(
+    if (showTools) HomeQuickTools(
       onSearch: () => openDiscovery(
         context, space: widget.space, repository: widget.repository,
       ),
