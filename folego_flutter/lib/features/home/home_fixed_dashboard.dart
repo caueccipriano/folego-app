@@ -208,7 +208,7 @@ class _CaptureButton extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 52),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            border: Border.all(color: primary ? Colors.transparent :
+            border: Border.all(color: primary ? AppColors.transparent :
               AppColors.border(brightness)),
             borderRadius: BorderRadius.circular(AppRadii.compactCard)),
           child: Row(mainAxisAlignment: MainAxisAlignment.center,
