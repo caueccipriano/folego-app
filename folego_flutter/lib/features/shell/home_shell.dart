@@ -179,13 +179,14 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.min,
           children: [
             const ListTile(
-              title: Text('se precisar de mais'),
-              subtitle: Text('as ferramentas continuam aqui, sem ocupar sua rotina'),
+              title: Text('mais'),
+              subtitle: Text('seu dinheiro e suas configurações'),
             ),
             ListTile(
               key: const ValueKey('tools-wallet'),
               leading: const Icon(Icons.account_balance_wallet_outlined),
-              title: const Text('contas, cartões e dívidas'),
+              title: const Text('contas e cartões'),
+              subtitle: const Text('saldos, faturas e dívidas'),
               onTap: () => Navigator.pop(sheetContext, 0),
             ),
             ListTile(
@@ -203,7 +204,8 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             ListTile(
               key: const ValueKey('tools-profile'),
               leading: const Icon(Icons.settings_outlined),
-              title: const Text('perfil, automações e ajustes'),
+              title: const Text('configurações'),
+              subtitle: const Text('perfil e automações'),
               onTap: () => Navigator.pop(sheetContext, 3),
             ),
           ],
