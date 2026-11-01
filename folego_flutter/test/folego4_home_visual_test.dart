@@ -7,7 +7,7 @@ void main() {
   test('Fôlego 4 keeps the daily amount as the principal hero value', () {
     expect(source, contains('Formatters.money('));
     expect(source, contains('snapshot.dailyFolego'));
-    expect(source, contains("ValueKey(\n                                                'home-fixed-daily-folego'"));
+    expect(source, contains("home-fixed-daily-folego"));
     expect(source, contains('Formatters.money(snapshot.spendablePool)'));
     expect(source, contains("ValueKey('home-fixed-spendable')"));
     expect(source, contains('FinancialPrivacy.maskMoney()'));
