@@ -104,6 +104,9 @@ void main() {
             return const Text('card');
           })),
         ));
+        // Theme extensions animate when switching between palette modes.
+        // Check the settled surface, not a mid-transition color blend.
+        await tester.pumpAndSettle();
         for (final bg in (decoration.gradient! as LinearGradient).colors) {
           _expectAa(colors.textoPrincipal, bg,
               '${palette.id} $mode primary on prominent glass');
