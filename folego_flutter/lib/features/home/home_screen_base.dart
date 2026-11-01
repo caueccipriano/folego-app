@@ -42,6 +42,7 @@ import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
 import 'home_fixed_dashboard.dart';
+import '../../shared/widgets/folego_glass_surface.dart';
 import 'home_mobile_summary_strip.dart';
 import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
@@ -1690,56 +1691,60 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final action = InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.compactCard),
+      overlayColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.pressed)) {
+          return foreground.withValues(alpha: .10);
+        }
+        if (states.contains(WidgetState.hovered) ||
+            states.contains(WidgetState.focused)) {
+          return foreground.withValues(alpha: .06);
+        }
+        return null;
+      }),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: foreground, size: 19),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: AppTypography.label(
+                  context,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: foreground,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
     return Semantics(
       button: true,
       label: semanticLabel ?? label,
-      child: Material(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadii.compactCard),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadii.compactCard),
-          overlayColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return foreground.withValues(alpha: .10);
-            }
-            if (states.contains(WidgetState.hovered) ||
-                states.contains(WidgetState.focused)) {
-              return foreground.withValues(alpha: .06);
-            }
-            return null;
-          }),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-            decoration: BoxDecoration(
+      child: borderColor == null
+          // Primary spending action stays fully opaque and legible.
+          ? Material(
+              color: background,
               borderRadius: BorderRadius.circular(AppRadii.compactCard),
-              border: borderColor == null
-                  ? null
-                  : Border.all(color: borderColor!),
+              child: action,
+            )
+          // Secondary quick actions get the soft frosted layer.
+          : FolegoGlassSurface(
+              radius: AppRadii.compactCard,
+              elevated: false,
+              child: action,
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: foreground, size: 19),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    style: AppTypography.label(
-                      context,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: foreground,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
