@@ -83,7 +83,8 @@ jobs:
             test/projection_screen_test.dart \
             test/home_mobile_summary_strip_test.dart \
             test/activity_inbox_bell_quiet_test.dart \
-            test/folego_glass_surfaces_test.dart
+            test/folego_glass_surfaces_test.dart \
+            test/design_system_accessibility_test.dart
 
       - name: Verify live Home privacy masking
         working-directory: folego_flutter
