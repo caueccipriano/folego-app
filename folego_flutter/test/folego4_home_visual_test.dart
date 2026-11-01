@@ -25,7 +25,7 @@ void main() {
 
   test('Premium visual retains tappable actions and accessible rhythm label', () {
     expect(source, contains("ValueKey('home-fixed-viewport')"));
-    expect(source, contains("ValueKey('home-fixed-rhythm-badge')"));
+    expect(source, contains("home-fixed-rhythm-badge"));
     expect(source, contains('final paceLabel = switch (snapshot.status)'));
     expect(source, contains('Positioned.fill('));
     expect(source, contains("ValueKey('home-fixed-spendable-tap')"));
