@@ -8,7 +8,7 @@ void main() {
   test('Fôlego 4 keeps the daily amount as the principal hero value', () {
     expect(source, contains('Formatters.money('));
     expect(source, contains('snapshot.dailyFolego'));
-    expect(source, contains("home-fixed-daily-folego"));
+    expect(source, contains('home-fixed-daily-folego'));
     expect(source, contains('Formatters.money(snapshot.spendablePool)'));
     expect(source, contains("ValueKey('home-fixed-spendable')"));
     expect(source, contains('FinancialPrivacy.maskMoney()'));
@@ -25,7 +25,7 @@ void main() {
 
   test('Premium visual retains tappable actions and accessible rhythm label', () {
     expect(source, contains("ValueKey('home-fixed-viewport')"));
-    expect(source, contains("home-fixed-rhythm-badge"));
+    expect(source, contains('home-fixed-rhythm-badge'));
     expect(source, contains('final paceLabel = switch (snapshot.status)'));
     expect(source, contains('Positioned.fill('));
     expect(source, contains("ValueKey('home-fixed-spendable-tap')"));
