@@ -188,9 +188,26 @@ class _Destination extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 36,
+                AnimatedContainer(
+                  duration: motionDuration,
+                  width: selected ? 22 : 5,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: selected ? activePurple : AppColors.transparent,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                AnimatedContainer(
+                  duration: motionDuration,
+                  width: 37,
                   height: 24,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? activePurple.withValues(alpha: isDark ? .18 : .09)
+                        : AppColors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Center(
                     child: Icon(
                       item.icon,
@@ -199,7 +216,6 @@ class _Destination extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 1),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
