@@ -110,6 +110,10 @@ void main() {
         for (final bg in (decoration.gradient! as LinearGradient).colors) {
           _expectAa(colors.textoPrincipal, bg,
               '${palette.id} $mode primary on prominent glass');
+          _expectAa(colors.textoSecundario, bg,
+              '${palette.id} $mode secondary on prominent glass');
+          _expectAa(colors.marca, bg,
+              '${palette.id} $mode accent on prominent glass');
         }
       }
     }
