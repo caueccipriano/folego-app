@@ -171,7 +171,7 @@ void main() {
   });
 
   testWidgets(
-    'badge uses exact count and rejects late response from previous space',
+    'badge keeps exact count accessible while rejecting late space responses',
     (tester) async {
       final requests = {
         'space-a': Completer<int>(),
@@ -196,7 +196,8 @@ void main() {
       requests['space-b']!.complete(281);
       await tester.pumpAndSettle();
       expect(find.byTooltip('notificações · 281 não lidas'), findsOneWidget);
-      expect(find.text('99+'), findsOneWidget);
+      expect(tester.widget<Badge>(find.byType(Badge)).label, isNull);
+      expect(find.text('99+'), findsNothing);
       requests['space-a']!.complete(0);
       await tester.pumpAndSettle();
       expect(find.byTooltip('notificações · 281 não lidas'), findsOneWidget);
