@@ -93,7 +93,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'olá, ' + name.toLowerCase(),
+                                'olá, ${name.toLowerCase()}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.label(
@@ -304,10 +304,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                       const SizedBox(height: 5),
                                       Text(
                                         snapshot.budgetConfigured
-                                            ? 'orçamento do mês: ' +
-                                                (budgetRatio * 100).round()
-                                                    .toString() +
-                                                '% utilizado'
+                                            ? 'orçamento do mês: ${(budgetRatio * 100).round()}% utilizado'
                                             : 'seu planejamento cresce com você',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
