@@ -17,7 +17,8 @@ class MoreToolsSheet extends StatelessWidget {
     final pad = space < 355 ? 12.0 : 18.0;
 
     return FolegoGlassSurface(
-      radius: 28,
+      radius: 30,
+      prominent: true,
       padding: EdgeInsets.fromLTRB(pad, 10, pad, 20),
       child: Column(
         key: const ValueKey('tools-compact-grid'),
