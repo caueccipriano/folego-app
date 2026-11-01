@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/folego_glass_surface.dart';
 
 /// Secondary destinations in one calm, two-by-two mobile menu.
 /// All actions remain explicit navigation, with no financial writes.
@@ -15,13 +16,25 @@ class MoreToolsSheet extends StatelessWidget {
     final space = MediaQuery.sizeOf(context).width;
     final pad = space < 355 ? 12.0 : 18.0;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(pad, 4, pad, 18),
+    return FolegoGlassSurface(
+      radius: 28,
+      padding: EdgeInsets.fromLTRB(pad, 10, pad, 20),
       child: Column(
         key: const ValueKey('tools-compact-grid'),
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Container(
+              width: 38,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 13),
+              decoration: BoxDecoration(
+                color: scheme.onSurfaceVariant.withValues(alpha: .34),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
             child: Row(children: [
@@ -97,9 +110,9 @@ class _ToolTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(18),
+    return FolegoGlassSurface(
+      radius: 18,
+      elevated: false,
       child: InkWell(
         key: tileKey,
         onTap: onTap,
@@ -107,10 +120,6 @@ class _ToolTile extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(minHeight: 108),
           padding: const EdgeInsets.fromLTRB(13, 12, 9, 11),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: scheme.outlineVariant),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

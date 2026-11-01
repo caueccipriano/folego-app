@@ -6,6 +6,7 @@ import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/folego_glass_surface.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
 import 'home_financial_hero.dart';
@@ -201,33 +202,37 @@ class _CaptureButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool primary;
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final fg = primary ? AppColors.onAction(brightness) :
-      AppColors.positiveText(brightness);
-    return Material(
-      color: primary ? AppColors.action(brightness) : AppColors.surface(brightness),
+    final foreground = primary
+        ? AppColors.onAction(brightness)
+        : AppColors.positiveText(brightness);
+    final action = InkWell(
+      onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.compactCard),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.compactCard),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 52),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            border: Border.all(color: primary ? AppColors.transparent :
-              AppColors.border(brightness)),
-            borderRadius: BorderRadius.circular(AppRadii.compactCard)),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 20, color: fg),
-              const SizedBox(width: 8),
-              Text(label, style: AppTypography.body(context, fontSize: 14,
-                fontWeight: FontWeight.w700, color: fg)),
-            ]),
-        ),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, size: 20, color: foreground),
+          const SizedBox(width: 8),
+          Text(label, style: AppTypography.body(context, fontSize: 14,
+            fontWeight: FontWeight.w700, color: foreground)),
+        ]),
       ),
     );
+    return primary
+        ? Material(
+            color: AppColors.action(brightness),
+            borderRadius: BorderRadius.circular(AppRadii.compactCard),
+            child: action,
+          )
+        : FolegoGlassSurface(
+            radius: AppRadii.compactCard,
+            elevated: false,
+            child: action,
+          );
   }
 }

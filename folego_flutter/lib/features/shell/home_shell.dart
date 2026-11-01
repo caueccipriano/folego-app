@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/notifications/notification_adapter_factory.dart';
 import '../../core/navigation/push_route.dart';
 import '../../core/privacy/financial_privacy.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/notifications/notification_runtime.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/realtime/realtime_invalidation.dart';
@@ -174,7 +175,8 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Future<void> _openTools() async {
     final target = await showModalBottomSheet<int>(
       context: context,
-      showDragHandle: true,
+      showDragHandle: false,
+      backgroundColor: AppColors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (sheetContext) => MoreToolsSheet(
