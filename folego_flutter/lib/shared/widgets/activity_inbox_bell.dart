@@ -153,9 +153,11 @@ class _ActivityInboxBellState extends State<ActivityInboxBell>
       backgroundColor: AppColors.surface(Theme.of(context).brightness),
       foregroundColor: AppColors.secondaryText(Theme.of(context).brightness),
     ),
+    // A high unread count should not dominate the compact Home header.
+    // The exact total stays available through the tooltip and inbox.
     icon: Badge(
       isLabelVisible: _unread > 0,
-      label: Text(_unread > 99 ? '99+' : '$_unread'),
+      label: _unread > 9 ? null : Text('$_unread'),
       child: const Icon(AppIcons.notifications, size: 19),
     ),
     onPressed: () async {
