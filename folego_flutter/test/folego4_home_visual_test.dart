@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final source = File('lib/features/home/home_fixed_dashboard.dart').readAsStringSync();
+  final source = File('lib/features/home/home_fixed_dashboard.dart')
+      .readAsStringSync();
 
   test('Fôlego 4 keeps the daily amount as the principal hero value', () {
     expect(source, contains('Formatters.money('));
@@ -14,7 +15,8 @@ void main() {
   });
 
   test('Monthly progress only appears for configured, visible budgets', () {
-    expect(source, contains('!hidden &&'));\n    expect(source, contains('snapshot.budgetConfigured &&'));
+    expect(source, contains('!hidden &&'));
+    expect(source, contains('snapshot.budgetConfigured &&'));
     expect(source, contains('snapshot.monthlyBudgetPlanned > 0'));
     expect(source, contains('budgetPercent > 100'));
     expect(source, contains('acima do planejado'));
