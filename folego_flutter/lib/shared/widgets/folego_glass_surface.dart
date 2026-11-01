@@ -62,6 +62,22 @@ class FolegoGlassSurface extends StatelessWidget {
       tokens.borda,
     );
 
+    // Glass highlights may be beautiful but cannot make foreground text
+    // disappear. Adapt only a problematic gradient stop toward the real
+    // card surface, which already satisfies AA for these text tokens.
+    Color readableStop(Color stop) {
+      bool readable(Color color) =>
+          FolegoColorTokens.contrastRatio(tokens.textoPrincipal, color) >= 4.5 &&
+          FolegoColorTokens.contrastRatio(tokens.textoSecundario, color) >= 4.5 &&
+          FolegoColorTokens.contrastRatio(tokens.marca, color) >= 4.5;
+      if (readable(stop)) return stop;
+      for (var step = 1; step <= 32; step++) {
+        final candidate = Color.lerp(stop, tokens.superficie, step / 32)!;
+        if (readable(candidate)) return candidate;
+      }
+      return tokens.superficie;
+    }
+
     return BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
       gradient: prominent
@@ -69,21 +85,21 @@ class FolegoGlassSurface extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.alphaBlend(
+                readableStop(Color.alphaBlend(
                   tokens.textoPrincipal.withValues(
                     alpha: isDark ? .21 : .025,
                   ),
                   tinted,
-                ),
-                Color.alphaBlend(
+                )),
+                readableStop(Color.alphaBlend(
                   tokens.superficie.withValues(alpha: isDark ? .14 : .65),
                   tinted,
-                ),
-                tinted,
-                Color.alphaBlend(
+                )),
+                readableStop(tinted),
+                readableStop(Color.alphaBlend(
                   tokens.marca.withValues(alpha: isDark ? .25 : .13),
                   tinted,
-                ),
+                )),
               ],
               stops: const [0, .25, .67, 1],
             )

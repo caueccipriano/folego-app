@@ -93,7 +93,7 @@ class HomeFixedDashboard extends StatelessWidget {
                             Row(children: [
                               Expanded(child: Text('quanto posso gastar?',
                                 style: AppTypography.body(context,
-                                  fontSize: 13, fontWeight: FontWeight.w600,
+                                  fontSize: 14, fontWeight: FontWeight.w600,
                                   color: colors.marcaHeroSobre))),
                               Icon(Icons.arrow_outward_rounded, size: 17,
                                 color: colors.marcaHeroSobre),
@@ -112,7 +112,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                 (timing ?? 'até o próximo recebimento'),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                               style: AppTypography.body(context,
-                                fontSize: 12, color: colors.marcaHeroSobre)),
+                                fontSize: 13, color: colors.marcaHeroSobre)),
                           ],
                         ),
                       ),
@@ -142,8 +142,7 @@ class HomeFixedDashboard extends StatelessWidget {
                         size: 19, color: scheme.primary),
                       title: Text(insight.title, maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.body(context,
-                          fontSize: 12, fontWeight: FontWeight.w700)),
+                        style: AppTypography.cardTitle(context, fontSize: 13)),
                       subtitle: Text(
                         homePulseShortDetail(insight, hidden: hidden),
                         maxLines: 1,

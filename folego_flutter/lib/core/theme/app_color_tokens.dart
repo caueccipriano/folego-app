@@ -405,6 +405,14 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     final brand = _ensureTextContrast(
       way.brand, way.surface, way.background, dark,
     );
+    final primary = _ensureTextContrast(
+      way.foreground, way.surface, way.background, dark,
+    );
+    // Muted labels must still be legible; "secondary" means less emphasis,
+    // not less than WCAG AA text contrast on normal card surfaces.
+    final secondary = _ensureTextContrast(
+      way.muted, way.surface, way.background, dark,
+    );
     // Cores financeiras semânticas NÃO seguem a paleta: o mesmo estado
     // (folga, atenção e déficit) precisa ter o mesmo significado em todas.
     const stateFolgaLight = Color(0xFF356516);
@@ -425,8 +433,8 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
       fundo: way.background,
       superficie: way.surface,
       superficieAlta: way.elevated,
-      textoPrincipal: way.foreground,
-      textoSecundario: way.muted,
+      textoPrincipal: primary,
+      textoSecundario: secondary,
       borda: way.border,
       folga: dark ? stateFolgaDark : stateFolgaLight,
       folgaSobre: dark ? way.background : const Color(0xFFFFFFFF),
@@ -447,12 +455,18 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   /// A cor original de botões/ações permanece inalterada.
   static Color _accentOnHero(Color action, Color hero) {
     if (contrastRatio(action, hero) >= 4.5) return action;
+    const dark = Color(0xFF17151D);
     const white = Color(0xFFFFFFFF);
+    // A light hero cannot be fixed by whitening the accent; choose the
+    // direction that actually increases contrast while keeping the hue
+    // whenever possible.
+    final target = contrastRatio(dark, hero) >= contrastRatio(white, hero)
+        ? dark : white;
     for (var step = 1; step <= 20; step++) {
-      final candidate = Color.lerp(action, white, step / 20)!;
+      final candidate = Color.lerp(action, target, step / 20)!;
       if (contrastRatio(candidate, hero) >= 4.5) return candidate;
     }
-    return white;
+    return target;
   }
 
   /// Marca usada como texto/ícone precisa alcançar 4.5:1 nas superfícies.

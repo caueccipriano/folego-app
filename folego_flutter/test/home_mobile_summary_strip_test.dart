@@ -71,6 +71,14 @@ void main() {
     expect(find.text('gastos do mês'), findsOneWidget);
     expect(find.text('próxima conta'), findsOneWidget);
     expect(find.textContaining('240,00'), findsOneWidget);
+    final amount = tester.widget<Text>(find.byKey(
+      const ValueKey('home-mobile-next-bill-amount')));
+    expect(amount.style!.fontFamily, 'Manrope');
+    expect(amount.style!.fontSize, greaterThanOrEqualTo(17));
+    expect(amount.style!.fontFeatures, isNotEmpty);
+    final title = tester.widget<Text>(find.text('orçamento flexível'));
+    expect(title.style!.fontFamily, 'Manrope');
+    expect(title.style!.fontSize, greaterThanOrEqualTo(13));
     expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(const ValueKey('home-mobile-budget')));
     await tester.tap(find.byKey(const ValueKey('home-mobile-next-bill')));
