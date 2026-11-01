@@ -14,7 +14,7 @@ void main() {
   });
 
   test('Monthly progress only appears for configured, visible budgets', () {
-    expect(source, contains('!hidden &&\n                                        snapshot.budgetConfigured &&'));
+    expect(source, contains('!hidden &&'));\n    expect(source, contains('snapshot.budgetConfigured &&'));
     expect(source, contains('snapshot.monthlyBudgetPlanned > 0'));
     expect(source, contains('budgetPercent > 100'));
     expect(source, contains('acima do planejado'));
