@@ -62,7 +62,7 @@ class HomeFixedDashboard extends StatelessWidget {
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, limits) {
-            final short = limits.maxHeight < 580;
+            final short = limits.maxHeight < 640;
             final tiny = limits.maxHeight < 455;
             final largeText = textScale > 1.3;
             final tight = short || largeText;
@@ -259,12 +259,8 @@ class HomeFixedDashboard extends StatelessWidget {
                                             child: Text(
                                               hidden
                                                   ? FinancialPrivacy.maskMoney()
-                                                  : Formatters.money(
-                                                      snapshot.spendablePool,
-                                                    ),
-                                              key: const ValueKey(
-                                                'home-fixed-spendable',
-                                              ),
+                                                  : Formatters.money(snapshot.spendablePool),
+                                              key: const ValueKey('home-fixed-spendable'),
                                               style: AppTypography.money(
                                                 context,
                                                 fontSize: 18,
