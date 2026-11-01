@@ -174,7 +174,8 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Future<void> _openTools() async {
     final target = await showModalBottomSheet<int>(
       context: context,
-      showDragHandle: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (sheetContext) => MoreToolsSheet(
