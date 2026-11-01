@@ -390,8 +390,8 @@ class HomeFixedDashboard extends StatelessWidget {
                                       const SizedBox(height: 5),
                                       Text(
                                         budgetPercent > 100
-                                            ? 'orçamento do mês: ${budgetPercent}% · acima do planejado'
-                                            : 'orçamento do mês: ${budgetPercent}% utilizado',
+                                            ? 'orçamento do mês: $budgetPercent% · acima do planejado'
+                                            : 'orçamento do mês: $budgetPercent% utilizado',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: AppTypography.label(
