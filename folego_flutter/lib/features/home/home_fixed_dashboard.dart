@@ -63,7 +63,7 @@ class HomeFixedDashboard extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, limits) {
             final short = limits.maxHeight < 640;
-            final tiny = limits.maxHeight < 455;
+            final tiny = limits.maxHeight < 530;
             final largeText = textScale > 1.3;
             final tight = short || largeText;
             final space = tiny ? 7.0 : 10.0;
