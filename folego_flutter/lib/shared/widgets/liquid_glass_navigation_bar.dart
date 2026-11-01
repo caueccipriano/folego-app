@@ -5,13 +5,9 @@ import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import 'folego_glass_surface.dart';
 
-/// Mobile navigation with a glass-like visual treatment.
-///
-/// Important: this intentionally does not use BackdropFilter. On iOS PWAs the
-/// real backdrop blur introduced an extra compositing layer around the
-/// bottomNavigationBar and made visual and pointer geometry diverge. The
-/// gradient below keeps the same visual language without changing hit testing.
+/// Frosted mobile dock without BackdropFilter to preserve iOS PWA hit targets.
 class LiquidGlassNavigationBar extends StatelessWidget {
   const LiquidGlassNavigationBar({
     super.key,
@@ -26,7 +22,6 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     // Three everyday destinations; advanced tasks live behind tools.
     final items = <_NavItem>[
       _NavItem(icon: AppIcons.home, label: 'hoje'),
@@ -35,8 +30,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     ];
 
     final tokens = FolegoColorTokens.of(context);
-    final surface = tokens.superficie;
-    // Solid, calm mobile navigation; no glass gradient or blur.
+    // Frosted appearance stays in the same layout region as the touch targets.
     final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
     final navigationHeight = 58.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
@@ -52,18 +46,12 @@ class LiquidGlassNavigationBar extends StatelessWidget {
             Flexible(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: navigationHeight,
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.border(theme.brightness),
-                      width: .8,
-                    ),
-                  ),
+                  child: FolegoGlassSurface(
+                    radius: 20,
+                    padding: const EdgeInsets.all(5),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -103,6 +91,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),
