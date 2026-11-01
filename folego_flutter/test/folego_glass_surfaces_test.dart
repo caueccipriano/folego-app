@@ -20,6 +20,15 @@ void main() {
       expect(decoration!.gradient, isA<LinearGradient>());
       expect(decoration!.borderRadius, BorderRadius.circular(23));
       expect(decoration!.boxShadow, isNotEmpty);
+      final strong = FolegoGlassSurface.decorationFor(
+        tester.element(find.text('fôlego')), radius: 23, prominent: true);
+      final regularColors = (decoration!.gradient! as LinearGradient).colors;
+      final strongColors = (strong.gradient! as LinearGradient).colors;
+      // The user should actually see a stronger tone and a lifted capsule.
+      expect(strongColors.length, greaterThan(regularColors.length));
+      expect(strongColors.first, isNot(strongColors.last));
+      expect(strong.boxShadow!.first.blurRadius,
+          greaterThan(decoration!.boxShadow!.first.blurRadius));
       expect(find.text('fôlego'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -38,6 +47,10 @@ void main() {
     ));
     expect(decoration!.gradient, isNull);
     expect(decoration!.color, isNotNull);
+    final highContrastGlass = FolegoGlassSurface.decorationFor(
+      tester.element(find.text('visível')), prominent: true);
+    expect(highContrastGlass.gradient, isNull);
+    expect(highContrastGlass.color, isNotNull);
     expect(find.text('visível'), findsOneWidget);
   });
 
@@ -62,6 +75,8 @@ void main() {
         ),
       ));
       expect(find.byType(FolegoGlassSurface), findsOneWidget);
+      expect(tester.widget<FolegoGlassSurface>(
+        find.byType(FolegoGlassSurface)).prominent, isTrue);
       expect(find.byKey(const ValueKey('mobile-liquid-nav')), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-1')));
