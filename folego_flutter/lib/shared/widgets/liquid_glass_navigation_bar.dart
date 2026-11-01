@@ -31,7 +31,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
     final tokens = FolegoColorTokens.of(context);
     // Frosted appearance stays in the same layout region as the touch targets.
-    final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
+    final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
     final navigationHeight = 62.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
     return SafeArea(
@@ -102,7 +102,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                   const SizedBox(height: 4),
                                   Text('mais',
                                     style: AppTypography.label(context,
-                                      fontSize: 11, color: selectedIndex >= 3
+                                      fontSize: 12, color: selectedIndex >= 3
                                         ? tokens.marca : tokens.textoSecundario)),
                                 ],
                               ),
@@ -207,7 +207,7 @@ class _Destination extends StatelessWidget {
                     maxLines: 1,
                     style: AppTypography.label(
                       context,
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? activeForeground : inactiveColor,
                     ),
