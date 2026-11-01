@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_icons.dart';
+import '../../shared/widgets/folego_glass_surface.dart';
 
 /// Two quick routes remain directly reachable, with a single calm surface
 /// instead of independent buttons competing with the financial headline.
@@ -23,13 +24,10 @@ class HomeQuickTools extends StatelessWidget {
       spacing: 10,
       runSpacing: 8,
       children: [
-        Material(
-          color: scheme.surfaceContainerLow,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: scheme.outlineVariant),
-          ),
+        FolegoGlassSurface(
+          radius: 18,
+          prominent: true,
+          elevated: false,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
