@@ -32,12 +32,12 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     final tokens = FolegoColorTokens.of(context);
     // Frosted appearance stays in the same layout region as the touch targets.
     final textScale = MediaQuery.textScalerOf(context).scale(11) / 11;
-    final navigationHeight = 58.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
+    final navigationHeight = 62.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
       top: false,
-      minimum: const EdgeInsets.fromLTRB(14, 0, 14, 3),
+      minimum: const EdgeInsets.fromLTRB(15, 8, 15, 8),
       child: SizedBox(
         height: navigationHeight,
         child: Row(
@@ -50,7 +50,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                   width: double.infinity,
                   height: navigationHeight,
                   child: FolegoGlassSurface(
-                    radius: 20,
+                    radius: 27,
+                    prominent: true,
                     padding: const EdgeInsets.all(5),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,18 +75,37 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                             key: const ValueKey('mobile-tools-button'),
                             onTap: onOpenTools,
                             borderRadius: BorderRadius.circular(14),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.grid_view_rounded, size: 21,
-                                  color: selectedIndex >= 3
-                                    ? tokens.marca : tokens.textoSecundario),
-                                const SizedBox(height: 4),
-                                Text('mais',
-                                  style: AppTypography.label(context,
-                                    fontSize: 11, color: selectedIndex >= 3
-                                      ? tokens.marca : tokens.textoSecundario)),
-                              ],
+                            child: AnimatedContainer(
+                              duration: MediaQuery.disableAnimationsOf(context)
+                                  ? Duration.zero
+                                  : const Duration(milliseconds: 180),
+                              margin: const EdgeInsets.symmetric(horizontal: 1),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(21),
+                                gradient: selectedIndex >= 3
+                                    ? LinearGradient(colors: [
+                                        tokens.marca.withValues(alpha: .24),
+                                        tokens.marca.withValues(alpha: .11),
+                                      ])
+                                    : null,
+                                border: selectedIndex >= 3
+                                    ? Border.all(
+                                        color: tokens.marca.withValues(alpha: .34))
+                                    : null,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.grid_view_rounded, size: 21,
+                                    color: selectedIndex >= 3
+                                      ? tokens.marca : tokens.textoSecundario),
+                                  const SizedBox(height: 4),
+                                  Text('mais',
+                                    style: AppTypography.label(context,
+                                      fontSize: 11, color: selectedIndex >= 3
+                                        ? tokens.marca : tokens.textoSecundario)),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -149,10 +169,21 @@ class _Destination extends StatelessWidget {
             curve: Curves.easeOutCubic,
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
-              color: selected
-                  ? activePurple.withValues(alpha: isDark ? .14 : .10)
-                  : AppColors.transparent,
-              borderRadius: BorderRadius.circular(AppRadii.feature),
+              gradient: selected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        activePurple.withValues(alpha: isDark ? .28 : .22),
+                        activePurple.withValues(alpha: isDark ? .14 : .10),
+                      ],
+                    )
+                  : null,
+              border: selected
+                  ? Border.all(color: activePurple.withValues(alpha: .30),
+                      width: .9)
+                  : null,
+              borderRadius: BorderRadius.circular(21),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

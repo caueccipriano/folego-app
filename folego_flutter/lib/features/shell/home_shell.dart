@@ -179,8 +179,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       backgroundColor: AppColors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (sheetContext) => MoreToolsSheet(
-        onSelected: (destination) => Navigator.pop(sheetContext, destination),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        child: MoreToolsSheet(
+          onSelected: (destination) => Navigator.pop(sheetContext, destination),
+        ),
       ),
     );
     if (!mounted || target == null) return;

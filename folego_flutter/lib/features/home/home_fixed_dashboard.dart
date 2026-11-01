@@ -231,6 +231,7 @@ class _CaptureButton extends StatelessWidget {
           )
         : FolegoGlassSurface(
             radius: AppRadii.compactCard,
+            prominent: true,
             elevated: false,
             child: action,
           );
