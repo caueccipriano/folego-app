@@ -29,7 +29,7 @@ class FolegoGlassSurface extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final highContrast = MediaQuery.highContrastOf(context);
     final edge = Color.alphaBlend(
-      Colors.white.withValues(alpha: isDark ? .20 : .82),
+      tokens.superficie.withValues(alpha: isDark ? .20 : .82),
       tokens.borda.withValues(alpha: isDark ? .70 : .82),
     );
 
@@ -53,7 +53,8 @@ class FolegoGlassSurface extends StatelessWidget {
         end: Alignment.bottomRight,
         colors: [
           Color.alphaBlend(
-            Colors.white.withValues(alpha: isDark ? .105 : .19),
+            (isDark ? tokens.textoPrincipal : tokens.superficie)
+                .withValues(alpha: isDark ? .105 : .19),
             translucent,
           ),
           translucent,
@@ -68,7 +69,8 @@ class FolegoGlassSurface extends StatelessWidget {
       boxShadow: elevated
           ? [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? .23 : .09),
+                color: (isDark ? tokens.fundo : tokens.textoPrincipal)
+                    .withValues(alpha: isDark ? .23 : .09),
                 blurRadius: 24,
                 offset: const Offset(0, 9),
               ),
