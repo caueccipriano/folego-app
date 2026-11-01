@@ -56,6 +56,18 @@ class HomeFixedDashboard extends StatelessWidget {
         ? (snapshot.monthlyBudgetUsed / snapshot.monthlyBudgetPlanned)
             .clamp(0.0, 1.0).toDouble()
         : 0.0;
+    // The progress bar caps at 100%, but the label must not hide overspending.
+    final budgetPercent = snapshot.monthlyBudgetPlanned > 0
+        ? (snapshot.monthlyBudgetUsed / snapshot.monthlyBudgetPlanned * 100)
+            .round()
+        : 0;
+    final paceLabel = switch (snapshot.status) {
+      'tranquilo' => 'dentro do plano',
+      'apertado' => 'atenção ao ritmo',
+      'segure_gastos' => 'reduza os gastos',
+      'sem_folga' => 'sem folga',
+      _ => 'acompanhe seu plano',
+    };
 
     return ColoredBox(
       color: AppColors.background(brightness),
@@ -141,6 +153,46 @@ class HomeFixedDashboard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadii.feature),
                           child: Stack(
                             children: [
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          colors.marcaHero,
+                                          Color.alphaBlend(
+                                            colors.marcaHeroSobre
+                                                .withValues(alpha: .018),
+                                            colors.marcaHero,
+                                          ),
+                                          colors.marcaHero,
+                                        ],
+                                        stops: const [0, .65, 1],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                left: -75,
+                                bottom: -104,
+                                child: IgnorePointer(
+                                  child: Container(
+                                    width: 150,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: colors.marcaHeroSobre
+                                            .withValues(alpha: .08),
+                                        width: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                               Positioned(
                                 right: -36,
                                 top: -65,
@@ -181,6 +233,36 @@ class HomeFixedDashboard extends StatelessWidget {
                                             ),
                                           ),
                                         ),
+                                        if (!tiny && !largeText && !hidden) ...[
+                                          Container(
+                                            key: const ValueKey(
+                                              'home-fixed-rhythm-badge',
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 9,
+                                              vertical: 5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: colors.marcaHero,
+                                              borderRadius:
+                                                  BorderRadius.circular(100),
+                                              border: Border.all(
+                                                color: colors.marcaHeroSobre
+                                                    .withValues(alpha: .33),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              paceLabel,
+                                              maxLines: 1,
+                                              style: AppTypography.label(
+                                                context,
+                                                fontSize: 10,
+                                                color: colors.marcaHeroSobre,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
                                         Icon(
                                           Icons.arrow_outward_rounded,
                                           color: colors.marcaHeroSobre,
@@ -284,13 +366,17 @@ class HomeFixedDashboard extends StatelessWidget {
                                         color: colors.marcaHeroSobre,
                                       ),
                                     ),
-                                    if (!tiny && !largeText) ...[
+                                    if (!tiny &&
+                                        !largeText &&
+                                        !hidden &&
+                                        snapshot.budgetConfigured &&
+                                        snapshot.monthlyBudgetPlanned > 0) ...[
                                       const SizedBox(height: 11),
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(99),
                                         child: LinearProgressIndicator(
                                           value: budgetRatio,
-                                          minHeight: 4,
+                                          minHeight: 6,
                                           backgroundColor: colors
                                               .marcaHeroSobre.withValues(
                                             alpha: .18,
@@ -303,9 +389,9 @@ class HomeFixedDashboard extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 5),
                                       Text(
-                                        snapshot.budgetConfigured
-                                            ? 'orçamento do mês: ${(budgetRatio * 100).round()}% utilizado'
-                                            : 'seu planejamento cresce com você',
+                                        budgetPercent > 100
+                                            ? 'orçamento do mês: ${budgetPercent}% · acima do planejado'
+                                            : 'orçamento do mês: ${budgetPercent}% utilizado',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: AppTypography.label(
@@ -490,14 +576,22 @@ class _MetricTile extends StatelessWidget {
       radius: 18,
       prominent: false,
       elevated: false,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 15, color: colors.marca),
-              const SizedBox(width: 6),
+              Container(
+                width: 25,
+                height: 25,
+                decoration: BoxDecoration(
+                  color: colors.marca.withValues(alpha: .09),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, size: 15, color: colors.marca),
+              ),
+              const SizedBox(width: 7),
               Expanded(
                 child: Text(
                   label,
