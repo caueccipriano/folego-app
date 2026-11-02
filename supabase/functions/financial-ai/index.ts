@@ -31,7 +31,10 @@ Deno.serve(async (request) => {
     : Deno.env.get('OPENAI_API_KEY');
   if (!url || !anon || !service) return respond(503, 'Assistente ainda não configurado.');
   const userClient = createClient(url, anon, { global: { headers: { Authorization: 'Bearer ' + jwt } } });
-  const { data: auth, error: authError } = await userClient.auth.getUser();
+  // Stateless Edge Functions must validate the bearer token explicitly.
+  // A global Authorization header scopes RLS queries but does not establish
+  // a client-side Auth session for getUser() without a token argument.
+  const { data: auth, error: authError } = await userClient.auth.getUser(jwt);
   if (authError || !auth.user) return respond(401, 'Sessão inválida.');
   // Read-only, no provider request or Premium quota use. Only a signed-in
   // account can see which AI provider has been configured; never emit keys.
