@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/privacy/financial_privacy.dart';
+import 'package:folego/core/utils/formatters.dart';
 import 'package:folego/features/home/financial_numbers_guide.dart';
 
 void main() {
@@ -26,20 +27,20 @@ void main() {
     expect(find.text('disponível até receber'), findsOneWidget);
     expect(find.text('gastos feitos no mês'), findsOneWidget);
     expect(find.text('despesas por competência'), findsOneWidget);
-    expect(find.text('R\$ 140,00'), findsOneWidget);
-    expect(find.text('R\$ 0,00'), findsOneWidget);
-    expect(find.text('R\$ 68,86'), findsOneWidget);
-    expect(find.text('R\$ 2.870,93'), findsOneWidget);
+    expect(find.text(Formatters.money(140)), findsOneWidget);
+    expect(find.text(Formatters.money(0)), findsOneWidget);
+    expect(find.text(Formatters.money(68.86)), findsOneWidget);
+    expect(find.text(Formatters.money(2870.93)), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('hide-money mode masks all financial totals', (tester) async {
     FinancialPrivacy.hidden.value = true;
     await tester.pumpWidget(screen(spending: 68.86, competence: 2870.93));
-    expect(find.text('R\$ 140,00'), findsNothing);
-    expect(find.text('R\$ 0,00'), findsNothing);
-    expect(find.text('R\$ 68,86'), findsNothing);
-    expect(find.text('R\$ 2.870,93'), findsNothing);
+    expect(find.textContaining('140,00'), findsNothing);
+    expect(find.textContaining('0,00'), findsNothing);
+    expect(find.textContaining('68,86'), findsNothing);
+    expect(find.textContaining('2.870,93'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
