@@ -456,8 +456,8 @@ class _HomeScreenState extends State<HomeScreen> {
         MediaQuery.textScalerOf(context).scale(16) <= 20) {
       return _buildFixedMobileHome(
         snapshot: snapshot,
-        surface: surface, border: border,
-        primaryText: primaryText, secondaryText: secondaryText,
+        surface: surface,
+        primaryText: primaryText,
         quickActions: quickActions,
         pulseInsight: selectHomePulse(
           snapshot: snapshot, upcoming: _upcomingEvents,
@@ -666,9 +666,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFixedMobileHome({
     required FolegoSnapshot snapshot,
     required Color surface,
-    required Color border,
     required Color primaryText,
-    required Color secondaryText,
     required Widget quickActions,
     required HomePulseInsight pulseInsight,
     required Widget monthlyMoney,
