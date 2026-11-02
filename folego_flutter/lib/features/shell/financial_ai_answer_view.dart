@@ -74,7 +74,14 @@ class FinancialAiAnswerView extends StatelessWidget {
           Text('seus números', style: AppTypography.cardTitle(context)),
           const SizedBox(height: 10),
           LayoutBuilder(builder: (context, constraints) {
-            final itemWidth = (constraints.maxWidth - 10) / 2;
+            // Small iPhones and larger accessibility text need full-width
+            // figures instead of shrinking monetary values until unreadable.
+            final largeText =
+                MediaQuery.textScalerOf(context).scale(14) / 14 >= 1.3;
+            final singleColumn = constraints.maxWidth < 320 || largeText;
+            final itemWidth = singleColumn
+                ? constraints.maxWidth
+                : (constraints.maxWidth - 10) / 2;
             return Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -82,6 +89,7 @@ class FinancialAiAnswerView extends StatelessWidget {
                 for (final entry in metrics.entries)
                   if (values.containsKey(entry.value))
                     SizedBox(
+                      key: ValueKey('financial-ai-metric-${entry.value}'),
                       width: itemWidth,
                       child: Container(
                         padding: const EdgeInsets.all(14),
