@@ -1121,19 +1121,43 @@ class _PlanScreenState extends State<PlanScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'resumo do mês',
-                  style: AppTypography.section(
-                    context,
-                    fontSize: 18,
-                    color: primaryText,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'VISÃO FINANCEIRA',
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                      ).copyWith(letterSpacing: 1.1),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'resumo do mês',
+                      style: AppTypography.section(
+                        context,
+                        fontSize: 19,
+                        color: primaryText,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Icon(
-                Icons.insights_outlined,
-                size: 20,
-                color: accent,
+              Container(
+                height: 38,
+                width: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: .11),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.insights_outlined,
+                  size: 20,
+                  color: accent,
+                ),
               ),
             ],
           ),
@@ -1161,26 +1185,43 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  label: 'planejado',
-                  value: Formatters.money(summary.plannedAmount),
-                  brightness: brightness,
-                  onTap: () => _showPlanMetricExplanation('planned'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Metric(
-                  label: 'gastos + dívidas pagas',
-                  value: Formatters.money(summary.actualAmount),
-                  brightness: brightness,
-                  onTap: () => _showPlanMetricExplanation('tracked'),
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, limits) {
+              // Financial amounts must remain readable rather than be
+              // squeezed by a second metric on small or zoomed-in phones.
+              final stackedMetrics = limits.maxWidth < 330 ||
+                  MediaQuery.textScalerOf(context).scale(14) >= 18;
+              final planned = _Metric(
+                label: 'planejado',
+                value: Formatters.money(summary.plannedAmount),
+                brightness: brightness,
+                onTap: () => _showPlanMetricExplanation('planned'),
+              );
+              final tracked = _Metric(
+                label: 'gastos + dívidas pagas',
+                value: Formatters.money(summary.actualAmount),
+                brightness: brightness,
+                onTap: () => _showPlanMetricExplanation('tracked'),
+              );
+              return stackedMetrics
+                  ? Column(
+                      key: const ValueKey('plan-metrics-stacked'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        planned,
+                        const SizedBox(height: 8),
+                        tracked,
+                      ],
+                    )
+                  : Row(
+                      key: const ValueKey('plan-metrics-inline'),
+                      children: [
+                        Expanded(child: planned),
+                        const SizedBox(width: 10),
+                        Expanded(child: tracked),
+                      ],
+                    );
+            },
           ),
           const SizedBox(height: 16),
           if (summary.plannedAmount > 0) ...[
