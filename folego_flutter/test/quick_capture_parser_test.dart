@@ -17,7 +17,7 @@ void main() {
     expect(prefix?.description, 'Uber');
     expect(prefix?.amountText, '27,90');
 
-    final withCurrency = QuickCaptureDraft.parse('R$ 1.234,56 Supermercado');
+    final withCurrency = QuickCaptureDraft.parse(r'R$ 1.234,56 Supermercado');
     expect(withCurrency?.description, 'Supermercado');
     expect(withCurrency?.amountText, '1234,56');
 
@@ -28,7 +28,7 @@ void main() {
 
   test('nunca interpreta negativos, datas nem preços sem centavos', () {
     expect(QuickCaptureDraft.parse('-27,90 Uber'), isNull);
-    expect(QuickCaptureDraft.parse('R$ -27,90 Uber'), isNull);
+    expect(QuickCaptureDraft.parse(r'R$ -27,90 Uber'), isNull);
     expect(QuickCaptureDraft.parse('27,90 -Uber'), isNull);
     expect(QuickCaptureDraft.parse('0,00 Uber'), isNull);
     expect(QuickCaptureDraft.parse('27,9 Uber'), isNull);
