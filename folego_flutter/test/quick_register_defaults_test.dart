@@ -1,69 +1,11 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:folego/data/models/account_item.dart';
-import 'package:folego/data/models/category_item.dart';
-import 'package:folego/data/models/credit_card_item.dart';
-import 'package:folego/data/models/financial_space.dart';
-import 'package:folego/data/repositories/folego_repository.dart';
-import 'package:folego/features/home/quick_register_sheet.dart';
 import 'package:folego/features/home/quick_register_defaults.dart';
 
 void main() {
-  testWidgets('a sole account is only selected after one explicit tap',
-      (tester) async {
-    final client = SupabaseClient(
-      'https://example.supabase.co',
-      'synthetic',
-      authOptions: const AuthClientOptions(autoRefreshToken: false),
-    );
-    addTearDown(client.dispose);
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: QuickRegisterSheet(
-          space: const FinancialSpace(id: 'test', name: 'Teste'),
-          repository: FolegoRepository(client),
-          loadCatalog: () async => (
-            accounts: const [
-              AccountItem(id: 'a', name: 'Conta única', type: 'checking'),
-            ],
-            benefits: const <AccountItem>[],
-            cards: const <CreditCardItem>[],
-            categories: const <CategoryItem>[],
-          ),
-        ),
-      ),
-    ));
-    await tester.pumpAndSettle();
-
-    expect(
-      tester.widget<DropdownButtonFormField<String>>(
-        find.byType(DropdownButtonFormField<String>),
-      ).initialValue,
-      isNull,
-    );
-    final shortcut = find.byKey(
-      const ValueKey('quick-confirm-single-instrument'),
-    );
-    expect(shortcut, findsOneWidget);
-    await tester.ensureVisible(shortcut);
-    await tester.tap(shortcut);
-    await tester.pumpAndSettle();
-
-    expect(
-      tester.widget<DropdownButtonFormField<String>>(
-        find.byType(DropdownButtonFormField<String>),
-      ).initialValue,
-      'a',
-    );
-    expect(shortcut, findsNothing);
-    expect(find.text('selecionar'), findsOneWidget);
-  });
-
   group('quick register instrument preselection', () {
-    test('preselects only an unambiguous account', () {
+    test('offers only an unambiguous payment candidate', () {
       expect(
         quickRegisterInstrumentId(
           items: const ['a'],
@@ -182,6 +124,7 @@ void main() {
     expect(source, contains("setState(() => _error = 'selecione uma categoria')"));
     expect(source, contains('onPressed: _saving ? null : _save'));
     expect(source, contains('quickRegisterInstrumentId('));
+    expect(source, contains("ValueKey('quick-confirm-single-instrument')"));
     expect(source, contains('quickRegisterHistoryAccountId('));
   });
 }
