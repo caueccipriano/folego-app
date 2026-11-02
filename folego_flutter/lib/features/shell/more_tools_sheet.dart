@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/folego_motion.dart';
 import '../../shared/widgets/folego_glass_surface.dart';
 
 /// Secondary destinations in one calm, two-by-two mobile menu.
@@ -100,7 +101,7 @@ class MoreToolsSheet extends StatelessWidget {
   }
 }
 
-class _ToolTile extends StatelessWidget {
+class _ToolTile extends StatefulWidget {
   const _ToolTile({
     required this.tileKey,
     required this.label,
@@ -116,14 +117,29 @@ class _ToolTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ToolTile> createState() => _ToolTileState();
+}
+
+class _ToolTileState extends State<_ToolTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return FolegoGlassSurface(
+    return AnimatedScale(
+      key: ValueKey('tool-scale-${widget.label}'),
+      scale: _pressed && FolegoMotion.enabled(context) ? .975 : 1,
+      duration: FolegoMotion.duration(context, milliseconds: 130),
+      curve: Curves.easeOutCubic,
+      child: FolegoGlassSurface(
       radius: 18,
       elevated: false,
       child: InkWell(
-        key: tileKey,
-        onTap: onTap,
+        key: widget.tileKey,
+        onTap: widget.onTap,
+        onHighlightChanged: (pressed) {
+          if (_pressed != pressed) setState(() => _pressed = pressed);
+        },
         borderRadius: BorderRadius.circular(18),
         child: Container(
           constraints: const BoxConstraints(minHeight: 112),
@@ -138,19 +154,20 @@ class _ToolTile extends StatelessWidget {
                   color: scheme.primary.withValues(alpha: .10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 20, color: scheme.primary),
+                child: Icon(widget.icon, size: 20, color: scheme.primary),
               ),
               const SizedBox(height: 10),
-              Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
+              Text(widget.label, maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: AppTypography.cardTitle(context, fontSize: 15,
                   color: scheme.onSurface)),
               const SizedBox(height: 3),
-              Text(caption, maxLines: 1, overflow: TextOverflow.ellipsis,
+              Text(widget.caption, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: AppTypography.label(context, fontSize: 12,
                   color: scheme.onSurfaceVariant)),
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/folego_motion.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/ui/app_snackbars.dart';
 import '../../core/utils/formatters.dart';
@@ -1213,14 +1214,23 @@ class _PlanScreenState extends State<PlanScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              child: LinearProgressIndicator(
-                key: const ValueKey('plan-summary-usage-progress'),
-                value: summary.usageRatio.clamp(0.0, 1.0),
-                minHeight: 8,
-                backgroundColor: border.withValues(alpha: .65),
-                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            TweenAnimationBuilder<double>(
+              key: const ValueKey('plan-progress-motion'),
+              tween: Tween<double>(
+                begin: 0,
+                end: summary.usageRatio.clamp(0.0, 1.0).toDouble(),
+              ),
+              duration: FolegoMotion.duration(context, milliseconds: 360),
+              curve: Curves.easeOutCubic,
+              builder: (context, animatedValue, _) => ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                child: LinearProgressIndicator(
+                  key: const ValueKey('plan-summary-usage-progress'),
+                  value: animatedValue,
+                  minHeight: 8,
+                  backgroundColor: border.withValues(alpha: .65),
+                  valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                ),
               ),
             ),
             const SizedBox(height: 8),

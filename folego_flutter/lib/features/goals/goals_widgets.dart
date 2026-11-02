@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/folego_motion.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_goal.dart';
 
@@ -69,11 +70,11 @@ class GoalProgressBar extends StatelessWidget {
       );
     }
 
-    if (!animate) return bar(target);
+    if (!animate || !FolegoMotion.enabled(context)) return bar(target);
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: target),
-      duration: const Duration(milliseconds: 460),
+      duration: FolegoMotion.duration(context, milliseconds: 420),
       curve: Curves.easeOutCubic,
       builder: (context, value, _) => bar(value),
     );
