@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { classifyProviderFailure } from './provider_error.ts';
+import { localFinancialSummary, type VerifiedMoney } from './local_summary.ts';
 import { defaultGeminiModel, makeGeminiRequest, readGeminiAnswer } from './gemini_adapter.ts';
 import { chooseCategories, cleanMonthlySummary, comparableDay, makeCategorySummary, normalizedRows, pendingClassificationAmount } from './category_context.ts';
 
@@ -44,12 +45,12 @@ Deno.serve(async (request) => {
       configured: Boolean(apiKey),
     }), { status: 200, headers });
   }
-  if (!apiKey) return respond(503, 'Assistente ainda não configurado.');
-  let body: { question?: unknown; context?: unknown; spaceId?: unknown };
+  let body: { question?: unknown; context?: unknown; spaceId?: unknown; mode?: unknown };
   try { body = await request.json(); } catch { return respond(400, 'Envie uma pergunta válida.'); }
   if (typeof body.question !== 'string' || body.question.trim().length < 3 || body.question.length > 500) {
     return respond(400, 'A pergunta deve ter de 3 a 500 caracteres.');
   }
+  if (body.mode !== undefined && body.mode !== 'summary') return respond(400, 'Modo inválido.');
   // Never accept transaction-level data or client assertions of entitlement.
   if (body.context !== undefined && (typeof body.context !== 'object' || body.context === null || Array.isArray(body.context))) {
     return respond(400, 'Resumo inválido.');
@@ -69,6 +70,7 @@ Deno.serve(async (request) => {
   // is ignored. No service-role reads of spending data are ever performed.
   let verifiedContext: Record<string, unknown> = safe;
   let deterministicFocus: { kind: string; title: string; description: string } | null = null;
+  let verifiedSummary: VerifiedMoney | null = null;
   if (body.spaceId !== undefined) {
     if (typeof body.spaceId !== 'string' ||
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.spaceId)) {
@@ -145,14 +147,50 @@ Deno.serve(async (request) => {
         pendingClassificationAmount: comparison.unclassifiedAmount,
       };
       deterministicFocus = comparison.focus;
+      verifiedSummary = {
+        month: calendar.month,
+        income: totals.income,
+        expenses: totals.expenses,
+        result: totals.result,
+        categories: comparison.categories,
+        comparison: {
+          daysOneTo: calendar.day,
+          currentMonth: calendar.month,
+          previousMonth: calendar.previousMonth,
+        },
+        pendingClassificationAmount: comparison.unclassifiedAmount,
+      };
     } catch {
       // The provider is not called with partial or inconsistent aggregates.
       return respond(503, 'Resumo de categorias indisponível. Tente novamente.');
     }
   }
+  // The free, fully deterministic mode needs no provider, subscription, or
+  // quota. Never derive it from unverified old client-supplied financial data.
+  const localReply = (mode: 'summary' | 'fallback') => {
+    if (!verifiedSummary) return respond(503, 'Resumo verificado indisponível.');
+    return new Response(JSON.stringify({
+      answer: localFinancialSummary(verifiedSummary, deterministicFocus),
+      focus: deterministicFocus,
+      provider: 'local',
+      mode,
+    }), { status: 200, headers });
+  };
+  if (body.mode === 'summary') {
+    if (!verifiedSummary) return respond(400, 'Informe um espaço financeiro válido.');
+    return localReply('summary');
+  }
+  if (!apiKey) {
+    if (verifiedSummary) return localReply('fallback');
+    return respond(503, 'Assistente ainda não configurado.');
+  }
   const admin = createClient(url, service);
   const { data: quota, error: quotaError } = await admin.rpc('consume_premium_ai_question', { p_user_id: auth.user.id });
-  if (quotaError) return respond(503, 'Não foi possível verificar seu plano.');
+  if (quotaError) {
+    console.warn('financial-ai quota_validation_failure', {stage:'premium_check'});
+    if (verifiedSummary) return localReply('fallback');
+    return respond(503, 'Não foi possível verificar seu plano.');
+  }
   if (quota !== true) return respond(403, 'Disponível para Premium, até 30 perguntas por mês.');
   let delivered = false;
   try {
@@ -205,6 +243,9 @@ Deno.serve(async (request) => {
       console.warn('financial-ai provider_failure', {
         status: upstream.status, reason: classification.kind,
       });
+      // A provider credit limit must not make the user's own finance summary
+      // inaccessible. Do not mark generation delivered; finally refunds quota.
+      if (verifiedSummary) return localReply('fallback');
       return respond(classification.status, classification.message);
     }
     const data = await upstream.json();
@@ -213,7 +254,11 @@ Deno.serve(async (request) => {
       : (data.output ?? []).flatMap((item: { content?: { type?: string; text?: string }[] }) => item.content ?? [])
         .filter((part: { type?: string }) => part.type === 'output_text')
         .map((part: { text?: string }) => part.text ?? '').join('\n').trim();
-    if (!answer) { console.warn('financial-ai empty_provider_output'); return respond(502, 'A IA não retornou uma resposta. Nenhuma pergunta descontada.'); }
+    if (!answer) {
+      console.warn('financial-ai empty_provider_output');
+      if (verifiedSummary) return localReply('fallback');
+      return respond(502, 'A IA não retornou uma resposta. Nenhuma pergunta descontada.');
+    }
     delivered = true;
     return new Response(JSON.stringify({ answer, focus: deterministicFocus, provider }), { status: 200, headers });
   } catch (error) {
@@ -222,6 +267,7 @@ Deno.serve(async (request) => {
     const reason = error instanceof Error && error.name === 'AbortError'
       ? 'timeout' : 'request_failed';
     console.warn('financial-ai transport_failure', { reason });
+    if (verifiedSummary) return localReply('fallback');
     return respond(502, 'A conexão com a IA falhou. Tente novamente; nenhuma pergunta descontada.');
   }
   finally {
