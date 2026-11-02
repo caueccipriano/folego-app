@@ -4,7 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Nunca deve deixar passar SQL cru, código de erro ou detalhes internos.
 abstract final class ErrorTranslator {
   static String forDisplay(Object error) {
-    if (error is FormatException) return error.message;
+    if (error is FormatException) {
+      return 'Não foi possível ler esses dados. Atualize e tente novamente.';
+    }
     if (error is AuthException) return _fromAuth(error);
     if (error is PostgrestException) return _fromPostgrest(error);
     if (error is StateError) {

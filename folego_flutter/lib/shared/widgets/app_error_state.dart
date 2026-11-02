@@ -5,10 +5,9 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 
-/// Estado de erro oficial do Fôlego.
-///
-/// Mantém falhas recuperáveis visualmente coerentes entre as telas principais.
-class AppErrorState extends StatelessWidget {
+/// A recoverable error state. A retry must not start duplicate reads if
+/// someone taps the control repeatedly while a network call is in flight.
+class AppErrorState extends StatefulWidget {
   const AppErrorState({
     super.key,
     required this.title,
@@ -23,6 +22,30 @@ class AppErrorState extends StatelessWidget {
   final Future<void> Function() onRetry;
 
   @override
+  State<AppErrorState> createState() => _AppErrorStateState();
+}
+
+class _AppErrorStateState extends State<AppErrorState> {
+  bool _retrying = false;
+  bool _retryFailed = false;
+
+  Future<void> _retry() async {
+    if (_retrying) return;
+    setState(() {
+      _retrying = true;
+      _retryFailed = false;
+    });
+    try {
+      await widget.onRetry();
+    } catch (_) {
+      // Do not expose exception bodies or technical diagnostics to the user.
+      if (mounted) setState(() => _retryFailed = true);
+    } finally {
+      if (mounted) setState(() => _retrying = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final expense = AppColors.expenseText(brightness);
@@ -34,60 +57,68 @@ class AppErrorState extends StatelessWidget {
       liveRegion: true,
       explicitChildNodes: true,
       child: Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 520),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
-      decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.border(brightness)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: expense.withValues(alpha: .10),
-              borderRadius: BorderRadius.circular(AppRadii.control),
-            ),
-            child: Icon(icon, size: 22, color: expense),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              context,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: primary,
-            ),
-          ),
-          if (description?.trim().isNotEmpty == true) ...[
-            const SizedBox(height: 6),
-            Text(
-              description!,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: AppTypography.body(
-                context,
-                fontSize: 13,
-                color: secondary,
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 520),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+        decoration: BoxDecoration(
+          color: AppColors.surface(brightness),
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          border: Border.all(color: AppColors.border(brightness)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: expense.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(AppRadii.control),
               ),
+              child: Icon(widget.icon, size: 22, color: expense),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              widget.title,
+              textAlign: TextAlign.center,
+              style: AppTypography.body(context, fontSize: 16,
+                fontWeight: FontWeight.w700, color: primary),
+            ),
+            if (widget.description?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 6),
+              Text(
+                widget.description!,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTypography.body(context,
+                  fontSize: 13, color: secondary),
+              ),
+            ],
+            if (_retryFailed) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Ainda não foi possível atualizar. Tente novamente.',
+                key: const ValueKey('folego-retry-feedback'),
+                textAlign: TextAlign.center,
+                style: AppTypography.body(context,
+                  fontSize: 12, color: expense),
+              ),
+            ],
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              key: const ValueKey('folego-error-retry'),
+              onPressed: _retrying ? null : _retry,
+              icon: _retrying
+                ? const SizedBox.square(dimension: 17,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(_retrying ? 'atualizando...' : 'tentar novamente'),
             ),
           ],
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () => onRetry(),
-            child: const Text('tentar novamente'),
-          ),
-        ],
+        ),
       ),
-    ),
     );
   }
 }

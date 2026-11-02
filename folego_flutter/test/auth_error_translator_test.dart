@@ -26,6 +26,14 @@ void main() {
       expect(result, contains('pelo menos 6 caracteres'));
     });
 
+    test('não mostra dados internos de JSON malformado', () {
+      const internal = 'JSON parse failed for transactions: token secreto 123';
+      final result = ErrorTranslator.forDisplay(const FormatException(internal));
+      expect(result, contains('Não foi possível ler esses dados'));
+      expect(result, isNot(contains('transactions')));
+      expect(result, isNot(contains('secreto')));
+    });
+
     test('traduz falha de rede', () {
       final result = ErrorTranslator.forDisplay(
         Exception('SocketException: Failed host lookup'),

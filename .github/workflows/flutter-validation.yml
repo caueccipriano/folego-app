@@ -60,8 +60,8 @@ jobs:
       - name: Smart category suggestions and natural quick capture
         run: flutter test test/smart_category_suggestion_test.dart test/quick_capture_parser_test.dart test/home_pulse_insight_test.dart test/folego41_quick_capture_flow_test.dart
 
-      - name: Shared empty and loading states
-        run: flutter test test/shared_empty_loading_states_test.dart
+      - name: Shared empty, loading and safe retry states
+        run: flutter test test/shared_empty_loading_states_test.dart test/app_error_retry_test.dart test/auth_error_translator_test.dart
 
       - name: iPhone typography, contrast and touch targets
         run: flutter test test/shared_header_responsive_test.dart test/design_system_accessibility_test.dart test/plan_guidance_test.dart
