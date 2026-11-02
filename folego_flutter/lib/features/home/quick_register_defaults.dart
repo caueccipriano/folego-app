@@ -6,8 +6,10 @@ String? quickRegisterInstrumentId<T>({
   required String? currentId,
   required String Function(T) idOf,
 }) {
-  if (currentId != null && items.any((item) => idOf(item) == currentId)) {
-    return currentId;
+  if (currentId != null) {
+    // An explicit selection that disappeared must not silently become another
+    // account when a catalog refresh completes while the draft is open.
+    return items.any((item) => idOf(item) == currentId) ? currentId : null;
   }
   return items.length == 1 ? idOf(items.single) : null;
 }
