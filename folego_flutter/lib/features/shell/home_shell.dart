@@ -17,6 +17,7 @@ import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/responsive_navigation_shell.dart';
 import '../home/home_screen.dart';
 import 'more_tools_sheet.dart';
+import 'financial_ai_screen.dart';
 import '../goals/goals_screen.dart';
 import '../diary/diary_screen.dart';
 import '../home/home_wallet_navigation_scope.dart';
@@ -216,6 +217,17 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         return;
       case 3:
         setState(() => _index = 4);
+        return;
+      case 4:
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => FinancialAiScreen(
+              client: Supabase.instance.client,
+              repository: widget.repository,
+              spaceId: widget.space.id,
+            ),
+          ),
+        );
         return;
     }
   }
