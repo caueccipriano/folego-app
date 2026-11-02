@@ -93,8 +93,8 @@ class FinancialReviewScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             FinancialNumbersGuide(
-              accountBalance: snapshot.liquidBalance,
-              untilIncome: snapshot.spendablePool,
+              accountBalance: snapshot.liquidBalance.toDouble(),
+              untilIncome: snapshot.spendablePool.toDouble(),
               spendingByPurchaseDate: summary?.spendingMade,
               expensesByCompetence: summary?.competenceExpenses,
             ),
