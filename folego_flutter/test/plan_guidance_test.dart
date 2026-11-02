@@ -161,6 +161,8 @@ void main() {
     expect(action, findsOneWidget);
     expect(tester.widget<IconButton>(action).tooltip, 'definir limite');
     await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    expect(tester.getCenter(action).dy, lessThan(780));
     await tester.tap(action);
     expect(edited?.categoryId, 'Calçados');
     expect(tester.takeException(), isNull);
