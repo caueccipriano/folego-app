@@ -35,7 +35,7 @@ class GoalProgressBar extends StatelessWidget {
     super.key,
     required this.progress,
     this.animate = true,
-    this.height = 7,
+    this.height = 9,
   });
 
   final double progress;
@@ -106,7 +106,7 @@ class GoalCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Ink(
-          padding: const EdgeInsets.all(17),
+          padding: const EdgeInsets.all(19),
           decoration: BoxDecoration(
             color: completed ? surface.withValues(alpha: .72) : surface,
             borderRadius: BorderRadius.circular(22),
@@ -145,7 +145,7 @@ class GoalCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.body(
                             context,
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: primary,
                           ),
@@ -172,7 +172,7 @@ class GoalCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.money(
                   context,
-                  fontSize: 15,
+                  fontSize: 16,
                   color: primary,
                 ),
               ),
