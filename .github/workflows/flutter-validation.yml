@@ -61,7 +61,7 @@ jobs:
         run: flutter test test/smart_category_suggestion_test.dart test/quick_capture_parser_test.dart test/home_pulse_insight_test.dart
 
       - name: Folego 3.0 streamlined navigation contract
-        run: flutter test test/folego3_less_routine_test.dart test/folego3_home_first_glance_test.dart test/folego3_more_tools_sheet_test.dart test/folego4_home_visual_test.dart test/folego4_movimentos_visual_test.dart
+        run: flutter test test/folego3_less_routine_test.dart test/folego3_home_first_glance_test.dart test/folego3_more_tools_sheet_test.dart test/folego4_home_visual_test.dart test/folego4_movimentos_visual_test.dart test/folego4_plan_summary_visual_test.dart
 
       - name: Home data freshness safety regression
         run: flutter test test/home_data_freshness_test.dart test/home_load_guard_test.dart test/sheet_sync_status_test.dart test/financial_organization_space_isolation_test.dart test/transaction_pending_guard_test.dart test/classification_review_overview_test.dart test/sheet_reconciliation_audit_test.dart
