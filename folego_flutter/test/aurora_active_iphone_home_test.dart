@@ -20,6 +20,25 @@ void main() {
     expect(active, contains("ValueKey('home-fixed-amount')"));
   });
 
+  test('banking-grade visual system is on the active Home', () {
+    expect(home, contains("FÔLEGO  /  HOJE"));
+    expect(active, contains('DISPONÍVEL ATÉ RECEBER'));
+    expect(active, contains('SEU LIMITE DIÁRIO'));
+    expect(active, contains('PRÓXIMO SALÁRIO'));
+    expect(active, contains('tokens.acaoHero'));
+    expect(active, contains("ValueKey('home-fixed-amount')"));
+    expect(active, contains("ValueKey('home-fixed-daily')"));
+    final summary = File('lib/features/home/home_mobile_summary_strip.dart')
+        .readAsStringSync();
+    expect(summary, contains("ValueKey('home-mobile-budget-value')"));
+    expect(summary, contains('budgetExceeded'));
+    expect(summary, contains('FolegoColorTokens.of(context)'));
+    final nav = File('lib/shared/widgets/liquid_glass_navigation_bar.dart')
+        .readAsStringSync();
+    expect(nav, contains('prominent: false'));
+    expect(nav, contains("ValueKey('mobile-liquid-nav')"));
+  });
+
   test('financial facts and navigation stay intact on the active Home', () {
     expect(active, contains('Formatters.money(snapshot.spendablePool)'));
     expect(active, contains('Formatters.money(snapshot.dailyFolego)'));

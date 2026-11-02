@@ -1266,8 +1266,9 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'FÔLEGO  /  SEU DINHEIRO',
+                'FÔLEGO  /  HOJE',
                 maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTypography.label(
                   context,
                   fontSize: 10,
