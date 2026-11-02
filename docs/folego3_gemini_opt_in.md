@@ -1,14 +1,25 @@
-# Gemini opcional no Fôlego
+# Gemini como provedor único do Fôlego
 
-A função financial-ai continua usando OpenAI por padrão. Gemini será usado
-apenas com FOLEGO_AI_PROVIDER=gemini e GEMINI_API_KEY definidos
-como secrets no Supabase. A chave nunca pertence ao PWA nem ao repositório.
+O assistente financeiro `financial-ai` usa exclusivamente a API Gemini do Google.
+Não há fallback para OpenAI, nem seleção por `FOLEGO_AI_PROVIDER`.
 
-Modelo padrão: gemini-3.5-flash-lite (configurável via FOLEGO_GEMINI_MODEL).
+**Segredo obrigatório no Supabase Edge Function Secrets:** `GEMINI_API_KEY`.
+A chave nunca deve estar no PWA, no Flutter, nos commits nem em URLs.
+**Modelo padrão:** `gemini-3.5-flash-lite`. Pode ser definido outro modelo
+compatível no segredo opcional `FOLEGO_GEMINI_MODEL`.
 
-Somente os totais agregados já aceitos pela função são enviados ao modelo.
-Permanecem autenticação JWT, quota Premium, reembolso em falhas, limite de
-pergunta e ausência de dados transacionais individuais.
+O endpoint GET autenticado de `financial-ai` retorna `provider: gemini`
+e `configured: true/false`, sem expor a chave e sem consumir cota.
+Caso a chave esteja ausente, a consulta é indisponibilizada e nenhuma
+pergunta Premium é descontada.
 
-Após configurar secrets, validar uma pergunta autenticada e o caso de erro
-antes de confirmar o uso no ambiente real.
+A autenticação JWT, o isolamento por espaço financeiro, a quota Premium,
+o reembolso em caso de falha e o processamento de totais agregados permanecem.
+O assistente é somente leitura e nunca modifica lançamentos.
+
+## Validação
+
+1. Executar `deno test --no-check supabase/tests/gemini_adapter_test.ts supabase/tests/financial_category_context_test.ts` e `deno check supabase/functions/financial-ai/index.ts`.
+2. Verificar status GET autenticado: `provider: gemini` e `configured: true`.
+3. Fazer uma pergunta autenticada e confirmar resposta `provider: gemini`.
+4. Confirmar a falha segura sem chave e o reembolso da quota em falhas.
