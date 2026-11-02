@@ -1,6 +1,5 @@
-/// Selects a valid instrument without guessing between multiple choices.
-/// A previous selection is retained only when it still belongs to the catalog.
-/// Exactly one available option is safe to propose; two or more require a tap.
+/// Resolves a single choice *after* the user explicitly confirms it.
+/// Never call this helper from catalog loading: payment selection is deliberate.
 String? quickRegisterInstrumentId<T>({
   required List<T> items,
   required String? currentId,
@@ -12,6 +11,16 @@ String? quickRegisterInstrumentId<T>({
     return items.any((item) => idOf(item) == currentId) ? currentId : null;
   }
   return items.length == 1 ? idOf(items.single) : null;
+}
+
+/// Existing payment choices remain valid only while their instrument exists.
+String? quickRegisterExistingInstrumentId<T>({
+  required List<T> items,
+  required String? currentId,
+  required String Function(T) idOf,
+}) {
+  if (currentId == null) return null;
+  return items.any((item) => idOf(item) == currentId) ? currentId : null;
 }
 
 /// A history shortcut may only reuse a payment account for a direct expense.
