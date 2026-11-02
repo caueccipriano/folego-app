@@ -203,7 +203,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             _checkingProvider
                                 ? 'verificando a IA...'
                                 : _providerConfigured == true
-                                    ? '\${_providerName ?? 'IA'} configurada no servidor'
+                                    ? '${_providerName ?? 'IA'} configurada no servidor'
                                     : _providerConfigured == false
                                         ? 'IA ainda não configurada no servidor'
                                         : 'não foi possível conferir a IA',
