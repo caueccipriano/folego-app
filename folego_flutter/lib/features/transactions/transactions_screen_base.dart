@@ -35,6 +35,7 @@ import '../home/quick_register_sheet.dart';
 import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
+import 'transaction_day_label.dart';
 import 'transaction_detail_sheet.dart';
 import 'transaction_edit_sheet.dart';
 import 'transaction_filter_sheet.dart';
@@ -1389,7 +1390,7 @@ class _TransactionsTabV3 extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(0, 4, 0, 76),
           itemCount: transactions.length + (showFooter ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: 6),
+          separatorBuilder: (_, _) => const SizedBox(height: 5),
           itemBuilder: (context, index) {
             if (index >= transactions.length) {
               return _TransactionLoadMoreFooterV3(
@@ -1399,10 +1400,10 @@ class _TransactionsTabV3 extends StatelessWidget {
               );
             }
             final item = transactions[index];
-            final group = _transactionGroupLabel(item.occurredAt);
+            final group = transactionDayLabel(item.occurredAt);
             final previousGroup = index == 0
                 ? null
-                : _transactionGroupLabel(transactions[index - 1].occurredAt);
+                : transactionDayLabel(transactions[index - 1].occurredAt);
             final showGroup = group != previousGroup;
 
             return Column(
@@ -1410,17 +1411,31 @@ class _TransactionsTabV3 extends StatelessWidget {
               children: [
                 if (showGroup) ...[
                   Padding(
-                    padding: EdgeInsets.fromLTRB(2, index == 0 ? 2 : 8, 2, 6),
-                    child: Text(
-                      group,
-                      style: AppTypography.label(
-                        context,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.secondaryText(
-                          Theme.of(context).brightness,
+                    padding: EdgeInsets.fromLTRB(3, index == 0 ? 3 : 12, 3, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          group,
+                          key: ValueKey('transaction-day-$index'),
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryText(
+                              Theme.of(context).brightness,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Divider(
+                            height: 1,
+                            color: AppColors.border(
+                              Theme.of(context).brightness,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1468,6 +1483,8 @@ class _TransactionsTabV3 extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) => onTap(),
+      showCheckmark: false,
+      visualDensity: const VisualDensity(vertical: -2),
       selectedColor: accent.withValues(alpha: .12),
       side: BorderSide(
         color: selected
@@ -1476,38 +1493,11 @@ class _TransactionsTabV3 extends StatelessWidget {
       ),
       labelStyle: AppTypography.label(
         context,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
         color: selected ? accent : AppColors.secondaryText(brightness),
       ),
     );
-  }
-
-  String _transactionGroupLabel(DateTime value) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final date = DateTime(value.year, value.month, value.day);
-    final diff = today.difference(date).inDays;
-
-    if (diff == 0) return 'hoje';
-    if (diff == 1) return 'ontem';
-    if (diff > 1 && diff < 7) return 'esta semana';
-
-    const months = [
-      'jan',
-      'fev',
-      'mar',
-      'abr',
-      'mai',
-      'jun',
-      'jul',
-      'ago',
-      'set',
-      'out',
-      'nov',
-      'dez',
-    ];
-    return '${value.day.toString().padLeft(2, '0')} ${months[value.month - 1]}';
   }
 
   List<_ActiveFilterChip> _activeChips() {
@@ -1679,14 +1669,14 @@ class _TransactionCardV3 extends StatelessWidget {
           onTap: onOpen,
           borderRadius: BorderRadius.circular(AppRadii.card),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(11, 8, 11, 8),
+            padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
             child: Row(
               children: [
                 CategoryIconBadge(
                   icon: visual.icon,
                   color: visual.color,
-                  size: 38,
-                  iconSize: 19,
+                  size: 42,
+                  iconSize: 20,
                   radius: AppRadii.control,
                 ),
                 const SizedBox(width: 10),
@@ -1709,8 +1699,8 @@ class _TransactionCardV3 extends StatelessWidget {
                       Text(
                         [
                           categoryLabel,
-                          _formatDate(item.occurredAt),
-                          if (item.accountName != null) item.accountName!,
+                          if (item.accountName?.trim().isNotEmpty == true)
+                            item.accountName!.trim(),
                         ].join(' • '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1723,17 +1713,25 @@ class _TransactionCardV3 extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  '${item.isIncome
-                      ? '+'
-                      : item.isExpense
-                      ? '−'
-                      : ''}${Formatters.money(item.amount.abs())}',
-                  style: AppTypography.money(
-                    context,
-                    fontSize: 13,
-                    color: amountColor,
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 136),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${item.isIncome
+                          ? '+'
+                          : item.isExpense
+                          ? '−'
+                          : ''}${Formatters.money(item.amount.abs())}',
+                      key: const ValueKey('transaction-row-amount'),
+                      style: AppTypography.money(
+                        context,
+                        fontSize: 15,
+                        color: amountColor,
+                      ),
+                    ),
                   ),
                 ),
               ],
