@@ -62,6 +62,7 @@ class QuickRegisterSheet extends StatefulWidget {
 class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   final _description = TextEditingController();
   final _amount = TextEditingController();
+  final _amountFocusNode = FocusNode();
   final _merchant = TextEditingController();
   final _reflectionNote = TextEditingController();
 
@@ -139,6 +140,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     _instrumentRealtimeBinding?.dispose();
     _description.dispose();
     _amount.dispose();
+    _amountFocusNode.dispose();
     _merchant.dispose();
     _reflectionNote.dispose();
     super.dispose();
@@ -318,7 +320,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       setState(() {
         _categoryHistory = page.items;
         _suggestions = ranked
-            .take(4)
+            .take(3)
             .map(
               (entry) => _QuickSuggestion(
                 label: entry.value.description.trim(),
@@ -348,8 +350,12 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           _creditCards = catalog.cards;
           _categories = _selectableCategories(catalog.categories);
           _categoryId = null;
-          _incomeAccountId = null;
-          _expensePayment = const QuickExpensePaymentState();
+          _incomeAccountId = catalog.accounts.length == 1
+              ? catalog.accounts.single.id
+              : null;
+          _expensePayment = QuickExpensePaymentState(
+            accountId: _incomeAccountId,
+          );
           _loading = false;
         });
         return;
@@ -381,7 +387,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           (_isExpense ? values[3] : values[1]) as List<CategoryItem>;
       final selectable = _selectableCategories(categories);
       final defaultCategoryId = _defaultCategoryId(selectable);
-      const String? accountId = null;
+      final String? accountId = accounts.length == 1 ? accounts.single.id : null;
 
       setState(() {
         _paymentAccounts = accounts;
@@ -815,7 +821,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
                         ],
 
-                        if (_suggestions.isNotEmpty) ...[
+                        if (_suggestions.isNotEmpty &&
+                            _description.text.trim().isEmpty) ...[
 
                           const SizedBox(height: 10),
 
@@ -898,7 +905,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               const SizedBox(height: 4),
               Text(
                 _isExpense
-                    ? 'valor, categoria e pagamento. o resto é detalhe.'
+                    ? 'digite o gasto e o valor juntos, se preferir.'
                     : 'valor, categoria e conta. pronto.',
                 style: AppTypography.body(
                   context,
@@ -920,8 +927,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   Widget _moneyField() {
     return TextField(
+      key: const ValueKey('quick-register-amount'),
       controller: _amount,
+      focusNode: _amountFocusNode,
       autofocus: !_isExpense,
+      textInputAction: TextInputAction.done,
       onChanged: (_) {
         if (_capturedShorthand) setState(() => _capturedShorthand = false);
       },
@@ -1126,7 +1136,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'atalhos',
+          'frequentes',
           style: AppTypography.label(
             context,
             fontSize: 9,
@@ -1157,6 +1167,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         }
                         _error = null;
                       });
+                      _amountFocusNode.requestFocus();
                     },
                   ),
                   if (i != _suggestions.length - 1) const SizedBox(width: 7),
@@ -1191,8 +1202,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   Widget _detailsSection() {
     return TextField(
+      key: const ValueKey('quick-register-description'),
       controller: _description,
       autofocus: _isExpense,
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => _amountFocusNode.requestFocus(),
       onChanged: (value) {
         final draft = _amount.text.trim().isEmpty
             ? QuickCaptureDraft.parse(value)
@@ -1214,7 +1228,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       textCapitalization: TextCapitalization.sentences,
       decoration: const InputDecoration(
         labelText: 'o que foi?',
-        hintText: 'ex.: Uber 27,90',
+        hintText: 'ex.: Uber 27,90 ou 27,90 Uber',
       ),
     );
   }
