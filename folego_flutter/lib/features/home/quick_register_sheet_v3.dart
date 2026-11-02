@@ -1038,6 +1038,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   Widget _paymentSection(Brightness brightness) {
     if (!_isExpense) {
       return DropdownButtonFormField<String>(
+        key: ValueKey('quick-income-account-${_incomeAccountId ?? 'none'}'),
         initialValue: _incomeAccountId,
         decoration: const InputDecoration(labelText: 'conta que recebeu'),
         items: _paymentAccounts
@@ -1087,6 +1088,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
         const SizedBox(height: 12),
         switch (_expensePayment.type) {
           QuickExpensePaymentType.account => DropdownButtonFormField<String>(
+            key: ValueKey(
+              'quick-expense-account-${_expensePayment.accountId ?? 'none'}',
+            ),
             initialValue:
                 _paymentAccounts.any((e) => e.id == _expensePayment.accountId)
                 ? _expensePayment.accountId
@@ -1103,6 +1107,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             ),
           ),
           QuickExpensePaymentType.creditCard => DropdownButtonFormField<String>(
+            key: ValueKey(
+              'quick-expense-card-${_expensePayment.cardId ?? 'none'}',
+            ),
             initialValue:
                 _creditCards.any((e) => e.id == _expensePayment.cardId)
                 ? _expensePayment.cardId
@@ -1119,6 +1126,9 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             ),
           ),
           QuickExpensePaymentType.benefit => DropdownButtonFormField<String>(
+            key: ValueKey(
+              'quick-expense-benefit-${_expensePayment.benefitAccountId ?? 'none'}',
+            ),
             initialValue:
                 _benefitAccounts.any(
                   (e) => e.id == _expensePayment.benefitAccountId,
