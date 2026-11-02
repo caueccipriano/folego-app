@@ -1361,10 +1361,10 @@ class _TransactionsTabV3 extends StatelessWidget {
               icon: filtered ? AppIcons.search : AppIcons.transactions,
               title: filtered
                   ? 'nenhum lançamento por aqui'
-                  : 'nenhum lançamento ainda',
+                  : 'seus lançamentos começam aqui',
               description: filtered
-                  ? 'tente ajustar os filtros ou a busca'
-                  : 'seus gastos, receitas e movimentações aparecerão aqui',
+                  ? 'nenhum registro corresponde à sua busca. limpe os filtros para ver tudo'
+                  : 'registre um gasto ou uma receita para começar a acompanhar seu dinheiro',
               action: filtered
                   ? TextButton.icon(
                       onPressed: onClearFilters,
