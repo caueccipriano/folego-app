@@ -43,4 +43,18 @@ void main() {
     expect(source, contains("financialAiProviderName(payload['provider'])"));
     expect(source, contains('sem geração de texto por IA'));
   });
+
+  test('Switching financial spaces invalidates pending AI and status replies', () {
+    final source = File('lib/features/shell/financial_ai_screen.dart')
+        .readAsStringSync();
+    expect(source, contains('int _requestSerial = 0;'));
+    expect(source, contains('int _providerSerial = 0;'));
+    expect(source, contains('final serial = ++_requestSerial;'));
+    expect(source, contains('serial != _requestSerial'));
+    expect(source, contains('_requestSerial++;'));
+    expect(source, contains('_sending = false;'));
+    expect(source, contains('oldWidget.spaceId != widget.spaceId ||'));
+    expect(source, contains('widget.client != requestedClient'));
+    expect(source, contains('serial != _providerSerial'));
+  });
 }
