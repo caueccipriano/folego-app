@@ -1252,6 +1252,23 @@ class _TransactionsTabV3 extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: AppColors.border(
+                                  Theme.of(context).brightness,
+                                ),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: AppColors.primaryPurple(
+                                  Theme.of(context).brightness,
+                                ),
+                                width: 1.5,
+                              ),
+                            ),
                             prefixIcon: const Icon(AppIcons.search, size: 19),
                             suffixIcon: value.text.isEmpty
                                 ? null
@@ -1451,34 +1468,33 @@ class _TransactionsTabV3 extends StatelessWidget {
               children: [
                 if (showGroup) ...[
                   Padding(
-                    padding: EdgeInsets.fromLTRB(3, index == 0 ? 3 : 12, 3, 8),
+                    padding: EdgeInsets.fromLTRB(3, index == 0 ? 5 : 17, 3, 11),
                     child: Semantics(
                       header: true,
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 7,
-                            ),
+                            height: 17,
+                            width: 3,
                             decoration: BoxDecoration(
                               color: AppColors.primaryPurple(
                                 Theme.of(context).brightness,
-                              ).withValues(alpha: .085),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              group,
-                              key: ValueKey('transaction-day-$index'),
-                              style: AppTypography.label(
-                                context,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryText(
-                                  Theme.of(context).brightness,
-                                ),
                               ),
+                              borderRadius: BorderRadius.circular(99),
                             ),
+                          ),
+                          const SizedBox(width: 9),
+                          Text(
+                            group,
+                            key: ValueKey('transaction-day-$index'),
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryText(
+                                Theme.of(context).brightness,
+                              ),
+                            ).copyWith(letterSpacing: .15),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -1486,7 +1502,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                               height: 1,
                               color: AppColors.border(
                                 Theme.of(context).brightness,
-                              ),
+                              ).withValues(alpha: .80),
                             ),
                           ),
                         ],
@@ -1540,7 +1556,11 @@ class _TransactionsTabV3 extends StatelessWidget {
       onSelected: (_) => onTap(),
       showCheckmark: false,
       visualDensity: const VisualDensity(vertical: -2),
-      selectedColor: accent.withValues(alpha: .12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(13),
+      ),
+      selectedColor: accent.withValues(alpha: .13),
       side: BorderSide(
         color: selected
             ? accent.withValues(alpha: .5)
@@ -1729,8 +1749,9 @@ class _TransactionCardV3 extends StatelessWidget {
           hoverColor: accent.withValues(alpha: .035),
           focusColor: accent.withValues(alpha: .09),
           splashColor: accent.withValues(alpha: .08),
+          highlightColor: accent.withValues(alpha: .045),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final textScale =

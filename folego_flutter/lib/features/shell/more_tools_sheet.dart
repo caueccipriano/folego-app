@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/folego_motion.dart';
 import '../../shared/widgets/folego_glass_surface.dart';
 
@@ -14,6 +15,7 @@ class MoreToolsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tokens = FolegoColorTokens.of(context);
     final space = MediaQuery.sizeOf(context);
     final pad = space.width < 355 ? 12.0 : 18.0;
 
@@ -55,17 +57,39 @@ class MoreToolsSheet extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('mais', style: AppTypography.section(context,
-                          fontSize: 20, color: scheme.onSurface)),
+                        Text(
+                          'SEU ESPAÇO',
+                          style: AppTypography.label(
+                            context,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: tokens.marca,
+                          ).copyWith(letterSpacing: 1.1),
+                        ),
                         const SizedBox(height: 3),
-                        Text('suas ferramentas, em um lugar',
+                        Text('mais', style: AppTypography.section(context,
+                          fontSize: 22, color: scheme.onSurface)),
+                        const SizedBox(height: 3),
+                        Text('contas, metas e configurações',
                           style: AppTypography.body(context, fontSize: 13,
                             color: scheme.onSurfaceVariant)),
                       ],
                     ),
                   ),
-                  Icon(Icons.apps_rounded, color: scheme.onSurfaceVariant,
-                    size: 22),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tokens.marca.withValues(alpha: .11),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: tokens.marca.withValues(alpha: .13),
+                      ),
+                    ),
+                    child: Icon(Icons.apps_rounded,
+                      color: tokens.marca, size: 21),
+                  ),
                 ]),
               ),
               LayoutBuilder(builder: (context, limits) {
@@ -112,6 +136,14 @@ class MoreToolsSheet extends StatelessWidget {
               FilledButton.icon(
                 key: const ValueKey('tools-financial-ai'),
                 onPressed: () => onSelected(4),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  backgroundColor: tokens.acao,
+                  foregroundColor: tokens.acaoSobre,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                ),
                 icon: const Icon(Icons.auto_awesome_outlined, size: 19),
                 label: const Text('perguntar ao Fôlego · IA'),
               ),
@@ -165,6 +197,7 @@ class _ToolTileState extends State<_ToolTile> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tokens = FolegoColorTokens.of(context);
     return AnimatedScale(
       key: ValueKey('tool-scale-${widget.label}'),
       scale: _pressed && FolegoMotion.enabled(context) ? .975 : 1,
@@ -172,7 +205,7 @@ class _ToolTileState extends State<_ToolTile> {
       curve: Curves.easeOutCubic,
       child: FolegoGlassSurface(
       radius: 18,
-      elevated: false,
+      elevated: true,
       child: InkWell(
         key: widget.tileKey,
         onTap: widget.onTap,
@@ -190,10 +223,13 @@ class _ToolTileState extends State<_ToolTile> {
                 width: 34, height: 34,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: .10),
+                  color: tokens.marca.withValues(alpha: .11),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: tokens.marca.withValues(alpha: .14),
+                  ),
                 ),
-                child: Icon(widget.icon, size: 20, color: scheme.primary),
+                child: Icon(widget.icon, size: 20, color: tokens.marca),
               ),
               const SizedBox(height: 10),
               Text(widget.label, maxLines: 2, overflow: TextOverflow.ellipsis,
