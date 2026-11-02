@@ -1064,6 +1064,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
+    final accent = AppColors.primaryPurple(brightness);
     final progressColor = _progressColor(summary.progressState, brightness);
     final percentage = (summary.usageRatio * 100).round();
     final pace = currentMonthBudgetPace(
@@ -1082,22 +1083,43 @@ class _PlanScreenState extends State<PlanScreen> {
     return Container(
       key: const ValueKey('plan-summary'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              accent.withValues(alpha: .035),
+              AppColors.surface(brightness),
+            ),
+            AppColors.surface(brightness),
+          ],
+        ),
         borderRadius: BorderRadius.circular(AppRadii.feature),
         border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'resumo do mês',
-            style: AppTypography.section(
-              context,
-              fontSize: 18,
-              color: primaryText,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'resumo do mês',
+                  style: AppTypography.section(
+                    context,
+                    fontSize: 18,
+                    color: primaryText,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.insights_outlined,
+                size: 20,
+                color: accent,
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(
@@ -1108,20 +1130,21 @@ class _PlanScreenState extends State<PlanScreen> {
               color: secondaryText,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
               Formatters.money(summary.remainingAmount.abs()),
+              key: const ValueKey('plan-summary-featured-amount'),
               style: AppTypography.money(
                 context,
-                fontSize: 28,
+                fontSize: 32,
                 color: remainingColor,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -1141,24 +1164,60 @@ class _PlanScreenState extends State<PlanScreen> {
                   onTap: () => _showPlanMetricExplanation('tracked'),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Metric(
-                  label: 'consumido',
-                  value: summary.plannedAmount > 0 ? '$percentage%' : '—',
-                  brightness: brightness,
-                  onTap: () => _showPlanMetricExplanation('percent'),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (summary.plannedAmount > 0) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'uso dos limites',
+                    style: AppTypography.label(
+                      context,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: primaryText,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  key: const ValueKey('plan-summary-usage-explanation'),
+                  onTap: () => _showPlanMetricExplanation('percent'),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: progressColor.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                      border: Border.all(
+                        color: progressColor.withValues(alpha: .30),
+                      ),
+                    ),
+                    child: Text(
+                      '$percentage%',
+                      key: const ValueKey('plan-summary-usage-percentage'),
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: progressColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
               child: LinearProgressIndicator(
+                key: const ValueKey('plan-summary-usage-progress'),
                 value: summary.usageRatio.clamp(0.0, 1.0),
-                minHeight: 7,
+                minHeight: 8,
                 backgroundColor: border.withValues(alpha: .65),
                 valueColor: AlwaysStoppedAnimation<Color>(progressColor),
               ),
@@ -1910,8 +1969,8 @@ class _Metric extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.control),
       child: Container(
-      constraints: const BoxConstraints(minWidth: 118),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.background(brightness).withValues(alpha: .38),
         borderRadius: BorderRadius.circular(AppRadii.control),
@@ -1924,7 +1983,7 @@ class _Metric extends StatelessWidget {
             label,
             style: AppTypography.label(
               context,
-              fontSize: 9,
+              fontSize: 11,
               color: AppColors.secondaryText(brightness),
             ),
           ),
@@ -1936,7 +1995,7 @@ class _Metric extends StatelessWidget {
               value,
               style: AppTypography.money(
                 context,
-                fontSize: 13,
+                fontSize: 16,
                 color: AppColors.primaryText(brightness),
               ),
             ),
