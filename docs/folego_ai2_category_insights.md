@@ -13,8 +13,10 @@ Uma próxima ação determinística (revisar gastos sem categoria, excesso de li
 ## Implantação e limites
 - Implementar e validar a função `financial-ai` no Supabase correspondente ao domínio PWA.
 - A função aceita `spaceId` e mantém compatibilidade com contextos agregados antigos. Para clientes novos, ignora os valores financeiros enviados pelo cliente e busca valores oficiais com a sessão do usuário.
-- O provedor permanece **OpenAI por padrão**; Gemini é opcional e requer secrets configurados no Supabase: `FOLEGO_AI_PROVIDER=gemini` e `GEMINI_API_KEY`. Nunca inserir chaves no PWA ou no repositório.
-- Não afirmar que o Gemini respondeu até passar teste autenticado real; não é possível verificar por mera existência da Edge Function.
+- O único provedor generativo é **Gemini** (`gemini-3.5-flash-lite` por padrão), habilitado apenas se o secret `GEMINI_API_KEY` existir no Supabase. `FOLEGO_AI_PROVIDER`, `OPENAI_API_KEY` e `FOLEGO_AI_MODEL` não são utilizados pela função. Nunca inserir chaves no PWA ou no repositório.
+- A API Gemini oferece uma camada gratuita com limites por projeto/modelo (não é ilimitada). No plano gratuito, o Google pode usar conteúdo enviado para melhorar produtos; usuários só devem enviar perguntas quando aceitarem essa condição.
+- Se o Gemini estiver indisponível, o usuário obtém um resumo financeiro determinístico **sem IA**, gratuito e sem consumo da cota Premium; falhas de geração não devem descontar cota.
+- A verificação GET informa se existe uma chave configurada, mas não comprova créditos, limites disponíveis ou sucesso de uma geração. Não afirmar que a chamada Gemini funcionou até realizar um POST autenticado real.
 - Não gerar notificações automáticas ou consumir perguntas de IA em background.
 - Quatro categorias são uma amostra de maior impacto; não representam automaticamente todas as categorias do mês.
 
