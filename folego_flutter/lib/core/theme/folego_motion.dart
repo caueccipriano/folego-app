@@ -17,4 +17,10 @@ abstract final class FolegoMotion {
   }) => enabled(context)
       ? Duration(milliseconds: milliseconds)
       : Duration.zero;
+
+  /// Shorter native sheet transition; instant for reduced-motion users.
+  static AnimationStyle sheetStyle(BuildContext context) => AnimationStyle(
+    duration: duration(context, milliseconds: 220),
+    reverseDuration: duration(context, milliseconds: 170),
+  );
 }

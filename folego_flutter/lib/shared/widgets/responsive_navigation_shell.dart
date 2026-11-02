@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/folego_motion.dart';
 import 'liquid_glass_navigation_bar.dart';
 
 /// Responsive application chrome. The content stack stays in the same branch of
@@ -46,7 +47,22 @@ class ResponsiveNavigationShell extends StatelessWidget {
             ),
           Expanded(
             key: const ValueKey('shell-content'),
-            child: IndexedStack(index: selectedIndex, children: pages),
+            // Keep every destination mounted: navigation must preserve
+            // scroll positions, form state and cached financial data.
+            child: IndexedStack(
+              index: selectedIndex,
+              children: [
+                for (var index = 0; index < pages.length; index++)
+                  AnimatedOpacity(
+                    key: ValueKey('shell-page-transition-$index'),
+                    opacity: index == selectedIndex ? 1 : 0,
+                    duration: FolegoMotion.duration(
+                      context, milliseconds: 150),
+                    curve: Curves.easeOutCubic,
+                    child: pages[index],
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -93,9 +109,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
     final secondaryText = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
     final width = compact ? 216.0 : 248.0;
-    final motionDuration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 160);
+    final motionDuration = FolegoMotion.duration(context, milliseconds: 160);
 
     return Material(
       key: const ValueKey('desktop-sidebar'),

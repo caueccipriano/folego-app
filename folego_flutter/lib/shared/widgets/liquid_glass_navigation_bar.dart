@@ -5,6 +5,7 @@ import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/folego_motion.dart';
 import 'folego_glass_surface.dart';
 
 /// Frosted mobile dock without BackdropFilter to preserve iOS PWA hit targets.
@@ -76,9 +77,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                             onTap: onOpenTools,
                             borderRadius: BorderRadius.circular(14),
                             child: AnimatedContainer(
-                              duration: MediaQuery.disableAnimationsOf(context)
-                                  ? Duration.zero
-                                  : const Duration(milliseconds: 180),
+                              duration: FolegoMotion.duration(context,
+                                  milliseconds: 160),
                               margin: const EdgeInsets.symmetric(horizontal: 1),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(21),
@@ -98,9 +98,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                 children: [
                                   AnimatedContainer(
                                     key: const ValueKey('mobile-tools-indicator'),
-                                    duration: MediaQuery.disableAnimationsOf(context)
-                                        ? Duration.zero
-                                        : const Duration(milliseconds: 180),
+                                    duration: FolegoMotion.duration(context,
+                                        milliseconds: 160),
                                     width: selectedIndex >= 3 ? 22 : 5,
                                     height: 3,
                                     decoration: BoxDecoration(
@@ -112,9 +111,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   AnimatedContainer(
-                                    duration: MediaQuery.disableAnimationsOf(context)
-                                        ? Duration.zero
-                                        : const Duration(milliseconds: 180),
+                                    duration: FolegoMotion.duration(context,
+                                        milliseconds: 160),
                                     width: 37,
                                     height: 24,
                                     decoration: BoxDecoration(
@@ -182,9 +180,7 @@ class _Destination extends StatelessWidget {
     final activePurple = FolegoColorTokens.of(context).marca;
     final inactiveColor = FolegoColorTokens.of(context).textoSecundario;
     final activeForeground = activePurple;
-    final motionDuration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 180);
+    final motionDuration = FolegoMotion.duration(context, milliseconds: 160);
 
     return Semantics(
       selected: selected,
