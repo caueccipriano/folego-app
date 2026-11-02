@@ -23,6 +23,18 @@ void main() {
     expect(source, isNot(contains('getMonthlyMoneySummary')));
   });
 
+  test('Financial AI backend uses Gemini exclusively with local fallback', () {
+    final code = File('../supabase/functions/financial-ai/index.ts')
+        .readAsStringSync();
+    expect(code, contains("const provider = 'gemini';"));
+    expect(code, contains("Deno.env.get('GEMINI_API_KEY')"));
+    expect(code, contains("localReply('fallback')"));
+    expect(code, isNot(contains('OPENAI_API_KEY')));
+    expect(code, isNot(contains('api.openai.com')));
+    expect(code, isNot(contains('FOLEGO_AI_PROVIDER')));
+    expect(code, isNot(contains('gpt-4.1-mini')));
+  });
+
   test('A failed AI reply cannot pretend to be an AI-generated text', () {
     final source = File('lib/features/shell/financial_ai_screen.dart')
         .readAsStringSync();
