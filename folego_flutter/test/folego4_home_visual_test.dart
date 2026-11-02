@@ -52,7 +52,8 @@ void main() {
     expect(nav, contains("ValueKey('mobile-tools-indicator')"));
     expect(nav, contains('width: selectedIndex >= 3 ? 22 : 5'));
     expect(nav, contains('width: selected ? 22 : 5'));
-    expect(nav, contains('MediaQuery.disableAnimationsOf(context)'));
+    expect(nav, contains('FolegoMotion.duration(context'));
+    expect(nav, isNot(contains('MediaQuery.disableAnimationsOf(context)')));
     expect(nav, isNot(contains('BackdropFilter(')));
   });
 }
