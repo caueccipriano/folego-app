@@ -98,8 +98,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 76),
               child: Column(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
                   Container(
