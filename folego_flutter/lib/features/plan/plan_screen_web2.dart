@@ -1076,8 +1076,8 @@ class _PlanScreenState extends State<PlanScreen> {
       usedAmount: summary.actualAmount,
     );
     final remainingLabel = summary.remainingAmount >= 0
-        ? 'abaixo dos limites (não é saldo em conta)'
-        : 'acima da soma dos limites';
+        ? 'ainda cabe nos limites (não é saldo em conta)'
+        : 'limites ultrapassados neste mês';
     final remainingColor = summary.remainingAmount < 0
         ? AppColors.expenseText(brightness)
         : primaryText;
@@ -1092,14 +1092,28 @@ class _PlanScreenState extends State<PlanScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color.alphaBlend(
-              accent.withValues(alpha: .035),
+              accent.withValues(alpha: .095),
               AppColors.surface(brightness),
             ),
             AppColors.surface(brightness),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadii.feature),
-        border: Border.all(color: border),
+        border: Border.all(
+          color: summary.remainingAmount < 0
+              ? progressColor.withValues(alpha: .52)
+              : border,
+          width: summary.remainingAmount < 0 ? 1.4 : 1,
+        ),
+        boxShadow: MediaQuery.highContrastOf(context)
+            ? null
+            : [
+                BoxShadow(
+                  color: accent.withValues(alpha: .075),
+                  blurRadius: 24,
+                  offset: const Offset(0, 9),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
