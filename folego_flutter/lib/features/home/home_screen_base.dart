@@ -715,7 +715,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? constraints.maxWidth - 20 : constraints.maxWidth,
                           child: Container(
                             key: const ValueKey('home-fixed-spendable'),
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.fromLTRB(19, 17, 19, 15),
                             decoration: BoxDecoration(
                               // The actual compact iPhone Home uses Aurora.
                               // No financial calculation or route changes.
@@ -756,47 +756,184 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Stack(
+                              clipBehavior: Clip.hardEdge,
                               children: [
-                                Text('disponível até receber',
-                                  style: AppTypography.body(context,
-                                    fontSize: 14, color: onHero.withValues(alpha: .94))),
-                                const SizedBox(height: 8),
-                                Text(privacy ? FinancialPrivacy.maskMoney()
-                                  : Formatters.money(snapshot.spendablePool),
-                                  key: const ValueKey('home-fixed-amount'),
-                                  maxLines: 1,
-                                  style: AppTypography.money(context,
-                                    fontSize: 42, color: tokens.acaoHero)),
-                                const SizedBox(height: 10),
-                                Text(
-                                  snapshot.dailyFolego == null
-                                    ? 'projeção disponível em meu mês'
-                                    : 'por dia: ${privacy ? FinancialPrivacy.maskMoney() : Formatters.money(snapshot.dailyFolego)}',
-                                  key: const ValueKey('home-fixed-daily'),
-                                  style: AppTypography.body(context,
-                                    fontSize: 14, color: onHero.withValues(alpha: .94))),
-                                if (snapshot.daysUntilIncome != null)
-                                  Text('${snapshot.daysUntilIncome} dias até o próximo recebimento',
-                                    style: AppTypography.body(context,
-                                      fontSize: 12, color: onHero.withValues(alpha: .84))),
-                                const SizedBox(height: 8),
-                                TextButton.icon(
-                                  key: const ValueKey('home-fixed-explain'),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: onHero,
-                                    backgroundColor:
-                                        onHero.withValues(alpha: .10),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    minimumSize: const Size(44, 44),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                Positioned(
+                                  right: -94,
+                                  top: -102,
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      width: 215,
+                                      height: 215,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          width: 1.5,
+                                          color: onHero.withValues(alpha: .19),
+                                        ),
+                                      ),
                                     ),
                                   ),
+                                ),
+                                Positioned(
+                                  right: -57,
+                                  top: -62,
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      width: 145,
+                                      height: 145,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: onHero.withValues(alpha: .12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'DISPONÍVEL ATÉ RECEBER',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.label(
+                                              context,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: onHero,
+                                            ).copyWith(letterSpacing: 1.0),
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.north_east_rounded,
+                                          size: 18,
+                                          color: onHero,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      privacy
+                                          ? FinancialPrivacy.maskMoney()
+                                          : Formatters.money(snapshot.spendablePool),
+                                      key: const ValueKey('home-fixed-amount'),
+                                      maxLines: 1,
+                                      style: AppTypography.money(
+                                        context,
+                                        fontSize: 44,
+                                        color: tokens.acaoHero,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 11),
+                                    Container(
+                                      height: 1,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(colors: [
+                                          onHero.withValues(alpha: .36),
+                                          onHero.withValues(alpha: .06),
+                                        ]),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 5,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'SEU LIMITE DIÁRIO',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppTypography.label(
+                                                  context,
+                                                  fontSize: 10,
+                                                  color: onHero.withValues(alpha: .87),
+                                                ).copyWith(letterSpacing: .6),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                snapshot.dailyFolego == null
+                                                    ? '—'
+                                                    : privacy
+                                                        ? FinancialPrivacy.maskMoney()
+                                                        : Formatters.money(snapshot.dailyFolego),
+                                                key: const ValueKey('home-fixed-daily'),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppTypography.money(
+                                                  context,
+                                                  fontSize: 18,
+                                                  color: onHero,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          height: 33,
+                                          color: onHero.withValues(alpha: .20),
+                                        ),
+                                        const SizedBox(width: 11),
+                                        Expanded(
+                                          flex: 4,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'PRÓXIMO SALÁRIO',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppTypography.label(
+                                                  context,
+                                                  fontSize: 10,
+                                                  color: onHero.withValues(alpha: .87),
+                                                ).copyWith(letterSpacing: .6),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                snapshot.daysUntilIncome == null
+                                                    ? 'a definir'
+                                                    : '${snapshot.daysUntilIncome} dias',
+                                                maxLines: 1,
+                                                style: AppTypography.money(
+                                                  context,
+                                                  fontSize: 18,
+                                                  color: onHero,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 9),
+                                    TextButton.icon(
+                                      key: const ValueKey('home-fixed-explain'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: onHero,
+                                        backgroundColor:
+                                            onHero.withValues(alpha: .13),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 7,
+                                        ),
+                                        minimumSize: const Size(44, 38),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          side: BorderSide(
+                                            color: onHero.withValues(alpha: .20),
+                                          ),
+                                        ),
+                                      ),
                                   onPressed: () => Navigator.of(context).push<void>(
                                     MaterialPageRoute<void>(builder: (_) =>
                                       FinancialReviewScreen(
@@ -806,7 +943,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         previous: _previousSnapshot,
                                         summary: _monthlyMoney))),
                                   icon: const Icon(Icons.info_outline, size: 17),
-                                  label: const Text('entenda esse valor'),
+                                      label: const Text('entenda esse valor'),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -1122,17 +1261,34 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Text(
-            'e aí, ${_name.toLowerCase()}',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.display(
-              context,
-              fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact
-                  ? 24
-                  : 28,
-              color: primaryText,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'FÔLEGO  /  SEU DINHEIRO',
+                maxLines: 1,
+                style: AppTypography.label(
+                  context,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: secondary,
+                ).copyWith(letterSpacing: 1.1),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'e aí, ${_name.toLowerCase()}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(
+                  context,
+                  fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact
+                      ? 25
+                      : 28,
+                  color: primaryText,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 6),
@@ -1147,6 +1303,9 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: surface,
             foregroundColor: secondary,
             side: BorderSide(color: border),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
           icon: const Icon(AppIcons.calendar, size: 19),
         ),
@@ -1160,6 +1319,9 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: surface,
             foregroundColor: secondary,
             side: BorderSide(color: border),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
           icon: Icon(hidden ? AppIcons.eyeOff : AppIcons.eye, size: 19),
         ),
@@ -1762,22 +1924,24 @@ class _QuickAction extends StatelessWidget {
         return null;
       }),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 48),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-        child: Column(
+        constraints: const BoxConstraints(minHeight: 54),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: foreground, size: 19),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: AppTypography.label(
-                  context,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: foreground,
+            Icon(icon, color: foreground, size: 20),
+            const SizedBox(width: 9),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: AppTypography.button(
+                    context,
+                    fontSize: 13,
+                    color: foreground,
+                  ),
                 ),
               ),
             ),
@@ -1793,13 +1957,17 @@ class _QuickAction extends StatelessWidget {
           // Primary spending action stays fully opaque and legible.
           ? Material(
               color: background,
-              borderRadius: BorderRadius.circular(AppRadii.compactCard),
+              elevation: MediaQuery.highContrastOf(context) ? 0 : 3,
+              shadowColor: background.withValues(alpha: .27),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadii.compactCard),
+              ),
               child: action,
             )
           // Secondary quick actions get the soft frosted layer.
           : FolegoGlassSurface(
               radius: AppRadii.compactCard,
-              elevated: false,
+              elevated: true,
               child: action,
             ),
     );
