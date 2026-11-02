@@ -14,11 +14,13 @@ class FinancialAiScreen extends StatefulWidget {
     required this.client,
     required this.repository,
     required this.spaceId,
+    this.onOpenPlan,
   });
 
   final SupabaseClient client;
   final FolegoRepository repository;
   final String spaceId;
+  final VoidCallback? onOpenPlan;
 
   @override
   State<FinancialAiScreen> createState() => _FinancialAiScreenState();
@@ -29,6 +31,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
   bool _sending = false;
   String? _answer;
   String? _error;
+  String? _focusTitle;
+  String? _focusDescription;
 
   @override
   void didUpdateWidget(covariant FinancialAiScreen oldWidget) {
@@ -36,6 +40,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
     if (oldWidget.spaceId != widget.spaceId) {
       _answer = null;
       _error = null;
+      _focusTitle = null;
+      _focusDescription = null;
       _question.clear();
     }
   }
@@ -61,6 +67,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
       _sending = true;
       _error = null;
       _answer = null;
+      _focusTitle = null;
+      _focusDescription = null;
     });
 
     try {
@@ -78,6 +86,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
         'financial-ai',
         body: {
           'question': question,
+          // The upgraded function verifies membership and fetches its own
+          // category aggregates. Legacy deployments still use monthly totals.
+          'spaceId': requestedSpaceId,
           'context': financialAiMonthlyContext(
             month: monthly.periodMonth,
             income: monthly.realIncome,
@@ -91,7 +102,15 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
       if (answer is! String || answer.trim().isEmpty) {
         throw const FormatException('Resposta vazia');
       }
-      setState(() => _answer = answer.trim());
+      final focus = payload is Map ? payload['focus'] : null;
+      final focusTitle = focus is Map ? focus['title'] : null;
+      final focusDescription = focus is Map ? focus['description'] : null;
+      setState(() {
+        _answer = answer.trim();
+        _focusTitle = focusTitle is String ? focusTitle : null;
+        _focusDescription = focusDescription is String
+            ? focusDescription : null;
+      });
     } on FunctionException catch (_) {
       if (!mounted || widget.spaceId != requestedSpaceId) return;
       setState(() => _error =
@@ -127,10 +146,11 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     style: AppTypography.section(context, fontSize: 22)),
                   const SizedBox(height: 10),
                   Text(
-                    'A IA usa apenas receitas, despesas por competência '
-                    'e resultado mensal consolidados. Não recebe lançamentos '
-                    'individuais, nomes de contas ou números de cartão. '
-                    'Sua pergunta também é enviada ao provedor de IA.',
+                    'A IA recebe somente totais financeiros e até quatro '
+                    'categorias principais, com comparação pelo mesmo '
+                    'período de dias. Não recebe lançamentos individuais, '
+                    'nomes de contas nem números de cartões. Sua pergunta '
+                    'também é enviada ao provedor de IA.',
                     style: AppTypography.body(context, fontSize: 13,
                       color: colors.onSurfaceVariant),
                   ),
@@ -153,8 +173,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                   Wrap(spacing: 8, runSpacing: 4, children: [
                     for (final prompt in const [
                       'Como está meu mês?',
-                      'Minha despesa está acima da receita?',
-                      'O que os totais dizem sobre meu orçamento?',
+                      'Qual categoria merece atenção?',
+                      'Compare meus gastos com o mês anterior.',
                     ])
                       ActionChip(
                         label: Text(prompt),
@@ -182,6 +202,44 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     const SizedBox(height: 16),
                     Text(_error!, key: const ValueKey('financial-ai-error'),
                       style: TextStyle(color: colors.error)),
+                  ],
+                  if (_focusTitle != null && !hidden) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      key: const ValueKey('financial-ai-focus'),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: colors.outlineVariant),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('uma coisa para conferir',
+                            style: AppTypography.label(context,
+                              color: colors.onSurfaceVariant)),
+                          const SizedBox(height: 6),
+                          Text(_focusTitle!,
+                            style: AppTypography.cardTitle(context)),
+                          if (_focusDescription != null) ...[
+                            const SizedBox(height: 4),
+                            Text(_focusDescription!,
+                              style: AppTypography.body(context,
+                                color: colors.onSurfaceVariant)),
+                          ],
+                          if (widget.onOpenPlan != null) ...[
+                            const SizedBox(height: 8),
+                            TextButton.icon(
+                              key: const ValueKey('financial-ai-open-plan'),
+                              onPressed: widget.onOpenPlan,
+                              icon: const Icon(Icons.arrow_forward, size: 16),
+                              label: const Text('ver no planejamento'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                   if (_answer != null && !hidden) ...[
                     const SizedBox(height: 24),
