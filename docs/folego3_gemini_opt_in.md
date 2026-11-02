@@ -3,7 +3,7 @@
 O assistente financeiro `financial-ai` usa exclusivamente a API Gemini do Google.
 Não há fallback para OpenAI, nem seleção por `FOLEGO_AI_PROVIDER`.
 
-**Segredo obrigatório no Supabase Edge Function Secrets:** `GEMINI_API_KEY`.
+**Segredo principal no Supabase Edge Function Secrets:** `gemini` (minúsculo, exatamente como já cadastrado). O identificador antigo `GEMINI_API_KEY` também é aceito por compatibilidade. A busca por `gemini` tem prioridade.
 A chave nunca deve estar no PWA, no Flutter, nos commits nem em URLs.
 **Modelo padrão:** `gemini-3.5-flash-lite`. Pode ser definido outro modelo
 compatível no segredo opcional `FOLEGO_GEMINI_MODEL`.
