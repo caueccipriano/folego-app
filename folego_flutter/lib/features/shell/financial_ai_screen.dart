@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_typography.dart';
 import 'financial_ai_status.dart';
 import 'financial_ai_answer_view.dart';
+import 'financial_ai_answer_actions.dart';
 import 'financial_ai_prompt_suggestions.dart';
 
 /// Read-only questions, using the existing authenticated financial-ai function.
@@ -203,6 +205,41 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
     }
   }
 
+  /// Copy only after a deliberate tap. Never place sensitive data on the
+  /// clipboard when privacy mode is active, or expose a stale-space toast.
+  Future<void> _copyAnswer() async {
+    final answer = _answer;
+    if (answer == null || FinancialPrivacy.hidden.value) return;
+    try {
+      await Clipboard.setData(ClipboardData(text: answer));
+      if (!mounted || FinancialPrivacy.hidden.value || _answer != answer) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Resposta copiada. Compartilhe com cuidado.')),
+      );
+    } catch (_) {
+      if (!mounted || FinancialPrivacy.hidden.value || _answer != answer) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível copiar a resposta.')),
+      );
+    }
+  }
+
+  /// Forget the visible explanation locally; no ledger or server mutation.
+  void _clearAnswer() {
+    if (_answer == null || FinancialPrivacy.hidden.value) return;
+    setState(() {
+      _answer = null;
+      _answerProvider = null;
+      _answerNotice = null;
+      _focusTitle = null;
+      _focusDescription = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -247,9 +284,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             _checkingProvider
                                 ? 'verificando a IA...'
                                 : _providerConfigured == true
-                                    ? '${_providerName ?? 'Gemini'} pronto · limite disponível não verificado'
+                                    ? '${_providerName ?? 'gemini'} configurado · limite disponível não verificado'
                                     : _providerConfigured == false
-                                        ? 'Gemini indisponível · resumo sem IA disponível'
+                                        ? 'gemini indisponível · resumo sem IA disponível'
                                         : 'não foi possível conferir a IA · resumo sem IA disponível',
                             style: AppTypography.body(context, fontSize: 12),
                           ),
@@ -277,7 +314,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                         'comparadas por dias equivalentes. A IA não recebe '
                         'movimentações individuais, contas nem cartões. '
                         'Cada consulta pode consumir uma pergunta Premium. No plano '
-                        'gratuito da API Gemini, o Google pode utilizar o '
+                        'gratuito da API gemini, o Google pode utilizar o '
                         'conteúdo agregado enviado para melhorar seus '
                         'produtos. Os limites gratuitos não são ilimitados.',
                         style: AppTypography.body(context, fontSize: 12,
@@ -440,6 +477,12 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     FinancialAiAnswerView(
                       key: const ValueKey('financial-ai-answer'),
                       answer: _answer!,
+                    ),
+                    const SizedBox(height: 10),
+                    FinancialAiAnswerActions(
+                      enabled: !_sending,
+                      onCopy: () => _copyAnswer(),
+                      onClear: _clearAnswer,
                     ),
                   ],
                   const SizedBox(height: 18),
