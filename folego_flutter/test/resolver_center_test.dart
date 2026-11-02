@@ -125,6 +125,11 @@ void main() {
     expect(hub, contains('mergeResolverTasks(pending: queues[0], other: queues[1])'));
     expect(hub, contains('initiallyExpanded: false'));
     expect(hub, contains("ValueKey('resolver-center')"));
+    expect(hub, contains("ValueKey('attention-upcoming-bills')"));
+    expect(hub, contains("ValueKey('attention-notification-history')"));
+    expect(hub, contains('_attentionBreakdown(tasks)'));
+    expect(hub, contains('UpcomingEventsScreen('));
+    expect(hub, contains('NotificationHistoryScreen('));
     expect(hub, contains("ValueKey('resolver-empty')"));
     expect(hub, contains('_reviewOther(row)'));
     expect(hub, contains('_openPending(row)'));
