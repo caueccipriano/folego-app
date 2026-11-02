@@ -96,7 +96,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
 
   Future<void> _ask() async {
     if (_sending || FinancialPrivacy.hidden.value ||
-        _providerConfigured == false) return;
+        _providerConfigured == false) {
+      return;
+    }
     final question = _question.text.trim();
     if (question.length < 3 || question.length > 500) {
       setState(() => _error = 'Escreva uma pergunta de 3 a 500 caracteres.');
@@ -125,7 +127,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
         },
       );
       if (!mounted || widget.spaceId != requestedSpaceId ||
-          widget.client != requestedClient) return;
+          widget.client != requestedClient) {
+        return;
+      }
       final payload = response.data;
       final answer = payload is Map ? payload['answer'] : null;
       if (answer is! String || answer.trim().isEmpty) {
