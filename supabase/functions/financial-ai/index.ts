@@ -9,7 +9,7 @@ const headers = {
   'Cache-Control': 'no-store',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 function respond(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers });
@@ -17,7 +17,7 @@ function respond(status: number, message: string) {
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  if (request.method !== 'POST') return respond(405, 'Método não permitido.');
+  if (request.method !== 'POST' && request.method !== 'GET') return respond(405, 'Método não permitido.');
   const jwt = request.headers.get('Authorization')?.replace(/^Bearer /i, '');
   if (!jwt) return respond(401, 'Entre na sua conta.');
   const url = Deno.env.get('SUPABASE_URL');
@@ -29,10 +29,19 @@ Deno.serve(async (request) => {
   const apiKey = provider === 'gemini'
     ? Deno.env.get('GEMINI_API_KEY')
     : Deno.env.get('OPENAI_API_KEY');
-  if (!url || !anon || !service || !apiKey) return respond(503, 'Assistente ainda não configurado.');
+  if (!url || !anon || !service) return respond(503, 'Assistente ainda não configurado.');
   const userClient = createClient(url, anon, { global: { headers: { Authorization: 'Bearer ' + jwt } } });
   const { data: auth, error: authError } = await userClient.auth.getUser();
   if (authError || !auth.user) return respond(401, 'Sessão inválida.');
+  // Read-only, no provider request or Premium quota use. Only a signed-in
+  // account can see which AI provider has been configured; never emit keys.
+  if (request.method === 'GET') {
+    return new Response(JSON.stringify({
+      provider,
+      configured: Boolean(apiKey),
+    }), { status: 200, headers });
+  }
+  if (!apiKey) return respond(503, 'Assistente ainda não configurado.');
   let body: { question?: unknown; context?: unknown; spaceId?: unknown };
   try { body = await request.json(); } catch { return respond(400, 'Envie uma pergunta válida.'); }
   if (typeof body.question !== 'string' || body.question.trim().length < 3 || body.question.length > 500) {
@@ -203,7 +212,7 @@ Deno.serve(async (request) => {
         .map((part: { text?: string }) => part.text ?? '').join('\n').trim();
     if (!answer) { console.warn('financial-ai empty_provider_output'); return respond(502, 'A IA não retornou uma resposta. Nenhuma pergunta descontada.'); }
     delivered = true;
-    return new Response(JSON.stringify({ answer, focus: deterministicFocus }), { status: 200, headers });
+    return new Response(JSON.stringify({ answer, focus: deterministicFocus, provider }), { status: 200, headers });
   } catch (error) {
     // A timeout differs from an HTTP provider rejection; keep both observable
     // without exposing prompts, secrets or financial data to logs.
