@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/utils/formatters.dart';
@@ -177,7 +178,7 @@ class PlanGuidanceCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Theme(
                       data: Theme.of(context).copyWith(
-                        dividerColor: Colors.transparent,
+                        dividerColor: AppColors.transparent,
                       ),
                       child: Material(
                         type: MaterialType.transparency,
