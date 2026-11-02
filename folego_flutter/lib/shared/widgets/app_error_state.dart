@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -51,6 +52,7 @@ class _AppErrorStateState extends State<AppErrorState> {
     final expense = AppColors.expenseText(brightness);
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
+    final tokens = FolegoColorTokens.of(context);
 
     return Semantics(
       container: true,
@@ -63,7 +65,14 @@ class _AppErrorStateState extends State<AppErrorState> {
         decoration: BoxDecoration(
           color: AppColors.surface(brightness),
           borderRadius: BorderRadius.circular(AppRadii.card),
-          border: Border.all(color: AppColors.border(brightness)),
+          border: Border.all(color: tokens.borda),
+          boxShadow: MediaQuery.highContrastOf(context)
+              ? null
+              : [BoxShadow(
+                  color: tokens.marca.withValues(alpha: .07),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                )],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
