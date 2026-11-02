@@ -90,14 +90,18 @@ class _HomeContentState extends State<_HomeContent> {
     try {
       final setup = await widget.repository.getOnboardingState(requestedSpaceId);
       if (!mounted || generation != _setupLoadGeneration ||
-          requestedSpaceId != widget.space.id) return;
+          requestedSpaceId != widget.space.id) {
+        return;
+      }
       setState(() {
         _setup = setup;
         _loadingSetup = false;
       });
     } catch (_) {
       if (!mounted || generation != _setupLoadGeneration ||
-          requestedSpaceId != widget.space.id) return;
+          requestedSpaceId != widget.space.id) {
+        return;
+      }
       setState(() => _loadingSetup = false);
     }
   }
