@@ -5,7 +5,7 @@ import 'dart:convert';
 String? financialAiProviderName(Object? provider) {
   switch (provider) {
     case 'gemini':
-      return 'Gemini';
+      return 'gemini';
     case 'local':
       return 'Cálculo do Fôlego';
     default:
