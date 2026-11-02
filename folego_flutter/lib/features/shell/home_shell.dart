@@ -223,7 +223,6 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           MaterialPageRoute<void>(
             builder: (_) => FinancialAiScreen(
               client: Supabase.instance.client,
-              repository: widget.repository,
               spaceId: widget.space.id,
               onOpenPlan: () {
                 Navigator.of(context).pop();
