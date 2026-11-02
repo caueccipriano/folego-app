@@ -77,6 +77,7 @@ class PlanScreen extends StatefulWidget {
     this.disableInsightsForTesting = false,
     this.onProjectionRequested,
     this.onPurchaseSimulationRequested,
+    this.onQuickSpendRequested,
     this.onSpendingBehaviorRequested,
     this.onFlexibleBudgetRequested,
   });
@@ -91,6 +92,7 @@ class PlanScreen extends StatefulWidget {
 
   final VoidCallback? onProjectionRequested;
   final VoidCallback? onPurchaseSimulationRequested;
+  final VoidCallback? onQuickSpendRequested;
   final ValueChanged<DateTime>? onSpendingBehaviorRequested;
   final VoidCallback? onFlexibleBudgetRequested;
 
@@ -856,11 +858,25 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _purchaseSimulationButton() => OutlinedButton.icon(
-    key: const ValueKey('plan-can-i-buy'),
-    onPressed: widget.onPurchaseSimulationRequested,
-    icon: const Icon(Icons.shopping_bag_outlined),
-    label: const Text('posso comprar? simular impacto'),
+  Widget _purchaseSimulationButton() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (widget.onQuickSpendRequested != null) ...[
+        FilledButton.icon(
+          key: const ValueKey('plan-quick-spend'),
+          onPressed: widget.onQuickSpendRequested,
+          icon: const Icon(Icons.auto_graph_rounded),
+          label: const Text('e se eu gastar hoje?'),
+        ),
+        const SizedBox(height: 8),
+      ],
+      OutlinedButton.icon(
+        key: const ValueKey('plan-can-i-buy'),
+        onPressed: widget.onPurchaseSimulationRequested,
+        icon: const Icon(Icons.shopping_bag_outlined),
+        label: const Text('comparar à vista, parcelas e adiar'),
+      ),
+    ],
   );
 
   Widget _buildMobileLayout(Brightness brightness, AppLayoutSize layout) {
