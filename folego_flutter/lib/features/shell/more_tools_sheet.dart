@@ -88,7 +88,7 @@ class MoreToolsSheet extends StatelessWidget {
               onTap: () => onSelected(3))),
           ]),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
+          FilledButton.icon(
             key: const ValueKey('tools-financial-ai'),
             onPressed: () => onSelected(4),
             icon: const Icon(Icons.auto_awesome_outlined, size: 19),
@@ -126,7 +126,7 @@ class _ToolTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 118),
+          constraints: const BoxConstraints(minHeight: 106),
           padding: const EdgeInsets.fromLTRB(13, 12, 9, 11),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
