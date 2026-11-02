@@ -908,13 +908,36 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                             ),
                     ),
                     if (widget.onClassificationRequested != null) ...[
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
+                      Material(
+                        color: accent.withValues(alpha: isDark ? .15 : .07),
+                        borderRadius: BorderRadius.circular(AppRadii.control),
+                        child: InkWell(
                           key: const ValueKey('transactions-smart-categories-entry'),
-                          onPressed: widget.onClassificationRequested,
-                          icon: const Icon(AppIcons.categoryUnclassified, size: 18),
-                          label: const Text('categorias inteligentes · revisar sugestões'),
+                          onTap: widget.onClassificationRequested,
+                          borderRadius: BorderRadius.circular(AppRadii.control),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                            child: Row(children: [
+                              Icon(AppIcons.categoryUnclassified,
+                                size: 20, color: accent),
+                              const SizedBox(width: 10),
+                              Expanded(child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('categorias inteligentes',
+                                    style: AppTypography.cardTitle(context,
+                                      fontSize: 13)),
+                                  const SizedBox(height: 2),
+                                  Text('revisar sugestões',
+                                    style: AppTypography.label(context,
+                                      fontSize: 11, color: secondary)),
+                                ],
+                              )),
+                              Icon(AppIcons.chevronRight,
+                                size: 18, color: secondary),
+                            ]),
+                          ),
                         ),
                       ),
                     ],
@@ -1181,7 +1204,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                         key: const ValueKey('transaction-filter-button'),
                         onPressed: onOpenFilters,
                         style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(50, 54),
+                          minimumSize: const Size(50, 50),
                           padding: EdgeInsets.zero,
                         ),
                         child: Badge(
