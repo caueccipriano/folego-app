@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_typography.dart';
 import 'financial_ai_status.dart';
+import 'financial_ai_answer_view.dart';
 
 /// Read-only questions, using the existing authenticated financial-ai function.
 /// The user explicitly submits each question; no automatic model requests.
@@ -195,21 +196,22 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
                   Text('entenda seu mês',
-                    style: AppTypography.section(context, fontSize: 22)),
+                    style: AppTypography.section(context, fontSize: 25)),
                   const SizedBox(height: 10),
                   Text(
                     'Pergunte, entenda seus números e veja uma ação para revisar.',
                     style: AppTypography.body(context, fontSize: 13,
                       color: colors.onSurfaceVariant),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   Container(
                     key: const ValueKey('financial-ai-provider-status'),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: colors.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: colors.outlineVariant),
                     ),
                     child: Row(
                       children: [
@@ -261,13 +263,14 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   TextField(
                     key: const ValueKey('financial-ai-question'),
                     controller: _question,
                     maxLength: 500,
                     minLines: 2,
                     maxLines: 4,
+                    style: AppTypography.body(context, fontSize: 14),
                     enabled: !_sending && !hidden,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: const InputDecoration(
@@ -300,7 +303,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                               },
                       ),
                   ]),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   FilledButton.icon(
                     key: const ValueKey('financial-ai-submit'),
                     onPressed: _sending || hidden ||
@@ -330,11 +333,21 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                   ],
                   if (_answerNotice != null && !hidden) ...[
                     const SizedBox(height: 16),
-                    Text(
-                      _answerNotice!,
-                      key: const ValueKey('financial-ai-local-notice'),
-                      style: AppTypography.body(context,
-                        fontSize: 13, color: colors.onSurfaceVariant),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.info_outline_rounded, size: 18,
+                          color: colors.onSurfaceVariant),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(_answerNotice!,
+                          key: const ValueKey('financial-ai-local-notice'),
+                          style: AppTypography.body(context,
+                            fontSize: 12, color: colors.onSurfaceVariant))),
+                      ]),
                     ),
                   ],
                   if (_focusTitle != null && !hidden) ...[
@@ -389,9 +402,10 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             color: colors.onSurfaceVariant)),
                     ]),
                     const SizedBox(height: 8),
-                    SelectableText(_answer!,
+                    FinancialAiAnswerView(
                       key: const ValueKey('financial-ai-answer'),
-                      style: AppTypography.body(context, fontSize: 15)),
+                      answer: _answer!,
+                    ),
                   ],
                   const SizedBox(height: 18),
                   Text(
