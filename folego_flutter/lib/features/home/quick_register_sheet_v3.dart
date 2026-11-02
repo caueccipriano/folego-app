@@ -350,12 +350,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           _creditCards = catalog.cards;
           _categories = _selectableCategories(catalog.categories);
           _categoryId = null;
-          _incomeAccountId = catalog.accounts.length == 1
-              ? catalog.accounts.single.id
-              : null;
-          _expensePayment = QuickExpensePaymentState(
-            accountId: _incomeAccountId,
-          );
+          _incomeAccountId = null;
+          _expensePayment = const QuickExpensePaymentState();
           _loading = false;
         });
         return;
@@ -387,7 +383,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           (_isExpense ? values[3] : values[1]) as List<CategoryItem>;
       final selectable = _selectableCategories(categories);
       final defaultCategoryId = _defaultCategoryId(selectable);
-      final String? accountId = accounts.length == 1 ? accounts.single.id : null;
+      const String? accountId = null;
 
       setState(() {
         _paymentAccounts = accounts;
