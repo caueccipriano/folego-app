@@ -19,7 +19,7 @@ O assistente é somente leitura e nunca modifica lançamentos.
 
 ## Validação
 
-1. Executar `deno test --no-check supabase/tests/gemini_adapter_test.ts supabase/tests/financial_category_context_test.ts` e `deno check supabase/functions/financial-ai/index.ts`.
+1. Executar `deno test --no-check --allow-read=supabase/functions/financial-ai/index.ts supabase/tests/gemini_adapter_test.ts supabase/tests/financial_category_context_test.ts` e `deno check supabase/functions/financial-ai/index.ts`.
 2. Verificar status GET autenticado: `provider: gemini` e `configured: true`.
 3. Fazer uma pergunta autenticada e confirmar resposta `provider: gemini`.
 4. Confirmar a falha segura sem chave e o reembolso da quota em falhas.
