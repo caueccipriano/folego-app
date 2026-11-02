@@ -70,7 +70,7 @@ jobs:
         run: flutter test test/folego_motion_test.dart test/shell_navigation_motion_test.dart test/goals_widgets_test.dart
 
       - name: Folego 3.0 streamlined navigation contract
-        run: flutter test test/financial_ai_prompt_suggestions_test.dart test/financial_ai_fallback_contract_test.dart test/financial_ai_answer_actions_test.dart test/financial_ai_answer_view_test.dart test/folego3_less_routine_test.dart test/folego3_home_first_glance_test.dart test/folego3_more_tools_sheet_test.dart test/folego4_home_visual_test.dart test/folego4_movimentos_visual_test.dart test/folego4_plan_summary_visual_test.dart test/folego4_category_distribution_test.dart
+        run: flutter test test/financial_ai_prompt_suggestions_test.dart test/financial_ai_fallback_contract_test.dart test/financial_ai_answer_actions_test.dart test/financial_ai_answer_view_test.dart test/folego3_less_routine_test.dart test/folego3_home_first_glance_test.dart test/folego3_more_tools_sheet_test.dart test/folego4_home_visual_test.dart test/folego4_movimentos_visual_test.dart test/premium_finish_contract_test.dart test/folego4_plan_summary_visual_test.dart test/folego4_category_distribution_test.dart
 
       - name: Home realtime refresh keeps existing state
         run: flutter test test/web2_responsive_shell_test.dart --plain-name "Home realtime refresh retains mounted content and scroll"
