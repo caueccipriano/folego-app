@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
@@ -51,6 +52,8 @@ class HomeMobileSummaryStrip extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
+    final tokens = FolegoColorTokens.of(context);
+    final highContrast = MediaQuery.highContrastOf(context);
     final ratio = progress(snapshot);
 
     final pending = upcoming
@@ -80,40 +83,59 @@ class HomeMobileSummaryStrip extends StatelessWidget {
     }) => Expanded(
       child: Material(
         color: surface,
-        borderRadius: BorderRadius.circular(16),
+        elevation: highContrast ? 0 : 1.4,
+        shadowColor: tokens.marca.withValues(alpha: .10),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: border),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: InkWell(
           key: ValueKey(keyName),
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 92),
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(13, 12, 12, 11),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 76),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Icon(icon, size: 17, color: secondary),
-                  const SizedBox(width: 5),
+                  Container(
+                    width: 28, height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tokens.marca.withValues(alpha: .085),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(icon, size: 17, color: tokens.marca),
+                  ),
+                  const SizedBox(width: 7),
                   Expanded(child: Text(label,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: AppTypography.label(context, fontSize: 12,
                         fontWeight: FontWeight.w600, color: secondary))),
                 ]),
                 const SizedBox(height: 7),
-                Text(amount, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  key: ValueKey('$keyName-amount'),
-                  style: AppTypography.money(context, fontSize: 17,
-                    color: primary)),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      amount, maxLines: 1,
+                      key: ValueKey('$keyName-amount'),
+                      style: AppTypography.money(context, fontSize: 19,
+                        color: primary),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 3),
                 Text(description, maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.label(context, fontSize: 11,
                     color: secondary)),
               ],
+              ),
             ),
           ),
         ),
@@ -126,31 +148,56 @@ class HomeMobileSummaryStrip extends StatelessWidget {
       children: [
         Material(
           color: surface,
-          borderRadius: BorderRadius.circular(16),
+          elevation: highContrast ? 0 : 1.2,
+          shadowColor: tokens.marca.withValues(alpha: .09),
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: border),
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: InkWell(
             key: const ValueKey('home-mobile-budget'),
             onTap: onBudget,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: border),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    Icon(Icons.donut_small_outlined, size: 17, color: secondary),
-                    const SizedBox(width: 7),
+                    Container(
+                      width: 28, height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: tokens.marca.withValues(alpha: .08),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Icon(Icons.donut_small_outlined, size: 17,
+                          color: tokens.marca),
+                    ),
+                    const SizedBox(width: 9),
                     Expanded(child: Text('orçamento flexível',
                       style: AppTypography.cardTitle(context, fontSize: 13,
                         color: primary))),
-                    Text(budgetLabel, key: const ValueKey('home-mobile-budget-value'),
-                      style: AppTypography.label(context, fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
                         color: budgetExceeded
-                            ? Theme.of(context).colorScheme.error : secondary)),
+                            ? Theme.of(context).colorScheme.error
+                                .withValues(alpha: .085)
+                            : tokens.marca.withValues(alpha: .065),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        budgetLabel,
+                        key: const ValueKey('home-mobile-budget-value'),
+                        style: AppTypography.label(context, fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: budgetExceeded
+                              ? Theme.of(context).colorScheme.error
+                              : secondary),
+                      ),
+                    ),
                     const SizedBox(width: 3),
                     Icon(Icons.chevron_right_rounded, size: 16, color: secondary),
                   ]),
@@ -161,11 +208,11 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                       child: LinearProgressIndicator(
                         key: const ValueKey('home-mobile-budget-progress'),
                         value: ratio,
-                        minHeight: 5,
-                        backgroundColor: border,
+                        minHeight: 6,
+                        backgroundColor: tokens.marca.withValues(alpha: .10),
                         color: budgetExceeded
                             ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.primary,
+                            : tokens.marca,
                       ),
                     ),
                   ],

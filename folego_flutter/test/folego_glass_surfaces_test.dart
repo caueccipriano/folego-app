@@ -75,8 +75,10 @@ void main() {
         ),
       ));
       expect(find.byType(FolegoGlassSurface), findsOneWidget);
+      // The new Signature dock is deliberately understated. Navigation
+      // geometry and all hit targets must remain unchanged.
       expect(tester.widget<FolegoGlassSurface>(
-        find.byType(FolegoGlassSurface)).prominent, isTrue);
+        find.byType(FolegoGlassSurface)).prominent, isFalse);
       expect(find.byKey(const ValueKey('mobile-liquid-nav')), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-1')));
