@@ -37,7 +37,7 @@ void main() {
     expect(source, contains('if (answer == null || FinancialPrivacy.hidden.value)'));
     expect(source, contains('if (_answer != null && !hidden)'));
     expect(source, contains('FinancialAiAnswerActions('));
-    expect(source, contains('onCopy: _copyAnswer'));
+    expect(source, contains('onCopy: () => _copyAnswer()'));
     expect(source, contains('onClear: _clearAnswer'));
     expect(source, isNot(contains('Clipboard.getData')));
   });
