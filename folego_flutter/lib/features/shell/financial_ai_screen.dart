@@ -37,6 +37,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
   String? _providerName;
   bool? _providerConfigured;
   bool _checkingProvider = true;
+  int _requestSerial = 0;
+  int _providerSerial = 0;
 
   @override
   void initState() {
@@ -47,12 +49,13 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
   /// Status-only check: no AI generation, transactions, or quota use.
   Future<void> _checkProvider() async {
     final client = widget.client;
+    final serial = ++_providerSerial;
     if (mounted) setState(() => _checkingProvider = true);
     try {
       final response = await client.functions.invoke(
         'financial-ai', method: HttpMethod.get,
       );
-      if (!mounted || widget.client != client) return;
+      if (!mounted || widget.client != client || serial != _providerSerial) return;
       final data = response.data;
       setState(() {
         _providerName = data is Map
@@ -61,13 +64,13 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
             ? data['configured'] as bool : null;
       });
     } catch (_) {
-      if (!mounted || widget.client != client) return;
+      if (!mounted || widget.client != client || serial != _providerSerial) return;
       setState(() {
         _providerConfigured = null;
         _providerName = null;
       });
     } finally {
-      if (mounted && widget.client == client) {
+      if (mounted && widget.client == client && serial == _providerSerial) {
         setState(() => _checkingProvider = false);
       }
     }
@@ -76,12 +79,13 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
   @override
   void didUpdateWidget(covariant FinancialAiScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.client != widget.client) {
-      _providerConfigured = null;
-      _providerName = null;
-      _checkProvider();
-    }
-    if (oldWidget.spaceId != widget.spaceId) {
+    if (oldWidget.spaceId != widget.spaceId ||
+        oldWidget.client != widget.client) {
+      // Cancel ownership of in-flight replies before showing a new space.
+      // The network call may finish, but it must never lock or repopulate
+      // the current screen with an earlier space's information.
+      _requestSerial++;
+      _sending = false;
       _answer = null;
       _error = null;
       _focusTitle = null;
@@ -89,6 +93,11 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
       _answerProvider = null;
       _answerNotice = null;
       _question.clear();
+    }
+    if (oldWidget.client != widget.client) {
+      _providerConfigured = null;
+      _providerName = null;
+      _checkProvider();
     }
   }
 
@@ -116,6 +125,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
     }
     final requestedSpaceId = widget.spaceId;
     final requestedClient = widget.client;
+    final serial = ++_requestSerial;
     FocusScope.of(context).unfocus();
     setState(() {
       _sending = true;
@@ -138,7 +148,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
           if (withoutAi) 'mode': 'summary',
         },
       );
-      if (!mounted || widget.spaceId != requestedSpaceId ||
+      if (!mounted || serial != _requestSerial ||
+          widget.spaceId != requestedSpaceId ||
           widget.client != requestedClient) {
         return;
       }
@@ -167,16 +178,22 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
             ? focusDescription : null;
       });
     } on FunctionException catch (error) {
-      if (!mounted || widget.spaceId != requestedSpaceId) return;
+      if (!mounted || serial != _requestSerial ||
+          widget.spaceId != requestedSpaceId ||
+          widget.client != requestedClient) return;
       setState(() => _error =
           financialAiErrorMessage(error.status, error.details));
     } catch (_) {
-      if (!mounted || widget.spaceId != requestedSpaceId) return;
+      if (!mounted || serial != _requestSerial ||
+          widget.spaceId != requestedSpaceId ||
+          widget.client != requestedClient) return;
       setState(() => _error =
           'Não foi possível consultar o resumo ou a IA agora. '
           'Seus dados continuam intactos.');
     } finally {
-      if (mounted && widget.spaceId == requestedSpaceId) {
+      if (mounted && serial == _requestSerial &&
+          widget.spaceId == requestedSpaceId &&
+          widget.client == requestedClient) {
         setState(() => _sending = false);
       }
     }
