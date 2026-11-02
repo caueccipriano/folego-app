@@ -717,14 +717,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Text('disponível até receber',
                                   style: AppTypography.body(context,
-                                    fontSize: 13, color: secondaryText)),
+                                    fontSize: 14, color: secondaryText)),
                                 const SizedBox(height: 8),
                                 Text(privacy ? FinancialPrivacy.maskMoney()
                                   : Formatters.money(snapshot.spendablePool),
                                   key: const ValueKey('home-fixed-amount'),
                                   maxLines: 1,
                                   style: AppTypography.money(context,
-                                    fontSize: 38, color: primaryText)),
+                                    fontSize: 42, color: primaryText)),
                                 const SizedBox(height: 10),
                                 Text(
                                   snapshot.dailyFolego == null
