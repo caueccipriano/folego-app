@@ -51,8 +51,10 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                   width: double.infinity,
                   height: navigationHeight,
                   child: FolegoGlassSurface(
+                    // Banking-inspired calmer dock: the active destination
+                    // carries the brand, rather than tinting the whole bar.
                     radius: 27,
-                    prominent: true,
+                    prominent: false,
                     padding: const EdgeInsets.all(5),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,13 +86,13 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(21),
                                 gradient: selectedIndex >= 3
                                     ? LinearGradient(colors: [
-                                        tokens.marca.withValues(alpha: .24),
-                                        tokens.marca.withValues(alpha: .11),
+                                        tokens.marca.withValues(alpha: .16),
+                                        tokens.marca.withValues(alpha: .055),
                                       ])
                                     : null,
                                 border: selectedIndex >= 3
                                     ? Border.all(
-                                        color: tokens.marca.withValues(alpha: .34))
+                                        color: tokens.marca.withValues(alpha: .23))
                                     : null,
                               ),
                               child: Column(
@@ -210,13 +212,13 @@ class _Destination extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        activePurple.withValues(alpha: isDark ? .28 : .22),
-                        activePurple.withValues(alpha: isDark ? .14 : .10),
+                        activePurple.withValues(alpha: isDark ? .23 : .15),
+                        activePurple.withValues(alpha: isDark ? .11 : .055),
                       ],
                     )
                   : null,
               border: selected
-                  ? Border.all(color: activePurple.withValues(alpha: .30),
+                  ? Border.all(color: activePurple.withValues(alpha: .23),
                       width: .9)
                   : null,
               borderRadius: BorderRadius.circular(21),
@@ -224,7 +226,7 @@ class _Destination extends StatelessWidget {
                   ? [
                       BoxShadow(
                         color: activePurple.withValues(
-                          alpha: isDark ? .15 : .09,
+                          alpha: isDark ? .10 : .05,
                         ),
                         blurRadius: 11,
                         offset: const Offset(0, 3),
