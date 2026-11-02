@@ -99,6 +99,49 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                   color: AppColors.secondaryText(brightness),
                 ),
               ),
+              if (!hidden && rows.isNotEmpty && total > 0) ...[
+                const SizedBox(height: 12),
+                Container(
+                  key: const ValueKey('category-donut-top-contributor'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: CategoryVisuals.colorFor(
+                      category: rows.first.categoryName,
+                      brightness: brightness,
+                    ).withValues(alpha: .08),
+                    borderRadius: BorderRadius.circular(AppRadii.control),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.auto_graph_rounded,
+                        size: 19,
+                        color: CategoryVisuals.colorFor(
+                          category: rows.first.categoryName,
+                          brightness: brightness,
+                        ),
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          'maior peso: ${rows.first.categoryName} · '
+                          '${(rows.first.actualAmount / total * 100).toStringAsFixed(0)}% do gráfico',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               if (hidden)
                 Text(
@@ -301,7 +344,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                           amount,
                         ],
                       ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       hidden
                           ? 'proporção oculta'
@@ -312,6 +355,29 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                         color: AppColors.secondaryText(brightness),
                       ),
                     ),
+                    if (!hidden && total > 0) ...[
+                      const SizedBox(height: 7),
+                      ExcludeSemantics(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                          child: LinearProgressIndicator(
+                            key: ValueKey(
+                              'category-share-progress-${row.categoryId}',
+                            ),
+                            value: (row.actualAmount / total).clamp(0.0, 1.0),
+                            minHeight: 6,
+                            backgroundColor: AppColors.border(brightness)
+                                .withValues(alpha: .55),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              CategoryVisuals.colorFor(
+                                category: row.categoryName,
+                                brightness: brightness,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 );
               },
