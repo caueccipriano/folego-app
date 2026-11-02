@@ -24,6 +24,9 @@ void main() {
       expect(tapped, index);
       expect(tester.takeException(), isNull);
     }
+    await tester.tap(find.byKey(const ValueKey('tools-financial-ai')));
+    await tester.pump();
+    expect(tapped, 4);
     expect(find.byType(ListView), findsNothing);
   });
 
