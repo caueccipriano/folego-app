@@ -92,9 +92,9 @@ class _AccountHeader extends StatelessWidget {
                       identity.displayName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.section(
+                      style: AppTypography.cardTitle(
                         context,
-                        fontSize: 15,
+                        fontSize: 17,
                         color: primary,
                       ),
                     ),
@@ -106,7 +106,7 @@ class _AccountHeader extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
                           context,
-                          fontSize: 11,
+                          fontSize: 12,
                           color: secondary,
                         ),
                       ),
