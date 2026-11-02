@@ -19,7 +19,11 @@ void main() {
   test('AI focus is read-only and requires a user request', () {
     final screen = File('lib/features/shell/financial_ai_screen.dart')
         .readAsStringSync();
-    expect(screen, contains('onPressed: _sending || hidden ? null : _ask'));
+    expect(screen, contains('_providerConfigured == false ? null : _ask'));
+    expect(screen, contains('method: HttpMethod.get'));
+    expect(screen, isNot(contains('getMonthlyMoneySummary')));
+    expect(screen, isNot(contains('financialAiMonthlyContext')));
+    expect(screen, contains("ValueKey('financial-ai-provider-status')"));
     expect(screen, contains('widget.onOpenPlan'));
     expect(screen, isNot(contains('.insert(')));
     expect(screen, isNot(contains('.update(')));
