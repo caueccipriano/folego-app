@@ -476,7 +476,9 @@ class _WalletScreenState extends State<WalletScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Benefícios ficam separados. Faturas e dívidas são exibidas '
-                  'à parte e não são descontadas novamente deste saldo.',
+                  'à parte e não são descontadas novamente deste saldo. '
+                  'O Fôlego da Home calcula outra coisa: quanto resta '
+                  'até receber, considerando compromissos e orçamento.',
                   style: AppTypography.body(
                     sheetContext,
                     fontSize: 11,
@@ -501,7 +503,7 @@ class _WalletScreenState extends State<WalletScreen> {
         subtitle: '${Formatters.money(summary.totalCash)} no total das contas',
         helperText: summary.availableCash < 0
             ? 'disponível negativo · confira as contas antes de gastar'
-            : null,
+            : 'saldo das contas, não é seu Fôlego até receber',
         onTap: _showCashBreakdown,
       ),
       _PositionMetric(

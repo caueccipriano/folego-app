@@ -25,8 +25,8 @@ void main() {
     ));
 
     expect(find.text('receitas'), findsOneWidget);
-    expect(find.text('despesas'), findsOneWidget);
-    expect(find.text('resultado'), findsOneWidget);
+    expect(find.text('despesas por competência'), findsOneWidget);
+    expect(find.text('resultado econômico'), findsOneWidget);
     expect(find.text('R\$ 100,00'), findsOneWidget);
     expect(find.text('R\$ 75,00'), findsOneWidget);
     expect(find.text('R\$ 25,00'), findsOneWidget);

@@ -22,8 +22,8 @@ class FinancialAiAnswerView extends StatelessWidget {
 
     const metrics = <String, String>{
       'Receitas registradas': 'receitas',
-      'Despesas por competência': 'despesas',
-      'Resultado do mês': 'resultado',
+      'Despesas por competência': 'despesas por competência',
+      'Resultado do mês': 'resultado econômico',
     };
     final values = <String, String>{};
     final details = <String>[];
@@ -111,6 +111,16 @@ class FinancialAiAnswerView extends StatelessWidget {
               ],
             );
           }),
+          if (isAutomatic) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Competência inclui as despesas atribuídas ao mês, '
+              'como parcelas. Não é o mesmo que compras feitas neste mês '
+              'nem dinheiro disponível.',
+              style: AppTypography.label(context, fontSize: 12,
+                color: scheme.onSurfaceVariant),
+            ),
+          ],
           const SizedBox(height: 16),
         ],
         if (general.isNotEmpty) _DetailSection(lines: general),

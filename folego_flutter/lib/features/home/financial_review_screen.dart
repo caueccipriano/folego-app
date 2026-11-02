@@ -12,6 +12,7 @@ import '../transactions/transaction_classification_inbox.dart';
 import '../transactions/transactions_screen.dart';
 import '../wallet/wallet_screen.dart';
 import 'folego_change_explanation.dart';
+import 'financial_numbers_guide.dart';
 import 'monthly_closing_review.dart';
 
 Future<void> reviewFinancialAccounts(
@@ -91,6 +92,13 @@ class FinancialReviewScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            FinancialNumbersGuide(
+              accountBalance: snapshot.liquidBalance,
+              untilIncome: snapshot.spendablePool,
+              spendingByPurchaseDate: summary?.spendingMade,
+              expensesByCompetence: summary?.competenceExpenses,
+            ),
+            const SizedBox(height: 18),
             FolegoChangeExplanation(current: snapshot, previous: previous),
             const SizedBox(height: 12),
             OutlinedButton.icon(

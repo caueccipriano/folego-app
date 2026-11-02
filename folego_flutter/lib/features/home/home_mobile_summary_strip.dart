@@ -188,7 +188,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                       : Formatters.money(monthly!.spendingNet),
               description: monthly == null
                   ? 'ver meu mês'
-                  : 'ver movimentações',
+                  : 'pela data da compra',
               onTap: onMonthly,
             ),
             const SizedBox(width: 8),

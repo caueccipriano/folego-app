@@ -80,7 +80,7 @@ void main() {
       ));
       final title = tester.widget<Text>(find.text('contas e cartões'));
       expect(title.style!.fontFamily, 'Manrope');
-      expect(title.style!.fontSize, 14);
+      expect(title.style!.fontSize, 15);
       final caption = tester.widget<Text>(find.text('faturas e dívidas'));
       expect(caption.style!.fontSize, greaterThanOrEqualTo(12));
       expect(tester.takeException(), isNull);
