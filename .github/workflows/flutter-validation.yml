@@ -91,7 +91,7 @@ jobs:
         run: flutter test test/unified_budget_control_test.dart
 
       - name: Plan intelligence, category and approval safety
-        run: flutter test test/plan_experience_test.dart test/plan_insights_section_test.dart test/plan_interaction_state_test.dart
+        run: flutter test test/plan_experience_test.dart test/plan_guidance_test.dart test/plan_insights_section_test.dart test/plan_interaction_state_test.dart
 
       - name: Safe current month budget pacing
         run: flutter test test/budget_pace_context_test.dart

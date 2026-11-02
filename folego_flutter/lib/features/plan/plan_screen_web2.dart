@@ -1255,28 +1255,12 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'comparação simples com o calendário, não é previsão: '
-              'contas e compras não acontecem em ritmo uniforme.',
+              'ritmo de calendário, não é previsão de gastos.',
               style: AppTypography.body(
                 context,
                 fontSize: 11,
                 color: secondaryText,
               ),
-            ),
-          ],
-          if (diagnostics.categoriesOverLimit > 0 ||
-              diagnostics.spendingWithoutLimit > 0) ...[
-            const SizedBox(height: 12),
-            Text(
-              '${diagnostics.categoriesOverLimit} categorias acima do próprio '
-              'limite: ${Formatters.money(diagnostics.exceededInLimitedCategories)}. '
-              'gastos sem limite: '
-              '${Formatters.money(diagnostics.spendingWithoutLimit)}. '
-              'limites não usados em outras categorias: '
-              '${Formatters.money(diagnostics.remainingInLimitedCategories)}.',
-              key: const ValueKey('plan-category-offset-explanation'),
-              style: AppTypography.body(
-                context, fontSize: 11, color: secondaryText),
             ),
           ],
           const SizedBox(height: 10),
@@ -1298,6 +1282,21 @@ class _PlanScreenState extends State<PlanScreen> {
                 style: AppTypography.body(context, fontSize: 11, color: secondaryText),
               ),
               children: [
+                if (diagnostics.categoriesOverLimit > 0 ||
+                    diagnostics.spendingWithoutLimit > 0) ...[
+                  Text(
+                    '${diagnostics.categoriesOverLimit} categorias acima do próprio '
+                    'limite: ${Formatters.money(diagnostics.exceededInLimitedCategories)}. '
+                    'gastos sem limite: '
+                    '${Formatters.money(diagnostics.spendingWithoutLimit)}. '
+                    'limites não usados em outras categorias: '
+                    '${Formatters.money(diagnostics.remainingInLimitedCategories)}.',
+                    key: const ValueKey('plan-category-offset-explanation'),
+                    style: AppTypography.body(context,
+                      fontSize: 12, color: secondaryText),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(

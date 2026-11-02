@@ -162,6 +162,11 @@ void main() {
     expect(classified, 1);
 
     final review = find.byKey(const ValueKey('plan-focus-action-Compras'));
+    expect(review, findsNothing);
+    final more = find.byKey(const ValueKey('plan-focus-more'));
+    await tester.ensureVisible(more);
+    await tester.tap(more);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(review);
     await tester.pumpAndSettle();
     await tester.tap(review);
@@ -193,6 +198,44 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('75%'), findsNothing);
     expect(find.textContaining('R\$ ••••'), findsWidgets);
+  });
+
+  testWidgets('multiple focus items keep one visible until requested',
+      (tester) async {
+    final items = [
+      category('A classificar', source: 'pending', actual: 30),
+      category('Compras', actual: 250),
+      category('Alimentação', planned: 200, actual: 300),
+    ];
+    BudgetOverviewItem? reviewed;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: ListView(children: [
+        PlanGuidanceCard(
+          items: items,
+          canEdit: true,
+          onEdit: (_, _) {},
+          onReviewSpending: (value) => reviewed = value,
+        ),
+      ])),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('plan-focus-A classificar')),
+      findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-focus-Compras')), findsNothing);
+    expect(find.byKey(const ValueKey('plan-focus-Alimentação')), findsNothing);
+    final more = find.byKey(const ValueKey('plan-focus-more'));
+    expect(more, findsOneWidget);
+    await tester.ensureVisible(more);
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('plan-focus-Compras')), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-focus-Alimentação')),
+      findsOneWidget);
+    final second = find.byKey(const ValueKey('plan-focus-Compras'));
+    await tester.ensureVisible(second);
+    await tester.tap(second);
+    expect(reviewed?.categoryId, 'Compras');
   });
 
   testWidgets('past months show no editable planning action', (tester) async {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_typography.dart';
-
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
@@ -67,7 +66,7 @@ class PlanGuidanceCard extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   canEdit
-                    ? 'uma decisão por vez. você confirma cada limite.'
+                    ? 'uma sugestão para organizar seu mês.'
                     : 'este mês está disponível apenas para consulta.',
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
                 ),
@@ -150,7 +149,7 @@ class PlanGuidanceCard extends StatelessWidget {
                       color: scheme.onSurface))),
                 ]),
                 const SizedBox(height: 4),
-                Text('até três pontos para conferir neste mês.',
+                Text('comece pelo primeiro ponto; os demais são opcionais.',
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
                 if (largest != null && total > 0) ...[
                   const SizedBox(height: 10),
@@ -172,50 +171,94 @@ class PlanGuidanceCard extends StatelessWidget {
                   ),
                 ] else ...[
                   const SizedBox(height: 9),
-                  for (final target in targets) ...[
-                    const Divider(height: 17),
-                    Material(
-                      type: MaterialType.transparency,
-                      child: ListTile(
-                      key: ValueKey('plan-focus-${target.category.categoryId}'),
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      title: Text(target.category.categoryName,
-                        style: AppTypography.cardTitle(context,
-                          fontSize: 14, color: scheme.onSurface)),
-                      subtitle: Text(_reason(target, hidden),
-                        style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
-                      trailing: _reviewAction(target) == null
-                          ? const Icon(Icons.chevron_right_rounded)
-                          : TextButton(
-                              key: ValueKey('plan-focus-action-${target.category.categoryId}'),
-                              onPressed: _reviewAction(target),
-                              child: Text(_reviewActionLabel(target)),
-                            ),
-                      onTap: () => onReviewSpending(target.category),
+                  _focusItem(context, targets.first, hidden, prominent: true),
+                  if (targets.length > 1) ...[
+                    const SizedBox(height: 5),
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        dividerColor: Colors.transparent,
+                      ),
+                      child: ExpansionTile(
+                        key: const ValueKey('plan-focus-more'),
+                        initiallyExpanded: false,
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: EdgeInsets.zero,
+                        title: Text(
+                          'ver outros ${targets.length - 1} pontos',
+                          style: AppTypography.label(context,
+                            fontSize: 13, color: scheme.primary,
+                            fontWeight: FontWeight.w700),
+                        ),
+                        children: [
+                          for (final target in targets.skip(1)) ...[
+                            const Divider(height: 12),
+                            _focusItem(context, target, hidden),
+                          ],
+                        ],
                       ),
                     ),
                   ],
                   const SizedBox(height: 4),
-                  Text('toque para conferir. gasto alto não significa desperdício.',
-                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11)),
+                  Text('valores dos registros; revisar não altera seus gastos.',
+                    style: AppTypography.label(context,
+                      fontSize: 11, color: scheme.onSurfaceVariant)),
                 ],
                 if (onCompareMonths != null) ...[
                   const SizedBox(height: 12),
-                  OutlinedButton.icon(
+                  TextButton.icon(
                     key: const ValueKey('plan-compare-months'),
                     onPressed: onCompareMonths,
                     icon: const Icon(Icons.compare_arrows_rounded, size: 18),
                     label: const Text('comparar meses'),
                   ),
-                  const SizedBox(height: 4),
-                  Text('mesmos dias dos dois meses, com base nos registros.',
-                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11)),
+
                 ],
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _focusItem(
+    BuildContext context,
+    PlanReviewTarget target,
+    bool hidden, {
+    bool prominent = false,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final action = _reviewAction(target);
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: prominent
+            ? BoxDecoration(
+                color: Color.alphaBlend(
+                  scheme.primary.withValues(alpha: .045), scheme.surface),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: scheme.outlineVariant),
+              )
+            : null,
+        child: ListTile(
+          key: ValueKey('plan-focus-${target.category.categoryId}'),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          dense: true,
+          title: Text(target.category.categoryName,
+            style: AppTypography.cardTitle(context,
+              fontSize: 14, color: scheme.onSurface)),
+          subtitle: Text(_reason(target, hidden),
+            style: AppTypography.body(context,
+              fontSize: 12, color: scheme.onSurfaceVariant)),
+          trailing: action == null
+              ? const Icon(Icons.chevron_right_rounded)
+              : TextButton(
+                  key: ValueKey('plan-focus-action-${target.category.categoryId}'),
+                  onPressed: action,
+                  child: Text(_reviewActionLabel(target)),
+                ),
+          onTap: () => onReviewSpending(target.category),
+        ),
       ),
     );
   }
