@@ -21,7 +21,7 @@ void main() {
   });
 
   test('banking-grade visual system is on the active Home', () {
-    expect(home, contains("FÔLEGO  /  HOJE"));
+    expect(home, contains('FÔLEGO  /  HOJE'));
     expect(active, contains('DISPONÍVEL ATÉ RECEBER'));
     expect(active, contains('SEU LIMITE DIÁRIO'));
     expect(active, contains('PRÓXIMO SALÁRIO'));
