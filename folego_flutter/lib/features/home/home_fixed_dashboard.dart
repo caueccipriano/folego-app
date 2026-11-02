@@ -49,7 +49,6 @@ class HomeFixedDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     final colors = FolegoColorTokens.of(context);
     final timing = homeIncomeTimingLabel(snapshot);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
