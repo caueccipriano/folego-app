@@ -47,7 +47,7 @@ void main() {
             .readAsStringSync();
     expect(source, contains('transactionDayLabel(item.occurredAt)'));
     expect(source, contains('transactionDayLabel(transactions[index - 1].occurredAt)'));
-    expect(source, contains('transaction-day-$index'));
+    expect(source, contains(r'transaction-day-$index'));
     expect(source, isNot(contains('esta semana')));
     expect(source, contains('onLoadMore()'));
     expect(source, contains('hasMore &&'));
