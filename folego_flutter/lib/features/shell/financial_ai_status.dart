@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Converts only trusted provider identifiers and known HTTP statuses into
 /// concise user-visible feedback. Never displays raw upstream error payloads.
 String? financialAiProviderName(Object? provider) {
@@ -12,7 +14,15 @@ String? financialAiProviderName(Object? provider) {
 }
 
 String financialAiErrorMessage(int status, Object? details) {
-  final body = details is Map ? details : null;
+  Object? decoded = details;
+  if (details is String && details.length <= 600) {
+    try {
+      decoded = jsonDecode(details);
+    } catch (_) {
+      // Upstream plain text is untrusted; show only generic status feedback.
+    }
+  }
+  final body = decoded is Map ? decoded : null;
   final error = body?['error'];
   // The function sends short, pre-approved messages. Unknown provider
   // responses must not be rendered raw (they may contain sensitive content).
