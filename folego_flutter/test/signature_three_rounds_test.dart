@@ -15,6 +15,17 @@ void main() {
     expect(more, contains("ValueKey('tools-profile')"));
   });
 
+  test('round 1: only visible balances reveal the budget excess amount', () {
+    final source = File('lib/features/home/home_mobile_summary_strip.dart')
+        .readAsStringSync();
+    expect(source, contains("ValueKey('home-budget-excess-amount')"));
+    expect(source, contains('if (budgetExceeded && showTiles)'));
+    expect(source, contains('if (ratio != null && !hidden)'));
+    expect(source, contains(
+      'snapshot.monthlyBudgetUsed - snapshot.monthlyBudgetPlanned'));
+    expect(source, contains("ValueKey('home-mobile-budget')"));
+  });
+
   test('round 2: movements retain financial amounts and interactive filters', () {
     final source =
         File('lib/features/transactions/transactions_screen_base.dart')
