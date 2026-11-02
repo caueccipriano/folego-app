@@ -293,7 +293,7 @@ class _SummaryCard extends StatelessWidget {
                     Formatters.money(total),
                     style: AppTypography.money(
                       context,
-                      fontSize: 28,
+                      fontSize: 32,
                       color: primary,
                     ),
                   ),
