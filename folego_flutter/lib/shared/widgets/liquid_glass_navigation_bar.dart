@@ -96,14 +96,55 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.grid_view_rounded, size: 21,
-                                    color: selectedIndex >= 3
-                                      ? tokens.marca : tokens.textoSecundario),
-                                  const SizedBox(height: 4),
-                                  Text('mais',
-                                    style: AppTypography.label(context,
-                                      fontSize: 12, color: selectedIndex >= 3
-                                        ? tokens.marca : tokens.textoSecundario)),
+                                  AnimatedContainer(
+                                    key: const ValueKey('mobile-tools-indicator'),
+                                    duration: MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 180),
+                                    width: selectedIndex >= 3 ? 22 : 5,
+                                    height: 3,
+                                    decoration: BoxDecoration(
+                                      color: selectedIndex >= 3
+                                          ? tokens.marca
+                                          : AppColors.transparent,
+                                      borderRadius: BorderRadius.circular(99),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  AnimatedContainer(
+                                    duration: MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 180),
+                                    width: 37,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: selectedIndex >= 3
+                                          ? tokens.marca.withValues(alpha: .12)
+                                          : AppColors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.grid_view_rounded,
+                                      size: 21,
+                                      color: selectedIndex >= 3
+                                          ? tokens.marca
+                                          : tokens.textoSecundario,
+                                    ),
+                                  ),
+                                  Text(
+                                    'mais',
+                                    style: AppTypography.label(
+                                      context,
+                                      fontSize: 12,
+                                      fontWeight: selectedIndex >= 3
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: selectedIndex >= 3
+                                          ? tokens.marca
+                                          : tokens.textoSecundario,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
                                 ],
                               ),
                             ),
@@ -184,6 +225,17 @@ class _Destination extends StatelessWidget {
                       width: .9)
                   : null,
               borderRadius: BorderRadius.circular(21),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: activePurple.withValues(
+                          alpha: isDark ? .15 : .09,
+                        ),
+                        blurRadius: 11,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
