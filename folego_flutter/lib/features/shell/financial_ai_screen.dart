@@ -223,9 +223,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             _checkingProvider
                                 ? 'verificando a IA...'
                                 : _providerConfigured == true
-                                    ? '${_providerName ?? 'IA'} selecionada · créditos não verificados'
+                                    ? '${_providerName ?? 'Gemini'} selecionado · limite disponível não verificado'
                                     : _providerConfigured == false
-                                        ? 'IA ainda não configurada no servidor'
+                                        ? 'Gemini sem chave no Supabase · resumo sem IA disponível'
                                         : 'não foi possível conferir a IA',
                             style: AppTypography.body(context, fontSize: 12),
                           ),
@@ -252,7 +252,10 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                         'despesas e até quatro categorias agregadas, '
                         'comparadas por dias equivalentes. A IA não recebe '
                         'movimentações individuais, contas nem cartões. '
-                        'Cada consulta pode consumir uma pergunta Premium.',
+                        'Cada consulta pode consumir uma pergunta Premium. No plano '
+                        'gratuito da API Gemini, o Google pode utilizar o '
+                        'conteúdo agregado enviado para melhorar seus '
+                        'produtos. Os limites gratuitos não são ilimitados.',
                         style: AppTypography.body(context, fontSize: 12,
                           color: colors.onSurfaceVariant),
                       ),
