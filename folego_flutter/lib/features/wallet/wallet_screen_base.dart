@@ -999,12 +999,18 @@ class _PositionMetricCard extends StatelessWidget {
         onTap: metric.onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
-          constraints: BoxConstraints(minHeight: emphasized ? 114 : 84),
+          constraints: BoxConstraints(minHeight: emphasized ? 118 : 84),
           padding: EdgeInsets.all(emphasized ? 18 : 12),
           decoration: BoxDecoration(
-            color: AppColors.surface(brightness),
+            color: emphasized
+                ? Color.alphaBlend(
+                    purple.withValues(alpha: .025),
+                    AppColors.surface(brightness))
+                : AppColors.surface(brightness),
             borderRadius: BorderRadius.circular(AppRadii.card),
-            border: Border.all(color: AppColors.border(brightness)),
+            border: Border.all(color: emphasized
+                ? purple.withValues(alpha: .23)
+                : AppColors.border(brightness)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1040,7 +1046,7 @@ class _PositionMetricCard extends StatelessWidget {
                   Formatters.money(metric.value),
                   style: AppTypography.money(
                     context,
-                    fontSize: emphasized ? 29 : 17,
+                    fontSize: emphasized ? 32 : 17,
                     color: metric.value < 0
                         ? AppColors.expenseText(brightness)
                         : primary,

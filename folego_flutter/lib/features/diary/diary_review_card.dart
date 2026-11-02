@@ -31,9 +31,17 @@ class DiaryReviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            '1 minuto para entender uma escolha',
-            style: AppTypography.section(context, fontSize: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_stories_outlined, size: 22,
+                color: AppColors.primaryPurple(brightness)),
+              const SizedBox(width: 10),
+              Expanded(child: Text(
+                '1 minuto para entender uma escolha',
+                style: AppTypography.section(context, fontSize: 19),
+              )),
+            ],
           ),
           const SizedBox(height: 9),
           Text(
@@ -48,7 +56,8 @@ class DiaryReviewCard extends StatelessWidget {
             const SizedBox(height: 13),
             Text(
               '$reviewed de $total gastos com reflexão neste mês',
-              style: AppTypography.body(context, fontSize: 12),
+              style: AppTypography.label(context, fontSize: 12,
+                color: AppColors.secondaryText(brightness)),
             ),
             const SizedBox(height: 7),
             ClipRRect(

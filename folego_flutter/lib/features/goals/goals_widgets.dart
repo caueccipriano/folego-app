@@ -172,7 +172,7 @@ class GoalCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.money(
                   context,
-                  fontSize: 16,
+                  fontSize: 18,
                   color: primary,
                 ),
               ),
@@ -185,8 +185,8 @@ class GoalCard extends StatelessWidget {
                   '${goal.progressPercent}%',
                   style: AppTypography.label(
                     context,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     color: completed ? secondary : purple,
                   ),
                 ),

@@ -710,7 +710,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             decoration: BoxDecoration(
                               color: surface,
                               border: Border.all(color: border),
-                              borderRadius: BorderRadius.circular(22),
+                              borderRadius: BorderRadius.circular(AppRadii.feature),
+                               boxShadow: [
+                                 BoxShadow(
+                                   color: primaryText.withValues(alpha: .045),
+                                   blurRadius: 18,
+                                   offset: const Offset(0, 5),
+                                 ),
+                               ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

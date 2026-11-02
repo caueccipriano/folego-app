@@ -126,15 +126,23 @@ class _ToolTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 106),
+          constraints: const BoxConstraints(minHeight: 112),
           padding: const EdgeInsets.fromLTRB(13, 12, 9, 11),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 23, color: scheme.primary),
-              const SizedBox(height: 12),
+              Container(
+                width: 34, height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: .10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 20, color: scheme.primary),
+              ),
+              const SizedBox(height: 10),
               Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: AppTypography.cardTitle(context, fontSize: 14,
+                style: AppTypography.cardTitle(context, fontSize: 15,
                   color: scheme.onSurface)),
               const SizedBox(height: 3),
               Text(caption, maxLines: 1, overflow: TextOverflow.ellipsis,

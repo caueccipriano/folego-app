@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_typography.dart';
+
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
@@ -59,7 +61,7 @@ class PlanGuidanceCard extends StatelessWidget {
                   Icon(Icons.tune_rounded, color: scheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(child: Text('seu próximo passo',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
+                    style: AppTypography.cardTitle(context, fontSize: 17,
                       color: scheme.onSurface))),
                 ]),
                 const SizedBox(height: 5),
@@ -144,7 +146,7 @@ class PlanGuidanceCard extends StatelessWidget {
                   Icon(Icons.lightbulb_outline_rounded, color: scheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(child: Text('gastos em foco',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
+                    style: AppTypography.cardTitle(context, fontSize: 17,
                       color: scheme.onSurface))),
                 ]),
                 const SizedBox(height: 4),
@@ -179,7 +181,8 @@ class PlanGuidanceCard extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                       title: Text(target.category.categoryName,
-                        style: TextStyle(fontWeight: FontWeight.w600, color: scheme.onSurface)),
+                        style: AppTypography.cardTitle(context,
+                          fontSize: 14, color: scheme.onSurface)),
                       subtitle: Text(_reason(target, hidden),
                         style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
                       trailing: _reviewAction(target) == null

@@ -394,7 +394,7 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryText,
-
+          minimumSize: const Size(44, 48),
           side: BorderSide(color: border),
 
           textStyle: textTheme.labelLarge?.copyWith(
