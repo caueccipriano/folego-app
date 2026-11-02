@@ -28,6 +28,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/category_search_picker.dart';
 import 'quick_register_payment_state.dart';
 import 'quick_capture_parser.dart';
+import 'quick_register_defaults.dart';
 
 typedef QuickRegisterCatalog = ({
   List<AccountItem> accounts,
@@ -245,38 +246,32 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           : const <CreditCardItem>[];
       final currentPayment = _expensePayment;
 
-      String? nextId<T>(
-        List<T> items,
-        String? current,
-        String Function(T item) idOf,
-      ) {
-        if (current != null && items.any((item) => idOf(item) == current)) {
-          return current;
-        }
-        return null;
-      }
 
       setState(() {
         _paymentAccounts = accounts;
         _benefitAccounts = benefits;
         _creditCards = cards;
-        _incomeAccountId = nextId(
-          accounts,
-          _incomeAccountId,
-          (item) => item.id,
+        _incomeAccountId = quickRegisterInstrumentId(
+          items: accounts,
+          currentId: _incomeAccountId,
+          idOf: (item) => item.id,
         );
         _expensePayment = QuickExpensePaymentState(
           type: currentPayment.type,
-          accountId: nextId(
-            accounts,
-            currentPayment.accountId,
-            (item) => item.id,
+          accountId: quickRegisterInstrumentId(
+            items: accounts,
+            currentId: currentPayment.accountId,
+            idOf: (item) => item.id,
           ),
-          cardId: nextId(cards, currentPayment.cardId, (item) => item.id),
-          benefitAccountId: nextId(
-            benefits,
-            currentPayment.benefitAccountId,
-            (item) => item.id,
+          cardId: quickRegisterInstrumentId(
+            items: cards,
+            currentId: currentPayment.cardId,
+            idOf: (item) => item.id,
+          ),
+          benefitAccountId: quickRegisterInstrumentId(
+            items: benefits,
+            currentId: currentPayment.benefitAccountId,
+            idOf: (item) => item.id,
           ),
           installmentsCount: currentPayment.installmentsCount,
         );
@@ -323,6 +318,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               (entry) => _QuickSuggestion(
                 label: entry.value.description.trim(),
                 categoryId: entry.value.categoryId,
+                eventType: entry.value.eventType,
+                accountId: entry.value.accountId,
               ),
             )
             .toList(growable: false);
@@ -348,8 +345,18 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           _creditCards = catalog.cards;
           _categories = _selectableCategories(catalog.categories);
           _categoryId = null;
-          _incomeAccountId = null;
-          _expensePayment = const QuickExpensePaymentState();
+          _incomeAccountId = quickRegisterInstrumentId(
+            items: catalog.accounts,
+            currentId: null,
+            idOf: (item) => item.id,
+          );
+          _expensePayment = QuickExpensePaymentState(
+            accountId: quickRegisterInstrumentId(
+              items: catalog.accounts,
+              currentId: null,
+              idOf: (item) => item.id,
+            ),
+          );
           _loading = false;
         });
         return;
@@ -381,7 +388,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
           (_isExpense ? values[3] : values[1]) as List<CategoryItem>;
       final selectable = _selectableCategories(categories);
       final defaultCategoryId = _defaultCategoryId(selectable);
-      const String? accountId = null;
+      final accountId = quickRegisterInstrumentId(
+        items: accounts,
+        currentId: null,
+        idOf: (item) => item.id,
+      );
 
       setState(() {
         _paymentAccounts = accounts;
@@ -461,7 +472,30 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 
   void _changePaymentType(QuickExpensePaymentType type) {
     setState(() {
-      _expensePayment = _expensePayment.select(type);
+      final selected = _expensePayment.select(type);
+      _expensePayment = switch (type) {
+        QuickExpensePaymentType.account => selected.withAccountId(
+          quickRegisterInstrumentId(
+            items: _paymentAccounts,
+            currentId: selected.accountId,
+            idOf: (item) => item.id,
+          ),
+        ),
+        QuickExpensePaymentType.creditCard => selected.withCardId(
+          quickRegisterInstrumentId(
+            items: _creditCards,
+            currentId: selected.cardId,
+            idOf: (item) => item.id,
+          ),
+        ),
+        QuickExpensePaymentType.benefit => selected.withBenefitAccountId(
+          quickRegisterInstrumentId(
+            items: _benefitAccounts,
+            currentId: selected.benefitAccountId,
+            idOf: (item) => item.id,
+          ),
+        ),
+      };
       if (!_expensePayment.supportsRecurring) _repeat = 'once';
       _error = null;
     });
@@ -1155,6 +1189,19 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                             )) {
                           _categoryId = suggestion.categoryId;
                         }
+                        final accountId = quickRegisterHistoryAccountId(
+                          eventType: suggestion.eventType,
+                          historicalAccountId: suggestion.accountId,
+                          activeAccountIds: _paymentAccounts
+                              .map((item) => item.id)
+                              .toList(growable: false),
+                          currentlyUsingAccount: _expensePayment.type ==
+                              QuickExpensePaymentType.account,
+                          selectedAccountId: _expensePayment.accountId,
+                        );
+                        if (accountId != null) {
+                          _expensePayment = _expensePayment.withAccountId(accountId);
+                        }
                         _error = null;
                       });
                     },
@@ -1495,8 +1542,15 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
 }
 
 class _QuickSuggestion {
-  const _QuickSuggestion({required this.label, this.categoryId});
+  const _QuickSuggestion({
+    required this.label,
+    required this.eventType,
+    this.categoryId,
+    this.accountId,
+  });
 
   final String label;
+  final String eventType;
   final String? categoryId;
+  final String? accountId;
 }
