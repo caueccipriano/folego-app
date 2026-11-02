@@ -55,7 +55,7 @@ void main() {
           currentId: 'old',
           idOf: (value) => value,
         ),
-        'only',
+        isNull,
       );
     });
   });
