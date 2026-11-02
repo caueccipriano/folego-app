@@ -99,6 +99,7 @@ void main() {
     Widget app(double keyboardInset) => MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(
+          size: const Size(390, 844),
           viewInsets: EdgeInsets.only(bottom: keyboardInset),
         ),
         child: _ShellForTest(mountCounts: counts),
@@ -138,6 +139,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: MediaQuery(
         data: const MediaQueryData(
+          size: Size(1280, 860),
           viewInsets: EdgeInsets.only(bottom: 300),
         ),
         child: _ShellForTest(mountCounts: List<int>.filled(5, 0)),
