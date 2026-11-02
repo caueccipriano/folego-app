@@ -168,9 +168,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
       valueListenable: FinancialPrivacy.hidden,
       builder: (context, hidden, _) => FolegoAmbientBackdrop(
         child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           title: Text('diário', style: AppTypography.section(context, fontSize: 18)),
           leading: IconButton(tooltip: 'voltar', onPressed: () => Navigator.of(context).maybePop(), icon: const Icon(AppIcons.back)),
           actions: [IconButton(tooltip: 'ver lançamentos', onPressed: _openTransactions, icon: const Icon(AppIcons.transactions))],
