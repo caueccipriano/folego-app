@@ -61,14 +61,14 @@ class AppSectionHeader extends StatelessWidget {
                 ],
               ),
             if (subtitle?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 5),
+              const SizedBox(height: 7),
               Text(
                 subtitle!,
-                maxLines: largerText ? 5 : 3,
+                maxLines: largerText ? 5 : 4,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.body(
                   context,
-                  fontSize: 13,
+                  fontSize: 14,
                   color: secondary,
                 ),
               ),

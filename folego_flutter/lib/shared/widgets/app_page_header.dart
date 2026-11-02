@@ -76,14 +76,14 @@ class AppPageHeader extends StatelessWidget {
                   subtitle!,
                   style: AppTypography.body(
                     context,
-                    fontSize: compact ? 13 : 14,
+                    fontSize: 14,
                     color: secondary,
                   ),
                 ),
               ),
             ],
             if (stackAction) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: trailing!,

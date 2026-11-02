@@ -63,6 +63,9 @@ jobs:
       - name: Shared empty and loading states
         run: flutter test test/shared_empty_loading_states_test.dart
 
+      - name: iPhone typography, contrast and touch targets
+        run: flutter test test/shared_header_responsive_test.dart test/design_system_accessibility_test.dart test/plan_guidance_test.dart
+
       - name: Accessible motion, navigation and sheet transitions
         run: flutter test test/folego_motion_test.dart test/shell_navigation_motion_test.dart test/goals_widgets_test.dart
 

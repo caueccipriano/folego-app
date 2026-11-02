@@ -131,6 +131,41 @@ void main() {
     expect(find.textContaining('260,00'), findsNothing);
   });
 
+  testWidgets('320px wide planning action tappable with large text',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    BudgetOverviewItem? edited;
+    final items = [
+      category('Compras', actual: 250),
+      category('Calçados', parent: 'Compras', actual: 250),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(1.4)),
+        child: Scaffold(body: ListView(children: [
+          PlanGuidanceCard(
+            items: items,
+            canEdit: true,
+            onEdit: (_, _) {},
+            onReviewSpending: (_) {},
+            onEditReviewCategory: (item) => edited = item,
+          ),
+        ])),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    final action = find.byKey(const ValueKey('plan-focus-action-Compras'));
+    expect(action, findsOneWidget);
+    expect(tester.widget<IconButton>(action).tooltip, 'definir limite');
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    expect(edited?.categoryId, 'Calçados');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('one-tap actions classify and open child limit without saving',
       (tester) async {
     final items = [

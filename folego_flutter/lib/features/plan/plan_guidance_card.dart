@@ -68,7 +68,7 @@ class PlanGuidanceCard extends StatelessWidget {
                   canEdit
                     ? 'uma sugestão para organizar seu mês.'
                     : 'este mês está disponível apenas para consulta.',
-                  style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+                  style: AppTypography.body(context, fontSize: 13, color: scheme.onSurfaceVariant),
                 ),
                 if (next != null && canEdit) ...[
                   const SizedBox(height: 13),
@@ -92,8 +92,9 @@ class PlanGuidanceCard extends StatelessWidget {
                           Text(next.hasBudget
                             ? 'rever: ${next.categoryName}'
                             : 'comece por: ${next.categoryName}',
-                            style: TextStyle(color: scheme.onSurface,
-                              fontWeight: FontWeight.w600)),
+                            style: AppTypography.body(context,
+                              fontSize: 15, fontWeight: FontWeight.w700,
+                              color: scheme.onSurface)),
                           const SizedBox(height: 4),
                           Text(
                             proposed != null
@@ -106,7 +107,7 @@ class PlanGuidanceCard extends StatelessWidget {
                                   '${hidden ? "R\$ ••••" : Formatters.money(next.actualAmount)}. '
                                   'escolha seu limite.'
                                 : 'defina um valor que faça sentido para você.',
-                            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                            style: AppTypography.body(context, fontSize: 13, color: scheme.onSurfaceVariant)),
                           const SizedBox(height: 12),
                           FilledButton.icon(
                             key: const ValueKey('plan-guided-edit'),
@@ -124,7 +125,7 @@ class PlanGuidanceCard extends StatelessWidget {
                     items.any((item) => item.isSubcategory && item.hasBudget)
                         ? 'seus limites estão configurados. acompanhe os gastos abaixo.'
                         : 'nenhuma subcategoria disponível para ajustar agora.',
-                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                    style: AppTypography.body(context, fontSize: 13, color: scheme.onSurfaceVariant)),
                 ],
               ],
             ),
@@ -150,7 +151,7 @@ class PlanGuidanceCard extends StatelessWidget {
                 ]),
                 const SizedBox(height: 4),
                 Text('comece pelo primeiro ponto; os demais são opcionais.',
-                  style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                  style: AppTypography.body(context, fontSize: 13, color: scheme.onSurfaceVariant)),
                 if (largest != null && total > 0) ...[
                   const SizedBox(height: 10),
                   Text(
@@ -158,8 +159,8 @@ class PlanGuidanceCard extends StatelessWidget {
                     '${hidden ? "R\$ ••••" : Formatters.money(largest.actualAmount)} '
                     '${hidden ? "" : "(${(largest.actualAmount / total * 100).round()}% do total acompanhado)"}',
                     key: const ValueKey('plan-largest-category'),
-                    style: TextStyle(color: scheme.onSurface, fontSize: 12,
-                      fontWeight: FontWeight.w600)),
+                    style: AppTypography.body(context, fontSize: 13,
+                      color: scheme.onSurface, fontWeight: FontWeight.w600)),
                 ],
                 if (targets.isEmpty) ...[
                   const SizedBox(height: 12),
@@ -167,7 +168,7 @@ class PlanGuidanceCard extends StatelessWidget {
                     total == 0
                       ? 'quando houver gastos, mostro onde vale conferir primeiro.'
                       : 'nenhum gasto acima do limite ou sem orçamento identificado.',
-                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+                    style: AppTypography.body(context, fontSize: 13, color: scheme.onSurfaceVariant),
                   ),
                 ] else ...[
                   const SizedBox(height: 9),
@@ -204,7 +205,7 @@ class PlanGuidanceCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text('valores dos registros; revisar não altera seus gastos.',
                     style: AppTypography.label(context,
-                      fontSize: 11, color: scheme.onSurfaceVariant)),
+                      fontSize: 13, color: scheme.onSurfaceVariant)),
                 ],
                 if (onCompareMonths != null) ...[
                   const SizedBox(height: 12),
@@ -232,6 +233,8 @@ class PlanGuidanceCard extends StatelessWidget {
   }) {
     final scheme = Theme.of(context).colorScheme;
     final action = _reviewAction(target);
+    final compactAction = MediaQuery.sizeOf(context).width < 380 ||
+        MediaQuery.textScalerOf(context).scale(1) > 1.25;
     return Container(
         decoration: prominent
             ? BoxDecoration(
@@ -247,19 +250,27 @@ class PlanGuidanceCard extends StatelessWidget {
           key: ValueKey('plan-focus-${target.category.categoryId}'),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           dense: true,
+          minVerticalPadding: 10,
           title: Text(target.category.categoryName,
             style: AppTypography.cardTitle(context,
               fontSize: 14, color: scheme.onSurface)),
           subtitle: Text(_reason(target, hidden),
             style: AppTypography.body(context,
-              fontSize: 12, color: scheme.onSurfaceVariant)),
+              fontSize: 13, color: scheme.onSurfaceVariant)),
           trailing: action == null
               ? const Icon(Icons.chevron_right_rounded)
-              : TextButton(
-                  key: ValueKey('plan-focus-action-${target.category.categoryId}'),
-                  onPressed: action,
-                  child: Text(_reviewActionLabel(target)),
-                ),
+              : compactAction
+                  ? IconButton(
+                      key: ValueKey('plan-focus-action-${target.category.categoryId}'),
+                      tooltip: _reviewActionLabel(target),
+                      icon: const Icon(Icons.tune_rounded, size: 20),
+                      onPressed: action,
+                    )
+                  : TextButton(
+                      key: ValueKey('plan-focus-action-${target.category.categoryId}'),
+                      onPressed: action,
+                      child: Text(_reviewActionLabel(target)),
+                    ),
           onTap: () => onReviewSpending(target.category),
           ),
         ),

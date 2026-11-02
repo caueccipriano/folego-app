@@ -95,6 +95,44 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('small iPhone page subtitle readable at 1.5 scale',
+      (tester) async {
+    await pumpHeader(
+      tester,
+      size: const Size(320, 720),
+      textScale: 1.5,
+      header: AppPageHeader(
+        title: 'carteira',
+        subtitle: 'suas contas, cartões e compromissos deste mês',
+        trailing: TextButton(
+          onPressed: () {},
+          child: const Text('ajustar'),
+        ),
+      ),
+    );
+    final subtitle = tester.widget<Text>(
+      find.text('suas contas, cartões e compromissos deste mês'));
+    expect(subtitle.style!.fontSize, 14);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('small iPhone section subtitle displays up to four lines',
+      (tester) async {
+    await pumpHeader(
+      tester,
+      size: const Size(320, 720),
+      header: const AppSectionHeader(
+        title: 'próximos compromissos',
+        subtitle: 'Veja os pagamentos organizados por vencimento '
+            'para entender o que precisa de atenção neste mês.',
+      ),
+    );
+    final subtitle = tester.widget<Text>(find.textContaining('pagamentos'));
+    expect(subtitle.style!.fontSize, 14);
+    expect(subtitle.maxLines, 4);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('page heading retains horizontal action on desktop',
       (tester) async {
     await pumpHeader(
