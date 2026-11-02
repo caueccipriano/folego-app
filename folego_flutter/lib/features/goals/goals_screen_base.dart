@@ -15,6 +15,8 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'goal_detail_screen.dart';
 import 'goal_form_sheet.dart';
 import 'goals_widgets.dart';
@@ -118,7 +120,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final background = AppColors.background(brightness);
     final primary = AppColors.primaryText(brightness);
     final layout = AppBreakpoints.of(context);
     final columns = switch (layout) {
@@ -127,8 +128,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       AppLayoutSize.expanded || AppLayoutSize.wide => 3,
     };
 
-    return ColoredBox(
-      color: background,
+    return FolegoAmbientBackdrop(
       child: SafeArea(
         child: AppContentContainer.dashboard(
           fillHeight: true,
@@ -138,6 +138,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(0, 22, 0, 48),
               children: [
+                const SignatureSectionIntro(
+                  eyebrow: 'Seus objetivos',
+                  caption: 'Pequenos aportes, conquistas que ficam',
+                  icon: Icons.flag_outlined,
+                ),
+                const SizedBox(height: 16),
                 _Header(onCreate: _saving ? null : _createGoal),
                 const SizedBox(height: 22),
                 if (_loading && _goals.isEmpty)
