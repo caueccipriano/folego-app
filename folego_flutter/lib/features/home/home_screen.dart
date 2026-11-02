@@ -31,8 +31,13 @@ class HomeScreen extends StatelessWidget {
     return RealtimeRefreshView(
       domain: AppRealtimeDomain.home,
       identity: space.id,
-      builder: (key) =>
-          _HomeContent(key: key, space: space, repository: repository),
+      // Update financial data without remounting Home or losing scroll state.
+      builder: (refreshToken) => _HomeContent(
+        key: ValueKey<String>(space.id),
+        space: space,
+        repository: repository,
+        refreshToken: refreshToken,
+      ),
     );
   }
 }
@@ -42,10 +47,12 @@ class _HomeContent extends StatefulWidget {
     super.key,
     required this.space,
     required this.repository,
+    required this.refreshToken,
   });
 
   final FinancialSpace space;
   final FolegoRepository repository;
+  final Key refreshToken;
 
   @override
   State<_HomeContent> createState() => _HomeContentState();
@@ -55,6 +62,21 @@ class _HomeContentState extends State<_HomeContent> {
   OnboardingState? _setup;
   bool _loadingSetup = true;
   bool _creatingAccount = false;
+  int _setupLoadGeneration = 0;
+
+  @override
+  void didUpdateWidget(covariant _HomeContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.space.id != widget.space.id) {
+      _setupLoadGeneration++;
+      _setup = null;
+      _loadingSetup = true;
+      _loadSetup();
+    } else if (oldWidget.refreshToken != widget.refreshToken) {
+      // Account and income changes can alter first-use readiness.
+      _loadSetup();
+    }
+  }
 
   @override
   void initState() {
@@ -63,15 +85,19 @@ class _HomeContentState extends State<_HomeContent> {
   }
 
   Future<void> _loadSetup() async {
+    final generation = ++_setupLoadGeneration;
+    final requestedSpaceId = widget.space.id;
     try {
-      final setup = await widget.repository.getOnboardingState(widget.space.id);
-      if (!mounted) return;
+      final setup = await widget.repository.getOnboardingState(requestedSpaceId);
+      if (!mounted || generation != _setupLoadGeneration ||
+          requestedSpaceId != widget.space.id) return;
       setState(() {
         _setup = setup;
         _loadingSetup = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _setupLoadGeneration ||
+          requestedSpaceId != widget.space.id) return;
       setState(() => _loadingSetup = false);
     }
   }
@@ -192,6 +218,7 @@ class _HomeContentState extends State<_HomeContent> {
         child: base.HomeScreen(
           space: widget.space,
           repository: widget.repository,
+          refreshToken: widget.refreshToken,
         ),
       );
     }
@@ -202,6 +229,7 @@ class _HomeContentState extends State<_HomeContent> {
       child: base.HomeScreen(
         space: widget.space,
         repository: widget.repository,
+        refreshToken: widget.refreshToken,
       ),
     );
   }

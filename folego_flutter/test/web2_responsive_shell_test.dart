@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/privacy/financial_privacy.dart';
+import 'package:folego/core/realtime/realtime_invalidation.dart';
+import 'package:folego/core/realtime/realtime_session.dart';
+import 'package:folego/features/home/home_screen.dart' as wrapped_home;
 import 'package:folego/core/theme/app_icons.dart';
 import 'package:folego/core/ui/app_snackbars.dart';
 import 'package:folego/data/models/category_item.dart';
@@ -158,6 +161,39 @@ void main() {
     expect(counts, everyElement(1));
   });
 
+  testWidgets('Home realtime refresh retains mounted content and scroll',
+      (tester) async {
+    _setViewport(tester, const Size(390, 844));
+    final coordinator = RealtimeInvalidationCoordinator(
+      debounce: const Duration(milliseconds: 1),
+    );
+    AppRealtimeRegistry.attach(coordinator);
+    addTearDown(() {
+      AppRealtimeRegistry.detach(coordinator);
+      coordinator.dispose();
+    });
+    final repo = _CountedHomeRepository();
+    await tester.pumpWidget(_app(Scaffold(
+      body: wrapped_home.HomeScreen(
+        space: const FinancialSpace(id: 'home-test', name: 'Casa'),
+        repository: repo,
+      ),
+    )));
+    await tester.pump();
+    await tester.pump();
+    final oldState = tester.state(find.byType(home.HomeScreen));
+    expect(repo.snapshotReads, 1);
+
+    coordinator.invalidate(AppRealtimeDomain.home);
+    await tester.pump(const Duration(milliseconds: 5));
+    await tester.pump();
+    await tester.pump();
+    expect(repo.snapshotReads, 2);
+    expect(identical(tester.state(find.byType(home.HomeScreen)), oldState),
+      isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Home shows a retry state instead of a blank page when snapshot fails', (tester) async {
     _setViewport(tester, const Size(390, 844));
     await tester.pumpWidget(_app(home.HomeScreen(
@@ -300,6 +336,16 @@ class _ProbePageState extends State<_ProbePage> {
   Widget build(BuildContext context) => Center(
     child: Text('page ${widget.index}', key: ValueKey('page-${widget.index}')),
   );
+}
+
+class _CountedHomeRepository extends _HomeRepository {
+  int snapshotReads = 0;
+
+  @override
+  Future<FolegoSnapshot> getSnapshot(String spaceId, {DateTime? asOfDate}) {
+    snapshotReads++;
+    return super.getSnapshot(spaceId, asOfDate: asOfDate);
+  }
 }
 
 class _HomeSnapshotFailureRepository extends _HomeRepository {

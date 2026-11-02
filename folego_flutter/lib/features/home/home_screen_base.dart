@@ -52,10 +52,13 @@ import '../plan/projection_navigation_scope.dart';
 import '../plan/category_period_comparison.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.space, required this.repository});
+  const HomeScreen({super.key, required this.space, required this.repository,
+    this.refreshToken});
 
   final FinancialSpace space;
   final FolegoRepository repository;
+  /// Realtime invalidation updates data without recreating this screen.
+  final Key? refreshToken;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -96,7 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void didUpdateWidget(covariant HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.space.id == widget.space.id) return;
+    if (oldWidget.space.id == widget.space.id) {
+      if (oldWidget.refreshToken != widget.refreshToken) {
+        _load();
+      }
+      return;
+    }
 
     // Clear all data from the previous financial space before rendering the
     // new one. Old in-flight requests must never repopulate this screen.
