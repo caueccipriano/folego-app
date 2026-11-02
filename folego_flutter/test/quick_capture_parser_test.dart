@@ -12,6 +12,30 @@ void main() {
     expect(withSymbol?.amountText, '1234,56');
   });
 
+  test('captura o valor no início sem pedir outro campo', () {
+    final prefix = QuickCaptureDraft.parse('27,90 Uber');
+    expect(prefix?.description, 'Uber');
+    expect(prefix?.amountText, '27,90');
+
+    final withCurrency = QuickCaptureDraft.parse(r'R$ 1.234,56 Supermercado');
+    expect(withCurrency?.description, 'Supermercado');
+    expect(withCurrency?.amountText, '1234,56');
+
+    final decimalDot = QuickCaptureDraft.parse('12.50 café');
+    expect(decimalDot?.description, 'café');
+    expect(decimalDot?.amountText, '12,50');
+  });
+
+  test('nunca interpreta negativos, datas nem preços sem centavos', () {
+    expect(QuickCaptureDraft.parse('-27,90 Uber'), isNull);
+    expect(QuickCaptureDraft.parse(r'R$ -27,90 Uber'), isNull);
+    expect(QuickCaptureDraft.parse('27,90 -Uber'), isNull);
+    expect(QuickCaptureDraft.parse('0,00 Uber'), isNull);
+    expect(QuickCaptureDraft.parse('27,9 Uber'), isNull);
+    expect(QuickCaptureDraft.parse('2026 Uber'), isNull);
+    expect(QuickCaptureDraft.parse('10/2026 Uber'), isNull);
+  });
+
   test('aceita ponto decimal sem confundir datas', () {
     expect(QuickCaptureDraft.parse('Café 12.50')?.amountText, '12,50');
     expect(QuickCaptureDraft.parse('Curso 2026'), isNull);
