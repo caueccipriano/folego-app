@@ -178,8 +178,10 @@ class PlanGuidanceCard extends StatelessWidget {
                       data: Theme.of(context).copyWith(
                         dividerColor: Colors.transparent,
                       ),
-                      child: ExpansionTile(
-                        key: const ValueKey('plan-focus-more'),
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: ExpansionTile(
+                          key: const ValueKey('plan-focus-more'),
                         initiallyExpanded: false,
                         tilePadding: EdgeInsets.zero,
                         childrenPadding: EdgeInsets.zero,
@@ -195,6 +197,7 @@ class PlanGuidanceCard extends StatelessWidget {
                             _focusItem(context, target, hidden),
                           ],
                         ],
+                        ),
                       ),
                     ),
                   ],
@@ -229,9 +232,7 @@ class PlanGuidanceCard extends StatelessWidget {
   }) {
     final scheme = Theme.of(context).colorScheme;
     final action = _reviewAction(target);
-    return Material(
-      color: Colors.transparent,
-      child: Container(
+    return Container(
         decoration: prominent
             ? BoxDecoration(
                 color: Color.alphaBlend(
@@ -240,7 +241,9 @@ class PlanGuidanceCard extends StatelessWidget {
                 border: Border.all(color: scheme.outlineVariant),
               )
             : null,
-        child: ListTile(
+        child: Material(
+          type: MaterialType.transparency,
+          child: ListTile(
           key: ValueKey('plan-focus-${target.category.categoryId}'),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           dense: true,
@@ -258,8 +261,8 @@ class PlanGuidanceCard extends StatelessWidget {
                   child: Text(_reviewActionLabel(target)),
                 ),
           onTap: () => onReviewSpending(target.category),
+          ),
         ),
-      ),
     );
   }
 
