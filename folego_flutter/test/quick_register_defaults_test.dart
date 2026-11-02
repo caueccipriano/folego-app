@@ -122,7 +122,7 @@ void main() {
         .readAsStringSync();
     expect(source, contains('QuickCaptureDraft.parse(value)'));
     expect(source, contains("setState(() => _error = 'selecione uma categoria')"));
-    expect(source, contains("onPressed: _saving ? null : _save"));
+    expect(source, contains('onPressed: _saving ? null : _save'));
     expect(source, contains('quickRegisterInstrumentId('));
     expect(source, contains('quickRegisterHistoryAccountId('));
   });
