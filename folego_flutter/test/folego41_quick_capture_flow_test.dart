@@ -16,7 +16,7 @@ Future<void> _openQuickSheet(
     paymentAccounts,
     (i) => AccountItem(
       id: 'account-$i',
-      name: 'conta ' + (i + 1).toString(),
+      name: 'conta ${i + 1}',
       type: 'bank',
     ),
   );
