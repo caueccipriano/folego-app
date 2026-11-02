@@ -662,10 +662,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 10),
           Container(
             key: const ValueKey('profile-lifetime-premium-notice'),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.card),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: .2)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
