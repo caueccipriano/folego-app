@@ -12,6 +12,8 @@ import '../../data/repositories/folego_repository_transaction_classification.dar
 import '../../data/smart_category_suggestion.dart';
 import '../../shared/widgets/financial_note_editor.dart';
 import '../plan/spending_behavior_screen.dart';
+import '../home/upcoming_events_screen.dart';
+import '../profile/notification_history_screen.dart';
 import '../profile/capture_review_screen.dart';
 import 'transaction_detail_sheet_v2.dart';
 import 'transaction_classification_inbox.dart';
@@ -454,6 +456,63 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
     );
   }
 
+  /// Destinations reuse existing RLS-protected agenda and notification reads.
+  Widget _attentionDestinations() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Wrap(
+        spacing: 9,
+        runSpacing: 9,
+        children: [
+          OutlinedButton.icon(
+            key: const ValueKey('attention-upcoming-bills'),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => UpcomingEventsScreen(
+                repository: widget.repository, spaceId: widget.spaceId),
+            )),
+            icon: const Icon(Icons.event_note_outlined, size: 18),
+            label: const Text('próximas contas'),
+          ),
+          OutlinedButton.icon(
+            key: const ValueKey('attention-notification-history'),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => NotificationHistoryScreen(
+                repository: widget.repository, spaceId: widget.spaceId),
+            )),
+            icon: const Icon(Icons.notifications_none_rounded, size: 18),
+            label: const Text('avisos importantes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _attentionBreakdown(List<Map<String, dynamic>> tasks) {
+    final counts = <String, int>{};
+    for (final row in tasks) {
+      final kind = row['kind']?.toString() ?? '';
+      counts[kind] = (counts[kind] ?? 0) + 1;
+    }
+    const categories = <String, String>{
+      'capture': 'comprovantes',
+      'classification': 'categorias',
+      'other': 'Outros',
+      'behavior': 'tipo de gasto',
+    };
+    return Wrap(
+      spacing: 7,
+      runSpacing: 6,
+      children: [
+        for (final entry in categories.entries)
+          if ((counts[entry.key] ?? 0) > 0)
+            Chip(
+              visualDensity: VisualDensity.compact,
+              label: Text('${counts[entry.key]} ${entry.value}'),
+            ),
+      ],
+    );
+  }
+
   Widget _resolverSection(List<Map<String, dynamic>> tasks) {
     final scheme = Theme.of(context).colorScheme;
     if (tasks.isEmpty) {
@@ -470,6 +529,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
             'Seus registros continuam disponíveis em Movimentos.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+          _attentionDestinations(),
         ]),
       );
     }
@@ -479,13 +539,16 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('uma coisa por vez',
+          Text('central de atenção',
             style: TextStyle(fontWeight: FontWeight.w700,
               fontSize: 19, color: scheme.onSurface)),
           const SizedBox(height: 4),
           Text('${tasks.length} pendência(s) nos registros consultados. '
             'Revisar não altera valores automaticamente.',
             style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          _attentionBreakdown(tasks),
+          _attentionDestinations(),
           const SizedBox(height: 14),
           Material(
             color: scheme.surfaceContainerLow,
@@ -627,7 +690,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(_tab == resolverTabIndex
-      ? 'resolver.' : 'organizar meu dinheiro')),
+      ? 'central de atenção' : 'organizar meu dinheiro')),
     body: Column(children: [
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -638,7 +701,7 @@ class _FinancialReviewHubState extends State<FinancialReviewHub> {
               child: ChoiceChip(
                 key: ValueKey('financial-hub-tab-$tab'),
                 label: Text(switch (tab) {
-                  resolverTabIndex => 'resolver',
+                  resolverTabIndex => 'atenção',
                   0 => 'comentários',
                   1 => 'pendências',
                   _ => 'Outros',
