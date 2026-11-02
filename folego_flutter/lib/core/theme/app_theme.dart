@@ -356,7 +356,7 @@ abstract final class AppTheme {
       // -----------------------------------------------------------------------
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(54),
+          minimumSize: const Size.fromHeight(50),
           elevation: 0,
 
           backgroundColor: tokens.acao,
