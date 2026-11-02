@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
@@ -1380,12 +1381,24 @@ class _PlanScreenState extends State<PlanScreen> {
         if (_parents.isEmpty)
           _buildCategoriesEmpty(brightness)
         else
-          ..._parents.map((parent) => _buildParentCard(parent, brightness)),
+          ValueListenableBuilder<bool>(
+            valueListenable: FinancialPrivacy.hidden,
+            builder: (context, hidden, _) => Column(
+              children: [
+                for (final parent in _parents)
+                  _buildParentCard(parent, brightness, hidden),
+              ],
+            ),
+          ),
       ],
     );
   }
 
-  Widget _buildParentCard(BudgetOverviewItem parent, Brightness brightness) {
+  Widget _buildParentCard(
+    BudgetOverviewItem parent,
+    Brightness brightness,
+    bool hidden,
+  ) {
     final children = _childrenOf(parent);
     final inactiveChildren = children
         .where((child) => !child.hasActivity && !child.hasBudget).toList();
@@ -1402,6 +1415,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     final icon = CategoryVisuals.iconFor(category: parent.categoryName);
     final percentage = (parent.usageRatio * 100).round();
+    final stateColor = _progressColor(parent.progressState, brightness);
     final sumOfChildren = children.fold<double>(
       0, (sum, child) => sum + child.actualAmount,
     );
@@ -1451,56 +1465,55 @@ class _PlanScreenState extends State<PlanScreen> {
                               style: AppTypography.body(
                                 context,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                                 color: primaryText,
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 5),
                             Text(
-                              parent.isPending
-                                  ? '${Formatters.money(parent.actualAmount)} aguardando categoria · já entra no total'
+                              hidden
+                                  ? 'valores ocultos'
+                                  : parent.isPending
+                                  ? 'a classificar · já incluído no total'
                                   : parent.hasBudget
-                                  ? parent.remainingAmount >= 0
-                                        ? '${Formatters.money(parent.remainingAmount)} abaixo do limite'
-                                        : '${Formatters.money(parent.remainingAmount.abs())} acima do planejado'
+                                  ? '${Formatters.money(parent.actualAmount)} usados de '
+                                      '${Formatters.money(parent.plannedAmount)} planejados'
                                   : parent.hasActivity
-                                  ? '${Formatters.money(parent.actualAmount)} realizado · sem limite agregado'
-                                  : 'sem limites nas subcategorias',
+                                  ? '${Formatters.money(parent.actualAmount)} gastos · sem limite'
+                                  : 'sem gasto nem limite',
+                              key: ValueKey('plan-parent-subtitle-${parent.categoryId}'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.label(
+                              style: AppTypography.body(
                                 context,
-                                fontSize: 10,
-                                color:
-                                    parent.hasBudget &&
-                                        parent.remainingAmount < 0
-                                    ? AppColors.expenseText(brightness)
-                                    : secondaryText,
+                                fontSize: 12,
+                                color: secondaryText,
                               ),
                             ),
-                            if (parent.hasBudget) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                '${Formatters.money(parent.actualAmount)} gastos / '
-                                '${Formatters.money(parent.plannedAmount)} de limite',
-                                style: AppTypography.body(
-                                  context, fontSize: 11, color: secondaryText),
-                              ),
-                            ],
                           ],
                         ),
                       ),
-                      if (parent.hasBudget) ...[
+                      if (parent.hasBudget && !hidden) ...[
                         const SizedBox(width: 8),
-                        Text(
-                          '$percentage%',
-                          style: AppTypography.label(
-                            context,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _progressColor(
-                              parent.progressState,
-                              brightness,
+                        Container(
+                          key: ValueKey('plan-parent-usage-${parent.categoryId}'),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: stateColor.withValues(alpha: .10),
+                            borderRadius: BorderRadius.circular(AppRadii.pill),
+                            border: Border.all(
+                              color: stateColor.withValues(alpha: .24),
+                            ),
+                          ),
+                          child: Text(
+                            '$percentage%',
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: stateColor,
                             ),
                           ),
                         ),
@@ -1522,19 +1535,37 @@ class _PlanScreenState extends State<PlanScreen> {
                 ),
               ),
             ),
-            if (parent.hasBudget)
+            if (parent.hasBudget && !hidden)
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 11),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                  child: LinearProgressIndicator(
-                    value: parent.progress,
-                    minHeight: 4,
-                    backgroundColor: border.withValues(alpha: .60),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _progressColor(parent.progressState, brightness),
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                      child: LinearProgressIndicator(
+                        key: ValueKey('plan-parent-progress-${parent.categoryId}'),
+                        value: parent.progress,
+                        minHeight: 6,
+                        backgroundColor: border.withValues(alpha: .60),
+                        valueColor: AlwaysStoppedAnimation<Color>(stateColor),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 7),
+                    Text(
+                      parent.remainingAmount < 0
+                          ? '${Formatters.money(parent.remainingAmount.abs())} acima do limite'
+                          : '${Formatters.money(parent.remainingAmount)} ainda dentro do limite',
+                      key: ValueKey('plan-parent-remaining-${parent.categoryId}'),
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        color: parent.remainingAmount < 0
+                            ? AppColors.expenseText(brightness)
+                            : secondaryText,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             if (parent.hasActivity && (expanded || children.isEmpty))
@@ -1575,7 +1606,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     ),
                     ...visibleChildren.map(
                       (child) => _buildChildCard(
-                        parent, child, familyColor, brightness),
+                        parent, child, familyColor, brightness, hidden),
                     ),
                     if (inactiveChildren.isNotEmpty)
                       Align(
@@ -1626,6 +1657,7 @@ class _PlanScreenState extends State<PlanScreen> {
     BudgetOverviewItem child,
     Color familyColor,
     Brightness brightness,
+    bool hidden,
   ) {
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
@@ -1696,7 +1728,17 @@ class _PlanScreenState extends State<PlanScreen> {
                   ],
                 ),
                 const SizedBox(height: 9),
-                if (child.hasBudget) ...[
+                if (hidden)
+                  Text(
+                    'valores ocultos',
+                    key: ValueKey('plan-child-hidden-${child.categoryId}'),
+                    style: AppTypography.body(
+                      context,
+                      fontSize: 11,
+                      color: secondaryText,
+                    ),
+                  )
+                else if (child.hasBudget) ...[
                   Row(
                     children: [
                       Expanded(
@@ -1711,6 +1753,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                       Text(
                         '$percentage%',
+                        key: ValueKey('plan-child-usage-${child.categoryId}'),
                         style: AppTypography.label(
                           context,
                           fontSize: 10,
@@ -1724,8 +1767,9 @@ class _PlanScreenState extends State<PlanScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadii.pill),
                     child: LinearProgressIndicator(
+                      key: ValueKey('plan-child-progress-${child.categoryId}'),
                       value: child.progress,
-                      minHeight: 4,
+                      minHeight: 6,
                       backgroundColor: border.withValues(alpha: .60),
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                     ),
