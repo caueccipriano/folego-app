@@ -8,7 +8,7 @@ export function makeGeminiRequest(model: string, instructions: string, prompt: s
     body: {
       systemInstruction: { parts: [{ text: instructions }] },
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.2 },
+      generationConfig: { maxOutputTokens: 640, temperature: 0.2 },
     },
   };
 }

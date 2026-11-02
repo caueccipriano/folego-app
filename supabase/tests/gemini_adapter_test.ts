@@ -16,10 +16,18 @@ Deno.test('Gemini reply uses visible text only', () => {
   if (readGeminiAnswer({ candidates: [{finishReason:'SAFETY'}] }) !== '') throw Error('Unsafe empty output');
 });
 
+Deno.test('Gemini requests have a bounded output length', () => {
+  const request = makeGeminiRequest(defaultGeminiModel, 'Curto', 'Meu mês');
+  if (request.body.generationConfig.maxOutputTokens !== 640) {
+    throw Error('Gemini output budget must stay compact');
+  }
+});
+
 Deno.test('financial-ai uses Gemini exclusively', async () => {
   const source = await Deno.readTextFile(new URL('../functions/financial-ai/index.ts', import.meta.url));
   if (!source.includes("const provider = 'gemini'")) throw Error('Gemini must be the fixed provider');
   if (!source.includes("Deno.env.get('gemini')")) throw Error('Must read existing lowercase gemini secret');
+  if (!source.includes('setTimeout(() => controller.abort(), 35000)')) throw Error('Gemini timeout too short');
   for (const forbidden of ['OPENAI_API_KEY', 'api.openai.com', 'FOLEGO_AI_PROVIDER', 'gpt-4']) {
     if (source.includes(forbidden)) throw Error('Legacy provider reference: ' + forbidden);
   }
