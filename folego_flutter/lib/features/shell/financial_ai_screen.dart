@@ -71,7 +71,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
       );
       if (!mounted || widget.spaceId != requestedSpaceId ||
           widget.client != requestedClient ||
-          widget.repository != requestedRepository) return;
+          widget.repository != requestedRepository) {
+        return;
+      }
       final response = await requestedClient.functions.invoke(
         'financial-ai',
         body: {
