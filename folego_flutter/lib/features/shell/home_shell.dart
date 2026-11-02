@@ -225,6 +225,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
               client: Supabase.instance.client,
               repository: widget.repository,
               spaceId: widget.space.id,
+              onOpenPlan: () {
+                Navigator.of(context).pop();
+                if (mounted) setState(() => _index = 2);
+              },
             ),
           ),
         );
