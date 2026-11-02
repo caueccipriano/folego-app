@@ -5,6 +5,7 @@ import '../../core/layout/app_content_container.dart';
 import '../../core/layout/app_scroll_gutter.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -43,6 +44,7 @@ import 'home_projection_insight_card.dart';
 import 'home_financial_hero.dart';
 import 'home_fixed_dashboard.dart';
 import '../../shared/widgets/folego_glass_surface.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
 import 'home_mobile_summary_strip.dart';
 import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
@@ -454,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
         MediaQuery.textScalerOf(context).scale(16) <= 20) {
       return _buildFixedMobileHome(
         snapshot: snapshot,
-        background: background, surface: surface, border: border,
+        surface: surface, border: border,
         primaryText: primaryText, secondaryText: secondaryText,
         quickActions: quickActions,
         pulseInsight: selectHomePulse(
@@ -663,7 +665,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // For very short viewports/large accessible text, retain scrollable fallback.
   Widget _buildFixedMobileHome({
     required FolegoSnapshot snapshot,
-    required Color background,
     required Color surface,
     required Color border,
     required Color primaryText,
@@ -677,8 +678,10 @@ class _HomeScreenState extends State<HomeScreen> {
     required Widget smartCheckin,
   }) {
     final privacy = FinancialPrivacy.hidden.value;
-    return ColoredBox(
-      color: background,
+    final tokens = FolegoColorTokens.of(context);
+    final onHero = tokens.marcaHeroSobre;
+    final highContrast = MediaQuery.highContrastOf(context);
+    return FolegoAmbientBackdrop(
       child: SafeArea(
         child: AppContentContainer.dashboard(
           fillHeight: true,
@@ -716,30 +719,58 @@ class _HomeScreenState extends State<HomeScreen> {
                             key: const ValueKey('home-fixed-spendable'),
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: surface,
-                              border: Border.all(color: border),
-                              borderRadius: BorderRadius.circular(AppRadii.feature),
-                               boxShadow: [
-                                 BoxShadow(
-                                   color: primaryText.withValues(alpha: .045),
-                                   blurRadius: 18,
-                                   offset: const Offset(0, 5),
-                                 ),
-                               ],
+                              // The actual compact iPhone Home uses Aurora.
+                              // No financial calculation or route changes.
+                              color: tokens.marcaHero,
+                              gradient: highContrast
+                                  ? null
+                                  : LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        tokens.marcaHero,
+                                        Color.alphaBlend(
+                                          onHero.withValues(alpha: .075),
+                                          tokens.marcaHero,
+                                        ),
+                                        Color.alphaBlend(
+                                          tokens.acaoHero.withValues(alpha: .035),
+                                          tokens.marcaHero,
+                                        ),
+                                      ],
+                                      stops: const [0, .53, 1],
+                                    ),
+                              border: Border.all(
+                                color: onHero.withValues(
+                                  alpha: highContrast ? .78 : .26,
+                                ),
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.feature),
+                              boxShadow: highContrast
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color: tokens.marcaHero
+                                            .withValues(alpha: .27),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 9),
+                                      ),
+                                    ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('disponível até receber',
                                   style: AppTypography.body(context,
-                                    fontSize: 14, color: secondaryText)),
+                                    fontSize: 14, color: onHero.withValues(alpha: .94))),
                                 const SizedBox(height: 8),
                                 Text(privacy ? FinancialPrivacy.maskMoney()
                                   : Formatters.money(snapshot.spendablePool),
                                   key: const ValueKey('home-fixed-amount'),
                                   maxLines: 1,
                                   style: AppTypography.money(context,
-                                    fontSize: 42, color: primaryText)),
+                                    fontSize: 42, color: tokens.acaoHero)),
                                 const SizedBox(height: 10),
                                 Text(
                                   snapshot.dailyFolego == null
@@ -747,14 +778,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                     : 'por dia: ${privacy ? FinancialPrivacy.maskMoney() : Formatters.money(snapshot.dailyFolego)}',
                                   key: const ValueKey('home-fixed-daily'),
                                   style: AppTypography.body(context,
-                                    fontSize: 14, color: secondaryText)),
+                                    fontSize: 14, color: onHero.withValues(alpha: .94))),
                                 if (snapshot.daysUntilIncome != null)
                                   Text('${snapshot.daysUntilIncome} dias até o próximo recebimento',
                                     style: AppTypography.body(context,
-                                      fontSize: 12, color: secondaryText)),
+                                      fontSize: 12, color: onHero.withValues(alpha: .84))),
                                 const SizedBox(height: 8),
                                 TextButton.icon(
                                   key: const ValueKey('home-fixed-explain'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: onHero,
+                                    backgroundColor:
+                                        onHero.withValues(alpha: .10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    minimumSize: const Size(44, 44),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
                                   onPressed: () => Navigator.of(context).push<void>(
                                     MaterialPageRoute<void>(builder: (_) =>
                                       FinancialReviewScreen(
