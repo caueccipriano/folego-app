@@ -1235,7 +1235,23 @@ class _TransactionsTabV3 extends StatelessWidget {
                           textInputAction: TextInputAction.search,
                           onChanged: onSearchChanged,
                           decoration: InputDecoration(
-                            hintText: 'descrição ou comentário',
+                            hintText: 'buscar lançamento',
+                            filled: true,
+                            fillColor: AppColors.surface(
+                              Theme.of(context).brightness,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 15,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: AppColors.border(
+                                  Theme.of(context).brightness,
+                                ),
+                              ),
+                            ),
                             prefixIcon: const Icon(AppIcons.search, size: 19),
                             suffixIcon: value.text.isEmpty
                                 ? null
@@ -1414,7 +1430,7 @@ class _TransactionsTabV3 extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(0, 4, 0, 76),
           itemCount: transactions.length + (showFooter ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: 5),
+          separatorBuilder: (_, _) => const SizedBox(height: 7),
           itemBuilder: (context, index) {
             if (index >= transactions.length) {
               return _TransactionLoadMoreFooterV3(
@@ -1436,30 +1452,45 @@ class _TransactionsTabV3 extends StatelessWidget {
                 if (showGroup) ...[
                   Padding(
                     padding: EdgeInsets.fromLTRB(3, index == 0 ? 3 : 12, 3, 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          group,
-                          key: ValueKey('transaction-day-$index'),
-                          style: AppTypography.label(
-                            context,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primaryText(
-                              Theme.of(context).brightness,
+                    child: Semantics(
+                      header: true,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPurple(
+                                Theme.of(context).brightness,
+                              ).withValues(alpha: .085),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              group,
+                              key: ValueKey('transaction-day-$index'),
+                              style: AppTypography.label(
+                                context,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryText(
+                                  Theme.of(context).brightness,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Divider(
-                            height: 1,
-                            color: AppColors.border(
-                              Theme.of(context).brightness,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Divider(
+                              height: 1,
+                              color: AppColors.border(
+                                Theme.of(context).brightness,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -1699,7 +1730,7 @@ class _TransactionCardV3 extends StatelessWidget {
           focusColor: accent.withValues(alpha: .09),
           splashColor: accent.withValues(alpha: .08),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final textScale =
@@ -1738,7 +1769,7 @@ class _TransactionCardV3 extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.body(
                               context,
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: primary,
                             ),
