@@ -34,6 +34,62 @@ void main() {
       findsOneWidget);
   });
 
+  const sampleMetrics = 'Resumo automático de 2026-11 (sem IA):\\n'
+      'Receitas registradas: R\\$ 123.456,78.\\n'
+      'Despesas por competência: R\\$ 75.432,10.\\n'
+      'Resultado do mês: R\\$ 48.024,68.\\n'
+      'Valores baseados nos registros do Fôlego.';
+
+  testWidgets('320px iPhone stacks financial metrics without shrinking them',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(testSurface(sampleMetrics));
+    expect(tester.getSize(find.byKey(
+        const ValueKey('financial-ai-metric-receitas'))).width, 288);
+    expect(find.text('R\\$ 123.456,78'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wider phones keep a compact two-column financial summary',
+      (tester) async {
+    tester.view.physicalSize = const Size(430, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(testSurface(sampleMetrics));
+    final width = tester.getSize(find.byKey(
+        const ValueKey('financial-ai-metric-receitas'))).width;
+    expect(width, closeTo(194, 1));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('accessibility text scaling switches money cards to one column',
+      (tester) async {
+    tester.view.physicalSize = const Size(430, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(1.6)),
+        child: Scaffold(
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: FinancialAiAnswerView(answer: sampleMetrics),
+            ),
+          ),
+        ),
+      ),
+    ));
+    expect(tester.getSize(find.byKey(
+        const ValueKey('financial-ai-metric-receitas'))).width, 398);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('free-form AI explanation remains visible in full',
       (tester) async {
     await tester.pumpWidget(testSurface(
