@@ -8,27 +8,35 @@ class QuickCaptureDraft {
   final String description;
   final String amountText;
 
-  /// Exemplos: "Uber 27,90" e "mercado R$ 1.234,56".
-  /// Só interpreta preços com duas casas decimais.
+  /// Aceita "Uber 27,90", "Uber R$ 27,90" e "R$ 27,90 Uber".
+  /// Exige duas casas decimais; não interpreta datas ou valores negativos.
   static QuickCaptureDraft? parse(String input) {
     final value = input.trim();
     if (value.isEmpty || value.length > 180) return null;
 
-    final match = RegExp(
+    final trailing = RegExp(
       r'^(.+?)\s+(?:R\$\s*)?(\d+(?:\.\d{3})*,\d{2}|\d+\.\d{2})$',
       caseSensitive: false,
     ).firstMatch(value);
-    if (match == null) return null;
+    final leading = trailing == null
+        ? RegExp(
+            r'^(?:R\$\s*)?(\d+(?:\.\d{3})*,\d{2}|\d+\.\d{2})\s+(.+)$',
+            caseSensitive: false,
+          ).firstMatch(value)
+        : null;
 
-    final description = match.group(1)!.trim();
+    if (trailing == null && leading == null) return null;
+    final description = (trailing?.group(1) ?? leading!.group(2)!).trim();
     if (description.isEmpty ||
+        description.startsWith('-') ||
+        description.startsWith('+') ||
         description.endsWith('-') ||
         description.endsWith('+') ||
-        description.endsWith('R\$')) {
+        description.endsWith('R$')) {
       return null;
     }
 
-    final token = match.group(2)!;
+    final token = trailing?.group(2) ?? leading!.group(1)!;
     final normalized = token.contains(',')
         ? token.replaceAll('.', '').replaceAll(',', '.')
         : token;
