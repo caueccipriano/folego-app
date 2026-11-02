@@ -33,7 +33,7 @@ class DiaryReviewCard extends StatelessWidget {
         children: [
           Text(
             '1 minuto para entender uma escolha',
-            style: AppTypography.section(context, fontSize: 18),
+            style: AppTypography.section(context, fontSize: 20),
           ),
           const SizedBox(height: 9),
           Text(
@@ -42,7 +42,7 @@ class DiaryReviewCard extends StatelessWidget {
                 : onReview == null
                 ? 'Você refletiu sobre todos os gastos disponíveis deste mês. Releia suas notas: o que vale repetir e o que prefere mudar?'
                 : 'Escolha um gasto: foi necessário, uma vontade ou investimento em você? Se quiser, anote o que vale repetir ou fazer diferente. Sem julgamento.',
-            style: AppTypography.body(context, fontSize: 13),
+            style: AppTypography.body(context, fontSize: 14),
           ),
           if (total > 0) ...[
             const SizedBox(height: 13),
@@ -51,10 +51,14 @@ class DiaryReviewCard extends StatelessWidget {
               style: AppTypography.body(context, fontSize: 12),
             ),
             const SizedBox(height: 7),
-            LinearProgressIndicator(
-              value: (reviewed / total).clamp(0.0, 1.0),
-              color: AppColors.primaryPurple(brightness),
-              backgroundColor: AppColors.border(brightness),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              child: LinearProgressIndicator(
+                value: (reviewed / total).clamp(0.0, 1.0),
+                minHeight: 9,
+                color: AppColors.primaryPurple(brightness),
+                backgroundColor: AppColors.border(brightness),
+              ),
             ),
           ],
           const SizedBox(height: 13),
