@@ -68,6 +68,13 @@ class HomeFixedDashboard extends StatelessWidget {
       'sem_folga' => 'sem folga',
       _ => 'acompanhe seu plano',
     };
+    final paceIcon = switch (snapshot.status) {
+      'tranquilo' => Icons.check_circle_outline_rounded,
+      'apertado' => Icons.info_outline_rounded,
+      'segure_gastos' => Icons.warning_amber_rounded,
+      'sem_folga' => Icons.remove_circle_outline_rounded,
+      _ => Icons.insights_outlined,
+    };
 
     return ColoredBox(
       color: AppColors.background(brightness),
@@ -76,6 +83,7 @@ class HomeFixedDashboard extends StatelessWidget {
           builder: (context, limits) {
             final short = limits.maxHeight < 640;
             final tiny = limits.maxHeight < 530;
+            final roomy = limits.maxWidth >= 370;
             final largeText = textScale > 1.3;
             final tight = short || largeText;
             final space = tiny ? 7.0 : 10.0;
@@ -233,7 +241,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                        if (!tiny && !largeText && !hidden) ...[
+                                        if (roomy && !tiny && !largeText && !hidden) ...[
                                           Container(
                                             key: const ValueKey(
                                               'home-fixed-rhythm-badge',
@@ -251,14 +259,25 @@ class HomeFixedDashboard extends StatelessWidget {
                                                     .withValues(alpha: .33),
                                               ),
                                             ),
-                                            child: Text(
-                                              paceLabel,
-                                              maxLines: 1,
-                                              style: AppTypography.label(
-                                                context,
-                                                fontSize: 10,
-                                                color: colors.marcaHeroSobre,
-                                              ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  paceIcon,
+                                                  size: 13,
+                                                  color: colors.marcaHeroSobre,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  paceLabel,
+                                                  maxLines: 1,
+                                                  style: AppTypography.label(
+                                                    context,
+                                                    fontSize: 10,
+                                                    color: colors.marcaHeroSobre,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                           const SizedBox(width: 8),
