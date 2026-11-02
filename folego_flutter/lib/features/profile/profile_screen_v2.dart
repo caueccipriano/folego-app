@@ -25,6 +25,8 @@ import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
@@ -951,7 +953,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final background = AppColors.background(brightness);
     final layout = AppBreakpoints.of(context);
     final desktop =
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
@@ -965,8 +966,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _logoutSection(),
     ];
 
-    return ColoredBox(
-      color: background,
+    return FolegoAmbientBackdrop(
       child: SafeArea(
         child: AppContentContainer(
           maxWidth: desktop
@@ -977,6 +977,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(0, 8, 0, 68),
             children: [
+              const SignatureSectionIntro(
+                eyebrow: 'Seu espaço',
+                caption: 'Preferências, privacidade e controle da conta',
+                icon: Icons.tune_rounded,
+              ),
+              const SizedBox(height: 16),
               const AppPageHeader(
                 title: 'perfil',
                 subtitle: 'sua conta, preferências e privacidade',
