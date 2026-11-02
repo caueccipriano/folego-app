@@ -74,14 +74,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('single account selected; multiple accounts require a choice',
+  testWidgets('all accounts require deliberate selection, even if there is one',
       (tester) async {
     await _openQuickSheet(tester, paymentAccounts: 1);
     final single =
         tester.widget<DropdownButtonFormField<String>>(
           find.byType(DropdownButtonFormField<String>).first,
         );
-    expect(single.initialValue, 'account-0');
+    expect(single.initialValue, isNull);
 
     await _openQuickSheet(tester, paymentAccounts: 2);
     final multiple =
