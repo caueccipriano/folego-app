@@ -8,8 +8,7 @@ class QuickCaptureDraft {
   final String description;
   final String amountText;
 
-  /// Aceita "Uber 27,90", "Uber R$ 27,90" e "R$ 27,90 Uber".
-  /// Exige duas casas decimais; não interpreta datas ou valores negativos.
+  /// Aceita texto e valor em ambas as ordens; exige centavos explícitos.
   static QuickCaptureDraft? parse(String input) {
     final value = input.trim();
     if (value.isEmpty || value.length > 180) return null;
@@ -31,25 +30,7 @@ class QuickCaptureDraft {
         description.startsWith('-') ||
         description.startsWith('+') ||
         description.endsWith('-') ||
-        description.endsWith('+') ||
-        description.endsWith(r'R) {
-      return null;
-    }
-
-    final token = trailing?.group(2) ?? leading!.group(1)!;
-    final normalized = token.contains(',')
-        ? token.replaceAll('.', '').replaceAll(',', '.')
-        : token;
-    final amount = double.tryParse(normalized);
-    if (amount == null || !amount.isFinite || amount <= 0) return null;
-
-    return QuickCaptureDraft(
-      description: description,
-      amountText: amount.toStringAsFixed(2).replaceAll('.', ','),
-    );
-  }
-}
-)) {
+        description.endsWith('+')) {
       return null;
     }
 
