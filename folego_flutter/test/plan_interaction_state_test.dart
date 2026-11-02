@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/core/realtime/realtime_invalidation.dart';
 import 'package:folego/core/realtime/realtime_session.dart';
 import 'package:folego/data/models/budget_overview_item.dart';
@@ -8,6 +9,54 @@ import 'package:folego/features/plan/plan_screen.dart' as realtime_plan;
 import 'package:folego/features/plan/plan_screen_web2.dart' as plan;
 
 void main() {
+  setUp(() => FinancialPrivacy.hidden.value = false);
+  tearDown(() => FinancialPrivacy.hidden.value = false);
+
+  testWidgets('parent and child percentage charts respect privacy toggles',
+      (tester) async {
+    final repository = _FakePlanRepository(_fixture(planned: 100, actual: 80));
+    await _pumpPlan(tester, repository);
+
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await _revealCategory(tester, parent);
+    expect(find.byKey(const ValueKey('plan-parent-usage-food')), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-parent-progress-food')), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-parent-remaining-food')), findsOneWidget);
+
+    await tester.tap(parent);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('plan-child-progress-market')), findsOneWidget);
+
+    FinancialPrivacy.hidden.value = true;
+    await tester.pump();
+    expect(find.byKey(const ValueKey('plan-parent-usage-food')), findsNothing);
+    expect(find.byKey(const ValueKey('plan-parent-progress-food')), findsNothing);
+    expect(find.byKey(const ValueKey('plan-parent-remaining-food')), findsNothing);
+    expect(find.byKey(const ValueKey('plan-child-progress-market')), findsNothing);
+    expect(find.byKey(const ValueKey('plan-child-usage-market')), findsNothing);
+    expect(find.byKey(const ValueKey('plan-child-hidden-market')), findsOneWidget);
+    expect(find.text('valores ocultos'), findsWidgets);
+    expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
+
+    FinancialPrivacy.hidden.value = false;
+    await tester.pump();
+    expect(find.byKey(const ValueKey('plan-parent-usage-food')), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-child-progress-market')), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-children-food')), findsOneWidget);
+  });
+
+  testWidgets('category over-budget warning shows actual percentage',
+      (tester) async {
+    final repository = _FakePlanRepository(_fixture(planned: 100, actual: 140));
+    await _pumpPlan(tester, repository);
+    final parent = find.byKey(const ValueKey('plan-parent-food'));
+    await _revealCategory(tester, parent);
+    final badge = find.byKey(const ValueKey('plan-parent-usage-food'));
+    expect(badge, findsOneWidget);
+    expect(find.descendant(of: badge, matching: find.text('140%')), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan-parent-remaining-food')), findsOneWidget);
+  });
+
   testWidgets('first Plan entry keeps every category closed', (tester) async {
     final repository = _FakePlanRepository(_fixture(planned: 100, actual: 35));
     await _pumpPlan(tester, repository);
