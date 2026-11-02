@@ -6,6 +6,8 @@ String? financialAiProviderName(Object? provider) {
   switch (provider) {
     case 'gemini':
       return 'Gemini';
+    case 'local':
+      return 'Cálculo do Fôlego';
     default:
       return null;
   }
