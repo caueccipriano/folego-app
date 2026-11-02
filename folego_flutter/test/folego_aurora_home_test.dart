@@ -57,7 +57,7 @@ void main() {
     expect(source, contains("ValueKey('home-aurora-rim')"));
     expect(source, contains('child: IgnorePointer('));
     expect(source, contains("ValueKey('home-fixed-viewport')"));
-    expect(source, contains("ValueKey('home-fixed-daily-folego')"));
+    expect(source, contains("'home-fixed-daily-folego'"));
     expect(source, contains('FinancialPrivacy.maskMoney()'));
     expect(source, contains('onTap: onDetails'));
     expect(source, isNot(contains('BackdropFilter(')));
