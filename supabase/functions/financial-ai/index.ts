@@ -25,7 +25,10 @@ Deno.serve(async (request) => {
   const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   // Gemini is the only AI provider. API credentials stay in Edge Function secrets.
   const provider = 'gemini';
-  const apiKey = Deno.env.get('GEMINI_API_KEY');
+  // The existing Supabase secret is named `gemini` (lowercase).
+  // Accept the previous name as a compatibility fallback, without exposing values.
+  const apiKey = Deno.env.get('gemini')?.trim()
+    || Deno.env.get('GEMINI_API_KEY')?.trim();
   if (!url || !anon || !service) return respond(503, 'Assistente ainda não configurado.');
   const userClient = createClient(url, anon, { global: { headers: { Authorization: 'Bearer ' + jwt } } });
   // Stateless Edge Functions must validate the bearer token explicitly.
