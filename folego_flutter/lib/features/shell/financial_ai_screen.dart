@@ -180,13 +180,17 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
     } on FunctionException catch (error) {
       if (!mounted || serial != _requestSerial ||
           widget.spaceId != requestedSpaceId ||
-          widget.client != requestedClient) return;
+          widget.client != requestedClient) {
+        return;
+      }
       setState(() => _error =
           financialAiErrorMessage(error.status, error.details));
     } catch (_) {
       if (!mounted || serial != _requestSerial ||
           widget.spaceId != requestedSpaceId ||
-          widget.client != requestedClient) return;
+          widget.client != requestedClient) {
+        return;
+      }
       setState(() => _error =
           'Não foi possível consultar o resumo ou a IA agora. '
           'Seus dados continuam intactos.');
