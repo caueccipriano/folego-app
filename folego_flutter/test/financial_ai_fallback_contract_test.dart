@@ -6,7 +6,7 @@ import 'package:folego/features/shell/financial_ai_status.dart';
 void main() {
   test('A local response is never credited to OpenAI or Gemini', () {
     expect(financialAiProviderName('local'), 'Cálculo do Fôlego');
-    expect(financialAiProviderName('gemini'), 'Gemini');
+    expect(financialAiProviderName('gemini'), 'gemini');
     expect(financialAiProviderName('openai'), isNull);
   });
 
