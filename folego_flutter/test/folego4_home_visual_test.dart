@@ -36,4 +36,23 @@ void main() {
     expect(source, isNot(contains('SingleChildScrollView(')));
     expect(source, isNot(contains('ListView(')));
   });
+
+  test('Rhythm badge uses semantics and never squeezes narrow screens', () {
+    expect(source, contains('final paceIcon = switch (snapshot.status)'));
+    expect(source, contains('final roomy = limits.maxWidth >= 370'));
+    expect(source, contains('roomy && !tiny && !largeText && !hidden'));
+    expect(source, contains('paceIcon,'));
+  });
+
+  test('Dock keeps glass touch targets and matches More active indicator', () {
+    final nav = File('lib/shared/widgets/liquid_glass_navigation_bar.dart')
+        .readAsStringSync();
+    expect(nav, contains("ValueKey('mobile-liquid-nav')"));
+    expect(nav, contains("ValueKey('mobile-tools-button')"));
+    expect(nav, contains("ValueKey('mobile-tools-indicator')"));
+    expect(nav, contains('width: selectedIndex >= 3 ? 22 : 5'));
+    expect(nav, contains('width: selected ? 22 : 5'));
+    expect(nav, contains('MediaQuery.disableAnimationsOf(context)'));
+    expect(nav, isNot(contains('BackdropFilter(')));
+  });
 }
