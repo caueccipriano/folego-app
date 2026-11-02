@@ -31,6 +31,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
   String? _focusTitle;
   String? _focusDescription;
   String? _answerProvider;
+  String? _answerNotice;
   String? _providerName;
   bool? _providerConfigured;
   bool _checkingProvider = true;
@@ -84,6 +85,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
       _focusTitle = null;
       _focusDescription = null;
       _answerProvider = null;
+      _answerNotice = null;
       _question.clear();
     }
   }
@@ -94,12 +96,18 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
     super.dispose();
   }
 
-  Future<void> _ask() async {
+  Future<void> _ask() => _submit();
+
+  Future<void> _showSummary() => _submit(withoutAi: true);
+
+  Future<void> _submit({bool withoutAi = false}) async {
     if (_sending || FinancialPrivacy.hidden.value ||
-        _providerConfigured == false) {
+        (!withoutAi && _providerConfigured == false)) {
       return;
     }
-    final question = _question.text.trim();
+    final question = withoutAi
+        ? 'Como está meu mês?'
+        : _question.text.trim();
     if (question.length < 3 || question.length > 500) {
       setState(() => _error = 'Escreva uma pergunta de 3 a 500 caracteres.');
       return;
@@ -114,6 +122,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
       _focusTitle = null;
       _focusDescription = null;
       _answerProvider = null;
+      _answerNotice = null;
     });
 
     try {
@@ -124,6 +133,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
         body: {
           'question': question,
           'spaceId': requestedSpaceId,
+          if (withoutAi) 'mode': 'summary',
         },
       );
       if (!mounted || widget.spaceId != requestedSpaceId ||
@@ -142,6 +152,14 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
         _answer = answer.trim();
         _answerProvider = payload is Map
             ? financialAiProviderName(payload['provider']) : null;
+        final responseMode = payload is Map ? payload['mode'] : null;
+        _answerNotice = responseMode == 'fallback'
+            ? 'O provedor de IA não concluiu a resposta. Este resumo foi '
+                'calculado pelo Fôlego, sem geração de texto por IA.'
+            : responseMode == 'summary'
+                ? 'Resumo dos registros financeiros, sem utilizar '
+                    'perguntas Premium ou serviços de IA.'
+                : null;
         _focusTitle = focusTitle is String ? focusTitle : null;
         _focusDescription = focusDescription is String
             ? focusDescription : null;
@@ -196,9 +214,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          _providerConfigured == true
-                              ? Icons.verified_outlined
-                              : Icons.info_outline,
+                          Icons.info_outline,
                           size: 18, color: colors.onSurfaceVariant,
                         ),
                         const SizedBox(width: 10),
@@ -207,9 +223,9 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             _checkingProvider
                                 ? 'verificando a IA...'
                                 : _providerConfigured == true
-                                    ? '${_providerName ?? 'IA'} configurada no servidor'
+                                    ? '${_providerName ?? 'Gemini'} selecionado · limite disponível não verificado'
                                     : _providerConfigured == false
-                                        ? 'IA ainda não configurada no servidor'
+                                        ? 'Gemini sem chave no Supabase · resumo sem IA disponível'
                                         : 'não foi possível conferir a IA',
                             style: AppTypography.body(context, fontSize: 12),
                           ),
@@ -236,7 +252,10 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                         'despesas e até quatro categorias agregadas, '
                         'comparadas por dias equivalentes. A IA não recebe '
                         'movimentações individuais, contas nem cartões. '
-                        'Cada consulta pode consumir uma pergunta Premium.',
+                        'Cada consulta pode consumir uma pergunta Premium. No plano '
+                        'gratuito da API Gemini, o Google pode utilizar o '
+                        'conteúdo agregado enviado para melhorar seus '
+                        'produtos. Os limites gratuitos não são ilimitados.',
                         style: AppTypography.body(context, fontSize: 12,
                           color: colors.onSurfaceVariant),
                       ),
@@ -292,6 +311,13 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                         : const Icon(Icons.auto_awesome_outlined),
                     label: Text(_sending ? 'consultando...' : 'perguntar'),
                   ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    key: const ValueKey('financial-ai-local-summary'),
+                    onPressed: _sending || hidden ? null : _showSummary,
+                    icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                    label: const Text('ver resumo sem IA · não usa cota'),
+                  ),
                   if (hidden) ...[
                     const SizedBox(height: 12),
                     const Text('Desative o modo privativo para consultar '
@@ -301,6 +327,15 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     const SizedBox(height: 16),
                     Text(_error!, key: const ValueKey('financial-ai-error'),
                       style: TextStyle(color: colors.error)),
+                  ],
+                  if (_answerNotice != null && !hidden) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _answerNotice!,
+                      key: const ValueKey('financial-ai-local-notice'),
+                      style: AppTypography.body(context,
+                        fontSize: 13, color: colors.onSurfaceVariant),
+                    ),
                   ],
                   if (_focusTitle != null && !hidden) ...[
                     const SizedBox(height: 20),
@@ -347,7 +382,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                         style: AppTypography.cardTitle(context)),
                       const Spacer(),
                       if (_answerProvider != null)
-                        Text('via $_answerProvider',
+                        Text(_answerProvider == 'Cálculo do Fôlego'
+                            ? 'cálculo do Fôlego' : 'via $_answerProvider',
                           key: const ValueKey('financial-ai-answer-provider'),
                           style: AppTypography.label(context,
                             color: colors.onSurfaceVariant)),
