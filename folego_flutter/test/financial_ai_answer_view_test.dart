@@ -34,10 +34,10 @@ void main() {
       findsOneWidget);
   });
 
-  const sampleMetrics = 'Resumo automático de 2026-11 (sem IA):\\n'
-      'Receitas registradas: R\\$ 123.456,78.\\n'
-      'Despesas por competência: R\\$ 75.432,10.\\n'
-      'Resultado do mês: R\\$ 48.024,68.\\n'
+  const sampleMetrics = 'Resumo automático de 2026-11 (sem IA):\n'
+      'Receitas registradas: R\$ 123.456,78.\n'
+      'Despesas por competência: R\$ 75.432,10.\n'
+      'Resultado do mês: R\$ 48.024,68.\n'
       'Valores baseados nos registros do Fôlego.';
 
   testWidgets('320px iPhone stacks financial metrics without shrinking them',
@@ -49,7 +49,7 @@ void main() {
     await tester.pumpWidget(testSurface(sampleMetrics));
     expect(tester.getSize(find.byKey(
         const ValueKey('financial-ai-metric-receitas'))).width, 288);
-    expect(find.text('R\\$ 123.456,78'), findsOneWidget);
+    expect(find.text('R\$ 123.456,78'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
