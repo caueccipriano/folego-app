@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:folego/data/models/account_item.dart';
 import 'package:folego/data/models/category_item.dart';
 import 'package:folego/data/models/credit_card_item.dart';
 import 'package:folego/data/models/financial_space.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/quick_register_sheet.dart';
+
+class _StubRepository implements FolegoRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 Future<void> _openQuickSheet(
   WidgetTester tester, {
@@ -20,9 +24,7 @@ Future<void> _openQuickSheet(
       type: 'bank',
     ),
   );
-  final repository = FolegoRepository(
-    SupabaseClient('https://example.supabase.co', 'fake-public-anon-key'),
-  );
+  final repository = _StubRepository();
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
