@@ -254,6 +254,12 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  Text(
+                    'Atalhos enviam a pergunta na hora e podem usar sua cota Premium.',
+                    style: AppTypography.label(context, fontSize: 11,
+                      color: colors.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(spacing: 8, runSpacing: 4, children: [
                     for (final prompt in const [
                       'Como está meu mês?',
