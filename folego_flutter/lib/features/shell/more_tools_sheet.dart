@@ -14,88 +14,106 @@ class MoreToolsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final space = MediaQuery.sizeOf(context).width;
-    final pad = space < 355 ? 12.0 : 18.0;
+    final space = MediaQuery.sizeOf(context);
+    final pad = space.width < 355 ? 12.0 : 18.0;
 
     return FolegoGlassSurface(
       radius: 30,
       prominent: true,
       padding: EdgeInsets.fromLTRB(pad, 10, pad, 20),
-      child: Column(
-        key: const ValueKey('tools-compact-grid'),
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 38,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 13),
-              decoration: BoxDecoration(
-                color: scheme.onSurfaceVariant.withValues(alpha: .34),
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
-            child: Row(children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('mais', style: AppTypography.section(context,
-                      fontSize: 20, color: scheme.onSurface)),
-                    const SizedBox(height: 3),
-                    Text('suas ferramentas, em um lugar',
-                      style: AppTypography.body(context, fontSize: 13,
-                        color: scheme.onSurfaceVariant)),
-                  ],
+      child: ConstrainedBox(
+        // Large accessibility text and short iPhones can scroll the menu
+        // without shrinking labels or hiding actions below the home indicator.
+        constraints: BoxConstraints(maxHeight: space.height * .78),
+        child: SingleChildScrollView(
+          key: const ValueKey('tools-scroll-region'),
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            key: const ValueKey('tools-compact-grid'),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 13),
+                  decoration: BoxDecoration(
+                    color: scheme.onSurfaceVariant.withValues(alpha: .34),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
-              Icon(Icons.apps_rounded, color: scheme.onSurfaceVariant,
-                size: 22),
-            ]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
+                child: Row(children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('mais', style: AppTypography.section(context,
+                          fontSize: 20, color: scheme.onSurface)),
+                        const SizedBox(height: 3),
+                        Text('suas ferramentas, em um lugar',
+                          style: AppTypography.body(context, fontSize: 13,
+                            color: scheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.apps_rounded, color: scheme.onSurfaceVariant,
+                    size: 22),
+                ]),
+              ),
+              LayoutBuilder(builder: (context, limits) {
+                final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+                // On 320px phones, two half-width tiles truncate their
+                // captions. At larger text scales use one readable column.
+                final oneColumn = limits.maxWidth < 310 || scale >= 1.3;
+                final tileWidth = oneColumn
+                    ? limits.maxWidth : (limits.maxWidth - 10) / 2;
+                return Wrap(
+                  key: ValueKey(oneColumn
+                      ? 'tools-single-column' : 'tools-two-columns'),
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(width: tileWidth, child: _ToolTile(
+                      tileKey: const ValueKey('tools-wallet'),
+                      label: 'contas e cartões',
+                      caption: 'faturas e dívidas',
+                      icon: Icons.account_balance_wallet_outlined,
+                      onTap: () => onSelected(0))),
+                    SizedBox(width: tileWidth, child: _ToolTile(
+                      tileKey: const ValueKey('tools-goals'),
+                      label: 'metas',
+                      caption: 'guardar e realizar',
+                      icon: Icons.flag_outlined,
+                      onTap: () => onSelected(1))),
+                    SizedBox(width: tileWidth, child: _ToolTile(
+                      tileKey: const ValueKey('tools-diary'),
+                      label: 'diário',
+                      caption: 'anotações financeiras',
+                      icon: Icons.auto_stories_outlined,
+                      onTap: () => onSelected(2))),
+                    SizedBox(width: tileWidth, child: _ToolTile(
+                      tileKey: const ValueKey('tools-profile'),
+                      label: 'configurações',
+                      caption: 'perfil e automações',
+                      icon: Icons.settings_outlined,
+                      onTap: () => onSelected(3))),
+                  ],
+                );
+              }),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                key: const ValueKey('tools-financial-ai'),
+                onPressed: () => onSelected(4),
+                icon: const Icon(Icons.auto_awesome_outlined, size: 19),
+                label: const Text('perguntar ao Fôlego · IA'),
+              ),
+            ],
           ),
-          Row(children: [
-            Expanded(child: _ToolTile(
-              tileKey: const ValueKey('tools-wallet'),
-              label: 'contas e cartões',
-              caption: 'faturas e dívidas',
-              icon: Icons.account_balance_wallet_outlined,
-              onTap: () => onSelected(0))),
-            const SizedBox(width: 10),
-            Expanded(child: _ToolTile(
-              tileKey: const ValueKey('tools-goals'),
-              label: 'metas',
-              caption: 'guardar e realizar',
-              icon: Icons.flag_outlined,
-              onTap: () => onSelected(1))),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: _ToolTile(
-              tileKey: const ValueKey('tools-diary'),
-              label: 'diário',
-              caption: 'anotações financeiras',
-              icon: Icons.auto_stories_outlined,
-              onTap: () => onSelected(2))),
-            const SizedBox(width: 10),
-            Expanded(child: _ToolTile(
-              tileKey: const ValueKey('tools-profile'),
-              label: 'configurações',
-              caption: 'perfil e automações',
-              icon: Icons.settings_outlined,
-              onTap: () => onSelected(3))),
-          ]),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            key: const ValueKey('tools-financial-ai'),
-            onPressed: () => onSelected(4),
-            icon: const Icon(Icons.auto_awesome_outlined, size: 19),
-            label: const Text('perguntar ao Fôlego · IA'),
-          ),
-        ],
+        ),
       ),
     );
   }
