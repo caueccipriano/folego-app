@@ -24,7 +24,11 @@ class MoreToolsSheet extends StatelessWidget {
       child: ConstrainedBox(
         // Large accessibility text and short iPhones can scroll the menu
         // without shrinking labels or hiding actions below the home indicator.
-        constraints: BoxConstraints(maxHeight: space.height * .78),
+        // In embedded tests or hosts MediaQuery can report zero height.
+        // Never collapse the whole menu and make its tap targets unreachable.
+        constraints: BoxConstraints(
+          maxHeight: space.height > 0 ? space.height * .78 : double.infinity,
+        ),
         child: SingleChildScrollView(
           key: const ValueKey('tools-scroll-region'),
           physics: const ClampingScrollPhysics(),
