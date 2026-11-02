@@ -215,6 +215,23 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                             : tokens.marca,
                       ),
                     ),
+                    // Only roomy iPhones show the additional amount; the
+                    // compact Home must never overflow or reveal hidden data.
+                    if (budgetExceeded && showTiles) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'limite excedido em ${Formatters.money(snapshot.monthlyBudgetUsed - snapshot.monthlyBudgetPlanned)}',
+                        key: const ValueKey('home-budget-excess-amount'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(
+                          context,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
