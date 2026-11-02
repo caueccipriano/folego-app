@@ -83,7 +83,7 @@ jobs:
             test/projection_screen_test.dart \
             test/home_mobile_summary_strip_test.dart \
             test/activity_inbox_bell_quiet_test.dart \
-            test/folego_glass_surfaces_test.dart \
+            test/folego_glass_surfaces_test.dart test/premium_tools_responsive_test.dart \
             test/web2_responsive_shell_test.dart test/shared_header_responsive_test.dart test/design_system_accessibility_test.dart test/shared_empty_loading_states_test.dart test/app_error_retry_test.dart test/folego_motion_test.dart test/shell_navigation_motion_test.dart test/premium_finish_contract_test.dart \
             test/financial_ai_answer_view_test.dart test/financial_ai_answer_actions_test.dart test/financial_ai_prompt_suggestions_test.dart test/financial_numbers_guide_test.dart test/plan_guidance_test.dart
 
