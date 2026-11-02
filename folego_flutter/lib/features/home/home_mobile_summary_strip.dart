@@ -58,6 +58,9 @@ class HomeMobileSummaryStrip extends StatelessWidget {
         .toList(growable: false)
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final next = pending.isEmpty ? null : pending.first;
+    final budgetExceeded = snapshot.budgetConfigured &&
+        snapshot.monthlyBudgetPlanned > 0 &&
+        snapshot.monthlyBudgetUsed > snapshot.monthlyBudgetPlanned;
     final budgetLabel = ratio == null
         ? 'definir orçamento no plano'
         : hidden
@@ -145,7 +148,9 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                         color: primary))),
                     Text(budgetLabel, key: const ValueKey('home-mobile-budget-value'),
                       style: AppTypography.label(context, fontSize: 12,
-                        color: secondary)),
+                        fontWeight: FontWeight.w700,
+                        color: budgetExceeded
+                            ? Theme.of(context).colorScheme.error : secondary)),
                     const SizedBox(width: 3),
                     Icon(Icons.chevron_right_rounded, size: 16, color: secondary),
                   ]),
@@ -158,7 +163,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                         value: ratio,
                         minHeight: 5,
                         backgroundColor: border,
-                        color: ratio >= 1
+                        color: budgetExceeded
                             ? Theme.of(context).colorScheme.error
                             : Theme.of(context).colorScheme.primary,
                       ),
