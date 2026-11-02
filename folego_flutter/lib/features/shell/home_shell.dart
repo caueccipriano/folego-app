@@ -196,7 +196,6 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         await Navigator.of(context).push<void>(
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('metas')),
               body: GoalsScreen(
                 repository: widget.repository,
                 spaceId: widget.space.id,
