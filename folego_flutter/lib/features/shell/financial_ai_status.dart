@@ -6,8 +6,6 @@ String? financialAiProviderName(Object? provider) {
   switch (provider) {
     case 'gemini':
       return 'Gemini';
-    case 'openai':
-      return 'OpenAI';
     default:
       return null;
   }
