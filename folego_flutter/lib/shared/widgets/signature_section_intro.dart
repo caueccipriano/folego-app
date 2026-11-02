@@ -86,3 +86,55 @@ class SignatureSectionIntro extends StatelessWidget {
     );
   }
 }
+
+
+/// Compact identifier for banking sheets. No automatic financial side effects.
+class SignatureSheetEyebrow extends StatelessWidget {
+  const SignatureSheetEyebrow({
+    super.key,
+    required this.label,
+    required this.icon,
+  });
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = FolegoColorTokens.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      key: const ValueKey('signature-sheet-eyebrow'),
+      constraints: const BoxConstraints(minHeight: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          colors.marca.withValues(alpha: dark ? .16 : .085),
+          colors.superficie,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.marca.withValues(alpha: .20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: colors.marca),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              label.toUpperCase(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.label(
+                context,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: colors.marca,
+              ).copyWith(letterSpacing: .85),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

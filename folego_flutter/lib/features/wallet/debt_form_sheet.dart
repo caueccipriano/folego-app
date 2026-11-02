@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/debt_detail.dart';
@@ -232,8 +233,18 @@ class _DebtFormState extends State<DebtForm> {
         top: false,
         child: Column(
           children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SignatureSheetEyebrow(
+                  label: 'Gestão de dívidas',
+                  icon: Icons.receipt_long_outlined,
+                ),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
+              padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
               child: Row(
                 children: [
                   Expanded(

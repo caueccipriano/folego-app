@@ -20,6 +20,7 @@ import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 class AutomationRulesScreen extends StatefulWidget {
   const AutomationRulesScreen({
@@ -225,8 +226,16 @@ class _AutomationRulesScreenState extends State<AutomationRulesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: SignatureSectionIntro(
+                  eyebrow: 'Organização automática',
+                  caption: 'Regras inteligentes com revisão antes de alterar',
+                  icon: Icons.auto_awesome_outlined,
+                ),
+              ),
               Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                padding: const EdgeInsets.only(top: 15, bottom: 12),
                 child: AppPageHeader(
                   title: 'automações',
                   subtitle: 'regras para sugerir e preparar classificações',

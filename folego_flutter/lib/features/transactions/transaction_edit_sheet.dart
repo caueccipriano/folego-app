@@ -16,6 +16,7 @@ import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../shared/widgets/category_search_picker.dart';
 
 class TransactionEditSheet extends StatefulWidget {
@@ -264,7 +265,15 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: SignatureSheetEyebrow(
+                      label: 'Ajuste de movimento',
+                      icon: Icons.edit_note_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     'editar lançamento',
                     style: AppTypography.section(

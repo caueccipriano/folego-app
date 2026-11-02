@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_card_payments.dart';
 import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../shared/widgets/app_sheet_handle.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'card_invoice_payment_state.dart';
 import 'existing_payment_picker.dart';
 
@@ -315,6 +316,11 @@ class _CardInvoicePaymentFormState extends State<_CardInvoicePaymentForm> {
                   const AppSheetHandle(),
                   const SizedBox(height: 18),
                 ],
+                const SignatureSheetEyebrow(
+                  label: 'Pagamento seguro',
+                  icon: Icons.verified_user_outlined,
+                ),
+                const SizedBox(height: 13),
                 Row(
                   children: [
                     Container(

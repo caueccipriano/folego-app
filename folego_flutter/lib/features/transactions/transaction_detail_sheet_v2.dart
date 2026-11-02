@@ -21,6 +21,7 @@ import '../../core/realtime/realtime_invalidation.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/financial_note_editor.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'recurring_form_sheet.dart';
 import 'transaction_action_sheets.dart';
 import 'transaction_edit_sheet.dart';
@@ -485,6 +486,16 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         child: Column(
           mainAxisSize: _compact ? MainAxisSize.max : MainAxisSize.min,
           children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(18, 13, 18, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SignatureSheetEyebrow(
+                  label: 'Movimentos',
+                  icon: Icons.receipt_long_outlined,
+                ),
+              ),
+            ),
             _header(brightness),
             if (_compact) Expanded(child: body) else Flexible(child: body),
           ],

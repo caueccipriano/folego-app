@@ -14,6 +14,7 @@ import '../../data/repositories/folego_repository_goals.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'goal_form_sheet.dart';
 import 'goals_widgets.dart';
 
@@ -212,6 +213,12 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(0, 18, 0, 42),
             children: [
+              const SignatureSectionIntro(
+                eyebrow: 'Minha conquista',
+                caption: 'Acompanhe seu objetivo e cada aporte realizado',
+                icon: Icons.flag_outlined,
+              ),
+              const SizedBox(height: 14),
               AppPageHeader(
                 title: goal.name,
                 subtitle: 'progresso, aportes e histórico desta meta',
