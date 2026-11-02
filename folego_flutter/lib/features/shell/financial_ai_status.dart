@@ -8,6 +8,8 @@ String? financialAiProviderName(Object? provider) {
       return 'Gemini';
     case 'openai':
       return 'OpenAI';
+    case 'local':
+      return 'Cálculo do Fôlego';
     default:
       return null;
   }
