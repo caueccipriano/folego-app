@@ -88,6 +88,67 @@ void main() {
     });
   }
 
+  testWidgets('iPhone keyboard hides dock and restores selected tab and pages',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final counts = List<int>.filled(5, 0);
+    Widget app(double keyboardInset) => MaterialApp(
+      home: MediaQuery(
+        data: MediaQueryData(
+          viewInsets: EdgeInsets.only(bottom: keyboardInset),
+        ),
+        child: _ShellForTest(mountCounts: counts),
+      ),
+    );
+
+    await tester.pumpWidget(app(0));
+    expect(find.byKey(const ValueKey('mobile-bottom-navigation')),
+        findsOneWidget);
+    await tester.tap(find.byKey(
+      const ValueKey('mobile-nav-destination-1')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 1);
+
+    await tester.pumpWidget(app(310));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('mobile-bottom-navigation')),
+        findsNothing);
+    expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 1);
+    expect(counts, everyElement(1));
+
+    await tester.pumpWidget(app(0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('mobile-bottom-navigation')),
+        findsOneWidget);
+    expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 1);
+    expect(counts, everyElement(1));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop sidebar stays visible when an inset is present',
+      (tester) async {
+    tester.view.physicalSize = const Size(1280, 860);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(
+        data: const MediaQueryData(
+          viewInsets: EdgeInsets.only(bottom: 300),
+        ),
+        child: _ShellForTest(mountCounts: List<int>.filled(5, 0)),
+      ),
+    ));
+    expect(find.byKey(const ValueKey('desktop-sidebar')), findsOneWidget);
+    expect(find.byKey(const ValueKey('mobile-bottom-navigation')),
+        findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('accessible navigation disables tab and sheet motion',
       (tester) async {
     Duration? tabDuration;
