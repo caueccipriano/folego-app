@@ -952,7 +952,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     final layout = AppBreakpoints.of(context);
     final desktop =
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
