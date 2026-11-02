@@ -7,6 +7,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../shared/widgets/folego_glass_surface.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
 import 'home_financial_hero.dart';
@@ -48,7 +49,6 @@ class HomeFixedDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     final colors = FolegoColorTokens.of(context);
     final timing = homeIncomeTimingLabel(snapshot);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -76,8 +76,7 @@ class HomeFixedDashboard extends StatelessWidget {
       _ => Icons.insights_outlined,
     };
 
-    return ColoredBox(
-      color: AppColors.background(brightness),
+    return FolegoAmbientBackdrop(
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, limits) {
@@ -128,12 +127,30 @@ class HomeFixedDashboard extends StatelessWidget {
                         notificationBell,
                         IconButton(
                           key: const ValueKey('home-agenda-shortcut'),
+                          style: IconButton.styleFrom(
+                            backgroundColor: colors.superficie
+                                .withValues(alpha: .82),
+                            foregroundColor: colors.textoPrincipal,
+                            side: BorderSide(color: colors.borda),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
                           onPressed: onAgenda,
                           tooltip: 'agenda',
                           icon: const Icon(AppIcons.calendar, size: 20),
                         ),
                         IconButton(
                           key: const ValueKey('home-privacy-toggle'),
+                          style: IconButton.styleFrom(
+                            backgroundColor: colors.superficie
+                                .withValues(alpha: .82),
+                            foregroundColor: colors.textoPrincipal,
+                            side: BorderSide(color: colors.borda),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
                           onPressed: onPrivacy,
                           tooltip: hidden ? 'mostrar valores' : 'ocultar valores',
                           icon: Icon(
@@ -191,36 +208,69 @@ class HomeFixedDashboard extends StatelessWidget {
                                 ),
                               ),
                               Positioned(
-                                left: -75,
-                                bottom: -104,
+                                left: -125,
+                                bottom: -163,
                                 child: IgnorePointer(
                                   child: Container(
-                                    width: 150,
-                                    height: 150,
+                                    width: 255,
+                                    height: 255,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
+                                      gradient: RadialGradient(
+                                        colors: [
+                                          colors.acaoHero.withValues(alpha: .11),
+                                          colors.marcaHero.withValues(alpha: 0),
+                                        ],
+                                      ),
                                       border: Border.all(
                                         color: colors.marcaHeroSobre
-                                            .withValues(alpha: .08),
-                                        width: 20,
+                                            .withValues(alpha: .13),
+                                        width: 1.2,
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                               Positioned(
-                                right: -36,
-                                top: -65,
+                                right: -86,
+                                top: -126,
                                 child: IgnorePointer(
                                   child: Container(
-                                    width: 176,
-                                    height: 176,
+                                    width: 240,
+                                    height: 240,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
+                                      gradient: RadialGradient(
+                                        colors: [
+                                          colors.marcaHeroSobre.withValues(
+                                            alpha: .13,
+                                          ),
+                                          colors.marcaHero.withValues(alpha: 0),
+                                        ],
+                                      ),
                                       border: Border.all(
                                         color: colors.marcaHeroSobre
-                                            .withValues(alpha: .13),
-                                        width: 28,
+                                            .withValues(alpha: .18),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // A reflective hairline defines the hero without
+                              // covering content or intercepting touch events.
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    key: const ValueKey('home-aurora-rim'),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadii.feature,
+                                      ),
+                                      border: Border.all(
+                                        color: colors.marcaHeroSobre
+                                            .withValues(alpha: .22),
+                                        width: 1,
                                       ),
                                     ),
                                   ),
@@ -317,7 +367,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                               ),
                                               style: AppTypography.money(
                                                 context,
-                                                fontSize: tiny ? 32 : 39,
+                                                fontSize: tiny ? 32 : (roomy ? 42 : 38),
                                                 color: colors.acaoHero,
                                               ),
                                             ),
@@ -342,8 +392,18 @@ class HomeFixedDashboard extends StatelessWidget {
                                     SizedBox(height: tiny ? 8 : 12),
                                     Container(
                                       height: 1,
-                                      color: colors.marcaHeroSobre
-                                          .withValues(alpha: .18),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            colors.marcaHeroSobre
+                                                .withValues(alpha: 0),
+                                            colors.marcaHeroSobre
+                                                .withValues(alpha: .28),
+                                            colors.acaoHero
+                                                .withValues(alpha: .12),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                     SizedBox(height: tiny ? 8 : 11),
                                     Row(
@@ -612,7 +672,17 @@ class _MetricTile extends StatelessWidget {
                 width: 25,
                 height: 25,
                 decoration: BoxDecoration(
-                  color: colors.marca.withValues(alpha: .09),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colors.marca.withValues(alpha: .23),
+                      colors.marca.withValues(alpha: .065),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: colors.marca.withValues(alpha: .19),
+                  ),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: Icon(icon, size: 15, color: colors.marca),
