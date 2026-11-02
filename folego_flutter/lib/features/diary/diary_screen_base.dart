@@ -20,6 +20,8 @@ import '../../data/repositories/folego_repository_diary.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../transactions/transactions_screen.dart';
 import 'reflection_form_sheet.dart';
 
@@ -164,10 +166,11 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
-      builder: (context, hidden, _) => Scaffold(
-        backgroundColor: AppColors.background(brightness),
+      builder: (context, hidden, _) => FolegoAmbientBackdrop(
+        child: Scaffold(
+        backgroundColor: AppColors.transparent,
         appBar: AppBar(
-          backgroundColor: AppColors.background(brightness),
+          backgroundColor: AppColors.transparent,
           title: Text('diário', style: AppTypography.section(context, fontSize: 18)),
           leading: IconButton(tooltip: 'voltar', onPressed: () => Navigator.of(context).maybePop(), icon: const Icon(AppIcons.back)),
           actions: [IconButton(tooltip: 'ver lançamentos', onPressed: _openTransactions, icon: const Icon(AppIcons.transactions))],
@@ -193,6 +196,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
                         MediaQuery.paddingOf(context).bottom + 140,
                       ),
                       children: [
+                        const SignatureSectionIntro(
+                          eyebrow: 'Consciência financeira',
+                          caption: 'Entenda escolhas, acompanhe hábitos e evolua',
+                          icon: Icons.auto_stories_outlined,
+                        ),
+                        const SizedBox(height: 16),
                         _header(brightness),
                         const SizedBox(height: 18),
                         if (_error == null) ...[
@@ -246,6 +255,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     ),
             ),
           ),
+        ),
         ),
       ),
     );
