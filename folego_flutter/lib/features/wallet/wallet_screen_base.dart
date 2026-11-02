@@ -18,6 +18,8 @@ import '../../data/models/wallet_commitment_insights.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
@@ -281,8 +283,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final brightness = Theme.of(context).brightness;
     return ValueListenableBuilder<bool>(
       valueListenable: FinancialPrivacy.hidden,
-      builder: (context, _, _) => ColoredBox(
-        color: AppColors.background(brightness),
+      builder: (context, _, _) => FolegoAmbientBackdrop(
         child: SafeArea(
           child: AppContentContainer.dashboard(
             fillHeight: true,
@@ -292,6 +293,12 @@ class _WalletScreenState extends State<WalletScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
                 children: [
+                  const SignatureSectionIntro(
+                    eyebrow: 'Seu patrimônio',
+                    caption: 'Contas, cartões e compromissos sob controle',
+                    icon: Icons.account_balance_wallet_outlined,
+                  ),
+                  const SizedBox(height: 14),
                   _buildHeader(brightness),
                   const SizedBox(height: 12),
                   if (_loading)
