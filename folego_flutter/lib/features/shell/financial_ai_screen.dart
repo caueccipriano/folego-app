@@ -5,6 +5,7 @@ import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_typography.dart';
 import 'financial_ai_status.dart';
 import 'financial_ai_answer_view.dart';
+import 'financial_ai_prompt_suggestions.dart';
 
 /// Read-only questions, using the existing authenticated financial-ai function.
 /// The user explicitly submits each question; no automatic model requests.
@@ -225,10 +226,10 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             _checkingProvider
                                 ? 'verificando a IA...'
                                 : _providerConfigured == true
-                                    ? '${_providerName ?? 'Gemini'} selecionado · limite disponível não verificado'
+                                    ? '${_providerName ?? 'Gemini'} pronto · limite disponível não verificado'
                                     : _providerConfigured == false
-                                        ? 'Gemini sem chave no Supabase · resumo sem IA disponível'
-                                        : 'não foi possível conferir a IA',
+                                        ? 'Gemini indisponível · resumo sem IA disponível'
+                                        : 'não foi possível conferir a IA · resumo sem IA disponível',
                             style: AppTypography.body(context, fontSize: 12),
                           ),
                         ),
@@ -273,46 +274,59 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     style: AppTypography.body(context, fontSize: 14),
                     enabled: !_sending && !hidden,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'o que você quer entender?',
                       hintText: 'Como está meu resultado neste mês?',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _question,
+                        builder: (context, draft, _) => draft.text.isEmpty
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              key: const ValueKey('financial-ai-clear-question'),
+                              tooltip: 'Limpar pergunta',
+                              onPressed: _sending || hidden
+                                  ? null : _question.clear,
+                              icon: const Icon(Icons.close_rounded, size: 19),
+                            ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Atalhos enviam a pergunta na hora e podem usar sua cota Premium.',
-                    style: AppTypography.label(context, fontSize: 11,
+                    'Sugestões preenchem a pergunta. Só tocar em Perguntar '
+                    'envia uma consulta Premium.',
+                    style: AppTypography.label(context, fontSize: 12,
                       color: colors.onSurfaceVariant),
                   ),
                   const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 4, children: [
-                    for (final prompt in const [
-                      'Como está meu mês?',
-                      'Qual categoria merece atenção?',
-                      'Compare meus gastos com o mês anterior.',
-                    ])
-                      ActionChip(
-                        label: Text(prompt),
-                        onPressed: _sending || hidden ||
-                            _providerConfigured == false
-                            ? null
-                            : () {
-                                _question.text = prompt;
-                                _ask();
-                              },
-                      ),
-                  ]),
+                  FinancialAiPromptSuggestions(
+                    enabled: !_sending && !hidden,
+                    onSelected: (prompt) {
+                      _question.value = TextEditingValue(
+                        text: prompt,
+                        selection: TextSelection.collapsed(offset: prompt.length),
+                      );
+                      if (_error != null) setState(() => _error = null);
+                    },
+                  ),
                   const SizedBox(height: 14),
-                  FilledButton.icon(
-                    key: const ValueKey('financial-ai-submit'),
-                    onPressed: _sending || hidden ||
-                        _providerConfigured == false ? null : _ask,
-                    icon: _sending
-                        ? const SizedBox(width: 16, height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.auto_awesome_outlined),
-                    label: Text(_sending ? 'consultando...' : 'perguntar'),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _question,
+                    builder: (context, draft, _) {
+                      final ready = draft.text.trim().length >= 3 &&
+                          draft.text.trim().length <= 500;
+                      return FilledButton.icon(
+                        key: const ValueKey('financial-ai-submit'),
+                        onPressed: _sending || hidden || !ready ||
+                            _providerConfigured == false ? null : _ask,
+                        icon: _sending
+                            ? const SizedBox(width: 16, height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.auto_awesome_outlined),
+                        label: Text(_sending ? 'consultando...' : 'perguntar'),
+                      );
+                    },
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(

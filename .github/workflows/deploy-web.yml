@@ -85,7 +85,7 @@ jobs:
             test/activity_inbox_bell_quiet_test.dart \
             test/folego_glass_surfaces_test.dart \
             test/design_system_accessibility_test.dart \
-            test/financial_ai_answer_view_test.dart test/financial_numbers_guide_test.dart
+            test/financial_ai_answer_view_test.dart test/financial_ai_prompt_suggestions_test.dart test/financial_numbers_guide_test.dart
 
       - name: Verify live Home privacy masking
         working-directory: folego_flutter

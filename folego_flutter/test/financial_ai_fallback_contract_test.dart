@@ -20,6 +20,7 @@ void main() {
     expect(source, contains('não usa cota'));
     expect(source, contains("ValueKey('financial-ai-local-notice')"));
     expect(source, contains('limite disponível não verificado'));
+    expect(source, contains('Só tocar em Perguntar'));
     expect(source, isNot(contains('getMonthlyMoneySummary')));
   });
 
