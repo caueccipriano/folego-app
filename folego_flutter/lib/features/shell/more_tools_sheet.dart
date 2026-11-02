@@ -115,6 +115,23 @@ class MoreToolsSheet extends StatelessWidget {
                 icon: const Icon(Icons.auto_awesome_outlined, size: 19),
                 label: const Text('perguntar ao Fôlego · IA'),
               ),
+              if (const String.fromEnvironment('FOLEGO_RELEASE').isNotEmpty) ...[
+                const SizedBox(height: 13),
+                Center(
+                  child: Semantics(
+                    label: 'versão publicada do Fôlego',
+                    child: Text(
+                      'Fôlego · versão ${const String.fromEnvironment('FOLEGO_RELEASE').substring(0, 8)}',
+                      key: const ValueKey('folego-visible-build-version'),
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
