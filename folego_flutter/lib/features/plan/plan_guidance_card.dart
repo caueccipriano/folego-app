@@ -46,11 +46,11 @@ class PlanGuidanceCard extends StatelessWidget {
         children: [
           if (next != null || !canEdit) Container(
             key: const ValueKey('plan-guided-start'),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: scheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: scheme.outlineVariant.withValues(alpha: .55)),
+              color: Color.alphaBlend(scheme.primary.withValues(alpha: .055), scheme.surface),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: scheme.primary.withValues(alpha: .18)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,11 +131,11 @@ class PlanGuidanceCard extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             key: const ValueKey('plan-review-focus'),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: scheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: scheme.outlineVariant.withValues(alpha: .55)),
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: scheme.outlineVariant),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
