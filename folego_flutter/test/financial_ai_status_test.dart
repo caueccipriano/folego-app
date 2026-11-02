@@ -3,7 +3,7 @@ import 'package:folego/features/shell/financial_ai_status.dart';
 
 void main() {
   test('Only actual providers receive their public names', () {
-    expect(financialAiProviderName('gemini'), 'Gemini');
+    expect(financialAiProviderName('gemini'), 'gemini');
     expect(financialAiProviderName('openai'), isNull);
     expect(financialAiProviderName('other'), isNull);
     expect(financialAiProviderName(null), isNull);
