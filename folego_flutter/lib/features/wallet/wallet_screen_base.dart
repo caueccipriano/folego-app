@@ -999,8 +999,8 @@ class _PositionMetricCard extends StatelessWidget {
         onTap: metric.onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
-          constraints: BoxConstraints(minHeight: emphasized ? 104 : 84),
-          padding: EdgeInsets.all(emphasized ? 14 : 10),
+          constraints: BoxConstraints(minHeight: emphasized ? 114 : 84),
+          padding: EdgeInsets.all(emphasized ? 18 : 12),
           decoration: BoxDecoration(
             color: AppColors.surface(brightness),
             borderRadius: BorderRadius.circular(AppRadii.card),
@@ -1021,7 +1021,7 @@ class _PositionMetricCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(
                         context,
-                        fontSize: 11,
+                        fontSize: emphasized ? 13 : 11,
                         color: secondary,
                       ),
                     ),
@@ -1040,7 +1040,7 @@ class _PositionMetricCard extends StatelessWidget {
                   Formatters.money(metric.value),
                   style: AppTypography.money(
                     context,
-                    fontSize: emphasized ? 24 : 17,
+                    fontSize: emphasized ? 29 : 17,
                     color: metric.value < 0
                         ? AppColors.expenseText(brightness)
                         : primary,
