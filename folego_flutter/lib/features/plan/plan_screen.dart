@@ -7,6 +7,7 @@ import '../../data/repositories/folego_repository.dart';
 import 'flexible_budget_screen.dart';
 import 'plan_screen_web2.dart' as base;
 import 'projection_screen.dart';
+import 'quick_spend_simulator_screen.dart';
 import 'spending_behavior_screen.dart';
 
 class PlanScreen extends StatefulWidget {
@@ -35,6 +36,7 @@ class PlanScreen extends StatefulWidget {
 class _PlanScreenState extends State<PlanScreen> {
   bool _projection = false;
   bool _startWithPurchase = false;
+  bool _quickSpend = false;
 
   @override
   void didUpdateWidget(covariant PlanScreen oldWidget) {
@@ -42,10 +44,12 @@ class _PlanScreenState extends State<PlanScreen> {
     if (oldWidget.spaceId != widget.spaceId) {
       _projection = false;
       _startWithPurchase = false;
+      _quickSpend = false;
     }
     if (oldWidget.projectionOpenToken != widget.projectionOpenToken &&
         widget.projectionOpenToken != null) {
       _projection = true;
+      _quickSpend = false;
     }
   }
 
@@ -63,6 +67,14 @@ class _PlanScreenState extends State<PlanScreen> {
       _projection = true;
     });
   }
+
+  void _openQuickSpend() => setState(() {
+    _quickSpend = true;
+    _projection = false;
+    _startWithPurchase = false;
+  });
+
+  void _closeQuickSpend() => setState(() => _quickSpend = false);
 
   void _openSpendingBehavior(DateTime month) {
     Navigator.of(context).push<void>(MaterialPageRoute<void>(
@@ -84,6 +96,13 @@ class _PlanScreenState extends State<PlanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_quickSpend) {
+      return QuickSpendSimulatorScreen(
+        repository: widget.repository,
+        spaceId: widget.spaceId,
+        onBack: _closeQuickSpend,
+      );
+    }
     if (_projection) {
       return ProjectionScreen(
         repository: widget.repository,
@@ -103,6 +122,7 @@ class _PlanScreenState extends State<PlanScreen> {
         disableInsightsForTesting: widget.disableInsightsForTesting,
         onProjectionRequested: _openProjection,
         onPurchaseSimulationRequested: _openPurchaseProjection,
+        onQuickSpendRequested: _openQuickSpend,
         onSpendingBehaviorRequested: _openSpendingBehavior,
         onFlexibleBudgetRequested: () async {
           final changed = await Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
