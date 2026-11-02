@@ -15,3 +15,11 @@ Deno.test('Gemini reply uses visible text only', () => {
   if (output !== 'Seu mês está organizado.') throw Error('Invalid visible reply');
   if (readGeminiAnswer({ candidates: [{finishReason:'SAFETY'}] }) !== '') throw Error('Unsafe empty output');
 });
+
+Deno.test('financial-ai uses Gemini exclusively', async () => {
+  const source = await Deno.readTextFile(new URL('../functions/financial-ai/index.ts', import.meta.url));
+  if (!source.includes("const provider = 'gemini'")) throw Error('Gemini must be the fixed provider');
+  for (const forbidden of ['OPENAI_API_KEY', 'api.openai.com', 'FOLEGO_AI_PROVIDER', 'gpt-4']) {
+    if (source.includes(forbidden)) throw Error('Legacy provider reference: ' + forbidden);
+  }
+});
