@@ -87,6 +87,13 @@ class MoreToolsSheet extends StatelessWidget {
               icon: Icons.settings_outlined,
               onTap: () => onSelected(3))),
           ]),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const ValueKey('tools-financial-ai'),
+            onPressed: () => onSelected(4),
+            icon: const Icon(Icons.auto_awesome_outlined, size: 19),
+            label: const Text('perguntar ao Fôlego · IA'),
+          ),
         ],
       ),
     );
