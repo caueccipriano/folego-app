@@ -30,6 +30,10 @@ class ResponsiveNavigationShell extends StatelessWidget {
     final layout = AppBreakpoints.of(context);
     final desktop =
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
+    // On iOS PWAs the virtual keyboard may take most of the viewport.
+    // Do not render the dock above it: let the active form use that space.
+    // Pages remain mounted by IndexedStack, including unsaved form drafts.
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     return Scaffold(
       // Keep the mobile body and navigation in separate layout regions. This
@@ -66,7 +70,7 @@ class ResponsiveNavigationShell extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: desktop
+      bottomNavigationBar: desktop || keyboardVisible
           ? null
           : KeyedSubtree(
               key: const ValueKey('mobile-bottom-navigation'),
