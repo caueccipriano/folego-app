@@ -131,8 +131,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                           : tokens.textoSecundario,
                                     ),
                                   ),
-                                  Text(
-                                    'mais',
+                                  Text('mais',
                                     style: AppTypography.label(
                                       context,
                                       fontSize: 12,
