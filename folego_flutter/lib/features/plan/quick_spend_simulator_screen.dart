@@ -248,10 +248,10 @@ class _QuickSpendSimulatorScreenState extends State<QuickSpendSimulatorScreen> {
                       key: const ValueKey('quick-spend-comparison'),
                       children: [
                         metric('sem a compra',
-                          money(current!.closingProjected)),
+                          money(current.closingProjected)),
                         const SizedBox(width: 10),
                         metric('com a compra',
-                          money(after!.closingProjected),
+                          money(after.closingProjected),
                           prominent: true),
                       ],
                     ),
@@ -269,12 +269,12 @@ class _QuickSpendSimulatorScreenState extends State<QuickSpendSimulatorScreen> {
                             style: AppTypography.label(context,
                               fontSize: 12, color: scheme.onSurfaceVariant)),
                           const SizedBox(height: 7),
-                          Text(money(after!.closingProjected -
-                              current!.closingProjected),
+                          Text(money(after.closingProjected -
+                              current.closingProjected),
                             style: AppTypography.money(context, fontSize: 21)),
                           const SizedBox(height: 7),
                           Text(
-                            result!.months.any((month) => month.isCritical)
+                            result.months.any((month) => month.isCritical)
                                 ? 'Atenção: há mês com saldo negativo nos próximos três meses.'
                                 : 'Nenhum mês negativo nos próximos três meses da projeção.',
                             style: AppTypography.body(context, fontSize: 12),
