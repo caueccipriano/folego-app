@@ -36,6 +36,7 @@ import 'recurring_form_sheet.dart';
 import 'recurring_occurrence.dart';
 import 'subscriptions_tab.dart';
 import 'transaction_day_label.dart';
+import 'transaction_card_layout.dart';
 import 'transaction_detail_sheet.dart';
 import 'transaction_edit_sheet.dart';
 import 'transaction_filter_sheet.dart';
@@ -1665,6 +1666,7 @@ class _TransactionCardV3 extends StatelessWidget {
     final border = AppColors.border(brightness);
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
+    final accent = AppColors.primaryPurple(brightness);
     final amountColor = item.isIncome
         ? AppColors.positiveText(brightness)
         : item.isExpense
@@ -1684,6 +1686,8 @@ class _TransactionCardV3 extends StatelessWidget {
           : 'abrir detalhe do lançamento',
       child: Material(
         color: surface,
+        elevation: MediaQuery.highContrastOf(context) ? 0 : .8,
+        shadowColor: primary.withValues(alpha: .12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
           side: BorderSide(color: border),
@@ -1691,73 +1695,93 @@ class _TransactionCardV3 extends StatelessWidget {
         child: InkWell(
           onTap: onOpen,
           borderRadius: BorderRadius.circular(AppRadii.card),
+          hoverColor: accent.withValues(alpha: .035),
+          focusColor: accent.withValues(alpha: .09),
+          splashColor: accent.withValues(alpha: .08),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
-            child: Row(
-              children: [
-                CategoryIconBadge(
-                  icon: visual.icon,
-                  color: visual.color,
-                  size: 42,
-                  iconSize: 20,
-                  radius: AppRadii.control,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        financialDisplayDescription(item.description),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.body(
-                          context,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: primary,
-                        ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final textScale =
+                    MediaQuery.textScalerOf(context).scale(14) / 14;
+                final ownLine = transactionAmountNeedsOwnLine(
+                  width: constraints.maxWidth,
+                  textScale: textScale,
+                );
+                final amount = Text(
+                  '${item.isIncome ? '+' : item.isExpense ? '−' : ''}${Formatters.money(item.amount.abs())}',
+                  key: const ValueKey('transaction-row-amount'),
+                  maxLines: 1,
+                  style: AppTypography.money(
+                    context,
+                    fontSize: ownLine ? 16 : 15,
+                    color: amountColor,
+                  ),
+                );
+                return Row(
+                  children: [
+                    CategoryIconBadge(
+                      icon: visual.icon,
+                      color: visual.color,
+                      size: 42,
+                      iconSize: 20,
+                      radius: AppRadii.control,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            financialDisplayDescription(item.description),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.body(
+                              context,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: primary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            [
+                              categoryLabel,
+                              if (item.accountName?.trim().isNotEmpty == true)
+                                item.accountName!.trim(),
+                            ].join(' • '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.body(
+                              context,
+                              fontSize: 11,
+                              color: secondary,
+                            ),
+                          ),
+                          if (ownLine) ...[
+                            const SizedBox(height: 7),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: amount,
+                            ),
+                          ],
+                        ],
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        [
-                          categoryLabel,
-                          if (item.accountName?.trim().isNotEmpty == true)
-                            item.accountName!.trim(),
-                        ].join(' • '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.body(
-                          context,
-                          fontSize: 11,
-                          color: secondary,
+                    ),
+                    if (!ownLine) ...[
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 136),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: amount,
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 136),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      '${item.isIncome
-                          ? '+'
-                          : item.isExpense
-                          ? '−'
-                          : ''}${Formatters.money(item.amount.abs())}',
-                      key: const ValueKey('transaction-row-amount'),
-                      style: AppTypography.money(
-                        context,
-                        fontSize: 15,
-                        color: amountColor,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ),

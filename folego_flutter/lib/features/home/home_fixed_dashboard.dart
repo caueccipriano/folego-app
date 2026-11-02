@@ -152,6 +152,9 @@ class HomeFixedDashboard extends StatelessWidget {
                     button: true,
                     child: Material(
                       color: colors.marcaHero,
+                      // Depth without backdrop blur: keeps iOS PWA taps reliable.
+                      elevation: MediaQuery.highContrastOf(context) ? 0 : 5,
+                      shadowColor: colors.marcaHero.withValues(alpha: .30),
                       borderRadius: BorderRadius.circular(AppRadii.feature),
                       child: InkWell(
                         key: const ValueKey('home-fixed-spendable-tap'),
@@ -172,12 +175,16 @@ class HomeFixedDashboard extends StatelessWidget {
                                           colors.marcaHero,
                                           Color.alphaBlend(
                                             colors.marcaHeroSobre
-                                                .withValues(alpha: .018),
+                                                .withValues(alpha: .09),
                                             colors.marcaHero,
                                           ),
-                                          colors.marcaHero,
+                                          Color.alphaBlend(
+                                            colors.marcaHeroSobre
+                                                .withValues(alpha: .025),
+                                            colors.marcaHero,
+                                          ),
                                         ],
-                                        stops: const [0, .65, 1],
+                                        stops: const [0, .56, 1],
                                       ),
                                     ),
                                   ),
@@ -666,6 +673,10 @@ class _CaptureButton extends StatelessWidget {
     final action = InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.compactCard),
+      splashColor: foreground.withValues(alpha: .10),
+      highlightColor: foreground.withValues(alpha: .065),
+      hoverColor: foreground.withValues(alpha: .055),
+      focusColor: foreground.withValues(alpha: .10),
       child: Container(
         constraints: const BoxConstraints(minHeight: 52),
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -696,6 +707,8 @@ class _CaptureButton extends StatelessWidget {
     return primary
         ? Material(
             color: AppColors.action(brightness),
+            elevation: MediaQuery.highContrastOf(context) ? 0 : 2,
+            shadowColor: AppColors.action(brightness).withValues(alpha: .24),
             borderRadius: BorderRadius.circular(AppRadii.compactCard),
             child: action,
           )

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/folego_glass_surface.dart';
 
 /// Presentation only: never calculates financial amounts or rewrites model facts.
 class FinancialAiAnswerView extends StatelessWidget {
@@ -91,13 +92,10 @@ class FinancialAiAnswerView extends StatelessWidget {
                     SizedBox(
                       key: ValueKey('financial-ai-metric-${entry.value}'),
                       width: itemWidth,
-                      child: Container(
+                      child: FolegoGlassSurface(
+                        radius: AppRadii.card,
+                        elevated: false,
                         padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: scheme.surface,
-                          borderRadius: BorderRadius.circular(AppRadii.card),
-                          border: Border.all(color: scheme.outlineVariant),
-                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
