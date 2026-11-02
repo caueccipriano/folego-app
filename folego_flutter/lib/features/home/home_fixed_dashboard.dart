@@ -367,7 +367,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                               ),
                                               style: AppTypography.money(
                                                 context,
-                                                fontSize: tiny ? 32 : 39,
+                                                fontSize: tiny ? 32 : (roomy ? 42 : 38),
                                                 color: colors.acaoHero,
                                               ),
                                             ),
@@ -392,8 +392,18 @@ class HomeFixedDashboard extends StatelessWidget {
                                     SizedBox(height: tiny ? 8 : 12),
                                     Container(
                                       height: 1,
-                                      color: colors.marcaHeroSobre
-                                          .withValues(alpha: .18),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            colors.marcaHeroSobre
+                                                .withValues(alpha: 0),
+                                            colors.marcaHeroSobre
+                                                .withValues(alpha: .28),
+                                            colors.acaoHero
+                                                .withValues(alpha: .12),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                     SizedBox(height: tiny ? 8 : 11),
                                     Row(
