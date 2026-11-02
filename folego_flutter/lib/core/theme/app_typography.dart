@@ -151,14 +151,14 @@ abstract final class AppTypography {
       ),
       bodyLarge: _interface(
         textStyle: manrope.bodyLarge,
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: FontWeight.w400,
         height: 1.45,
         color: primaryText,
       ),
       bodyMedium: _interface(
         textStyle: manrope.bodyMedium,
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.45,
         color: primaryText,
