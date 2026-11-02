@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 
@@ -21,6 +22,7 @@ class AppLoadingState extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final secondary = AppColors.secondaryText(brightness);
     final primary = AppColors.primaryText(brightness);
+    final tokens = FolegoColorTokens.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -64,7 +66,14 @@ class AppLoadingState extends StatelessWidget {
                             borderRadius:
                                 BorderRadius.circular(AppRadii.feature),
                             border: Border.all(
-                              color: AppColors.border(brightness)),
+                              color: tokens.borda),
+                            boxShadow: MediaQuery.highContrastOf(context)
+                                ? null
+                                : [BoxShadow(
+                                    color: tokens.marca.withValues(alpha: .06),
+                                    blurRadius: 22,
+                                    offset: const Offset(0, 7),
+                                  )],
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
