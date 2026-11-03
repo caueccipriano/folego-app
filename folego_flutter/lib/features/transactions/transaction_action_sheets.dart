@@ -14,6 +14,7 @@ import '../../data/repositories/folego_repository_payment_instruments.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../shared/widgets/category_search_picker.dart';
 import '../../shared/widgets/app_loading_state.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 class CardPurchaseEditSheet extends StatefulWidget {
   const CardPurchaseEditSheet({super.key, required this.repository, required this.detail});
@@ -473,6 +474,11 @@ class _ActionSheetFrame extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SignatureSheetEyebrow(
+                  label: 'Editar com segurança',
+                  icon: Icons.edit_note_outlined,
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
