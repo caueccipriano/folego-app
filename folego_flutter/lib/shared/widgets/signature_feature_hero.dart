@@ -106,11 +106,7 @@ class SignatureFeatureHero extends StatelessWidget {
                         ).copyWith(letterSpacing: 1.3),
                       ),
                     ),
-                    if (trailing != null)
-                      Flexible(
-                        flex: 0,
-                        child: trailing!,
-                      )
+                    if (trailing != null) trailing!
                     else
                       Container(
                         width: 32,
