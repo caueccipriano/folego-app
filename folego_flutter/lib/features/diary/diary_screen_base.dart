@@ -21,7 +21,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
-import '../../shared/widgets/signature_section_intro.dart';
+import '../../shared/widgets/signature_feature_hero.dart';
 import '../transactions/transactions_screen.dart';
 import 'reflection_form_sheet.dart';
 
@@ -196,10 +196,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
                         MediaQuery.paddingOf(context).bottom + 140,
                       ),
                       children: [
-                        const SignatureSectionIntro(
-                          eyebrow: 'Consciência financeira',
-                          caption: 'Entenda escolhas, acompanhe hábitos e evolua',
+                        const SignatureFeatureHero(
+                          title: 'Escolhas que contam.',
+                          eyebrow: 'Diário financeiro',
+                          subtitle: 'Acompanhe seus hábitos sem julgamentos',
                           icon: Icons.auto_stories_outlined,
+                          compact: true,
                         ),
                         const SizedBox(height: 16),
                         _header(brightness),
