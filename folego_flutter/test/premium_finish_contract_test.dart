@@ -25,7 +25,9 @@ void main() {
     expect(source, contains('if (ownLine) ...['));
     expect(source, contains('if (!ownLine) ...['));
     expect(source, contains('onTap: onOpen'));
-    expect(source, contains('MediaQuery.highContrastOf(context) ? 0 : .8'));
+    expect(source, contains('MediaQuery.highContrastOf(context) ? 0 : 1.25'));
+    expect(source, contains('onTap: onOpen'));
+    expect(source, contains('visual.color.withValues(alpha: .26)'));
   });
 
   test('compact Home keeps a premium sheen with accessible tap regions', () {
