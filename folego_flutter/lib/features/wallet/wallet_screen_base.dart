@@ -19,7 +19,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
-import '../../shared/widgets/signature_section_intro.dart';
+import '../../shared/widgets/signature_feature_hero.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
@@ -293,12 +293,6 @@ class _WalletScreenState extends State<WalletScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
                 children: [
-                  const SignatureSectionIntro(
-                    eyebrow: 'Seu patrimônio',
-                    caption: 'Contas, cartões e compromissos sob controle',
-                    icon: Icons.account_balance_wallet_outlined,
-                  ),
-                  const SizedBox(height: 14),
                   _buildHeader(brightness),
                   const SizedBox(height: 12),
                   if (_loading)
@@ -327,73 +321,49 @@ class _WalletScreenState extends State<WalletScreen> {
     final border = AppColors.border(brightness);
     final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
 
-    // Keep the title and actions on one row on iPhone, freeing the space
-    // formerly used by the extra right-aligned actions row.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Semantics(
-                header: true,
-                child: Text(
-                  'carteira',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.display(
-                    context,
-                    fontSize: compact ? 26 : 28,
-                    color: AppColors.primaryText(brightness),
-                  ),
-                ),
-              ),
+    return SignatureFeatureHero(
+      title: 'carteira',
+      eyebrow: 'Seu dinheiro, com clareza',
+      subtitle: 'Contas, cartões, benefícios e dívidas em um só lugar',
+      icon: Icons.account_balance_wallet_outlined,
+      compact: compact,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            key: const ValueKey('wallet-privacy-toggle'),
+            tooltip: FinancialPrivacy.hidden.value
+                ? 'mostrar valores'
+                : 'ocultar valores',
+            onPressed: FinancialPrivacy.toggle,
+            style: IconButton.styleFrom(
+              minimumSize: const Size(44, 44),
+              backgroundColor: surface,
+              foregroundColor: secondary,
+              side: BorderSide(color: border),
             ),
-            const SizedBox(width: 8),
+            icon: Icon(
+              FinancialPrivacy.hidden.value ? AppIcons.eyeOff : AppIcons.eye,
+              size: 19,
+            ),
+          ),
+          if (widget.onAddRequested != null) ...[
+            const SizedBox(width: 6),
             IconButton(
-              key: const ValueKey('wallet-privacy-toggle'),
-              tooltip: FinancialPrivacy.hidden.value
-                  ? 'mostrar valores'
-                  : 'ocultar valores',
-              onPressed: FinancialPrivacy.toggle,
+              key: const ValueKey('wallet-add-action'),
+              tooltip: 'adicionar',
+              onPressed: widget.onAddRequested,
               style: IconButton.styleFrom(
                 minimumSize: const Size(44, 44),
                 backgroundColor: surface,
                 foregroundColor: secondary,
                 side: BorderSide(color: border),
               ),
-              icon: Icon(
-                FinancialPrivacy.hidden.value ? AppIcons.eyeOff : AppIcons.eye,
-                size: 19,
-              ),
+              icon: const Icon(AppIcons.add, size: 20),
             ),
-            if (widget.onAddRequested != null) ...[
-              const SizedBox(width: 6),
-              IconButton(
-                key: const ValueKey('wallet-add-action'),
-                tooltip: 'adicionar',
-                onPressed: widget.onAddRequested,
-                style: IconButton.styleFrom(
-                  minimumSize: const Size(44, 44),
-                  backgroundColor: surface,
-                  foregroundColor: secondary,
-                  side: BorderSide(color: border),
-                ),
-                icon: const Icon(AppIcons.add, size: 20),
-              ),
-            ],
           ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'contas, cartões, benefícios e dívidas num só lugar',
-          style: AppTypography.body(
-            context,
-            fontSize: compact ? 13 : 14,
-            color: secondary,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
