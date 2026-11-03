@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/wallet_overview.dart';
@@ -188,6 +189,11 @@ class _WalletAddMenu extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SignatureSheetEyebrow(
+                label: 'Sua carteira',
+                icon: Icons.account_balance_wallet_outlined,
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -434,6 +440,11 @@ class _WalletAccountEditorState extends State<WalletAccountEditor> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SignatureSheetEyebrow(
+                label: 'Contas e benefícios',
+                icon: Icons.account_balance_outlined,
+              ),
+              const SizedBox(height: 12),
               _EditorHeader(
                 title: _editing
                     ? (_benefit ? 'editar benefício' : 'editar conta')
@@ -704,6 +715,11 @@ class _WalletCardEditorState extends State<WalletCardEditor> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SignatureSheetEyebrow(
+                label: 'Seus cartões',
+                icon: Icons.credit_card_outlined,
+              ),
+              const SizedBox(height: 12),
               _EditorHeader(
                 title: _editing ? 'editar cartão' : 'novo cartão',
                 subtitle: _editing
