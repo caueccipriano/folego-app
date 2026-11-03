@@ -34,16 +34,16 @@ void main() {
     });
   }
 
-  test('all secondary destinations share Signature editorial surface', () {
+  test('main destinations retain a visible Signature editorial surface', () {
     const targets = {
-      'wallet/wallet_screen_base.dart': 'Seu patrimônio',
-      'goals/goals_screen_base.dart': 'Seus objetivos',
-      'diary/diary_screen_base.dart': 'Consciência financeira',
-      'profile/profile_screen_v2.dart': 'Seu espaço',
+      'wallet/wallet_screen_base.dart': 'Seu dinheiro, com clareza',
+      'goals/goals_screen_base.dart': 'Metas financeiras',
+      'diary/diary_screen_base.dart': 'Diário financeiro',
+      'profile/profile_screen_v2.dart': 'Do seu jeito',
     };
     for (final entry in targets.entries) {
       final source = File('lib/features/${entry.key}').readAsStringSync();
-      expect(source, contains('SignatureSectionIntro('),
+      expect(source, contains('SignatureFeatureHero('),
           reason: entry.key);
       expect(source, contains('FolegoAmbientBackdrop('),
           reason: entry.key);

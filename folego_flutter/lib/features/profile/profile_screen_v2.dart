@@ -23,10 +23,9 @@ import '../../data/models/profile_identity.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
-import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
-import '../../shared/widgets/signature_section_intro.dart';
+import '../../shared/widgets/signature_feature_hero.dart';
 import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
 import 'financial_organization_screen.dart';
@@ -976,15 +975,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(0, 8, 0, 68),
             children: [
-              const SignatureSectionIntro(
-                eyebrow: 'Seu espaço',
-                caption: 'Preferências, privacidade e controle da conta',
-                icon: Icons.tune_rounded,
-              ),
-              const SizedBox(height: 16),
-              const AppPageHeader(
+              const SignatureFeatureHero(
                 title: 'perfil',
-                subtitle: 'sua conta, preferências e privacidade',
+                eyebrow: 'Do seu jeito',
+                subtitle: 'Sua conta, seu visual e sua privacidade',
+                icon: Icons.tune_rounded,
+                compact: true,
               ),
               const SizedBox(height: 10),
               if (!desktop)

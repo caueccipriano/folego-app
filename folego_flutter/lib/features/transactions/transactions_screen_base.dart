@@ -27,7 +27,7 @@ import '../../data/repositories/folego_repository_subscriptions.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
-import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_feature_hero.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
@@ -830,9 +830,12 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AppPageHeader(
-                      title: 'lançamentos',
-                      subtitle: 'movimentações, assinaturas e recorrências',
+                    SignatureFeatureHero(
+                      title: 'movimentos',
+                      eyebrow: 'Extrato inteligente',
+                      subtitle: 'Cada entrada, saída e compromisso em seu lugar',
+                      icon: Icons.swap_horiz_rounded,
+                      compact: true,
                       trailing:
                           widget.onImportRequested == null &&
                               widget.onClassificationRequested == null
