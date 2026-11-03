@@ -4,6 +4,7 @@ import '../../core/privacy/financial_privacy.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/utils/formatters.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../data/models/transaction_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_payment_recognition.dart';
@@ -112,6 +113,11 @@ class _ExistingPaymentPickerState extends State<ExistingPaymentPicker> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SignatureSheetEyebrow(
+            label: 'Conciliação manual',
+            icon: Icons.link_rounded,
+          ),
+          const SizedBox(height: 10),
           Text(widget.targetName),
           const Text(
             'Sugestões por valor; nenhuma correspondência é confirmada automaticamente.',

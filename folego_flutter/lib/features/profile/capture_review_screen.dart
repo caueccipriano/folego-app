@@ -11,6 +11,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_notifications.dart';
 import '../transactions/transaction_detail_sheet_v2.dart';
 import '../transactions/transactions_screen.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 /// A receipt is evidence to review, never a confirmed financial event.
 class CaptureReviewScreen extends StatefulWidget {
@@ -125,6 +126,12 @@ class _CaptureReviewScreenState extends State<CaptureReviewScreen> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            const SignatureSectionIntro(
+              eyebrow: 'Revisão de comprovantes',
+              caption: 'Confira antes de vincular ao seu histórico',
+              icon: Icons.receipt_long_outlined,
+            ),
+            const SizedBox(height: 16),
             Text(
               data['description']?.toString() ??
                   data['counterparty']?.toString() ??
