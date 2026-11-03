@@ -92,8 +92,10 @@ void main() {
         .readAsStringSync();
     expect(wallet, contains("ValueKey('wallet-privacy-toggle')"));
     expect(wallet, contains("ValueKey('wallet-add-action')"));
-    expect(transactions, contains("ValueKey('statement-import-entry')"));
-    expect(transactions, contains("ValueKey('transaction-classification-inbox')"));
+    expect(transactions, contains('statement-import-entry'));
+    expect(transactions, contains('onPressed: widget.onImportRequested'));
+    expect(transactions, contains('transaction-classification-inbox'));
+    expect(transactions, contains('onPressed: widget.onClassificationRequested'));
     expect(transactions, contains('_tabController'));
     expect(plan, contains('_changeMonth('));
     expect(plan, contains('_PlanModeToggle('));
