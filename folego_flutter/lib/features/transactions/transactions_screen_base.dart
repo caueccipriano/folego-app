@@ -1739,12 +1739,20 @@ class _TransactionCardV3 extends StatelessWidget {
           ? 'abrir detalhe e ações do lançamento'
           : 'abrir detalhe do lançamento',
       child: Material(
-        color: surface,
-        elevation: MediaQuery.highContrastOf(context) ? 0 : .8,
-        shadowColor: primary.withValues(alpha: .12),
+        color: Color.alphaBlend(
+          visual.color.withValues(alpha: brightness == Brightness.dark ? .065 : .038),
+          surface,
+        ),
+        elevation: MediaQuery.highContrastOf(context) ? 0 : 1.25,
+        shadowColor: accent.withValues(alpha: .14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
-          side: BorderSide(color: border),
+          side: BorderSide(
+            color: Color.alphaBlend(
+              visual.color.withValues(alpha: .26),
+              border,
+            ),
+          ),
         ),
         child: InkWell(
           onTap: onOpen,
@@ -1754,7 +1762,7 @@ class _TransactionCardV3 extends StatelessWidget {
           splashColor: accent.withValues(alpha: .08),
           highlightColor: accent.withValues(alpha: .045),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final textScale =
@@ -1769,7 +1777,7 @@ class _TransactionCardV3 extends StatelessWidget {
                   maxLines: 1,
                   style: AppTypography.money(
                     context,
-                    fontSize: ownLine ? 16 : 15,
+                    fontSize: ownLine ? 18 : 16,
                     color: amountColor,
                   ),
                 );
@@ -1793,12 +1801,12 @@ class _TransactionCardV3 extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.body(
                               context,
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: primary,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 5),
                           Text(
                             [
                               categoryLabel,
@@ -1809,7 +1817,7 @@ class _TransactionCardV3 extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.body(
                               context,
-                              fontSize: 11,
+                              fontSize: 12,
                               color: secondary,
                             ),
                           ),
