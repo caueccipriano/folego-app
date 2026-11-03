@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../core/theme/category_visuals.dart';
 import '../../core/theme/reflection_visuals.dart';
 import '../../core/utils/formatters.dart';
@@ -786,6 +787,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (compact) const AppSheetHandle(),
+                        const SizedBox(height: 12),
+                        const SignatureSheetEyebrow(
+                          label: 'Novo movimento',
+                          icon: Icons.add_circle_outline_rounded,
+                        ),
                         const SizedBox(height: 12),
                         _header(brightness),
                         const SizedBox(height: 16),
