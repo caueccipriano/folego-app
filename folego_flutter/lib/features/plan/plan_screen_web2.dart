@@ -1104,14 +1104,14 @@ class _PlanScreenState extends State<PlanScreen> {
     return Container(
       key: const ValueKey('plan-summary'),
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             Color.alphaBlend(
-              accent.withValues(alpha: .095),
+              accent.withValues(alpha: .14),
               AppColors.surface(brightness),
             ),
             AppColors.surface(brightness),
@@ -1198,7 +1198,7 @@ class _PlanScreenState extends State<PlanScreen> {
               key: const ValueKey('plan-summary-featured-amount'),
               style: AppTypography.money(
                 context,
-                fontSize: 32,
+                fontSize: 34,
                 color: remainingColor,
               ),
             ),
@@ -1301,7 +1301,7 @@ class _PlanScreenState extends State<PlanScreen> {
                 child: LinearProgressIndicator(
                   key: const ValueKey('plan-summary-usage-progress'),
                   value: animatedValue,
-                  minHeight: 8,
+                  minHeight: 10,
                   backgroundColor: border.withValues(alpha: .65),
                   valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                 ),
