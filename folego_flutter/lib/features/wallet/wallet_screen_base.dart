@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/error_translator.dart';
 import '../../data/models/wallet_detail.dart';
@@ -972,24 +973,47 @@ class _PositionMetricCard extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
+    final tokens = FolegoColorTokens.of(context);
     return Material(
       color: AppColors.transparent,
       child: InkWell(
         onTap: metric.onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
-          constraints: BoxConstraints(minHeight: emphasized ? 118 : 84),
-          padding: EdgeInsets.all(emphasized ? 18 : 12),
+          constraints: BoxConstraints(minHeight: emphasized ? 132 : 90),
+          padding: EdgeInsets.all(emphasized ? 20 : 14),
           decoration: BoxDecoration(
-            color: emphasized
-                ? Color.alphaBlend(
-                    purple.withValues(alpha: .025),
-                    AppColors.surface(brightness))
-                : AppColors.surface(brightness),
-            borderRadius: BorderRadius.circular(AppRadii.card),
-            border: Border.all(color: emphasized
-                ? purple.withValues(alpha: .23)
-                : AppColors.border(brightness)),
+            gradient: emphasized
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.alphaBlend(
+                        tokens.marca.withValues(alpha: .18),
+                        tokens.superficie,
+                      ),
+                      Color.alphaBlend(
+                        tokens.marca.withValues(alpha: .045),
+                        tokens.superficie,
+                      ),
+                    ],
+                  )
+                : null,
+            color: emphasized ? null : tokens.superficie,
+            borderRadius: BorderRadius.circular(AppRadii.feature),
+            border: Border.all(
+              color: emphasized
+                  ? tokens.marca.withValues(alpha: .42)
+                  : tokens.borda,
+              width: emphasized ? 1.35 : 1,
+            ),
+            boxShadow: emphasized && !MediaQuery.highContrastOf(context)
+                ? [BoxShadow(
+                    color: tokens.marca.withValues(alpha: .10),
+                    blurRadius: 24,
+                    offset: const Offset(0, 9),
+                  )]
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -997,8 +1021,17 @@ class _PositionMetricCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(metric.icon, size: 16, color: purple),
-                  const SizedBox(width: 6),
+                  Container(
+                    width: emphasized ? 34 : 29,
+                    height: emphasized ? 34 : 29,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: purple.withValues(alpha: emphasized ? .17 : .10),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(metric.icon, size: 17, color: purple),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       metric.label,
@@ -1025,7 +1058,7 @@ class _PositionMetricCard extends StatelessWidget {
                   Formatters.money(metric.value),
                   style: AppTypography.money(
                     context,
-                    fontSize: emphasized ? 32 : 17,
+                    fontSize: emphasized ? 34 : 18,
                     color: metric.value < 0
                         ? AppColors.expenseText(brightness)
                         : primary,
