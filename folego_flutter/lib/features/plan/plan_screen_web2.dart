@@ -27,6 +27,8 @@ import '../../data/repositories/folego_repository_budget.dart';
 import '../../data/repositories/folego_repository_transaction_classification.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_feature_hero.dart';
+import '../../shared/widgets/folego_ambient_backdrop.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
@@ -667,8 +669,7 @@ class _PlanScreenState extends State<PlanScreen> {
       );
     }
 
-    return ColoredBox(
-      color: AppColors.background(brightness),
+    return FolegoAmbientBackdrop(
       child: SafeArea(
         child: AppContentContainer.dashboard(
           fillHeight: true,
@@ -1017,9 +1018,12 @@ class _PlanScreenState extends State<PlanScreen> {
       ),
     );
 
-    const title = AppPageHeader(
+    const title = SignatureFeatureHero(
       title: 'plano',
-      subtitle: 'seu limite, seus gastos e o que ainda cabe neste mês',
+      eyebrow: 'Futuro financeiro',
+      subtitle: 'Seu limite, seus gastos e as possibilidades deste mês',
+      icon: Icons.insights_outlined,
+      compact: true,
     );
 
     if (compact) {
