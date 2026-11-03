@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/sheet_reconciliation_audit.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 typedef SheetAuditLoader = Future<List<SheetAuditItem>> Function(String spaceId);
 
@@ -104,6 +105,12 @@ class _SheetAuditScreenState extends State<SheetAuditScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
             children: [
+              const SignatureSectionIntro(
+                eyebrow: 'Conciliação segura',
+                caption: 'Revise vínculos sem marcar registros como aprovados',
+                icon: Icons.fact_check_outlined,
+              ),
+              const SizedBox(height: 16),
               Text('Auditoria por lançamento',
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
