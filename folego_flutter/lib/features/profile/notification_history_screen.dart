@@ -22,6 +22,7 @@ import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 typedef NotificationHistoryLoader =
     Future<List<NotificationHistoryItem>> Function(String spaceId);
@@ -437,8 +438,16 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: SignatureSectionIntro(
+                  eyebrow: 'Central de atenção',
+                  caption: 'Avisos organizados, sem notificações desnecessárias',
+                  icon: Icons.notifications_none_rounded,
+                ),
+              ),
               Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                padding: const EdgeInsets.only(top: 14, bottom: 12),
                 child: AppPageHeader(
                   title: 'notificações',
                   subtitle: 'novidades e o que precisa da sua atenção',
