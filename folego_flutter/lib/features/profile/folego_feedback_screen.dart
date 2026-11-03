@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../shared/widgets/signature_section_intro.dart';
+
 class FolegoFeedbackScreen extends StatefulWidget {
   const FolegoFeedbackScreen({super.key, required this.client});
   final SupabaseClient client;
@@ -52,6 +54,12 @@ class _FolegoFeedbackScreenState extends State<FolegoFeedbackScreen> {
       body: SafeArea(child: Center(child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: ListView(padding: const EdgeInsets.all(20), children: [
+          const SignatureSectionIntro(
+            eyebrow: 'Sua voz',
+            caption: 'Ideias e melhorias para o seu Fôlego',
+            icon: Icons.chat_bubble_outline_rounded,
+          ),
+          const SizedBox(height: 16),
           Text('ajude a melhorar o Fôlego', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 10),
           const Text(
