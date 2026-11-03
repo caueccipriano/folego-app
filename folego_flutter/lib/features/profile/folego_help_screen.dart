@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 /// Product FAQ: explanations only. Never reads, infers, or edits user finances.
 class FolegoHelpScreen extends StatelessWidget {
@@ -72,6 +73,12 @@ class FolegoHelpScreen extends StatelessWidget {
               key: const ValueKey('help-center-scroll'),
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 64),
               children: [
+                const SignatureSectionIntro(
+                  eyebrow: 'Fôlego Signature',
+                  caption: 'Respostas claras sobre seu dinheiro e o aplicativo',
+                  icon: Icons.help_outline_rounded,
+                ),
+                const SizedBox(height: 16),
                 Text('entenda seu fôlego.',
                     style: AppTypography.display(
                       context, fontSize: 27, color: ink,
