@@ -7,6 +7,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/financial_goal.dart';
 import '../../shared/widgets/app_sheet_handle.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'goals_widgets.dart';
 
 class GoalFormResult {
@@ -149,7 +150,12 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const AppSheetHandle(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
+                const SignatureSheetEyebrow(
+                  label: 'Planejamento de metas',
+                  icon: Icons.flag_outlined,
+                ),
+                const SizedBox(height: 10),
                 Text(
                   editing ? 'editar meta' : 'nova meta',
                   style: AppTypography.section(context, fontSize: 21, color: primary),
@@ -334,7 +340,12 @@ class _GoalContributionSheetState extends State<_GoalContributionSheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const AppSheetHandle(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
+                const SignatureSheetEyebrow(
+                  label: 'Aporte de reserva',
+                  icon: Icons.savings_outlined,
+                ),
+                const SizedBox(height: 10),
                 Text(
                   'fazer aporte',
                   style: AppTypography.section(context, fontSize: 21, color: primary),

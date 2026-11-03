@@ -20,6 +20,7 @@ import '../../data/repositories/folego_repository_statement_import.dart';
 import '../../shared/widgets/category_search_field.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../profile/category_management_screen.dart';
 import 'statement_import_parser.dart';
 import 'statement_import_reconciliation.dart';
@@ -598,6 +599,12 @@ class _StatementImportScreenState extends State<StatementImportScreen> {
   Widget _fileStep() => ListView(
         padding: const EdgeInsets.fromLTRB(0, 18, 0, 32),
         children: [
+          const SignatureSectionIntro(
+            eyebrow: 'Importação segura',
+            caption: 'Revise cada lançamento antes de adicionar ao Fôlego',
+            icon: Icons.upload_file_outlined,
+          ),
+          const SizedBox(height: 14),
           const _IntroCard(icon: AppIcons.transactions, title: 'traga seu extrato com revisão', text: 'CSV e OFX passam por preview, deduplicação e revisão antes de qualquer lançamento financeiro.'),
           const SizedBox(height: 18),
           FilledButton.icon(key: const ValueKey('statement-import-pick-file'), onPressed: _loading ? null : _pickFile, icon: const Icon(AppIcons.add), label: Text(_loading ? 'lendo arquivo…' : 'selecionar CSV ou OFX')),

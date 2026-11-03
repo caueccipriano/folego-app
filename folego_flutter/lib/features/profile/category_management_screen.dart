@@ -13,6 +13,7 @@ import '../../data/models/category_item.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_categories.dart';
 import '../../shared/widgets/category_icon_badge.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 typedef CategoryManagementLoader = Future<List<CategoryItem>> Function(
   String spaceId,
@@ -408,6 +409,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(0, 22, 0, 100),
         children: [
+          const SignatureSectionIntro(
+            eyebrow: 'Organização inteligente',
+            caption: 'Categorias consistentes para todo o seu histórico',
+            icon: Icons.category_outlined,
+          ),
+          const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [

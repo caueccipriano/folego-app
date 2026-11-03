@@ -18,6 +18,7 @@ import '../../shared/widgets/financial_note_editor.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'card_invoice_payment_sheet.dart';
 import 'wallet_instrument_management.dart';
 import 'balance_comparison.dart';
@@ -669,6 +670,12 @@ class _InstrumentDetailScaffold extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.fromLTRB(0, compact ? 10 : 20, 0, 48),
             children: [
+              const SignatureSectionIntro(
+                eyebrow: 'Contas e cartões',
+                caption: 'Detalhes, movimentos e opções deste instrumento',
+                icon: Icons.account_balance_wallet_outlined,
+              ),
+              const SizedBox(height: 14),
               if (compact)
                 _CompactInstrumentDetailHeader(
                   title: title,

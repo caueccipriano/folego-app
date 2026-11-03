@@ -15,6 +15,7 @@ import '../../data/repositories/folego_repository_notifications.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'notification_essentials.dart';
 import 'notification_history_screen.dart';
 import 'notification_settings_data_source.dart';
@@ -339,8 +340,16 @@ class _NotificationSettingsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: SignatureSectionIntro(
+                  eyebrow: 'Avisos essenciais',
+                  caption: 'O que merece atenção, na hora certa',
+                  icon: Icons.notifications_active_outlined,
+                ),
+              ),
               Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 12),
+                padding: const EdgeInsets.only(top: 15, bottom: 12),
                 child: AppPageHeader(
                   title: 'notificações',
                   subtitle: 'avisos curtos, só do que importa',

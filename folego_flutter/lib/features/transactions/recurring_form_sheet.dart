@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/category_item.dart';
@@ -664,7 +665,12 @@ monthlyLastDay:
                       ),
                     ),
 
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 13),
+                    const SignatureSheetEyebrow(
+                      label: 'Compromissos recorrentes',
+                      icon: Icons.event_repeat_outlined,
+                    ),
+                    const SizedBox(height: 12),
 
                     Row(
                       children: [

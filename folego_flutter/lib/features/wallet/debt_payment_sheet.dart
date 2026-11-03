@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/account_item.dart';
 import '../../data/models/debt_detail.dart';
@@ -168,6 +169,14 @@ class _DebtPaymentSheetState extends State<DebtPaymentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: SignatureSheetEyebrow(
+                label: 'Pagamento de dívida',
+                icon: Icons.account_balance_outlined,
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(

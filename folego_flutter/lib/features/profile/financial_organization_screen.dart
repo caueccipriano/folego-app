@@ -16,6 +16,7 @@ import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import '../../shared/widgets/app_section_header.dart';
 import 'financial_organization_data_source.dart';
 
@@ -402,6 +403,12 @@ class _FinancialOrganizationScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const SignatureSectionIntro(
+                        eyebrow: 'Seus dados',
+                        caption: 'Categorias e marcadores em uma visão organizada',
+                        icon: Icons.folder_open_outlined,
+                      ),
+                      const SizedBox(height: 14),
                       AppPageHeader(
                         title: 'organização',
                         subtitle: 'categorias e marcadores do seu dinheiro',

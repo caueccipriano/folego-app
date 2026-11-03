@@ -17,6 +17,7 @@ import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 import 'debt_form_sheet.dart';
 import 'debt_payment_sheet.dart';
 
@@ -158,6 +159,14 @@ class _WalletDebtDetailScreenState extends State<WalletDebtDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: SignatureSectionIntro(
+                  eyebrow: 'Compromissos',
+                  caption: 'Saldo, parcelas e pagamentos da dívida',
+                  icon: Icons.receipt_long_outlined,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 12),
                 child: AppPageHeader(

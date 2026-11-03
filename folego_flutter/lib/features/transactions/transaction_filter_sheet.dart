@@ -8,6 +8,7 @@ import '../../core/theme/app_typography.dart';
 import '../../data/models/category_item.dart';
 import '../../data/models/transaction_filters.dart';
 import '../../shared/widgets/category_search_picker.dart';
+import '../../shared/widgets/signature_section_intro.dart';
 
 const Map<String, String> transactionEventTypeLabels = {
   'income': 'receita',
@@ -212,8 +213,18 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
         ),
         child: Column(
           children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SignatureSheetEyebrow(
+                  label: 'Sua busca',
+                  icon: Icons.tune_outlined,
+                ),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
+              padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
               child: Row(
                 children: [
                   Expanded(
