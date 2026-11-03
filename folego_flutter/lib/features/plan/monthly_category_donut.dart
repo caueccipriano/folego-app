@@ -76,19 +76,48 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
           .toList();
       return Material(
         key: const ValueKey('monthly-category-donut'),
-        color: AppColors.surface(brightness),
+        color: Color.alphaBlend(
+          AppColors.primaryPurple(brightness).withValues(alpha: .05),
+          AppColors.surface(brightness),
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.feature),
-          side: BorderSide(color: AppColors.border(brightness)),
+          side: BorderSide(
+            color: Color.alphaBlend(
+              AppColors.primaryPurple(brightness).withValues(alpha: .23),
+              AppColors.border(brightness),
+            ),
+          ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'seu mês por categoria',
-                style: AppTypography.section(context, fontSize: 17),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryPurple(brightness).withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(
+                      Icons.donut_large_rounded,
+                      size: 21,
+                      color: AppColors.primaryPurple(brightness),
+                    ),
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      'seu mês por categoria',
+                      style: AppTypography.section(context, fontSize: 18),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(
@@ -111,8 +140,14 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                     color: CategoryVisuals.colorFor(
                       category: rows.first.categoryName,
                       brightness: brightness,
-                    ).withValues(alpha: .08),
+                    ).withValues(alpha: .15),
                     borderRadius: BorderRadius.circular(AppRadii.control),
+                    border: Border.all(
+                      color: CategoryVisuals.colorFor(
+                        category: rows.first.categoryName,
+                        brightness: brightness,
+                      ).withValues(alpha: .28),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -157,7 +192,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
               else
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final diameter = math.min(200.0, constraints.maxWidth);
+                    final diameter = math.min(216.0, constraints.maxWidth);
                     return Center(
                       child: Semantics(
                         label: 'Distribuição dos gastos por categoria; valores na lista abaixo',
@@ -195,7 +230,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                                           maxLines: 1,
                                           style: AppTypography.money(
                                             context,
-                                            fontSize: 20,
+                                            fontSize: 23,
                                           ),
                                         ),
                                       ),
@@ -302,8 +337,8 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 10,
-            height: 10,
+            width: 12,
+            height: 12,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: CategoryVisuals.colorFor(
@@ -321,11 +356,15 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                     MediaQuery.textScalerOf(context).scale(13) > 17;
                 final name = Text(
                   row.categoryName,
-                  style: AppTypography.body(context, fontSize: 13),
+                  style: AppTypography.body(
+                    context,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 );
                 final amount = Text(
                   Formatters.money(row.actualAmount),
-                  style: AppTypography.money(context, fontSize: 13),
+                  style: AppTypography.money(context, fontSize: 14),
                 );
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,7 +404,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                               'category-share-progress-${row.categoryId}',
                             ),
                             value: (row.actualAmount / total).clamp(0.0, 1.0),
-                            minHeight: 6,
+                            minHeight: 8,
                             backgroundColor: AppColors.border(brightness)
                                 .withValues(alpha: .55),
                             valueColor: AlwaysStoppedAnimation<Color>(

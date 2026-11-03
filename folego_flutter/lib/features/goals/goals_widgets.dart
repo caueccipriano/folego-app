@@ -36,7 +36,7 @@ class GoalProgressBar extends StatelessWidget {
     super.key,
     required this.progress,
     this.animate = true,
-    this.height = 9,
+    this.height = 10,
   });
 
   final double progress;
@@ -109,9 +109,22 @@ class GoalCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(19),
           decoration: BoxDecoration(
-            color: completed ? surface.withValues(alpha: .72) : surface,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: completed
+                  ? [surface.withValues(alpha: .85), surface]
+                  : [
+                      Color.alphaBlend(purple.withValues(alpha: .13), surface),
+                      surface,
+                    ],
+            ),
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: border),
+            border: Border.all(
+              color: completed
+                  ? border
+                  : Color.alphaBlend(purple.withValues(alpha: .31), border),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,7 +137,7 @@ class GoalCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: completed
                           ? border.withValues(alpha: .55)
-                          : purple.withValues(alpha: .12),
+                          : purple.withValues(alpha: .19),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
@@ -167,6 +180,16 @@ class GoalCard extends StatelessWidget {
                 ],
               ),
               const Spacer(),
+              Text(
+                'ACUMULADO / OBJETIVO',
+                style: AppTypography.label(
+                  context,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: secondary,
+                ).copyWith(letterSpacing: 0.8),
+              ),
+              const SizedBox(height: 4),
               Text(
                 '${Formatters.money(goal.currentAmount)} de ${Formatters.money(goal.target)}',
                 maxLines: 1,

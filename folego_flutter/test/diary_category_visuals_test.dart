@@ -165,7 +165,9 @@ void main() {
       );
       expect(center.width, lessThanOrEqualTo(ring.width * .61));
       expect(center.height, lessThan(ring.height - 48));
-      expect(center.center, ring.center);
+      // RenderBox positions may differ by fractional floating-point precision.
+      // A subpixel tolerance is stricter than visual alignment on iPhone.
+      expect((center.center - ring.center).distance, lessThan(0.01));
       expect(find.text('nas categorias acima de zero'), findsNothing);
       final explanation = find.byKey(
         const ValueKey('category-donut-explanation'),
