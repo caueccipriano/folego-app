@@ -27,7 +27,6 @@ import '../../data/repositories/folego_repository_subscriptions.dart';
 import '../../data/repositories/folego_repository_transaction_actions.dart';
 import '../../data/repositories/folego_repository_transaction_filters.dart';
 import '../../shared/widgets/category_icon_badge.dart';
-import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/signature_feature_hero.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
