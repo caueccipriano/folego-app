@@ -51,7 +51,9 @@ void main() {
     expect(nav, contains("ValueKey('mobile-tools-button')"));
     expect(nav, contains("ValueKey('mobile-tools-indicator')"));
     expect(nav, contains('width: selectedIndex >= 3 ? 22 : 5'));
-    expect(nav, contains('width: selected ? 22 : 5'));
+    // Fluxo dispensa o marcador decorativo sem reduzir as áreas de toque.
+    expect(nav, contains('width: isFlow ? 0 : (selected ? 22 : 5)'));
+    expect(nav, contains("AppColorSelection.selected.value == 'fluxo'"));
     expect(nav, contains('FolegoMotion.duration(context'));
     expect(nav, isNot(contains('MediaQuery.disableAnimationsOf(context)')));
     expect(nav, isNot(contains('BackdropFilter(')));

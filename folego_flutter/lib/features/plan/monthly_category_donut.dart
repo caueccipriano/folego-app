@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/category_visuals.dart';
@@ -58,6 +59,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
     valueListenable: FinancialPrivacy.hidden,
     builder: (context, hidden, _) {
       final brightness = Theme.of(context).brightness;
+      final minimal = AppColorSelection.selected.value == 'fluxo';
       final rows = monthlyCategorySlices(widget.items);
       final total = rows.fold<double>(0, (sum, row) => sum + row.actualAmount);
       final credits = widget.items
@@ -76,14 +78,14 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
           .toList();
       return Material(
         key: const ValueKey('monthly-category-donut'),
-        color: Color.alphaBlend(
+        color: minimal ? AppColors.surface(brightness) : Color.alphaBlend(
           AppColors.primaryPurple(brightness).withValues(alpha: .05),
           AppColors.surface(brightness),
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.feature),
           side: BorderSide(
-            color: Color.alphaBlend(
+            color: minimal ? AppColors.border(brightness) : Color.alphaBlend(
               AppColors.primaryPurple(brightness).withValues(alpha: .23),
               AppColors.border(brightness),
             ),
@@ -137,13 +139,13 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                     vertical: 11,
                   ),
                   decoration: BoxDecoration(
-                    color: CategoryVisuals.colorFor(
+                    color: minimal ? AppColors.background(brightness) : CategoryVisuals.colorFor(
                       category: rows.first.categoryName,
                       brightness: brightness,
                     ).withValues(alpha: .15),
                     borderRadius: BorderRadius.circular(AppRadii.control),
                     border: Border.all(
-                      color: CategoryVisuals.colorFor(
+                      color: minimal ? AppColors.border(brightness) : CategoryVisuals.colorFor(
                         category: rows.first.categoryName,
                         brightness: brightness,
                       ).withValues(alpha: .28),

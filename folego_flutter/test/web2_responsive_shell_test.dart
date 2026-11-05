@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/privacy/financial_privacy.dart';
+import 'package:folego/core/theme/app_color_tokens.dart';
+import 'package:folego/core/theme/app_theme.dart';
 import 'package:folego/core/realtime/realtime_invalidation.dart';
 import 'package:folego/core/realtime/realtime_session.dart';
 import 'package:folego/features/home/home_screen.dart' as wrapped_home;
@@ -21,6 +25,18 @@ import 'package:folego/l10n/app_localizations.dart';
 import 'package:folego/shared/widgets/responsive_navigation_shell.dart';
 
 void main() {
+  // Golden previews use the same bundled fonts as the production app.
+  // Normal regression tests avoid this overhead.
+  setUpAll(() async {
+    if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] != '1') return;
+    final interface = FontLoader('Manrope')
+      ..addFont(rootBundle.load('assets/fonts/Manrope-Regular.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Manrope-Bold.ttf'));
+    final brand = FontLoader('Unbounded')
+      ..addFont(rootBundle.load('assets/fonts/Unbounded-Bold.ttf'));
+    await Future.wait([interface.load(), brand.load()]);
+  });
+
   testWidgets('320px keeps every mobile navigation target tappable', (tester) async {
     await _pumpShell(tester, const Size(320, 700));
 
@@ -240,6 +256,65 @@ void main() {
     expect(find.textContaining('1.600'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+
+  // Uses only in-memory, synthetic financial data. The optional golden captures
+  // let reviewers inspect the *active* Home rather than the public login demo.
+  for (final viewport in [const Size(320, 700), const Size(390, 844)]) {
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets(
+        'Fluxo iPhone visual preview ${viewport.width.toInt()} ${brightness.name}',
+        (tester) async {
+          final oldPalette = AppColorSelection.selected.value;
+          AppColorSelection.choose('fluxo');
+          addTearDown(() => AppColorSelection.choose(oldPalette));
+          FinancialPrivacy.hidden.value = false;
+          addTearDown(() => FinancialPrivacy.hidden.value = false);
+          _setViewport(tester, viewport);
+
+          final colors = FolegoColorTokens.fromId('fluxo', brightness);
+          await tester.pumpWidget(MaterialApp(
+            locale: const Locale('pt', 'BR'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: brightness == Brightness.dark
+                ? AppTheme.dark() : AppTheme.light(),
+            home: Scaffold(
+              key: const ValueKey('fluxo-iphone-preview'),
+              body: home.HomeScreen(
+                space: const FinancialSpace(id: 'visual-demo', name: 'Exemplo'),
+                repository: _HomeRepository(),
+              ),
+            ),
+          ));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 150));
+
+          expect(find.byKey(const ValueKey('home-fixed-mobile')), findsOneWidget);
+          final finder = find.byKey(const ValueKey('home-fixed-spendable'));
+          expect(finder, findsOneWidget);
+          final hero = tester.widget<Container>(finder);
+          final decoration = hero.decoration! as BoxDecoration;
+          expect(decoration.color, colors.marcaHero);
+          expect(decoration.gradient, isNull);
+          expect(decoration.boxShadow, isNull);
+          expect(find.byKey(const ValueKey('home-fixed-daily')), findsOneWidget);
+          expect(find.byKey(const ValueKey('home-fixed-amount')), findsOneWidget);
+          expect(tester.getRect(finder).width,
+            lessThanOrEqualTo(viewport.width));
+          expect(tester.takeException(), isNull);
+
+          if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] == '1') {
+            await expectLater(
+              find.byKey(const ValueKey('fluxo-iphone-preview')),
+              matchesGoldenFile(
+                'goldens/fluxo-home-${viewport.width.toInt()}-${brightness.name}.png',
+              ),
+            );
+          }
+        },
+      );
+    }
+  }
 
   testWidgets('Home desktop uses dashboard columns instead of a mobile stack', (tester) async {
     _setViewport(tester, const Size(1366, 900));

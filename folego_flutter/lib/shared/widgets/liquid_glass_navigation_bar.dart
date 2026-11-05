@@ -181,6 +181,7 @@ class _Destination extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final activePurple = FolegoColorTokens.of(context).marca;
     final inactiveColor = FolegoColorTokens.of(context).textoSecundario;
+    final isFlow = AppColorSelection.selected.value == 'fluxo';
     final activeForeground = activePurple;
     final motionDuration = FolegoMotion.duration(context, milliseconds: 160);
 
@@ -207,7 +208,10 @@ class _Destination extends StatelessWidget {
             curve: Curves.easeOutCubic,
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
-              gradient: selected
+              color: selected && isFlow
+                  ? activePurple.withValues(alpha: isDark ? .14 : .085)
+                  : null,
+              gradient: selected && !isFlow
                   ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -222,7 +226,7 @@ class _Destination extends StatelessWidget {
                       width: .9)
                   : null,
               borderRadius: BorderRadius.circular(21),
-              boxShadow: selected
+              boxShadow: selected && !isFlow
                   ? [
                       BoxShadow(
                         color: activePurple.withValues(
@@ -239,14 +243,14 @@ class _Destination extends StatelessWidget {
               children: [
                 AnimatedContainer(
                   duration: motionDuration,
-                  width: selected ? 22 : 5,
-                  height: 3,
+                  width: isFlow ? 0 : (selected ? 22 : 5),
+                  height: isFlow ? 0 : 3,
                   decoration: BoxDecoration(
                     color: selected ? activePurple : AppColors.transparent,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: isFlow ? 0 : 2),
                 AnimatedContainer(
                   duration: motionDuration,
                   width: 37,

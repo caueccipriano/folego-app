@@ -17,6 +17,16 @@ class FolegoAmbientBackdrop extends StatelessWidget {
       return ColoredBox(color: tokens.fundo, child: child);
     }
 
+    // O estilo Fluxo evita brilhos decorativos: os dados são o destaque.
+    // Mantém a mesma key para contratos e testes de navegação.
+    if (AppColorSelection.selected.value == 'fluxo') {
+      return DecoratedBox(
+        key: const ValueKey('folego-ambient-backdrop'),
+        decoration: BoxDecoration(color: tokens.fundo),
+        child: child,
+      );
+    }
+
     final dark = Theme.of(context).brightness == Brightness.dark;
     final brandGlow = Color.alphaBlend(
       tokens.marca.withValues(alpha: dark ? .19 : .10),

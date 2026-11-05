@@ -27,10 +27,11 @@ class SignatureFeatureHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
-    final foreground = colors.marcaHeroSobre;
+    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final foreground = minimal ? colors.textoPrincipal : colors.marcaHeroSobre;
     final highContrast = MediaQuery.highContrastOf(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final vertical = compact ? 15.0 : 20.0;
+    final vertical = minimal ? (compact ? 11.0 : 15.0) : (compact ? 15.0 : 20.0);
     final titleSize = compact ? 23.0 : 27.0;
 
     return Container(
@@ -38,16 +39,16 @@ class SignatureFeatureHero extends StatelessWidget {
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: colors.marcaHero,
-        borderRadius: BorderRadius.circular(compact ? 23 : 28),
+        color: minimal ? colors.fundo : colors.marcaHero,
+        borderRadius: BorderRadius.circular(minimal ? 16 : (compact ? 23 : 28)),
         border: Border.all(
-          color: foreground.withValues(alpha: highContrast ? .70 : .18),
+          color: minimal ? colors.borda.withValues(alpha: .60) : foreground.withValues(alpha: highContrast ? .70 : .18),
           width: highContrast ? 1.5 : 1,
         ),
       ),
       child: Stack(
         children: [
-          if (!highContrast) ...[
+          if (!highContrast && !minimal) ...[
             Positioned(
               right: -62,
               top: -93,
@@ -91,7 +92,7 @@ class SignatureFeatureHero extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(icon, color: foreground, size: 16),
+                    Icon(icon, color: minimal ? colors.marca : foreground, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -102,7 +103,7 @@ class SignatureFeatureHero extends StatelessWidget {
                           context,
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: foreground,
+                          color: minimal ? colors.marca : foreground,
                         ).copyWith(letterSpacing: 1.3),
                       ),
                     ),
@@ -148,7 +149,7 @@ class SignatureFeatureHero extends StatelessWidget {
                   style: AppTypography.body(
                     context,
                     fontSize: compact ? 11 : 12,
-                    color: foreground.withValues(alpha: .94),
+                    color: minimal ? colors.textoSecundario : foreground.withValues(alpha: .94),
                   ),
                 ),
               ],

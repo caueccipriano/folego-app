@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/features/shell/more_tools_sheet.dart';
 import 'package:folego/shared/widgets/folego_glass_surface.dart';
 import 'package:folego/shared/widgets/liquid_glass_navigation_bar.dart';
@@ -24,9 +25,15 @@ void main() {
         tester.element(find.text('fôlego')), radius: 23, prominent: true);
       final regularColors = (decoration!.gradient! as LinearGradient).colors;
       final strongColors = (strong.gradient! as LinearGradient).colors;
-      // The user should actually see a stronger tone and a lifted capsule.
-      expect(strongColors.length, greaterThan(regularColors.length));
-      expect(strongColors.first, isNot(strongColors.last));
+      // Fluxo deliberately replaces the old tinted gradient with calm
+      // neutral surfaces; other palettes preserve the original glass finish.
+      if (AppColorSelection.selected.value == 'fluxo') {
+        expect(strongColors.length, 2);
+        expect(strongColors.first, strongColors.last);
+      } else {
+        expect(strongColors.length, greaterThan(regularColors.length));
+        expect(strongColors.first, isNot(strongColors.last));
+      }
       expect(strong.boxShadow!.first.blurRadius,
           greaterThan(decoration!.boxShadow!.first.blurRadius));
       expect(find.text('fôlego'), findsOneWidget);

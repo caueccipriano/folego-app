@@ -50,6 +50,7 @@ class HomeFixedDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     final timing = homeIncomeTimingLabel(snapshot);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final budgetRatio = snapshot.monthlyBudgetPlanned > 0
@@ -170,7 +171,7 @@ class HomeFixedDashboard extends StatelessWidget {
                     child: Material(
                       color: colors.marcaHero,
                       // Depth without backdrop blur: keeps iOS PWA taps reliable.
-                      elevation: MediaQuery.highContrastOf(context) ? 0 : 5,
+                      elevation: minimal || MediaQuery.highContrastOf(context) ? 0 : 5,
                       shadowColor: colors.marcaHero.withValues(alpha: .30),
                       borderRadius: BorderRadius.circular(AppRadii.feature),
                       child: InkWell(
@@ -190,24 +191,25 @@ class HomeFixedDashboard extends StatelessWidget {
                                         end: Alignment.bottomRight,
                                         colors: [
                                           colors.marcaHero,
-                                          Color.alphaBlend(
+                                          if (minimal) colors.marcaHero,
+                                          if (!minimal) Color.alphaBlend(
                                             colors.marcaHeroSobre
                                                 .withValues(alpha: .09),
                                             colors.marcaHero,
                                           ),
-                                          Color.alphaBlend(
+                                          if (!minimal) Color.alphaBlend(
                                             colors.marcaHeroSobre
                                                 .withValues(alpha: .025),
                                             colors.marcaHero,
                                           ),
                                         ],
-                                        stops: const [0, .56, 1],
+                                        stops: minimal ? null : const [0, .56, 1],
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                              Positioned(
+                              if (!minimal) Positioned(
                                 left: -125,
                                 bottom: -163,
                                 child: IgnorePointer(
@@ -231,7 +233,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              Positioned(
+                              if (!minimal) Positioned(
                                 right: -86,
                                 top: -126,
                                 child: IgnorePointer(

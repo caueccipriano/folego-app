@@ -45,6 +45,29 @@ class FolegoGlassSurface extends StatelessWidget {
       );
     }
 
+    // Superfície de orçamento: cartões brancos, borda delicada e uma
+    // sombra funcional, sem reflexos coloridos por baixo dos números.
+    // Usa um gradiente constante para preservar os contratos existentes
+    // que inspecionam a decoração e a acessibilidade.
+    if (AppColorSelection.selected.value == 'fluxo') {
+      return BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        gradient: LinearGradient(
+          colors: [tokens.superficie, tokens.superficie],
+        ),
+        border: Border.all(color: tokens.borda),
+        boxShadow: elevated ? [
+          BoxShadow(
+            color: tokens.textoPrincipal.withValues(
+              alpha: isDark ? .18 : .045,
+            ),
+            blurRadius: prominent ? 16 : 11,
+            offset: const Offset(0, 3),
+          ),
+        ] : null,
+      );
+    }
+
     final translucent = Color.alphaBlend(
       tokens.marca.withValues(alpha: isDark ? .055 : .025),
       tokens.superficie.withValues(alpha: isDark ? .87 : .82),
