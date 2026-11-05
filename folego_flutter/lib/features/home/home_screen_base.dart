@@ -47,6 +47,7 @@ import '../../shared/widgets/folego_glass_surface.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
 import 'home_mobile_summary_strip.dart';
 import 'home_budget_overview_panel.dart';
+import 'financial_analytics_screen.dart';
 import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
 import '../transactions/resolver_queue.dart';
@@ -327,6 +328,21 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => CategoryPeriodComparison(
           repository: widget.repository,
           spaceId: widget.space.id,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openFinancialAnalytics() async {
+    final openMonthlyTransactions =
+        HomeExpenseNavigationScope.maybeOf(context)
+            ?.onOpenMonthlyTransactions;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => FinancialAnalyticsScreen(
+          repository: widget.repository,
+          spaceId: widget.space.id,
+          onOpenTransactions: openMonthlyTransactions,
         ),
       ),
     );
@@ -1091,6 +1107,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 repository: widget.repository,
                 spaceId: widget.space.id,
                 hidden: FinancialPrivacy.hidden.value,
+                monthSummary: _monthlyMoney,
+                onAnalytics: () {
+                  Navigator.of(sheetContext).pop();
+                  _openFinancialAnalytics();
+                },
                 onExpense: () {
                   Navigator.of(sheetContext).pop();
                   _openRegister('expense');
@@ -1181,6 +1202,11 @@ class _HomeScreenState extends State<HomeScreen> {
               repository: widget.repository,
               spaceId: widget.space.id,
               hidden: FinancialPrivacy.hidden.value,
+              monthSummary: _monthlyMoney,
+              onAnalytics: () {
+                Navigator.of(sheetContext).pop();
+                _openFinancialAnalytics();
+              },
               onExpense: () {
                 Navigator.of(sheetContext).pop();
                 _openRegister('expense');
