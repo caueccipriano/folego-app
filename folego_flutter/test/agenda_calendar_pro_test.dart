@@ -148,6 +148,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Pagamento energia'), findsOneWidget);
     expect(find.text('Salário previsto'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+    final layoutFailure = tester.takeException();
+    if (layoutFailure != null) {
+      debugPrint('AGENDA_LAYOUT_DIAGNOSTIC: $layoutFailure');
+    }
+    expect(layoutFailure, isNull);
   });
 }
