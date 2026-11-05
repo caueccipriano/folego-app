@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/theme/app_color_tokens.dart';
+import 'package:folego/core/theme/app_theme.dart';
+import 'package:folego/shared/widgets/signature_feature_hero.dart';
 import 'package:folego/shared/widgets/folego_ambient_backdrop.dart';
 import 'package:folego/shared/widgets/folego_glass_surface.dart';
 
@@ -17,6 +19,33 @@ void main() {
       expect(FolegoColorTokens.contrastRatio(
         tokens.marca, tokens.fundo), greaterThanOrEqualTo(4.5));
     }
+  });
+
+  testWidgets('Fluxo headers keep navigation while removing decoration', (tester) async {
+    final previous = AppColorSelection.selected.value;
+    AppColorSelection.choose('fluxo');
+    addTearDown(() => AppColorSelection.choose(previous));
+
+    final tokens = FolegoColorTokens.fromId('fluxo', Brightness.light);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: const Scaffold(
+        body: SignatureFeatureHero(
+          title: 'movimentos',
+          eyebrow: 'extrato',
+          subtitle: 'seus lançamentos',
+          icon: Icons.swap_horiz_rounded,
+          compact: true,
+        ),
+      ),
+    ));
+
+    final hero = tester.widget<Container>(
+      find.byKey(const ValueKey('signature-feature-hero')),
+    );
+    expect((hero.decoration! as BoxDecoration).color, tokens.fundo);
+    expect(find.text('movimentos'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Fluxo cards stay neutral and readable', (tester) async {
