@@ -5,12 +5,15 @@ class HomeOverviewModulesSettings {
   const HomeOverviewModulesSettings({
     required this.order,
     required this.hidden,
+    this.compact = true,
   });
 
   static const defaultOrder = <String>['actions', 'budget', 'accounts'];
 
   final List<String> order;
   final Set<String> hidden;
+  /// Dense, readable cards for iPhone. This is a presentation choice only.
+  final bool compact;
 
   static List<String> normalizeOrder(Iterable<String>? values) {
     final result = <String>[];
@@ -43,6 +46,7 @@ class HomeOverviewModulesSettings {
       hidden: normalizeHidden(
         prefs.getStringList(_storageKey(spaceId, 'hidden')),
       ),
+      compact: prefs.getBool(_storageKey(spaceId, 'compact')) ?? true,
     );
   }
 
@@ -56,6 +60,7 @@ class HomeOverviewModulesSettings {
       _storageKey(spaceId, 'hidden'),
       normalizeHidden(hidden).toList(),
     );
+    await prefs.setBool(_storageKey(spaceId, 'compact'), compact);
   }
 
   HomeOverviewModulesSettings withVisibility(String section, bool show) {
@@ -65,7 +70,9 @@ class HomeOverviewModulesSettings {
     } else {
       nextHidden.add(section);
     }
-    return HomeOverviewModulesSettings(order: [...order], hidden: nextHidden);
+    return HomeOverviewModulesSettings(
+      order: [...order], hidden: nextHidden, compact: compact,
+    );
   }
 
   HomeOverviewModulesSettings move(String section, int delta) {
@@ -75,8 +82,15 @@ class HomeOverviewModulesSettings {
     if (from < 0 || to < 0 || to >= nextOrder.length) return this;
     nextOrder.removeAt(from);
     nextOrder.insert(to, section);
-    return HomeOverviewModulesSettings(order: nextOrder, hidden: {...hidden});
+    return HomeOverviewModulesSettings(
+      order: nextOrder, hidden: {...hidden}, compact: compact,
+    );
   }
+
+  HomeOverviewModulesSettings withCompact(bool value) =>
+      HomeOverviewModulesSettings(
+        order: [...order], hidden: {...hidden}, compact: value,
+      );
 
   bool isVisible(String section) => !hidden.contains(section);
 }
