@@ -133,7 +133,7 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
         brand: Color(0xFF087E75), background: Color(0xFFF5F6F8),
         surface: Color(0xFFFFFFFF), elevated: Color(0xFFEDF1F3),
         foreground: Color(0xFF1C2630), muted: Color(0xFF586774),
-        border: Color(0xFFE2E8EB), hero: Color(0xFF087E75)),
+        border: Color(0xFFE2E8EB), hero: Color(0xFF076A62)),
       FolegoColorWay(
         brand: Color(0xFF68D2C4), background: Color(0xFF0E171C),
         surface: Color(0xFF1B272D), elevated: Color(0xFF28373F),
