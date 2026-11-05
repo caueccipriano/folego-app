@@ -37,6 +37,11 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   final Color folgaHero, apertadoHero, estouradoHero;
 
   static const catalog = <FolegoPalette>[
+    // Inspirada na clareza e na organização dos apps financeiros nativos.
+    // Cores e identidade próprias do Fôlego; nenhuma reprodução de assets.
+    FolegoPalette('fluxo', 'Fluxo', Color(0xFF087E75),
+        Color(0xFF1D9D8F), Color(0xFFF5F6F8), Color(0xFF0E171C),
+        description: 'Verde-petróleo + neutros · minimalista'),
     FolegoPalette('folego', 'Fôlego', Color(0xFF6C3CE9),
         Color(0xFFC6F135), Color(0xFFF5F1E8), Color(0xFF101014),
         description: 'Roxo + lima · original'),
@@ -123,6 +128,18 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   // Cada paleta tem cores próprias para claro e escuro. Não interpolar
   // superfícies com branco/preto nem misturar tons de duas paletas.
   static const _colorways = <String, List<FolegoColorWay>>{
+    'fluxo': [
+      FolegoColorWay(
+        brand: Color(0xFF087E75), background: Color(0xFFF5F6F8),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFEDF1F3),
+        foreground: Color(0xFF1C2630), muted: Color(0xFF586774),
+        border: Color(0xFFE2E8EB), hero: Color(0xFF087E75)),
+      FolegoColorWay(
+        brand: Color(0xFF68D2C4), background: Color(0xFF0E171C),
+        surface: Color(0xFF1B272D), elevated: Color(0xFF28373F),
+        foreground: Color(0xFFF2F7F7), muted: Color(0xFFC1D0D3),
+        border: Color(0xFF394950), hero: Color(0xFF14584F)),
+    ],
     'folego': [
       FolegoColorWay(brand: Color(0xFF6C3CE9), background: Color(0xFFF5F1E8),
         surface: Color(0xFFFFFFFF), elevated: Color(0xFFF0ECE2),
@@ -605,7 +622,7 @@ class FolegoColorWay {
 
 /// Seleção local, compartilhada pela ThemeExtension e por widgets legados.
 abstract final class AppColorSelection {
-  static final ValueNotifier<String> selected = ValueNotifier<String>('folego');
+  static final ValueNotifier<String> selected = ValueNotifier<String>('fluxo');
 
   static void choose(String id) {
     selected.value = FolegoColorTokens.palette(id).id;
