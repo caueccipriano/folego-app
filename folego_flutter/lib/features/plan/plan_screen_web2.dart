@@ -1583,6 +1583,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       if (parent.hasBudget && !hidden && budgetFlow) ...[
                         const SizedBox(width: 8),
                         SizedBox(
+                          key: ValueKey('plan-parent-usage-${parent.categoryId}'),
                           width: 94,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1611,7 +1612,6 @@ class _PlanScreenState extends State<PlanScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 '$percentage%',
-                                key: ValueKey('plan-parent-usage-${parent.categoryId}'),
                                 style: AppTypography.label(
                                   context, fontSize: 11, color: stateColor),
                               ),
