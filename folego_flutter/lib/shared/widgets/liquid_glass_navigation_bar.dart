@@ -334,7 +334,7 @@ class _NavigationSurface extends StatelessWidget {
         borderRadius: BorderRadius.circular(19),
       ),
       padding: const EdgeInsets.all(5),
-      child: child,
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }
