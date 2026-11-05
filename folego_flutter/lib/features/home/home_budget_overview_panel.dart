@@ -329,9 +329,9 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
                   const SizedBox(width: 12),
                   metric('disponível no limite', budgetReady
                       ? _money(remaining) : 'definir',
-                      tone: remaining < 0 ? colors.estourado : null),
+                      tone: widget.hidden ? null : (remaining < 0 ? colors.estourado : null)),
                 ]),
-                if (budgetReady) ...[
+                if (budgetReady && !widget.hidden) ...[
                   const SizedBox(height: 13),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(99),
