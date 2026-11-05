@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_content_container.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_refresh_view.dart';
 import '../../core/theme/app_colors.dart';
@@ -22,6 +23,8 @@ import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../transactions/recurring_form_sheet.dart';
+import 'agenda_calendar_month.dart';
+import 'agenda_calendar_grid.dart';
 import '../wallet/wallet_detail_screen.dart';
 
 class UpcomingEventsScreen extends StatelessWidget {
@@ -78,13 +81,136 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
   String? _realizingKey;
   AgendaFilter _filter = AgendaFilter.all;
   bool _groupByMonth = false;
+  bool _calendarView = false;
   bool _focused = true;
+  late DateTime _calendarMonth;
+  late DateTime _calendarDay;
+  Future<List<UpcomingFinancialEvent>>? _calendarFuture;
   List<UpcomingFinancialEvent> _events = const [];
 
   @override
   void initState() {
     super.initState();
+    final initial = widget.initialDate ?? DateTime.now();
+    _calendarMonth = DateTime(initial.year, initial.month);
+    _calendarDay = AgendaCalendarMonth.normalized(initial);
     _load();
+  }
+
+  Future<List<UpcomingFinancialEvent>> _fetchCalendarMonth() =>
+      widget.repository.getFinancialAgenda(
+        widget.spaceId,
+        startDate: AgendaCalendarMonth.firstDay(_calendarMonth),
+        endDate: AgendaCalendarMonth.lastDay(_calendarMonth),
+        limit: 200,
+      );
+
+  void _showCalendar() => setState(() {
+    _calendarView = true;
+    _calendarFuture = _fetchCalendarMonth();
+  });
+
+  void _moveCalendarMonth(int delta) => setState(() {
+    _calendarMonth = DateTime(
+      _calendarMonth.year, _calendarMonth.month + delta,
+    );
+    _calendarDay = AgendaCalendarMonth.firstDay(_calendarMonth);
+    _calendarFuture = _fetchCalendarMonth();
+  });
+
+  Widget _buildCalendar() {
+    final future = _calendarFuture;
+    if (future == null) return const SizedBox.shrink();
+    return FutureBuilder<List<UpcomingFinancialEvent>>(
+      future: future,
+      builder: (context, result) {
+        if (result.connectionState != ConnectionState.done) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (result.hasError || result.data == null) {
+          return OutlinedButton.icon(
+            key: const ValueKey('agenda-calendar-retry'),
+            onPressed: () => setState(
+              () => _calendarFuture = _fetchCalendarMonth(),
+            ),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('recarregar calendário'),
+          );
+        }
+        final all = result.data!;
+        final filtered = all.where((event) => event.matches(_filter))
+            .toList(growable: false);
+        final selected = AgendaCalendarMonth.eventsForDay(
+          filtered, _calendarDay,
+        );
+        final income = AgendaCalendarMonth.incomeForDay(selected);
+        final outflow = AgendaCalendarMonth.outflowForDay(selected);
+        return ValueListenableBuilder<bool>(
+          valueListenable: FinancialPrivacy.hidden,
+          builder: (context, hidden, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AgendaCalendarGrid(
+                month: _calendarMonth,
+                selectedDay: _calendarDay,
+                events: filtered,
+                onSelectDay: (day) =>
+                    setState(() => _calendarDay = day),
+                onPreviousMonth: () => _moveCalendarMonth(-1),
+                onNextMonth: () => _moveCalendarMonth(1),
+              ),
+              const SizedBox(height: 12),
+              AppSectionHeader(
+                title: 'dia ${_calendarDay.day}',
+                subtitle: '${selected.length} compromissos previstos no dia',
+              ),
+              if (selected.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  if (income > 0) Chip(
+                    avatar: const Icon(AppIcons.income, size: 17),
+                    label: Text(
+                      'entradas: ${hidden ? FinancialPrivacy.maskMoney() : Formatters.money(income)}',
+                    ),
+                  ),
+                  if (outflow > 0) Chip(
+                    avatar: const Icon(AppIcons.expense, size: 17),
+                    label: Text(
+                      'saídas: ${hidden ? FinancialPrivacy.maskMoney() : Formatters.money(outflow)}',
+                    ),
+                  ),
+                ]),
+              ],
+              const SizedBox(height: 8),
+              if (selected.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 13),
+                  child: Text('Nenhum compromisso encontrado neste dia.'),
+                )
+              else
+                for (final event in selected)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: _AgendaEventCard(
+                      event: event,
+                      realizing: _realizingKey == event.eventKey,
+                      onTap: () => _openEvent(event),
+                      onRealize: event.isRecurring
+                          ? () => _realize(event) : null,
+                    ),
+                  ),
+              if (all.length >= 200)
+                Text('Exibindo até 200 compromissos no mês. '
+                  'O período pode conter outros registros.',
+                  style: AppTypography.body(context, fontSize: 11)),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _load() async {
@@ -103,6 +229,9 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
       setState(() {
         _events = events;
         _loading = false;
+        if (_calendarView) {
+          _calendarFuture = _fetchCalendarMonth();
+        }
       });
     } catch (error) {
       if (!mounted) return;
@@ -345,19 +474,35 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
               ChoiceChip(
                 key: const ValueKey('agenda-view-urgency'),
                 label: const Text('por urgência'),
-                selected: !_groupByMonth,
-                onSelected: (_) => setState(() => _groupByMonth = false),
+                selected: !_groupByMonth && !_calendarView,
+                onSelected: (_) => setState(() {
+                  _groupByMonth = false;
+                  _calendarView = false;
+                }),
               ),
               ChoiceChip(
                 key: const ValueKey('agenda-view-month'),
                 label: const Text('por mês'),
-                selected: _groupByMonth,
-                onSelected: (_) => setState(() => _groupByMonth = true),
+                selected: _groupByMonth && !_calendarView,
+                onSelected: (_) => setState(() {
+                  _groupByMonth = true;
+                  _calendarView = false;
+                }),
+              ),
+              ChoiceChip(
+                key: const ValueKey('agenda-view-calendar'),
+                label: const Text('calendário'),
+                selected: _calendarView,
+                onSelected: (_) {
+                  if (!_calendarView) _showCalendar();
+                },
               ),
             ],
           ),
           const SizedBox(height: 14),
-          if (visible.isEmpty)
+          if (_calendarView)
+            _buildCalendar()
+          else if (visible.isEmpty)
             const _AgendaEmpty()
           else if (_groupByMonth)
             for (final month in sortedMonths) ...[
