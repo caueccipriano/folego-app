@@ -1461,7 +1461,7 @@ class _PlanScreenState extends State<PlanScreen> {
       children: [
         const AppSectionHeader(
           title: 'categorias',
-          subtitle: 'revise as pendências e abra uma categoria para conferir sua soma',
+          subtitle: 'planejado, usado e disponível por categoria',
         ),
         const SizedBox(height: 10),
         if (_parents.isEmpty)
@@ -1492,6 +1492,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final visibleChildren = showingIdle ? children :
         children.where((child) => child.hasActivity || child.hasBudget).toList();
     final expanded = _expandedCategoryIds.contains(parent.categoryId);
+    final budgetFlow = AppColorSelection.selected.value == 'fluxo';
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
@@ -1579,7 +1580,355 @@ class _PlanScreenState extends State<PlanScreen> {
                           ],
                         ),
                       ),
-                      if (parent.hasBudget && !hidden) ...[
+                      if (parent.hasBudget && !hidden && budgetFlow) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 101,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                parent.remainingAmount < 0
+                                    ? 'ultrapassado' : 'disponível',
+                                style: AppTypography.label(
+                                  context, fontSize: 11, color: secondaryText),
+                              ),
+                              const SizedBox(height: 3),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  Formatters.money(parent.remainingAmount.abs()),
+                                  style: AppTypography.money(context,
+                                    fontSize: 15,
+                                    color: parent.remainingAmount < 0
+                                        ? AppColors.expenseText(brightness)
+                                        : primaryText),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${parent.categoryId}'),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: stateColor.withValues(alpha: .10),
+                            borderRadius: BorderRadius.circular(AppRadii.pill),
+                            border: Border.all(
+                              color: stateColor.withValues(alpha: .24),
+                            ),
+                          ),
+                          child: Text(
+                            '$percentage%',
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: stateColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (children.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        AnimatedRotation(
+                          duration: const Duration(milliseconds: 180),
+                          turns: expanded ? .25 : 0,
+                          child: Icon(
+                            AppIcons.chevronRight,
+                            size: 20,
+                            color: secondaryText,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (parent.hasBudget && !hidden)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                      child: LinearProgressIndicator(
+                        key: ValueKey('plan-parent-progress-${parent.categoryId}'),
+                        value: parent.progress,
+                        minHeight: 6,
+                        backgroundColor: border.withValues(alpha: .60),
+                        valueColor: AlwaysStoppedAnimation<Color>(stateColor),
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      parent.remainingAmount < 0
+                          ? '${Formatters.money(parent.remainingAmount.abs())} acima do limite'
+                          : '${Formatters.money(parent.remainingAmount)} ainda dentro do limite',
+                      key: ValueKey('plan-parent-remaining-${parent.categoryId}'),
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        color: parent.remainingAmount < 0
+                            ? AppColors.expenseText(brightness)
+                            : secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (parent.hasActivity && (expanded || children.isEmpty))
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: ValueKey('plan-view-postings-${parent.categoryId}'),
+                  onPressed: () => _showCategorySpending(parent),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                  label: const Text('ver lançamentos deste total'),
+                ),
+              ),
+            if (children.isNotEmpty && expanded)
+              Container(
+                key: ValueKey('plan-children-${parent.categoryId}'),
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: border)),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 3, 5, 12),
+                      child: Text(
+                        amountWithoutSubcategory > .009
+                            ? 'soma: ${Formatters.money(sumOfChildren)} '
+                                'nas subcategorias + '
+                                '${Formatters.money(amountWithoutSubcategory)} '
+                                'sem subcategoria = '
+                                '${Formatters.money(parent.actualAmount)}'
+                            : 'total da categoria: '
+                                '${Formatters.money(parent.actualAmount)} '
+                                '(soma dos gastos das subcategorias)',
+                        style: AppTypography.body(
+                          context, fontSize: 11, color: secondaryText),
+                      ),
+                    ),
+                    ...visibleChildren.map(
+                      (child) => _buildChildCard(
+                        parent, child, familyColor, brightness, hidden),
+                    ),
+                    if (inactiveChildren.isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          key: ValueKey('plan-toggle-unused-${parent.categoryId}'),
+                          onPressed: () => setState(() {
+                            if (!_showIdleCategoryIds.add(parent.categoryId)) {
+                              _showIdleCategoryIds.remove(parent.categoryId);
+                            }
+                          }),
+                          child: Text(showingIdle
+                              ? 'ocultar ${inactiveChildren.length} sem gasto nem limite'
+                              : 'mostrar ${inactiveChildren.length} sem gasto nem limite'),
+                        ),
+                      ),
+                    if (amountWithoutSubcategory > .009)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(7, 5, 7, 9),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'sem subcategoria: '
+                            '${Formatters.money(amountWithoutSubcategory)} '
+                            '— os lançamentos precisam ser detalhados',
+                            style: AppTypography.body(
+                              context, fontSize: 11, color: secondaryText),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCategorySpending(BudgetOverviewItem category) =>
+      showBudgetCategorySpending(
+        context: context, repository: widget.repository,
+        spaceId: widget.spaceId, month: _month, category: category,
+      );
+
++'percentage%',
+                                key: ValueKey('plan-parent-usage-'+'${parent.categoryId}'),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: stateColor.withValues(alpha: .10),
+                            borderRadius: BorderRadius.circular(AppRadii.pill),
+                            border: Border.all(
+                              color: stateColor.withValues(alpha: .24),
+                            ),
+                          ),
+                          child: Text(
+                            '$percentage%',
+                            style: AppTypography.label(
+                              context,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: stateColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (children.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        AnimatedRotation(
+                          duration: const Duration(milliseconds: 180),
+                          turns: expanded ? .25 : 0,
+                          child: Icon(
+                            AppIcons.chevronRight,
+                            size: 20,
+                            color: secondaryText,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (parent.hasBudget && !hidden)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                      child: LinearProgressIndicator(
+                        key: ValueKey('plan-parent-progress-${parent.categoryId}'),
+                        value: parent.progress,
+                        minHeight: 6,
+                        backgroundColor: border.withValues(alpha: .60),
+                        valueColor: AlwaysStoppedAnimation<Color>(stateColor),
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      parent.remainingAmount < 0
+                          ? '${Formatters.money(parent.remainingAmount.abs())} acima do limite'
+                          : '${Formatters.money(parent.remainingAmount)} ainda dentro do limite',
+                      key: ValueKey('plan-parent-remaining-${parent.categoryId}'),
+                      style: AppTypography.label(
+                        context,
+                        fontSize: 11,
+                        color: parent.remainingAmount < 0
+                            ? AppColors.expenseText(brightness)
+                            : secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (parent.hasActivity && (expanded || children.isEmpty))
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: ValueKey('plan-view-postings-${parent.categoryId}'),
+                  onPressed: () => _showCategorySpending(parent),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                  label: const Text('ver lançamentos deste total'),
+                ),
+              ),
+            if (children.isNotEmpty && expanded)
+              Container(
+                key: ValueKey('plan-children-${parent.categoryId}'),
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: border)),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 3, 5, 12),
+                      child: Text(
+                        amountWithoutSubcategory > .009
+                            ? 'soma: ${Formatters.money(sumOfChildren)} '
+                                'nas subcategorias + '
+                                '${Formatters.money(amountWithoutSubcategory)} '
+                                'sem subcategoria = '
+                                '${Formatters.money(parent.actualAmount)}'
+                            : 'total da categoria: '
+                                '${Formatters.money(parent.actualAmount)} '
+                                '(soma dos gastos das subcategorias)',
+                        style: AppTypography.body(
+                          context, fontSize: 11, color: secondaryText),
+                      ),
+                    ),
+                    ...visibleChildren.map(
+                      (child) => _buildChildCard(
+                        parent, child, familyColor, brightness, hidden),
+                    ),
+                    if (inactiveChildren.isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          key: ValueKey('plan-toggle-unused-${parent.categoryId}'),
+                          onPressed: () => setState(() {
+                            if (!_showIdleCategoryIds.add(parent.categoryId)) {
+                              _showIdleCategoryIds.remove(parent.categoryId);
+                            }
+                          }),
+                          child: Text(showingIdle
+                              ? 'ocultar ${inactiveChildren.length} sem gasto nem limite'
+                              : 'mostrar ${inactiveChildren.length} sem gasto nem limite'),
+                        ),
+                      ),
+                    if (amountWithoutSubcategory > .009)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(7, 5, 7, 9),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'sem subcategoria: '
+                            '${Formatters.money(amountWithoutSubcategory)} '
+                            '— os lançamentos precisam ser detalhados',
+                            style: AppTypography.body(
+                              context, fontSize: 11, color: secondaryText),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCategorySpending(BudgetOverviewItem category) =>
+      showBudgetCategorySpending(
+        context: context, repository: widget.repository,
+        spaceId: widget.spaceId, month: _month, category: category,
+      );
+
++'{parent.categoryId}'),
+                                style: AppTypography.label(
+                                  context, fontSize: 11, color: stateColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (parent.hasBudget && !hidden) ...[
                         const SizedBox(width: 8),
                         Container(
                           key: ValueKey('plan-parent-usage-${parent.categoryId}'),
