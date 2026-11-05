@@ -771,32 +771,58 @@ class _AgendaEventCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            event.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.body(
-                              context,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: primary,
-                            ),
+                    LayoutBuilder(
+                      builder: (context, limits) {
+                        final compact = limits.maxWidth < 210;
+                        final name = Text(
+                          event.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.body(
+                            context,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: primary,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
+                        );
+                        final amount = Text(
                           '$prefix${Formatters.money(event.amount)}',
+                          maxLines: 1,
                           style: AppTypography.label(
                             context,
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: event.isInformational ? primary : accent,
                           ),
-                        ),
-                      ],
+                        );
+                        if (compact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              name,
+                              const SizedBox(height: 3),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: amount,
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(child: name),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: amount,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 4),
                     Text(
