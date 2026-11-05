@@ -156,9 +156,12 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
                     child: const Text('restaurar padrão'),
                   ),
                   const Spacer(),
-                  FilledButton(
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    child: const Text('concluir'),
+                  SizedBox(
+                    width: 120,
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      child: const Text('concluir'),
+                    ),
                   ),
                 ]),
               ],
