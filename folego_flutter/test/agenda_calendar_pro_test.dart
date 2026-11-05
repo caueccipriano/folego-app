@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -151,6 +152,26 @@ void main() {
     final layoutFailure = tester.takeException();
     if (layoutFailure != null) {
       debugPrint('AGENDA_LAYOUT_DIAGNOSTIC: $layoutFailure');
+      for (final flex in tester.allRenderObjects.whereType<RenderFlex>()) {
+        if (flex.direction != Axis.horizontal || !flex.hasSize) continue;
+        var child = flex.firstChild;
+        var rightmost = 0.0;
+        while (child != null) {
+          final data = child.parentData as FlexParentData;
+          if (child.hasSize) {
+            final right = data.offset.dx + child.size.width;
+            if (right > rightmost) rightmost = right;
+          }
+          child = flex.childAfter(child);
+        }
+        if (rightmost > flex.size.width + 1) {
+          debugPrint(
+            'AGENDA_OVERFLOW_ROW: width=${flex.size.width.toStringAsFixed(1)} '
+            'childrenEnd=${rightmost.toStringAsFixed(1)} '
+            'creator=${flex.debugCreator}',
+          );
+        }
+      }
     }
     expect(layoutFailure, isNull);
   });
