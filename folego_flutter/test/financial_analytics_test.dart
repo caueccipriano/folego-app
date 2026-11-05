@@ -115,10 +115,12 @@ void main() {
       expect(captured.last, DateTime(2026, 10));
       expect(find.text('mês selecionado · out/26'), findsOneWidget);
       expect(find.byKey(const ValueKey('analytics-income')), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
       await tester.tap(find.byKey(const ValueKey('analytics-month-3')));
       await tester.pumpAndSettle();
       expect(find.text('mês selecionado · ago/26'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
       FinancialPrivacy.hidden.value = true;
       await tester.pumpAndSettle();
@@ -126,6 +128,7 @@ void main() {
       expect(find.byKey(const ValueKey('analytics-economic-result')),
           findsNothing);
       expect(find.byKey(const ValueKey('analytics-income')), findsNothing);
+      expect(tester.takeException(), isNull);
     });
   }
 
