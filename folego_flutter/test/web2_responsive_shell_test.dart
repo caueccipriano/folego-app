@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/privacy/financial_privacy.dart';
 import 'package:folego/core/theme/app_color_tokens.dart';
@@ -24,6 +25,18 @@ import 'package:folego/l10n/app_localizations.dart';
 import 'package:folego/shared/widgets/responsive_navigation_shell.dart';
 
 void main() {
+  // Golden previews use the same bundled fonts as the production app.
+  // Normal regression tests avoid this overhead.
+  setUpAll(() async {
+    if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] != '1') return;
+    final interface = FontLoader('Manrope')
+      ..addFont(rootBundle.load('assets/fonts/Manrope-Regular.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Manrope-Bold.ttf'));
+    final brand = FontLoader('Unbounded')
+      ..addFont(rootBundle.load('assets/fonts/Unbounded-Bold.ttf'));
+    await Future.wait([interface.load(), brand.load()]);
+  });
+
   testWidgets('320px keeps every mobile navigation target tappable', (tester) async {
     await _pumpShell(tester, const Size(320, 700));
 
