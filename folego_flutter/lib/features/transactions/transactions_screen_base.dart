@@ -9,7 +9,7 @@ import '../../core/navigation/push_route.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_color_tokens.dart;
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_theme.dart';
