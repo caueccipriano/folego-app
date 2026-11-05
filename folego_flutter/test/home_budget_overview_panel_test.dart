@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:folego/core/theme/app_theme.dart';
 import 'package:folego/data/models/folego_snapshot.dart';
 import 'package:folego/data/models/wallet_overview.dart';
 import 'package:folego/data/repositories/folego_repository.dart';
 import 'package:folego/features/home/home_budget_overview_panel.dart';
+import 'package:folego/features/home/home_overview_modules_settings.dart';
 
 class _OverviewRepository implements FolegoRepository {
   const _OverviewRepository();
@@ -61,6 +63,8 @@ FolegoSnapshot _snapshot() => FolegoSnapshot(
 );
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   setUpAll(() async {
     if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] != '1') return;
     final manrope = FontLoader('Manrope')
@@ -138,6 +142,54 @@ void main() {
       );
     }
   }
+
+
+  testWidgets('organizer hides a module and preserves the always-visible balance',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: Scaffold(body: SingleChildScrollView(
+        child: HomeBudgetOverviewPanel(
+          repository: const _OverviewRepository(),
+          spaceId: 'my-space',
+          snapshot: _snapshot(),
+          hidden: false,
+          onExpense: () {},
+          onIncome: () {},
+          onBudget: () {},
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('budget-flow-organize')));
+    await tester.pumpAndSettle();
+    expect(find.text('organizar visão geral'), findsOneWidget);
+    expect(find.byKey(const ValueKey('overview-visible-accounts')),
+        findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('overview-visible-accounts')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('concluir'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('visão geral'), findsOneWidget);
+    expect(find.byKey(const ValueKey('budget-flow-spendable')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('overview-section-accounts')),
+        findsNothing);
+    expect(find.byKey(const ValueKey('overview-section-budget')),
+        findsOneWidget);
+    final prefs = await HomeOverviewModulesSettings.load('my-space');
+    expect(prefs.hidden, {'accounts'});
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('privacy hides financial amounts but preserves navigation',
       (tester) async {
