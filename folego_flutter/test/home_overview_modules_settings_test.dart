@@ -10,7 +10,7 @@ void main() {
 
   test('defaults show all modules in a predictable order', () async {
     final settings = await HomeOverviewModulesSettings.load('space-one');
-    expect(settings.order, ['actions', 'budget', 'accounts']);
+    expect(settings.order, ['actions', 'analytics', 'budget', 'accounts']);
     expect(settings.hidden, isEmpty);
   });
 
@@ -22,7 +22,7 @@ void main() {
     await next.save('space-one');
 
     final restored = await HomeOverviewModulesSettings.load('space-one');
-    expect(restored.order, ['actions', 'accounts', 'budget']);
+    expect(restored.order, ['actions', 'analytics', 'accounts', 'budget']);
     expect(restored.isVisible('budget'), isFalse);
     expect(restored.isVisible('accounts'), isTrue);
 
@@ -35,7 +35,7 @@ void main() {
     expect(
       HomeOverviewModulesSettings.normalizeOrder(
           ['accounts', 'invalid', 'accounts']),
-      ['accounts', 'actions', 'budget'],
+      ['accounts', 'actions', 'analytics', 'budget'],
     );
     expect(
       HomeOverviewModulesSettings.normalizeHidden(['unknown', 'actions']),

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/budget-flow-experience-20261105
+      - feat/folego-pro-analytics-20261105
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/budget-flow-ux-qa.yml'
@@ -34,7 +35,7 @@ jobs:
       - name: Flutter analyze
         run: flutter analyze
       - name: Test safe amount calculator and explicit confirmation
-        run: flutter test test/quick_amount_calculator_test.dart test/home_overview_modules_settings_test.dart
+        run: flutter test test/quick_amount_calculator_test.dart test/home_overview_modules_settings_test.dart test/financial_analytics_test.dart
       - name: Render 320/390 iPhone overview with in-memory data
         env:
           FOLEGO_VISUAL_CAPTURE: '1'
