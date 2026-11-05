@@ -117,9 +117,22 @@ void main() {
       expect(find.byKey(const ValueKey('analytics-income')), findsOneWidget);
       expect(tester.takeException(), isNull);
 
+      // Select the history month while its bar is above the bottom navigation.
       await tester.tap(find.byKey(const ValueKey('analytics-month-3')));
       await tester.pumpAndSettle();
       expect(find.text('mês selecionado · ago/26'), findsOneWidget);
+
+      // Then scroll down to the category chart, which is lazy-built below.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('monthly-category-donut')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 24,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('category-donut-paint')),
+          findsOneWidget);
+      expect(find.textContaining('ago/26'), findsWidgets);
       expect(tester.takeException(), isNull);
 
       FinancialPrivacy.hidden.value = true;
