@@ -211,6 +211,7 @@ void main() {
     expect(find.text('••••'), findsWidgets);
     expect(find.textContaining('1.600'), findsNothing);
     expect(find.textContaining('1.500'), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(find.text('visão geral'), findsOneWidget);
   });
 }
