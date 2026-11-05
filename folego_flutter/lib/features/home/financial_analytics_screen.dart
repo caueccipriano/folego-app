@@ -197,10 +197,11 @@ class _FinancialAnalyticsScreenState extends State<FinancialAnalyticsScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Row(
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 6,
                           children: [
                             _legend(tokens.marca, 'receitas'),
-                            const SizedBox(width: 15),
                             _legend(tokens.acao, 'gastos feitos'),
                           ],
                         ),
