@@ -109,7 +109,7 @@ class _QuickAmountCalculatorState extends State<QuickAmountCalculator> {
         }
       } else if (const ['÷', '×', '−', '+'].contains(key)) {
         if (_expression.isEmpty) return;
-        if (RegExp(r'[+−×÷]) {
+        if (RegExp(r'[+−×÷]$').hasMatch(_expression)) {
           _expression = _expression.substring(0, _expression.length - 1);
         }
         _expression = '$_expression$key';
