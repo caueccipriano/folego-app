@@ -176,10 +176,12 @@ class _FinancialAnalyticsScreenState extends State<FinancialAnalyticsScreen> {
                     _surface(tokens, Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(children: [
-                          Expanded(child: Text('evolução dos últimos meses',
-                            style: AppTypography.section(context, fontSize: 16))),
-                          SegmentedButton<int>(
+                        Text('evolução dos últimos meses',
+                          style: AppTypography.section(context, fontSize: 16)),
+                        const SizedBox(height: 9),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: SegmentedButton<int>(
                             key: const ValueKey('analytics-range'),
                             showSelectedIcon: false,
                             style: const ButtonStyle(
@@ -193,7 +195,7 @@ class _FinancialAnalyticsScreenState extends State<FinancialAnalyticsScreen> {
                             onSelectionChanged: (values) =>
                                 _changeRange(values.first),
                           ),
-                        ]),
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
