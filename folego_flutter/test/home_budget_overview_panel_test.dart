@@ -89,6 +89,7 @@ void main() {
           var income = 0;
           var budget = 0;
           var accounts = 0;
+          var analytics = 0;
           await tester.pumpWidget(MaterialApp(
             theme: brightness == Brightness.dark
                 ? AppTheme.dark() : AppTheme.light(),
@@ -104,6 +105,7 @@ void main() {
                   onIncome: () => income++,
                   onBudget: () => budget++,
                   onAccounts: () => accounts++,
+                  onAnalytics: () => analytics++,
                 ),
               ),
             )),
@@ -133,6 +135,12 @@ void main() {
           expect(expenses, 1);
           expect(income, 1);
           expect(budget, 1);
+
+          await tester.ensureVisible(
+              find.byKey(const ValueKey('budget-flow-analytics-entry')));
+          await tester.tap(
+              find.byKey(const ValueKey('budget-flow-analytics-entry')));
+          expect(analytics, 1);
 
           await tester.ensureVisible(find.text('Conta do dia a dia'));
           await tester.tap(find.text('Conta do dia a dia'));
