@@ -191,6 +191,46 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('compact view can be changed without affecting finances',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: Scaffold(body: SingleChildScrollView(
+        child: HomeBudgetOverviewPanel(
+          repository: const _OverviewRepository(),
+          spaceId: 'compact-space',
+          snapshot: _snapshot(),
+          hidden: false,
+          onExpense: () {},
+          onIncome: () {},
+          onBudget: () {},
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('budget-flow-organize')));
+    await tester.pumpAndSettle();
+    final density = find.byKey(const ValueKey('overview-compact-toggle'));
+    expect(tester.widget<Switch>(density).value, isTrue);
+
+    await tester.tap(density);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(density).value, isFalse);
+    await tester.tap(find.text('concluir'));
+    await tester.pumpAndSettle();
+
+    final prefs = await HomeOverviewModulesSettings.load('compact-space');
+    expect(prefs.compact, isFalse);
+    expect(find.byKey(const ValueKey('budget-flow-spendable')),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('privacy hides financial amounts but preserves navigation',
       (tester) async {
     await tester.pumpWidget(MaterialApp(

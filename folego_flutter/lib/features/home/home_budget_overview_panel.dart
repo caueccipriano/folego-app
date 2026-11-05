@@ -106,6 +106,29 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
                   style: AppTypography.body(sheetContext, fontSize: 12),
                 ),
                 const SizedBox(height: 14),
+                Row(children: [
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('visual compacto',
+                        style: AppTypography.body(sheetContext,
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 3),
+                      Text('cards menores, mais conteúdo na tela',
+                        style: AppTypography.label(sheetContext, fontSize: 11)),
+                    ],
+                  )),
+                  Switch.adaptive(
+                    key: const ValueKey('overview-compact-toggle'),
+                    value: _modules.compact,
+                    onChanged: (value) => _changeModules(
+                      _modules.withCompact(value), refresh,
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
                 for (var i = 0; i < _modules.order.length; i++)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
@@ -212,6 +235,8 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
     final remaining = planned - used;
     final fraction = budgetReady ? (used / planned).clamp(0.0, 1.0).toDouble() : 0.0;
 
+    final compact = _modules.compact;
+
     Widget metric(String title, String value, {Color? tone}) {
       return Expanded(
         child: Column(
@@ -238,7 +263,8 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title, style: AppTypography.section(
-                  context, fontSize: 18, color: colors.textoPrincipal)),
+                  context, fontSize: compact ? 17 : 18,
+                  color: colors.textoPrincipal)),
               const SizedBox(height: 3),
               Text(subtitle, style: AppTypography.label(
                   context, fontSize: 11, color: colors.textoSecundario)),
@@ -260,7 +286,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colors.borda),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       child: child,
     );
 
@@ -273,7 +299,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            height: 78,
+            height: compact ? 66 : 78,
             decoration: BoxDecoration(
               border: Border.all(color: colors.borda),
               borderRadius: BorderRadius.circular(16),
@@ -297,7 +323,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
         heading('atalhos', 'registre com poucos toques'),
-        const SizedBox(height: 10),
+        SizedBox(height: compact ? 7 : 10),
         Row(children: [
           shortcut('gasto', AppIcons.expense, widget.onExpense,
               'budget-flow-register-expense'),
@@ -315,7 +341,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
         children: [
         heading('orçamentos', 'planejado e disponível por mês',
             onTap: widget.onBudget),
-        const SizedBox(height: 10),
+        SizedBox(height: compact ? 7 : 10),
         Material(
           color: colors.superficie,
           borderRadius: BorderRadius.circular(20),
@@ -363,7 +389,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
         children: [
         heading('contas', 'saldos bancários, não o fôlego disponível',
             onTap: widget.onAccounts),
-        const SizedBox(height: 10),
+        SizedBox(height: compact ? 7 : 10),
         FutureBuilder<WalletOverview>(
           future: _wallet,
           builder: (context, result) {
@@ -466,7 +492,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
         Text('Seu dinheiro em um só lugar',
             style: AppTypography.body(context,
                 fontSize: 12, color: colors.textoSecundario)),
-        const SizedBox(height: 16),
+        SizedBox(height: compact ? 12 : 16),
         surface(Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -497,7 +523,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
         )),
         for (final section in _modules.order)
           if (_modules.isVisible(section)) ...[
-            const SizedBox(height: 18),
+            SizedBox(height: compact ? 12 : 18),
             KeyedSubtree(
               key: ValueKey('overview-section-$section'),
               child: sectionWidgets[section]!,
