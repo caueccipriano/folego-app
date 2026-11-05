@@ -134,16 +134,27 @@ class AgendaCalendarGrid extends StatelessWidget {
             },
           ),
           const SizedBox(height: 11),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 13,
+            runSpacing: 6,
             children: [
-              _dot(tokens.folga), const SizedBox(width: 5),
-              Text('entrada prevista', style: AppTypography.label(
-                context, fontSize: 11, color: tokens.textoSecundario)),
-              const SizedBox(width: 15),
-              _dot(tokens.estourado), const SizedBox(width: 5),
-              Text('saída prevista', style: AppTypography.label(
-                context, fontSize: 11, color: tokens.textoSecundario)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dot(tokens.folga), const SizedBox(width: 5),
+                  Text('entrada prevista', style: AppTypography.label(
+                    context, fontSize: 11, color: tokens.textoSecundario)),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dot(tokens.estourado), const SizedBox(width: 5),
+                  Text('saída prevista', style: AppTypography.label(
+                    context, fontSize: 11, color: tokens.textoSecundario)),
+                ],
+              ),
             ],
           ),
         ],
