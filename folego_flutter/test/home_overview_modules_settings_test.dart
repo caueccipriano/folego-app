@@ -12,6 +12,7 @@ void main() {
     final settings = await HomeOverviewModulesSettings.load('space-one');
     expect(settings.order, ['actions', 'budget', 'accounts']);
     expect(settings.hidden, isEmpty);
+    expect(settings.compact, isTrue);
   });
 
   test('reordering and hidden modules persist within a financial space',
@@ -25,10 +26,26 @@ void main() {
     expect(restored.order, ['actions', 'accounts', 'budget']);
     expect(restored.isVisible('budget'), isFalse);
     expect(restored.isVisible('accounts'), isTrue);
+    expect(restored.compact, isTrue);
 
     final otherSpace = await HomeOverviewModulesSettings.load('space-two');
     expect(otherSpace.order, HomeOverviewModulesSettings.defaultOrder);
     expect(otherSpace.hidden, isEmpty);
+    expect(otherSpace.compact, isTrue);
+  });
+
+  test('layout density stays independent for each financial space', () async {
+    final one = await HomeOverviewModulesSettings.load('space-one');
+    final comfortable = one.withCompact(false);
+    await comfortable.save('space-one');
+
+    final restored = await HomeOverviewModulesSettings.load('space-one');
+    final other = await HomeOverviewModulesSettings.load('space-two');
+    expect(restored.compact, isFalse);
+    expect(restored.order, HomeOverviewModulesSettings.defaultOrder);
+    expect(other.compact, isTrue);
+    expect(restored.move('budget', -1).compact, isFalse);
+    expect(restored.withVisibility('accounts', false).compact, isFalse);
   });
 
   test('invalid and duplicate module ids are discarded safely', () {
