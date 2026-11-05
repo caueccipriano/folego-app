@@ -1599,16 +1599,29 @@ class _PlanScreenState extends State<PlanScreen> {
                                 alignment: Alignment.centerRight,
                                 child: Text(
                                   Formatters.money(parent.remainingAmount.abs()),
-                                  style: AppTypography.money(context,
+                                  style: AppTypography.money(
+                                    context,
                                     fontSize: 15,
                                     color: parent.remainingAmount < 0
                                         ? AppColors.expenseText(brightness)
-                                        : primaryText),
+                                        : primaryText,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '${parent.categoryId}'),
+                                '$percentage%',
+                                key: ValueKey('plan-parent-usage-${parent.categoryId}'),
+                                style: AppTypography.label(
+                                  context, fontSize: 11, color: stateColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (parent.hasBudget && !hidden) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          key: ValueKey('plan-parent-usage-${parent.categoryId}'),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 9, vertical: 6,
                           ),
