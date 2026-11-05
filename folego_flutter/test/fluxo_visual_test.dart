@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 import 'package:folego/shared/widgets/signature_feature_hero.dart';
+import 'package:folego/data/models/financial_goal.dart';
+import 'package:folego/features/goals/goals_widgets.dart';
 import 'package:folego/shared/widgets/folego_ambient_backdrop.dart';
 import 'package:folego/shared/widgets/folego_glass_surface.dart';
 
@@ -20,6 +22,47 @@ void main() {
         tokens.marca, tokens.fundo), greaterThanOrEqualTo(4.5));
     }
   });
+
+  for (final brightness in [Brightness.light, Brightness.dark]) {
+    testWidgets('Fluxo goal cards use flat surfaces and keep tap in $brightness',
+        (tester) async {
+      final previous = AppColorSelection.selected.value;
+      AppColorSelection.choose('fluxo');
+      addTearDown(() => AppColorSelection.choose(previous));
+      final tokens = FolegoColorTokens.fromId('fluxo', brightness);
+      var taps = 0;
+      final goal = FinancialGoal(
+        id: 'design-check',
+        spaceId: 's',
+        name: 'Reserva de emergência',
+        target: 20000,
+        targetDate: DateTime(2027, 12),
+        icon: GoalIcon.piggyBank,
+        status: GoalStatus.active,
+        currentAmount: 1500,
+        createdAt: DateTime(2026, 11),
+        updatedAt: DateTime(2026, 11),
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+        home: Scaffold(body: SizedBox(
+          width: 350,
+          height: 190,
+          child: GoalCard(goal: goal, onTap: () => taps++),
+        )),
+      ));
+      await tester.pumpAndSettle();
+      final ink = tester.widget<Ink>(find.byType(Ink).first);
+      final decoration = ink.decoration! as BoxDecoration;
+      expect(decoration.color, tokens.superficie);
+      expect(decoration.gradient, isNull);
+      expect(find.text('Reserva de emergência'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Reserva de emergência'));
+      expect(taps, 1);
+    });
+  }
 
   testWidgets('Fluxo headers keep navigation while removing decoration', (tester) async {
     final previous = AppColorSelection.selected.value;
