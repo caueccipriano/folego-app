@@ -191,7 +191,8 @@ class HomeFixedDashboard extends StatelessWidget {
                                         end: Alignment.bottomRight,
                                         colors: [
                                           colors.marcaHero,
-                                          if (!minimal)                                           Color.alphaBlend(
+                                          if (minimal) colors.marcaHero,
+                                          if (!minimal) Color.alphaBlend(
                                             colors.marcaHeroSobre
                                                 .withValues(alpha: .09),
                                             colors.marcaHero,
