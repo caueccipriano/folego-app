@@ -31,18 +31,18 @@ class SignatureFeatureHero extends StatelessWidget {
     final foreground = minimal ? colors.textoPrincipal : colors.marcaHeroSobre;
     final highContrast = MediaQuery.highContrastOf(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final vertical = minimal ? (compact ? 11.0 : 15.0) : (compact ? 15.0 : 20.0);
-    final titleSize = compact ? 23.0 : 27.0;
+    final vertical = minimal ? (compact ? 9.0 : 12.0) : (compact ? 15.0 : 20.0);
+    final titleSize = minimal ? (compact ? 21.0 : 24.0) : (compact ? 23.0 : 27.0);
 
     return Container(
       key: const ValueKey('signature-feature-hero'),
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: minimal ? colors.fundo : colors.marcaHero,
-        borderRadius: BorderRadius.circular(minimal ? 16 : (compact ? 23 : 28)),
+        color: minimal ? colors.superficie : colors.marcaHero,
+        borderRadius: BorderRadius.circular(minimal ? 14 : (compact ? 23 : 28)),
         border: Border.all(
-          color: minimal ? colors.borda.withValues(alpha: .60) : foreground.withValues(alpha: highContrast ? .70 : .18),
+          color: minimal ? colors.borda : foreground.withValues(alpha: highContrast ? .70 : .18),
           width: highContrast ? 1.5 : 1,
         ),
       ),
@@ -85,7 +85,7 @@ class SignatureFeatureHero extends StatelessWidget {
             ),
           ],
           Padding(
-            padding: EdgeInsets.fromLTRB(19, vertical, 16, vertical),
+            padding: EdgeInsets.fromLTRB(minimal ? 15 : 19, vertical, 16, vertical),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -108,7 +108,7 @@ class SignatureFeatureHero extends StatelessWidget {
                       ),
                     ),
                     if (trailing != null) trailing!
-                    else
+                    else if (!minimal)
                       Container(
                         width: 32,
                         height: 32,
@@ -127,7 +127,7 @@ class SignatureFeatureHero extends StatelessWidget {
                       ),
                   ],
                 ),
-                SizedBox(height: compact ? 6 : 11),
+                SizedBox(height: minimal ? 5 : (compact ? 6 : 11)),
                 Semantics(
                   header: true,
                   child: Text(
@@ -141,10 +141,10 @@ class SignatureFeatureHero extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: minimal ? 2 : 5),
                 Text(
                   subtitle,
-                  maxLines: textScale > 1.5 ? 3 : 2,
+                  maxLines: textScale > 1.5 ? 3 : (minimal && compact ? 1 : 2),
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.body(
                     context,
