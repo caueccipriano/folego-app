@@ -45,9 +45,12 @@ class MonthlyCategoryDonut extends StatefulWidget {
     super.key,
     required this.items,
     required this.onCategory,
+    this.periodLabel,
   });
   final List<BudgetOverviewItem> items;
   final ValueChanged<BudgetOverviewItem> onCategory;
+  /// Optional historical period; defaults to the current-month copy.
+  final String? periodLabel;
   @override
   State<MonthlyCategoryDonut> createState() => _MonthlyCategoryDonutState();
 }
@@ -123,7 +126,9 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Veja como os gastos se distribuem neste mês.',
+                widget.periodLabel == null
+                    ? 'Veja como os gastos se distribuem neste mês.'
+                    : 'Veja como os gastos se distribuem em ${widget.periodLabel}.',
                 style: AppTypography.body(
                   context,
                   fontSize: 12,
