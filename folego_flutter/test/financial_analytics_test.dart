@@ -115,8 +115,11 @@ void main() {
       expect(captured.last, DateTime(2026, 10));
       expect(find.text('mês selecionado · out/26'), findsOneWidget);
       expect(find.byKey(const ValueKey('analytics-income')), findsOneWidget);
-      await tester.ensureVisible(
+      await tester.scrollUntilVisible(
         find.byKey(const ValueKey('monthly-category-donut')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 24,
       );
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('category-donut-paint')),
@@ -124,8 +127,11 @@ void main() {
       expect(find.textContaining('out/26'), findsWidgets);
       expect(tester.takeException(), isNull);
 
-      await tester.ensureVisible(
+      await tester.scrollUntilVisible(
         find.byKey(const ValueKey('analytics-month-3')),
+        -160,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 24,
       );
       await tester.tap(find.byKey(const ValueKey('analytics-month-3')));
       await tester.pumpAndSettle();
