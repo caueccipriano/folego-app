@@ -9,6 +9,7 @@ import '../../data/models/budget_overview_item.dart';
 import '../../data/models/monthly_money_summary.dart';
 import '../../data/repositories/folego_repository.dart';
 import '../plan/plan_screen_web2.dart' show showBudgetCategorySpending;
+import '../plan/monthly_category_donut.dart';
 import 'financial_analytics_models.dart';
 
 typedef AnalyticsMonthLoader = Future<MonthlyMoneySummary> Function(DateTime month);
@@ -315,29 +316,18 @@ class _FinancialAnalyticsScreenState extends State<FinancialAnalyticsScreen> {
                             style: AppTypography.body(context, fontSize: 12),
                           ));
                         }
-                        final total = categories.fold<double>(
-                          0, (sum, category) => sum + category.actualAmount,
+                        return MonthlyCategoryDonut(
+                          key: ValueKey('analytics-category-chart-${selected.periodMonth.year}-${selected.periodMonth.month}'),
+                          items: categoryResult.data!,
+                          periodLabel: analyticsMonthLabel(selected.periodMonth),
+                          onCategory: (category) => showBudgetCategorySpending(
+                            context: context,
+                            repository: widget.repository,
+                            spaceId: widget.spaceId,
+                            month: selected.periodMonth,
+                            category: category,
+                          ),
                         );
-                        return _surface(tokens, Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            for (final category in categories.take(8)) ...[
-                              _categoryRow(
-                                tokens: tokens,
-                                category: category,
-                                total: total,
-                                periodMonth: selected.periodMonth,
-                              ),
-                              const SizedBox(height: 9),
-                            ],
-                            if (categories.length > 8)
-                              Text(
-                                'Mostrando 8 de ${categories.length} categorias.',
-                                style: AppTypography.label(context, fontSize: 11,
-                                  color: tokens.textoSecundario),
-                              ),
-                          ],
-                        ));
                       },
                     ),
                   ],
@@ -414,57 +404,6 @@ class _FinancialAnalyticsScreenState extends State<FinancialAnalyticsScreen> {
     ),
   );
 
-  Widget _categoryRow({
-    required FolegoColorTokens tokens,
-    required BudgetOverviewItem category,
-    required double total,
-    required DateTime periodMonth,
-  }) {
-    final share = total > 0
-        ? (category.actualAmount / total).clamp(0.0, 1.0).toDouble()
-        : 0.0;
-    return InkWell(
-      key: ValueKey('analytics-category-${category.categoryId}'),
-      borderRadius: BorderRadius.circular(11),
-      onTap: () => showBudgetCategorySpending(
-        context: context,
-        repository: widget.repository,
-        spaceId: widget.spaceId,
-        month: periodMonth,
-        category: category,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Expanded(child: Text(category.categoryName,
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppTypography.body(context, fontSize: 13,
-                  fontWeight: FontWeight.w600))),
-              const SizedBox(width: 7),
-              Text(Formatters.money(category.actualAmount),
-                style: AppTypography.money(context, fontSize: 13)),
-              const SizedBox(width: 3),
-              Icon(AppIcons.chevronRight, size: 16,
-                color: tokens.textoSecundario),
-            ]),
-            const SizedBox(height: 7),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: LinearProgressIndicator(
-                value: share,
-                minHeight: 5,
-                color: tokens.marca,
-                backgroundColor: tokens.borda,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _PrivacyMessage extends StatelessWidget {
