@@ -15,7 +15,7 @@ void main() {
     expect(active, contains('FolegoAmbientBackdrop('));
     expect(active, contains('tokens.marcaHero'));
     expect(active, contains('tokens.acaoHero'));
-    expect(active, contains('highContrast ? .78 : .26'));
+    expect(active, contains('highContrast ? .78 : (minimal ? .15 : .26)'));
     expect(active, contains("ValueKey('home-fixed-spendable')"));
     expect(active, contains("ValueKey('home-fixed-amount')"));
   });
