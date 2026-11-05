@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 
 import '../../core/layout/app_content_container.dart';
+import '../../core/privacy/financial_privacy.dart';
 import '../../core/navigation/push_route.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
@@ -1434,6 +1435,20 @@ class _TransactionsTabV3 extends StatelessWidget {
       );
     }
 
+    // Group totals include only the displayed records. The last, partially
+    // loaded day never claims a complete sum while another page is pending.
+    final dailyOutflow = <String, double>{};
+    final dailyIncome = <String, double>{};
+    for (final transaction in transactions) {
+      final day = transactionDayLabel(transaction.occurredAt);
+      if (transaction.isExpense) {
+        dailyOutflow[day] = (dailyOutflow[day] ?? 0) +
+            transaction.amount.abs();
+      } else if (transaction.isIncome) {
+        dailyIncome[day] = (dailyIncome[day] ?? 0) +
+            transaction.amount.abs();
+      }
+    }
     final showFooter = loadingMore || loadMoreError != null;
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -1466,6 +1481,11 @@ class _TransactionsTabV3 extends StatelessWidget {
                 ? null
                 : transactionDayLabel(transactions[index - 1].occurredAt);
             final showGroup = group != previousGroup;
+            final groupEnds = index + 1 >= transactions.length ||
+                transactionDayLabel(transactions[index + 1].occurredAt) != group;
+            final groupIsComplete = index + 1 < transactions.length || !hasMore;
+            final outflow = dailyOutflow[group] ?? 0;
+            final income = dailyIncome[group] ?? 0;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1521,6 +1541,45 @@ class _TransactionsTabV3 extends StatelessWidget {
                   onEdit: item.canEditAsSimple ? () => onEdit(item) : null,
                   onDelete: item.canEditAsSimple ? () => onDelete(item) : null,
                 ),
+                if (AppColorSelection.selected.value == 'fluxo' &&
+                    groupEnds && groupIsComplete &&
+                    (outflow > 0 || income > 0))
+                  ValueListenableBuilder<bool>(
+                    valueListenable: FinancialPrivacy.hidden,
+                    builder: (context, hidden, _) => Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 10, 9),
+                        child: Column(
+                          key: ValueKey('transaction-day-summary-$index'),
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('total dos lançamentos listados neste dia',
+                              style: AppTypography.label(context,
+                                fontSize: 11,
+                                color: AppColors.secondaryText(
+                                  Theme.of(context).brightness))),
+                            if (outflow > 0)
+                              Text(hidden
+                                  ? 'saídas: valores ocultos'
+                                  : 'saídas: ${Formatters.money(outflow)}',
+                                style: AppTypography.label(context,
+                                  fontSize: 12,
+                                  color: AppColors.expenseText(
+                                    Theme.of(context).brightness))),
+                            if (income > 0)
+                              Text(hidden
+                                  ? 'entradas: valores ocultos'
+                                  : 'entradas: ${Formatters.money(income)}',
+                                style: AppTypography.label(context,
+                                  fontSize: 12,
+                                  color: AppColors.positiveText(
+                                    Theme.of(context).brightness))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },

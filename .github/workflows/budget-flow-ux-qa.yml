@@ -1,0 +1,49 @@
+name: QA Budget Flow UX - iPhone previews
+
+on:
+  push:
+    branches:
+      - feat/budget-flow-experience-20261105
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/budget-flow-ux-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: budget-flow-ux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  overview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Dependencies
+        run: flutter pub get
+      - name: Flutter analyze
+        run: flutter analyze
+      - name: Test safe amount calculator and explicit confirmation
+        run: flutter test test/quick_amount_calculator_test.dart test/home_overview_modules_settings_test.dart
+      - name: Render 320/390 iPhone overview with in-memory data
+        env:
+          FOLEGO_VISUAL_CAPTURE: '1'
+        run: flutter test --update-goldens test/home_budget_overview_panel_test.dart
+      - name: Upload preview screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: budget-flow-overview-preview-${{ github.run_number }}
+          path: folego_flutter/test/goldens/budget-flow-overview-*.png
+          if-no-files-found: warn
+          retention-days: 7

@@ -46,6 +46,7 @@ import 'home_fixed_dashboard.dart';
 import '../../shared/widgets/folego_glass_surface.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
 import 'home_mobile_summary_strip.dart';
+import 'home_budget_overview_panel.dart';
 import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
 import '../transactions/resolver_queue.dart';
@@ -1085,7 +1086,41 @@ class _HomeScreenState extends State<HomeScreen> {
             key: const ValueKey('home-monthly-details-scroll'),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
             children: [
-              monthlyMoney, const SizedBox(height: 12), projectionInsight,
+              HomeBudgetOverviewPanel(
+                snapshot: _snapshot!,
+                repository: widget.repository,
+                spaceId: widget.space.id,
+                hidden: FinancialPrivacy.hidden.value,
+                onExpense: () {
+                  Navigator.of(sheetContext).pop();
+                  _openRegister('expense');
+                },
+                onIncome: () {
+                  Navigator.of(sheetContext).pop();
+                  _openRegister('income');
+                },
+                onBudget: () {
+                  Navigator.of(sheetContext).pop();
+                  final open = FlexibleBudgetNavigationScope.maybeOf(context)?.open;
+                  if (open != null) { open(); } else { _openSpendingIncrease(); }
+                },
+                onAccounts: HomeWalletNavigationScope.maybeOf(context) == null
+                    ? null : () {
+                      Navigator.of(sheetContext).pop();
+                      HomeWalletNavigationScope.maybeOf(context)?.onOpenSection(0);
+                    },
+              ),
+              const SizedBox(height: 22),
+              Text('entradas e saídas',
+                style: AppTypography.section(sheetContext, fontSize: 18)),
+              const SizedBox(height: 10),
+              if (!FinancialPrivacy.hidden.value)
+                monthlyMoney
+              else
+                const Text('valores ocultos · use o olho da Home para mostrar'),
+              if (!FinancialPrivacy.hidden.value) ...[
+              const SizedBox(height: 12),
+              projectionInsight,
               TextButton.icon(
                 key: const ValueKey('home-fixed-compare'),
                 onPressed: () {
@@ -1098,6 +1133,9 @@ class _HomeScreenState extends State<HomeScreen> {
               if (upcoming != null) ...[const SizedBox(height: 12), upcoming],
               if (latest != null) ...[const SizedBox(height: 12), latest],
               const SizedBox(height: 12), smartCheckin,
+              ] else
+                const Text('detalhes financeiros ocultos · use o olho da Home'),
+
             ],
           )),
         ]),
@@ -1138,12 +1176,43 @@ class _HomeScreenState extends State<HomeScreen> {
               loading: _loading,
               onRefresh: _load,
             ),
+            HomeBudgetOverviewPanel(
+              snapshot: _snapshot!,
+              repository: widget.repository,
+              spaceId: widget.space.id,
+              hidden: FinancialPrivacy.hidden.value,
+              onExpense: () {
+                Navigator.of(sheetContext).pop();
+                _openRegister('expense');
+              },
+              onIncome: () {
+                Navigator.of(sheetContext).pop();
+                _openRegister('income');
+              },
+              onBudget: () {
+                Navigator.of(sheetContext).pop();
+                final open = FlexibleBudgetNavigationScope.maybeOf(context)?.open;
+                if (open != null) { open(); } else { _openSpendingIncrease(); }
+              },
+              onAccounts: HomeWalletNavigationScope.maybeOf(context) == null
+                  ? null : () {
+                    Navigator.of(sheetContext).pop();
+                    HomeWalletNavigationScope.maybeOf(context)?.onOpenSection(0);
+                  },
+            ),
+            if (AppColorSelection.selected.value != 'fluxo' &&
+                !FinancialPrivacy.hidden.value) ...[
+              const SizedBox(height: 12), hero,
+            ],
+            const SizedBox(height: 22),
+            Text('entradas e saídas',
+                style: AppTypography.section(sheetContext, fontSize: 18)),
+            const SizedBox(height: 10),
             if (!FinancialPrivacy.hidden.value)
-              hero
+              monthlyMoney
             else
               const Text('valores ocultos · use o olho da Home para mostrar'),
-            const SizedBox(height: 12),
-            monthlyMoney,
+            if (!FinancialPrivacy.hidden.value) ...[
             const SizedBox(height: 12),
             projection,
             TextButton.icon(
@@ -1162,6 +1231,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10), latest,
             ],
             const SizedBox(height: 12), smartCheckin,
+            ] else
+              const Text('detalhes financeiros ocultos · use o olho da Home'),
+
           ],
         ),
       ),

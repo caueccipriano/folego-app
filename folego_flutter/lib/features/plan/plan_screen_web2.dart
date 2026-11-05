@@ -1461,7 +1461,7 @@ class _PlanScreenState extends State<PlanScreen> {
       children: [
         const AppSectionHeader(
           title: 'categorias',
-          subtitle: 'revise as pendências e abra uma categoria para conferir sua soma',
+          subtitle: 'planejado, usado e disponível por categoria',
         ),
         const SizedBox(height: 10),
         if (_parents.isEmpty)
@@ -1492,6 +1492,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final visibleChildren = showingIdle ? children :
         children.where((child) => child.hasActivity || child.hasBudget).toList();
     final expanded = _expandedCategoryIds.contains(parent.categoryId);
+    final budgetFlow = AppColorSelection.selected.value == 'fluxo';
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
@@ -1579,7 +1580,45 @@ class _PlanScreenState extends State<PlanScreen> {
                           ],
                         ),
                       ),
-                      if (parent.hasBudget && !hidden) ...[
+                      if (parent.hasBudget && !hidden && budgetFlow) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          key: ValueKey('plan-parent-usage-${parent.categoryId}'),
+                          width: 94,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                parent.remainingAmount < 0
+                                    ? 'ultrapassado' : 'disponível',
+                                style: AppTypography.label(
+                                  context, fontSize: 11, color: secondaryText),
+                              ),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  Formatters.money(parent.remainingAmount.abs()),
+                                  style: AppTypography.money(
+                                    context,
+                                    fontSize: 15,
+                                    color: parent.remainingAmount < 0
+                                        ? AppColors.expenseText(brightness)
+                                        : primaryText,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '$percentage%',
+                                style: AppTypography.label(
+                                  context, fontSize: 11, color: stateColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (parent.hasBudget && !hidden) ...[
                         const SizedBox(width: 8),
                         Container(
                           key: ValueKey('plan-parent-usage-${parent.categoryId}'),
