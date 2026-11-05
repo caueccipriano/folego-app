@@ -761,7 +761,7 @@ class _DashboardSurface extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: tokens.borda),
       ),
-      child: child,
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }
