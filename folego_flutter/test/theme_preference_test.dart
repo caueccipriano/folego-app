@@ -19,7 +19,7 @@ void main() {
     final store = _MemoryStore();
     final preferences = AppPreferenceRepository(store);
     expect(await preferences.loadThemeMode(), ThemeMode.system);
-    expect(await preferences.loadPaletteId(), 'folego');
+    expect(await preferences.loadPaletteId(), 'fluxo');
 
     await preferences.saveThemeMode(ThemeMode.dark);
     await preferences.savePaletteId('mare');
@@ -33,11 +33,11 @@ void main() {
     expect(await preferences.loadPaletteId(), 'chiclete');
   });
 
-  test('paleta desconhecida volta para Fôlego sem alterar o modo', () async {
+  test('paleta desconhecida volta para Fluxo sem alterar o modo', () async {
     final preferences = AppPreferenceRepository(_MemoryStore());
     await preferences.saveThemeMode(ThemeMode.dark);
     await preferences.savePaletteId('tema-desconhecido');
     expect(await preferences.loadThemeMode(), ThemeMode.dark);
-    expect(await preferences.loadPaletteId(), 'folego');
+    expect(await preferences.loadPaletteId(), 'fluxo');
   });
 }
