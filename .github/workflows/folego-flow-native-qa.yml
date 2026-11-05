@@ -1,0 +1,46 @@
+name: Folego Flow native navigation QA
+
+on:
+  push:
+    branches:
+      - design/folego-flow-native-navigation-20261105
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/folego-flow-native-qa.yml'
+  pull_request:
+    branches:
+      - design/folego-flow-compact-overview-20261105
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/folego-flow-native-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flow-native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flutter-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Flutter analyze
+        run: flutter analyze
+      - name: iPhone navigation and finance safety
+        run: flutter test test/flow_native_navigation_test.dart test/shell_navigation_motion_test.dart test/home_budget_overview_panel_test.dart test/home_overview_modules_settings_test.dart test/home_hero_theme_color_test.dart test/signature_visible_main_tabs_test.dart -r expanded
+      - name: Build web PWA
+        run: flutter build web --release
