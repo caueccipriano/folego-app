@@ -58,7 +58,7 @@ class FolegoGlassSurface extends StatelessWidget {
         border: Border.all(color: tokens.borda),
         boxShadow: elevated ? [
           BoxShadow(
-            color: const Color(0xFF081D23).withValues(
+            color: tokens.textoPrincipal.withValues(
               alpha: isDark ? .18 : .045,
             ),
             blurRadius: prominent ? 16 : 11,
