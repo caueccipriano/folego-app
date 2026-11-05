@@ -4,6 +4,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/privacy/financial_privacy.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart;
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -1080,6 +1081,7 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _buildSummary(Brightness brightness) {
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     final summary = _summary;
     final diagnostics = BudgetMonthDiagnostics.fromItems(_items);
     final primaryText = AppColors.primaryText(brightness);
@@ -1106,7 +1108,8 @@ class _PlanScreenState extends State<PlanScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        color: minimal ? AppColors.surface(brightness) : null,
+        gradient: minimal ? null : LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
@@ -1124,7 +1127,7 @@ class _PlanScreenState extends State<PlanScreen> {
               : border,
           width: summary.remainingAmount < 0 ? 1.4 : 1,
         ),
-        boxShadow: MediaQuery.highContrastOf(context)
+        boxShadow: minimal || MediaQuery.highContrastOf(context)
             ? null
             : [
                 BoxShadow(
@@ -2092,6 +2095,7 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border(brightness);
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.control),
@@ -2099,7 +2103,7 @@ class _Metric extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 76),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.background(brightness).withValues(alpha: .38),
+        color: minimal ? AppColors.background(brightness) : AppColors.background(brightness).withValues(alpha: .38),
         borderRadius: BorderRadius.circular(AppRadii.control),
         border: Border.all(color: border.withValues(alpha: .75)),
       ),
