@@ -6,6 +6,7 @@ import '../../core/layout/app_breakpoints.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -794,12 +795,10 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                         ),
                         const SizedBox(height: 12),
                         _header(brightness),
-                        const SizedBox(height: 16),
-                        _detailsSection(),
-
                         const SizedBox(height: 12),
-
                         _moneyField(),
+                        const SizedBox(height: 15),
+                        _detailsSection(),
 
                         if (_capturedShorthand) ...[
 
@@ -928,21 +927,48 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
   }
 
   Widget _moneyField() {
-    return TextField(
-      key: const ValueKey('quick-register-amount'),
-      controller: _amount,
-      focusNode: _amountFocusNode,
-      autofocus: !_isExpense,
-      textInputAction: TextInputAction.done,
-      onChanged: (_) {
-        if (_capturedShorthand) setState(() => _capturedShorthand = false);
-      },
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: AppTypography.money(context, fontSize: 30),
-      decoration: const InputDecoration(
-        labelText: 'valor',
-        prefixText: 'R\$ ',
-        hintText: '0,00',
+    final brightness = Theme.of(context).brightness;
+    final tokens = FolegoColorTokens.of(context);
+    return Container(
+      key: const ValueKey('budget-flow-amount-surface'),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
+      decoration: BoxDecoration(
+        color: tokens.fundo,
+        border: Border.all(color: tokens.borda),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _isExpense ? 'VALOR DA DESPESA' : 'VALOR DA RECEITA',
+            style: AppTypography.label(context,
+                fontSize: 11,
+                color: AppColors.secondaryText(brightness))
+                .copyWith(letterSpacing: .7),
+          ),
+          TextField(
+            key: const ValueKey('quick-register-amount'),
+            controller: _amount,
+            focusNode: _amountFocusNode,
+            autofocus: !_isExpense,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) {
+              if (_capturedShorthand) setState(() => _capturedShorthand = false);
+            },
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: AppTypography.money(context, fontSize: 35),
+            decoration: const InputDecoration(
+              labelText: 'valor',
+              prefixText: 'R\$ ',
+              hintText: '0,00',
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              isDense: true,
+            ),
+          ),
+        ],
       ),
     );
   }
