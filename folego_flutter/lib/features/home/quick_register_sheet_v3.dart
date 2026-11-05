@@ -29,6 +29,7 @@ import '../../shared/widgets/app_sheet_handle.dart';
 import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/category_search_picker.dart';
 import 'quick_register_payment_state.dart';
+import 'quick_amount_calculator.dart';
 import 'quick_capture_parser.dart';
 
 typedef QuickRegisterCatalog = ({
@@ -940,12 +941,42 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _isExpense ? 'VALOR DA DESPESA' : 'VALOR DA RECEITA',
-            style: AppTypography.label(context,
-                fontSize: 11,
-                color: AppColors.secondaryText(brightness))
-                .copyWith(letterSpacing: .7),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _isExpense ? 'VALOR DA DESPESA' : 'VALOR DA RECEITA',
+                  style: AppTypography.label(context,
+                      fontSize: 11,
+                      color: AppColors.secondaryText(brightness))
+                      .copyWith(letterSpacing: .7),
+                ),
+              ),
+              TextButton.icon(
+                key: const ValueKey('quick-register-open-calculator'),
+                onPressed: () async {
+                  final current = Formatters.parseMoney(_amount.text);
+                  final value = await showModalBottomSheet<num>(
+                    context: context,
+                    useSafeArea: true,
+                    isScrollControlled: true,
+                    showDragHandle: true,
+                    builder: (_) => QuickAmountCalculator(
+                      initialValue: current > 0 ? current : null,
+                    ),
+                  );
+                  if (!mounted || value == null) return;
+                  setState(() {
+                    _amount.text =
+                        value.toStringAsFixed(2).replaceAll('.', ',');
+                    _capturedShorthand = false;
+                    _error = null;
+                  });
+                },
+                icon: const Icon(Icons.calculate_outlined, size: 17),
+                label: const Text('calcular'),
+              ),
+            ],
           ),
           TextField(
             key: const ValueKey('quick-register-amount'),
