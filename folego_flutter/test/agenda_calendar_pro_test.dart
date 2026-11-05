@@ -106,9 +106,10 @@ void main() {
     });
   }
 
-  testWidgets('Agenda calendar fetches selected month and opens day entries',
-      (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
+  for (final width in [320.0, 390.0]) {
+    testWidgets('Agenda calendar fetches month and opens day at $width',
+        (tester) async {
+    tester.view.physicalSize = Size(width, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -174,5 +175,6 @@ void main() {
       }
     }
     expect(layoutFailure, isNull);
-  });
+    });
+  }
 }
