@@ -818,10 +818,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 5),
-                                    Text(
-                                      privacy
-                                          ? FinancialPrivacy.maskMoney()
-                                          : Formatters.money(snapshot.spendablePool),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        privacy
+                                            ? FinancialPrivacy.maskMoney()
+                                            : Formatters.money(snapshot.spendablePool),
                                       key: const ValueKey('home-fixed-amount'),
                                       maxLines: 1,
                                       style: AppTypography.money(
@@ -829,6 +832,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         fontSize: 44,
                                         color: tokens.acaoHero,
                                       ),
+                                    ),
                                     ),
                                     const SizedBox(height: 11),
                                     Container(
@@ -888,15 +892,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                'PRÓXIMO SALÁRIO',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
+                                              FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  'PRÓXIMO SALÁRIO',
+                                                  maxLines: 1,
                                                 style: AppTypography.label(
                                                   context,
                                                   fontSize: 10,
                                                   color: onHero.withValues(alpha: .87),
                                                 ).copyWith(letterSpacing: .6),
+                                                ),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
@@ -1285,7 +1292,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: AppTypography.display(
                   context,
                   fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact
-                      ? 25
+                      ? (AppColorSelection.selected.value == 'fluxo' &&
+                              MediaQuery.sizeOf(context).width < 360
+                          ? 19
+                          : 25)
                       : 28,
                   color: primaryText,
                 ),
