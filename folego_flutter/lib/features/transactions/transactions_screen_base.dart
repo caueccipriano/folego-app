@@ -1562,7 +1562,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                             if (outflow > 0)
                               Text(hidden
                                   ? 'saídas: valores ocultos'
-                                  : 'saídas: ' + Formatters.money(outflow),
+                                  : 'saídas: ${Formatters.money(outflow)}',
                                 style: AppTypography.label(context,
                                   fontSize: 12,
                                   color: AppColors.expenseText(
@@ -1570,7 +1570,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                             if (income > 0)
                               Text(hidden
                                   ? 'entradas: valores ocultos'
-                                  : 'entradas: ' + Formatters.money(income),
+                                  : 'entradas: ${Formatters.money(income)}',
                                 style: AppTypography.label(context,
                                   fontSize: 12,
                                   color: AppColors.positiveText(
