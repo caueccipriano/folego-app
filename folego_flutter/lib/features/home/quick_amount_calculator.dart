@@ -33,14 +33,17 @@ abstract final class BudgetAmountMath {
       switch (operation) {
         case '*':
           current *= next;
+          break;
         case '/':
           if (next == 0) return null;
           current /= next;
+          break;
         case '+':
         case '-':
           groups.add(current);
           additions.add(operation);
           current = next;
+          break;
       }
       if (!current.isFinite) return null;
     }
@@ -106,7 +109,100 @@ class _QuickAmountCalculatorState extends State<QuickAmountCalculator> {
         }
       } else if (const ['÷', '×', '−', '+'].contains(key)) {
         if (_expression.isEmpty) return;
-        if (_expression.endsWith(RegExp(r'[+−×÷]'))) {
+        if (RegExp(r'[+−×÷]) {
+          _expression = _expression.substring(0, _expression.length - 1);
+        }
+        _expression = '$_expression$key';
+      } else if (key == ',') {
+        final part = _expression.split(RegExp(r'[+−×÷]')).last;
+        if (part.contains(',')) return;
+        _expression = part.isEmpty ? '${_expression}0,' : '$_expression,';
+      } else if (_expression.length < 32) {
+        _expression = '$_expression$key';
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = FolegoColorTokens.of(context);
+    final preview = BudgetAmountMath.evaluate(_expression);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('calculadora', style: AppTypography.section(
+                context, fontSize: 20, color: colors.textoPrincipal)),
+            const SizedBox(height: 4),
+            Text('Some ou divida valores antes de registrar.',
+                style: AppTypography.body(
+                    context, fontSize: 12, color: colors.textoSecundario)),
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: colors.fundo,
+                border: Border.all(color: colors.borda),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(_expression.isEmpty ? '0' : _expression,
+                      key: const ValueKey('budget-calculator-expression'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.money(context,
+                          fontSize: 24, color: colors.textoPrincipal)),
+                  const SizedBox(height: 5),
+                  Text(preview == null ? 'digite uma expressão válida'
+                      : Formatters.money(preview),
+                      key: const ValueKey('budget-calculator-result'),
+                      style: AppTypography.label(context,
+                          fontSize: 12, color: colors.textoSecundario)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final row in _rows) ...[
+              Row(children: [
+                for (final label in row) ...[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: OutlinedButton(
+                        key: ValueKey('budget-calculator-key-$label'),
+                        onPressed: () => _press(label),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(44, 49),
+                          padding: EdgeInsets.zero,
+                          backgroundColor: label == 'OK'
+                              ? colors.marca : colors.superficie,
+                          foregroundColor: label == 'OK'
+                              ? colors.marcaSobre : colors.textoPrincipal,
+                          side: BorderSide(color: colors.borda),
+                        ),
+                        child: Text(label,
+                            style: AppTypography.body(context,
+                                fontSize: 17, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ),
+                ],
+              ]),
+              const SizedBox(height: 3),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+).hasMatch(_expression)) {
           _expression = _expression.substring(0, _expression.length - 1);
         }
         _expression = '$_expression$key';
