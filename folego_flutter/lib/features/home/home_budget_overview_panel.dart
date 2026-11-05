@@ -7,6 +7,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/folego_snapshot.dart';
+import '../../data/models/monthly_money_summary.dart';
 import '../../data/models/wallet_overview.dart';
 import '../../data/repositories/folego_repository.dart';
 import 'home_overview_modules_settings.dart';
@@ -24,6 +25,8 @@ class HomeBudgetOverviewPanel extends StatefulWidget {
     required this.onIncome,
     required this.onBudget,
     this.onAccounts,
+    this.onAnalytics,
+    this.monthSummary,
   });
 
   final FolegoSnapshot snapshot;
@@ -34,6 +37,8 @@ class HomeBudgetOverviewPanel extends StatefulWidget {
   final VoidCallback onIncome;
   final VoidCallback onBudget;
   final VoidCallback? onAccounts;
+  final VoidCallback? onAnalytics;
+  final MonthlyMoneySummary? monthSummary;
 
   @override
   State<HomeBudgetOverviewPanel> createState() => _HomeBudgetOverviewPanelState();
@@ -50,6 +55,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
 
   static const _titles = <String, String>{
     'actions': 'Atalhos',
+    'analytics': 'Análises',
     'budget': 'Orçamentos',
     'accounts': 'Contas',
   };
@@ -308,6 +314,61 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
           shortcut('orçamento', AppIcons.plan, widget.onBudget,
               'budget-flow-open-budget'),
         ]),
+        ],
+      ),
+      'analytics': Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          heading('análises', 'gráficos interativos · últimos 6 meses fechados',
+              onTap: widget.onAnalytics),
+          const SizedBox(height: 10),
+          Material(
+            color: colors.superficie,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              key: const ValueKey('budget-flow-analytics-entry'),
+              onTap: widget.onAnalytics,
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: colors.borda),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(children: [
+                      Icon(AppIcons.chartLine, color: colors.marca, size: 20),
+                      const SizedBox(width: 9),
+                      Expanded(child: Text('central de análises',
+                        style: AppTypography.cardTitle(context, fontSize: 13))),
+                      if (widget.onAnalytics != null)
+                        Icon(AppIcons.chevronRight,
+                            size: 18, color: colors.textoSecundario),
+                    ]),
+                    const SizedBox(height: 10),
+                    if (widget.monthSummary != null) ...[
+                      Text('mês atual · parcial',
+                        style: AppTypography.label(context, fontSize: 11,
+                          color: colors.textoSecundario)),
+                      const SizedBox(height: 6),
+                      Row(children: [
+                        metric('receitas reais',
+                          _money(widget.monthSummary!.realIncome)),
+                        const SizedBox(width: 10),
+                        metric('gastos feitos',
+                          _money(widget.monthSummary!.spendingMade)),
+                      ]),
+                    ] else
+                      Text('Compare meses encerrados e explore categorias.',
+                        style: AppTypography.body(context, fontSize: 12,
+                          color: colors.textoSecundario)),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       'budget': Column(
