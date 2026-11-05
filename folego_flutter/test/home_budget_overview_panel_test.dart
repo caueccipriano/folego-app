@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:folego/core/theme/app_theme.dart';
@@ -58,6 +61,16 @@ FolegoSnapshot _snapshot() => FolegoSnapshot(
 );
 
 void main() {
+  setUpAll(() async {
+    if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] != '1') return;
+    final manrope = FontLoader('Manrope')
+      ..addFont(rootBundle.load('assets/fonts/Manrope-Regular.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Manrope-Bold.ttf'));
+    final unbounded = FontLoader('Unbounded')
+      ..addFont(rootBundle.load('assets/fonts/Unbounded-Bold.ttf'));
+    await Future.wait([manrope.load(), unbounded.load()]);
+  });
+
   for (final width in [320.0, 390.0]) {
     for (final brightness in [Brightness.light, Brightness.dark]) {
       testWidgets(
@@ -96,6 +109,14 @@ void main() {
           expect(find.text('orçamentos'), findsOneWidget);
           expect(find.text('Conta do dia a dia'), findsOneWidget);
           expect(tester.takeException(), isNull);
+          if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] == '1') {
+            await expectLater(
+              find.byType(Scaffold),
+              matchesGoldenFile(
+                'goldens/budget-flow-overview-${width.toInt()}-${brightness.name}.png',
+              ),
+            );
+          }
 
           await tester.ensureVisible(
               find.byKey(const ValueKey('budget-flow-register-expense')));
