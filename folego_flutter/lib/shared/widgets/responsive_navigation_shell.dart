@@ -103,7 +103,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
     final items = <_DesktopNavItem>[
       _DesktopNavItem(icon: AppIcons.home, label: 'hoje'),
       _DesktopNavItem(icon: AppIcons.transactions, label: 'movimentos'),
-      _DesktopNavItem(icon: AppIcons.plan, label: 'futuro'),
+      _DesktopNavItem(icon: AppIcons.plan, label: 'planejar'),
     ];
 
     final brightness = Theme.of(context).brightness;
