@@ -7,7 +7,7 @@ class HomeOverviewModulesSettings {
     required this.hidden,
   });
 
-  static const defaultOrder = <String>['actions', 'budget', 'accounts'];
+  static const defaultOrder = <String>['actions', 'analytics', 'budget', 'accounts'];
 
   final List<String> order;
   final Set<String> hidden;
