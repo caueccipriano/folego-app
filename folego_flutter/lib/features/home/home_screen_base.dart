@@ -1118,6 +1118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 monthlyMoney
               else
                 const Text('valores ocultos · use o olho da Home para mostrar'),
+              if (!FinancialPrivacy.hidden.value) ...[
               const SizedBox(height: 12),
               projectionInsight,
               TextButton.icon(
@@ -1132,6 +1133,9 @@ class _HomeScreenState extends State<HomeScreen> {
               if (upcoming != null) ...[const SizedBox(height: 12), upcoming],
               if (latest != null) ...[const SizedBox(height: 12), latest],
               const SizedBox(height: 12), smartCheckin,
+              ] else
+                const Text('detalhes financeiros ocultos · use o olho da Home'),
+
             ],
           )),
         ]),
@@ -1208,6 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> {
               monthlyMoney
             else
               const Text('valores ocultos · use o olho da Home para mostrar'),
+            if (!FinancialPrivacy.hidden.value) ...[
             const SizedBox(height: 12),
             projection,
             TextButton.icon(
@@ -1226,6 +1231,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10), latest,
             ],
             const SizedBox(height: 12), smartCheckin,
+            ] else
+              const Text('detalhes financeiros ocultos · use o olho da Home'),
+
           ],
         ),
       ),
