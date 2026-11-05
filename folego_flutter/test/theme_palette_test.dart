@@ -7,12 +7,12 @@ void main() {
   test('referências recentes são fáceis de encontrar na seleção de temas', () {
     final ids = FolegoColorTokens.catalog.map((item) => item.id).toList();
     expect(ids.take(3).toList(),
-      ['folego', 'pistache_frost', 'terracota_gallery']);
-    expect(ids.toSet().length, 27);
+      ['fluxo', 'folego', 'pistache_frost']);
+    expect(ids.toSet().length, 28);
   });
 
-  test('27 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 27);
+  test('28 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 28);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
