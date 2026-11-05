@@ -197,7 +197,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
               const SizedBox(width: 14),
               metric('próximo salário', snapshot.daysUntilIncome == null
                   ? 'a definir'
-                  : snapshot.daysUntilIncome.toString() + ' dias'),
+                  : '${snapshot.daysUntilIncome} dias'),
             ]),
           ],
         )),
@@ -250,7 +250,7 @@ class _HomeBudgetOverviewPanelState extends State<HomeBudgetOverviewPanel> {
                   const SizedBox(height: 8),
                   Text(widget.hidden
                       ? 'utilização oculta'
-                      : 'usado no mês: ' + _money(used),
+                      : 'usado no mês: ${_money(used)}',
                       style: AppTypography.label(context,
                           fontSize: 11, color: colors.textoSecundario)),
                 ],
