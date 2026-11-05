@@ -677,6 +677,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final privacy = FinancialPrivacy.hidden.value;
     final tokens = FolegoColorTokens.of(context);
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     final onHero = tokens.marcaHeroSobre;
     final highContrast = MediaQuery.highContrastOf(context);
     return FolegoAmbientBackdrop(
@@ -715,13 +716,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? constraints.maxWidth - 20 : constraints.maxWidth,
                           child: Container(
                             key: const ValueKey('home-fixed-spendable'),
-                            padding: const EdgeInsets.fromLTRB(19, 17, 19, 15),
+                            padding: EdgeInsets.fromLTRB(19, minimal ? 15 : 17, 19, minimal ? 13 : 15),
                             decoration: BoxDecoration(
                               // The actual compact iPhone Home uses Aurora.
                               // No financial calculation or route changes.
                               color: tokens.marcaHero,
-                              gradient: highContrast
-                                  ? null
+                              gradient: highContrast || minimal
+                                   ? null
                                   : LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -740,13 +741,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                               border: Border.all(
                                 color: onHero.withValues(
-                                  alpha: highContrast ? .78 : .26,
+                                  alpha: highContrast ? .78 : (minimal ? .15 : .26),
                                 ),
                               ),
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.feature),
-                              boxShadow: highContrast
-                                  ? null
+                              borderRadius: BorderRadius.circular(minimal ? 20 : AppRadii.feature),
+                              boxShadow: highContrast || minimal
+                                   ? null
                                   : [
                                       BoxShadow(
                                         color: tokens.marcaHero
@@ -759,8 +759,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Stack(
                               clipBehavior: Clip.hardEdge,
                               children: [
-                                Positioned(
-                                  right: -94,
+                                if (!minimal) Positioned(
+                                   right: -94,
                                   top: -102,
                                   child: IgnorePointer(
                                     child: Container(
@@ -776,8 +776,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                 ),
-                                Positioned(
-                                  right: -57,
+                                if (!minimal) Positioned(
+                                   right: -57,
                                   top: -62,
                                   child: IgnorePointer(
                                     child: Container(
