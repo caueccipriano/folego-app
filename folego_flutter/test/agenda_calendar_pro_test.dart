@@ -138,9 +138,13 @@ void main() {
         q.$1 == DateTime(2026, 11, 1) &&
         q.$2 == DateTime(2026, 11, 30) && q.$3 == 200), isTrue);
 
-    await tester.ensureVisible(find.byKey(
-        const ValueKey('agenda-calendar-day-14')));
+    // The calendar is nested inside Agenda's scrollable timeline.
+    // Move the outer list, not the non-scrollable seven-column grid.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -450));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('agenda-calendar-day-14')));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, -250));
     await tester.pumpAndSettle();
     expect(find.text('Pagamento energia'), findsOneWidget);
     expect(find.text('Salário previsto'), findsOneWidget);
