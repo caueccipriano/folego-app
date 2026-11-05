@@ -718,7 +718,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             key: const ValueKey('home-fixed-spendable'),
                             padding: EdgeInsets.fromLTRB(19, minimal ? 15 : 17, 19, minimal ? 13 : 15),
                             decoration: BoxDecoration(
-                              // The actual compact iPhone Home uses Aurora.
+                              // The active iPhone Home uses a flat hero in Fluxo.
                               // No financial calculation or route changes.
                               color: tokens.marcaHero,
                               gradient: highContrast || minimal
@@ -954,7 +954,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  if (constraints.maxHeight >= 590) ...[
+                  if (constraints.maxHeight >= (minimal ? 780 : 590)) ...[
                     const SizedBox(height: 8),
                     HomeMobileSummaryStrip(
                       snapshot: snapshot,
@@ -962,7 +962,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       upcoming: _upcomingEvents,
                       upcomingAvailable: !_upcomingUnavailable,
                       hidden: privacy,
-                      showTiles: constraints.maxHeight >= 695,
+                      showTiles: constraints.maxHeight >= (minimal ? 805 : 695) &&
+                          (!minimal || constraints.maxWidth >= 350),
                       onBudget: () {
                         final open = FlexibleBudgetNavigationScope
                             .maybeOf(context)?.open;
@@ -983,7 +984,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                   const SizedBox(height: 8),
                   quickActions,
-                  if (pulseInsight.showCard) ...[
+                  if (pulseInsight.showCard && (!minimal || constraints.maxHeight >= 760)) ...[
                     const SizedBox(height: 6),
                     Material(
                       color: surface,
