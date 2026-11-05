@@ -33,6 +33,8 @@ jobs:
         run: flutter pub get
       - name: Flutter analyze
         run: flutter analyze
+      - name: Test safe amount calculator and explicit confirmation
+        run: flutter test test/quick_amount_calculator_test.dart
       - name: Render 320/390 iPhone overview with in-memory data
         env:
           FOLEGO_VISUAL_CAPTURE: '1'
