@@ -974,6 +974,7 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     final tokens = FolegoColorTokens.of(context);
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     return Material(
       color: AppColors.transparent,
       child: InkWell(
@@ -983,7 +984,7 @@ class _PositionMetricCard extends StatelessWidget {
           constraints: BoxConstraints(minHeight: emphasized ? 132 : 90),
           padding: EdgeInsets.all(emphasized ? 20 : 14),
           decoration: BoxDecoration(
-            gradient: emphasized
+            gradient: emphasized && !minimal
                 ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -999,15 +1000,15 @@ class _PositionMetricCard extends StatelessWidget {
                     ],
                   )
                 : null,
-            color: emphasized ? null : tokens.superficie,
+            color: emphasized && !minimal ? null : tokens.superficie,
             borderRadius: BorderRadius.circular(AppRadii.feature),
             border: Border.all(
-              color: emphasized
+              color: emphasized && !minimal
                   ? tokens.marca.withValues(alpha: .42)
                   : tokens.borda,
-              width: emphasized ? 1.35 : 1,
+              width: emphasized && !minimal ? 1.35 : 1,
             ),
-            boxShadow: emphasized && !MediaQuery.highContrastOf(context)
+            boxShadow: emphasized && !minimal && !MediaQuery.highContrastOf(context)
                 ? [BoxShadow(
                     color: tokens.marca.withValues(alpha: .10),
                     blurRadius: 24,
@@ -1879,19 +1880,20 @@ class _InteractiveWalletCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final border = AppColors.border(brightness);
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     return Material(
       color: AppColors.surface(brightness),
-      borderRadius: BorderRadius.circular(AppRadii.card),
+      borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.card),
+        borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.card),
+            borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
             border: Border.all(
-              color: accentColor?.withValues(alpha: .24) ?? border,
+              color: minimal ? border : accentColor?.withValues(alpha: .24) ?? border,
             ),
           ),
           child: child,
