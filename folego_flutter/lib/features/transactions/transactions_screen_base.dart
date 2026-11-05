@@ -9,6 +9,7 @@ import '../../core/navigation/push_route.dart';
 import '../../core/realtime/realtime_invalidation.dart';
 import '../../core/realtime/realtime_session.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart;
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_theme.dart';
@@ -1721,6 +1722,7 @@ class _TransactionCardV3 extends StatelessWidget {
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
+    final minimal = AppColorSelection.selected.value == 'fluxo';
     final amountColor = item.isIncome
         ? AppColors.positiveText(brightness)
         : item.isExpense
@@ -1739,16 +1741,16 @@ class _TransactionCardV3 extends StatelessWidget {
           ? 'abrir detalhe e ações do lançamento'
           : 'abrir detalhe do lançamento',
       child: Material(
-        color: Color.alphaBlend(
+        color: minimal ? surface : Color.alphaBlend(
           visual.color.withValues(alpha: brightness == Brightness.dark ? .065 : .038),
           surface,
         ),
         elevation: MediaQuery.highContrastOf(context) ? 0 : 1.25,
-        shadowColor: accent.withValues(alpha: .14),
+        shadowColor: (minimal ? primary : accent).withValues(alpha: minimal ? .055 : .14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.card),
+          borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
           side: BorderSide(
-            color: Color.alphaBlend(
+            color: minimal ? border : Color.alphaBlend(
               visual.color.withValues(alpha: .26),
               border,
             ),
@@ -1756,13 +1758,13 @@ class _TransactionCardV3 extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onOpen,
-          borderRadius: BorderRadius.circular(AppRadii.card),
+          borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
           hoverColor: accent.withValues(alpha: .035),
           focusColor: accent.withValues(alpha: .09),
           splashColor: accent.withValues(alpha: .08),
           highlightColor: accent.withValues(alpha: .045),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: EdgeInsets.symmetric(horizontal: 15, vertical: minimal ? 13 : 16),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final textScale =
