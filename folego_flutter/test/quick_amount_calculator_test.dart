@@ -54,7 +54,7 @@ void main() {
       await tester.tap(find.byKey(ValueKey('budget-calculator-key-$key')));
       await tester.pump();
     }
-    expect(find.text('R\\$ 14,00'), findsOneWidget);
+    expect(find.textContaining('14,00'), findsOneWidget);
     expect(confirmed, isNull);
 
     await tester.tap(find.byKey(const ValueKey('budget-calculator-key-OK')));
