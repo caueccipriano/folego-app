@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/folego_motion.dart';
@@ -100,6 +101,7 @@ class GoalCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     final completed = goal.isCompleted;
+    final minimal = AppColorSelection.selected.value == 'fluxo';
 
     return Material(
       color: AppColors.transparent,
@@ -109,7 +111,8 @@ class GoalCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(19),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            color: minimal ? surface : null,
+            gradient: minimal ? null : LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: completed
@@ -121,7 +124,7 @@ class GoalCard extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: completed
+              color: minimal || completed
                   ? border
                   : Color.alphaBlend(purple.withValues(alpha: .31), border),
             ),
@@ -135,7 +138,9 @@ class GoalCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: completed
+                      color: minimal
+                          ? AppColors.background(brightness)
+                          : completed
                           ? border.withValues(alpha: .55)
                           : purple.withValues(alpha: .19),
                       borderRadius: BorderRadius.circular(14),
