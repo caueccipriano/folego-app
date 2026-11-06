@@ -108,26 +108,26 @@ class MoreToolsSheet extends StatelessWidget {
                   children: [
                     SizedBox(width: tileWidth, child: _ToolTile(
                       tileKey: const ValueKey('tools-wallet'),
-                      label: 'contas e cartões',
-                      caption: 'faturas e dívidas',
+                      label: 'carteira',
+                      caption: 'contas, cartões e dívidas',
                       icon: Icons.account_balance_wallet_outlined,
                       onTap: () => onSelected(0))),
                     SizedBox(width: tileWidth, child: _ToolTile(
                       tileKey: const ValueKey('tools-goals'),
                       label: 'metas',
-                      caption: 'guardar e realizar',
+                      caption: 'reservas e objetivos',
                       icon: Icons.flag_outlined,
                       onTap: () => onSelected(1))),
                     SizedBox(width: tileWidth, child: _ToolTile(
                       tileKey: const ValueKey('tools-diary'),
                       label: 'diário',
-                      caption: 'anotações financeiras',
+                      caption: 'hábitos e reflexões',
                       icon: Icons.auto_stories_outlined,
                       onTap: () => onSelected(2))),
                     SizedBox(width: tileWidth, child: _ToolTile(
                       tileKey: const ValueKey('tools-profile'),
-                      label: 'configurações',
-                      caption: 'perfil e automações',
+                      label: 'perfil',
+                      caption: 'temas, conta e ajustes',
                       icon: Icons.settings_outlined,
                       onTap: () => onSelected(3))),
                   ],
