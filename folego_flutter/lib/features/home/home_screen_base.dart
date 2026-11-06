@@ -929,7 +929,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  if (constraints.maxHeight >= 635) ...[
+                  if (constraints.maxHeight >=
+                      (constraints.maxWidth < 350 ? 790 : 750)) ...[
                     const SizedBox(height: 8),
                     HomeMobileSummaryStrip(
                       snapshot: snapshot,
