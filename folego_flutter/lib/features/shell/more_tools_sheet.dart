@@ -197,7 +197,6 @@ class _ToolTileState extends State<_ToolTile> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final tokens = FolegoColorTokens.of(context);
     return AnimatedScale(
       key: ValueKey('tool-scale-${widget.label}'),

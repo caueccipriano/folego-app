@@ -811,7 +811,6 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     final isDark = brightness == Brightness.dark;
     final surface = AppColors.surface(brightness);
     final border = AppColors.border(brightness);
-    final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
     final colors = FolegoColorTokens.of(context);
