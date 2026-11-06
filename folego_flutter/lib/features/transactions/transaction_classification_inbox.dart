@@ -159,6 +159,7 @@ Map<String, String> historicalCategorySuggestions({
 
   for (final item in history) {
     if (item.status != 'confirmed' ||
+        item.needsClassification ||
         item.categoryId == null ||
         !allowed.contains(item.categoryId)) {
       continue;
@@ -224,6 +225,7 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
     final category = allowed[item.categoryId];
     final name = normalizeAutomationText(item.description);
     if (item.status != 'confirmed' ||
+        item.needsClassification ||
         item.source != 'sheet-sync' ||
         (item.eventType != 'income' && item.eventType != 'expense') ||
         item.accountId == null ||
