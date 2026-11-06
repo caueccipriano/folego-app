@@ -374,6 +374,7 @@ class FolegoRepository {
         category_id,
         status,
         source,
+        metadata,
         category:categories(
           id,
           name,

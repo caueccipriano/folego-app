@@ -9,6 +9,7 @@ class TransactionItem {
     required this.source,
     this.competenceDate,
     this.categoryId,
+    this.needsClassification = false,
     this.categoryName,
     this.categoryColorHex,
     this.categoryParentId,
@@ -26,6 +27,8 @@ class TransactionItem {
   final String source;
 
   final String? categoryId;
+  /// A category can be prefilled while still waiting for human review.
+  final bool needsClassification;
   final String? categoryName;
   final String? categoryColorHex;
   final String? categoryParentId;
@@ -58,6 +61,10 @@ class TransactionItem {
     final accountData = _extractAccountData(
       json['financial_impacts'],
     );
+    final rawMetadata = json['metadata'];
+    final metadata = rawMetadata is Map
+        ? Map<String, dynamic>.from(rawMetadata)
+        : const <String, dynamic>{};
 
     return TransactionItem(
       id: json['id'] as String,
@@ -75,6 +82,8 @@ class TransactionItem {
       status: json['status'] as String,
       source: json['source'] as String,
       categoryId: category?['id'] as String?,
+      needsClassification: metadata['needs_classification'] == true ||
+          metadata['needs_classification']?.toString().toLowerCase() == 'true',
       categoryName: category?['name'] as String?,
       categoryColorHex: category?['color_hex'] as String?,
       categoryParentId: category?['parent_id'] as String?,

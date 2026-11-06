@@ -1,7 +1,111 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/data/models/transaction_item.dart';
 import 'package:folego/data/repositories/folego_repository_transaction_classification.dart';
 
 void main() {
+  test('transaction model retains pending review even with a category', () {
+    TransactionItem parsed(dynamic flag) => TransactionItem.fromJson({
+      'id': 'test-1',
+      'event_type': 'expense',
+      'description': 'Compra sintética',
+      'amount': 15,
+      'occurred_at': '2026-11-06T14:00:00Z',
+      'status': 'confirmed',
+      'source': 'sheet-sync',
+      'category': {'id': 'groceries', 'name': 'Mercado'},
+      'financial_impacts': [],
+      'metadata': {'needs_classification': flag},
+    });
+    expect(parsed(true).needsClassification, isTrue);
+    expect(parsed('true').needsClassification, isTrue);
+    expect(parsed(false).needsClassification, isFalse);
+    expect(parsed(null).needsClassification, isFalse);
+    expect(parsed(true).categoryId, 'groceries');
+  });
+
+
+  group('unclassified economic review', () {
+    Map<String, dynamic> entry({
+      String? categoryId,
+      String eventType = 'card_purchase',
+      String status = 'confirmed',
+      Map<String, dynamic>? metadata,
+    }) => {
+      'event_type': eventType,
+      'status': status,
+      'category_id': categoryId,
+      'metadata': metadata,
+    };
+
+    test('unclassified category enters review even without metadata flag', () {
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(categoryId: 'unclassified', metadata: {}),
+          unclassifiedId: 'unclassified',
+        ),
+        isTrue,
+      );
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(categoryId: null, metadata: {}),
+          unclassifiedId: 'unclassified',
+        ),
+        isTrue,
+      );
+    });
+
+    test('review disappears on categorization', () {
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(categoryId: 'groceries', metadata: {'needs_classification': false}),
+          unclassifiedId: 'unclassified',
+        ),
+        isFalse,
+      );
+    });
+
+    test('does not surface transfers, settled entries or hidden imports', () {
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(eventType: 'card_payment'),
+          unclassifiedId: 'unclassified',
+        ),
+        isFalse,
+      );
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(eventType: 'transfer'),
+          unclassifiedId: 'unclassified',
+        ),
+        isFalse,
+      );
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(status: 'ignored'),
+          unclassifiedId: 'unclassified',
+        ),
+        isFalse,
+      );
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(metadata: {'hidden': true, 'needs_classification': true}),
+          unclassifiedId: 'unclassified',
+        ),
+        isFalse,
+      );
+    });
+
+    test('legacy flagged categories still request review', () {
+      expect(
+        isVisiblePendingClassificationRow(
+          entry(categoryId: 'mapped', metadata: {'needs_classification': true}),
+          unclassifiedId: 'unclassified',
+        ),
+        isTrue,
+      );
+    });
+  });
+
   group('transactionClassificationKind', () {
     test('uses income categories for income-like events', () {
       expect(transactionClassificationKind('income'), 'income');
