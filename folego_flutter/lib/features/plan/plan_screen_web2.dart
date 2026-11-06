@@ -1483,7 +1483,7 @@ class _PlanScreenState extends State<PlanScreen> {
       children: [
         const AppSectionHeader(
           title: 'categorias',
-          subtitle: 'planejado, usado e disponível por categoria',
+          subtitle: 'limites por categoria · confira também seu caixa antes de gastar',
         ),
         const SizedBox(height: 10),
         if (_parents.isEmpty)
@@ -1588,8 +1588,8 @@ class _PlanScreenState extends State<PlanScreen> {
                                   ? '${Formatters.money(parent.actualAmount)} usados de '
                                       '${Formatters.money(parent.plannedAmount)} planejados'
                                   : parent.hasActivity
-                                  ? '${Formatters.money(parent.actualAmount)} gastos · sem limite'
-                                  : 'sem gasto nem limite',
+                                  ? '${Formatters.money(parent.actualAmount)} gastos · sem verba liberada'
+                                  : 'sem verba planejada',
                               key: ValueKey('plan-parent-subtitle-${parent.categoryId}'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -1612,7 +1612,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             children: [
                               Text(
                                 parent.remainingAmount < 0
-                                    ? 'ultrapassado' : 'disponível',
+                                    ? 'ultrapassado' : 'limite restante',
                                 style: AppTypography.label(
                                   context, fontSize: 11, color: secondaryText),
                               ),
@@ -1702,7 +1702,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     Text(
                       parent.remainingAmount < 0
                           ? '${Formatters.money(parent.remainingAmount.abs())} acima do limite'
-                          : '${Formatters.money(parent.remainingAmount)} ainda dentro do limite',
+                          : '${Formatters.money(parent.remainingAmount)} restantes no limite · não é saldo livre',
                       key: ValueKey('plan-parent-remaining-${parent.categoryId}'),
                       style: AppTypography.label(
                         context,
@@ -1766,8 +1766,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             }
                           }),
                           child: Text(showingIdle
-                              ? 'ocultar ${inactiveChildren.length} sem gasto nem limite'
-                              : 'mostrar ${inactiveChildren.length} sem gasto nem limite'),
+                              ? 'ocultar ${inactiveChildren.length} sem atividade'
+                              : 'mostrar ${inactiveChildren.length} sem atividade'),
                         ),
                       ),
                     if (amountWithoutSubcategory > .009)
@@ -1940,8 +1940,12 @@ class _PlanScreenState extends State<PlanScreen> {
                       Expanded(
                         child: Text(
                           child.hasActivity
-                              ? '${Formatters.money(child.actualAmount)} em gastos · sem limite, mas incluído no total'
-                              : 'nenhum gasto neste mês · sem limite',
+                              ? '${Formatters.money(child.actualAmount)} em gastos · sem verba para novas compras'
+                              : child.budgetSource == 'month' ||
+                                      child.budgetSource == 'override' ||
+                                      child.budgetSource == 'recurring'
+                                  ? 'R\$ 0 de verba liberada neste mês'
+                                  : 'sem teto definido · não significa dinheiro livre',
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
