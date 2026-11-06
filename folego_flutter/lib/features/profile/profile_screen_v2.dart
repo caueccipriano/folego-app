@@ -25,6 +25,7 @@ import '../../data/repositories/folego_repository_profile.dart';
 import '../../data/repositories/folego_repository_profile_export.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
+import '../../shared/widgets/folego_detail_disclosure.dart';
 import '../../shared/widgets/signature_feature_hero.dart';
 import '../auth/auth_validation.dart';
 import 'automation_rules_screen.dart';
@@ -708,9 +709,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
-        const SizedBox(height: 8),
-        _SettingsCard(
-          children: [
+        const SizedBox(height: 9),
+        FolegoDetailDisclosure(
+          key: const ValueKey('profile-account-tools-disclosure'),
+          title: 'acesso e ferramentas',
+          subtitle: 'e-mail, senha, categorias e ajuda',
+          icon: Icons.manage_accounts_outlined,
+          child: _SettingsCard(
+            children: [
             _SettingsRow(
               icon: AppIcons.edit,
               title: 'alterar e-mail',
@@ -752,7 +758,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: 'usuários, acesso Premium e sugestões',
                 onTap: _openFolegoAdmin,
               ),
-          ],
+            ],
+          ),
         ),
       ],
     ),
@@ -959,7 +966,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       const SizedBox(height: 19),
       _preferencesSection(),
       const SizedBox(height: 19),
-      _dataSection(),
+      FolegoDetailDisclosure(
+        key: const ValueKey('profile-data-disclosure'),
+        title: 'dados, sincronização e versão',
+        subtitle: 'exportar, verificar a planilha e instalar no iPhone',
+        icon: Icons.folder_outlined,
+        child: _dataSection(),
+      ),
       const SizedBox(height: 22),
       _logoutSection(),
     ];
