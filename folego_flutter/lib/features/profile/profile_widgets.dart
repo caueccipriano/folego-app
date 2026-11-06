@@ -42,18 +42,27 @@ class _AccountHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final surface = AppColors.surface(brightness);
-    final border = AppColors.border(brightness);
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    final purple = AppColors.primaryPurple(brightness);
+    final colors = FolegoColorTokens.of(context);
+    final surface = colors.superficie;
+    final border = colors.borda;
+    final primary = colors.textoPrincipal;
+    final secondary = colors.textoSecundario;
+    final purple = colors.marca;
 
+    final minimal = AppColorSelection.selected.value == 'ink';
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(AppRadii.feature),
+        color: minimal ? surface : null,
+        gradient: minimal ? null : LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(purple.withValues(alpha: .085), surface),
+            surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: border),
       ),
       child: Column(
@@ -172,12 +181,12 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
+    final colors = FolegoColorTokens.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.border(brightness)),
+        color: colors.superficie,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borda),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
@@ -206,11 +215,11 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    final expense = AppColors.expenseText(brightness);
-    final purple = AppColors.primaryPurple(brightness);
+    final colors = FolegoColorTokens.of(context);
+    final primary = colors.textoPrincipal;
+    final secondary = colors.textoSecundario;
+    final expense = colors.estourado;
+    final purple = colors.marca;
     final foreground = destructive ? expense : primary;
     final iconColor = enabled
         ? (destructive ? expense : purple)
@@ -223,9 +232,11 @@ class _SettingsRow extends StatelessWidget {
       value: subtitle,
       child: ExcludeSemantics(
         child: Material(
-        color: AppColors.surface(brightness),
+        color: colors.superficie,
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
+          splashColor: colors.marca.withValues(alpha: .08),
+          hoverColor: colors.marca.withValues(alpha: .05),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 64),
             child: Padding(
