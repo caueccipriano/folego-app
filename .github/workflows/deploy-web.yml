@@ -1,15 +1,9 @@
-name: Deploy Flutter Web
+name: Publish Folego Flow PWA to GitHub Pages
 
 on:
   push:
     branches:
-      - feat/transactions-recurring
-    paths:
-      - 'folego_flutter/**'
-      - '.github/workflows/deploy-web.yml'
-  pull_request:
-    branches:
-      - feat/transactions-recurring
+      - release/folego-flow-20261106
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/deploy-web.yml'
@@ -23,7 +17,7 @@ permissions:
 concurrency:
   # Pull-request preview builds must never cancel or queue the public PWA deployment.
   # One serial group per ref keeps repeat production pushes supersedable.
-  group: github-pages-${{ github.ref }}
+  group: github-pages-production
   cancel-in-progress: true
 
 jobs:
@@ -196,11 +190,11 @@ jobs:
           path: folego_flutter/build/web
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feat/transactions-recurring'
+    if: github.ref == 'refs/heads/release/folego-flow-20261106'
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages-preview
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
