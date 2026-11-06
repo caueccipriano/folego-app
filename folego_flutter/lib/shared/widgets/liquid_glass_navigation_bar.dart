@@ -27,18 +27,22 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     final items = <_NavItem>[
       _NavItem(icon: AppIcons.home, label: 'hoje'),
       _NavItem(icon: AppIcons.transactions, label: 'movimentos'),
-      _NavItem(icon: AppIcons.plan, label: 'futuro'),
+      _NavItem(icon: AppIcons.plan, label: 'planejar'),
     ];
 
     final tokens = FolegoColorTokens.of(context);
+    final isFlow = AppColorSelection.selected.value == 'fluxo';
     // Frosted appearance stays in the same layout region as the touch targets.
     final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
-    final navigationHeight = 62.0 + 16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
+    final navigationHeight = (isFlow ? 58.0 : 62.0) +
+        16.0 * (textScale.clamp(1.0, 2.0) - 1.0);
 
     return SafeArea(
       key: const ValueKey('mobile-liquid-nav'),
       top: false,
-      minimum: const EdgeInsets.fromLTRB(15, 8, 15, 8),
+      minimum: isFlow
+          ? const EdgeInsets.fromLTRB(12, 5, 12, 7)
+          : const EdgeInsets.fromLTRB(15, 8, 15, 8),
       child: SizedBox(
         height: navigationHeight,
         child: Row(
@@ -50,13 +54,10 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   height: navigationHeight,
-                  child: FolegoGlassSurface(
-                    // Banking-inspired calmer dock: the active destination
-                    // carries the brand, rather than tinting the whole bar.
-                    radius: 27,
-                    prominent: false,
-                    padding: const EdgeInsets.all(5),
-                  child: Row(
+                  child: _NavigationSurface(
+                    flow: isFlow,
+                    tokens: tokens,
+                    child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ...List.generate(items.length, (index) {
@@ -84,7 +85,10 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                               margin: const EdgeInsets.symmetric(horizontal: 1),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(21),
-                                gradient: selectedIndex >= 3
+                                color: selectedIndex >= 3 && isFlow
+                                    ? tokens.marca.withValues(alpha: .08)
+                                    : null,
+                                gradient: selectedIndex >= 3 && !isFlow
                                     ? LinearGradient(colors: [
                                         tokens.marca.withValues(alpha: .16),
                                         tokens.marca.withValues(alpha: .055),
@@ -102,8 +106,8 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                     key: const ValueKey('mobile-tools-indicator'),
                                     duration: FolegoMotion.duration(context,
                                         milliseconds: 160),
-                                    width: selectedIndex >= 3 ? 22 : 5,
-                                    height: 3,
+                                    width: isFlow ? 0 : (selectedIndex >= 3 ? 22 : 5),
+                                    height: isFlow ? 0 : 3,
                                     decoration: BoxDecoration(
                                       color: selectedIndex >= 3
                                           ? tokens.marca
@@ -118,14 +122,14 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                     width: 37,
                                     height: 24,
                                     decoration: BoxDecoration(
-                                      color: selectedIndex >= 3
+                                      color: selectedIndex >= 3 && !isFlow
                                           ? tokens.marca.withValues(alpha: .12)
                                           : AppColors.transparent,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
                                       Icons.grid_view_rounded,
-                                      size: 21,
+                                      size: isFlow ? 20 : 21,
                                       color: selectedIndex >= 3
                                           ? tokens.marca
                                           : tokens.textoSecundario,
@@ -134,7 +138,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
                                   Text('mais',
                                     style: AppTypography.label(
                                       context,
-                                      fontSize: 12,
+                                      fontSize: isFlow ? 11 : 12,
                                       fontWeight: selectedIndex >= 3
                                           ? FontWeight.w700
                                           : FontWeight.w500,
@@ -276,7 +280,7 @@ class _Destination extends StatelessWidget {
                     maxLines: 1,
                     style: AppTypography.label(
                       context,
-                      fontSize: 12,
+                      fontSize: isFlow ? 11 : 12,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? activeForeground : inactiveColor,
                     ),
@@ -297,4 +301,40 @@ class _NavItem {
 
   final IconData icon;
   final String label;
+}
+
+/// Fluxo keeps the dock as a calm, opaque native surface. Other palettes
+/// preserve their existing frosted treatment and safe iOS hit targets.
+class _NavigationSurface extends StatelessWidget {
+  const _NavigationSurface({
+    required this.flow,
+    required this.tokens,
+    required this.child,
+  });
+
+  final bool flow;
+  final FolegoColorTokens tokens;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!flow) {
+      return FolegoGlassSurface(
+        radius: 27,
+        prominent: false,
+        padding: const EdgeInsets.all(5),
+        child: child,
+      );
+    }
+    return Container(
+      key: const ValueKey('flow-native-nav-surface'),
+      decoration: BoxDecoration(
+        color: tokens.superficie,
+        border: Border.all(color: tokens.borda),
+        borderRadius: BorderRadius.circular(19),
+      ),
+      padding: const EdgeInsets.all(5),
+      child: Material(type: MaterialType.transparency, child: child),
+    );
+  }
 }

@@ -63,7 +63,7 @@ void main() {
     expect(find.byKey(const ValueKey('mobile-nav-destination-4')), findsNothing);
     expect(find.text('hoje'), findsOneWidget);
     expect(find.text('movimentos'), findsOneWidget);
-    expect(find.text('futuro'), findsOneWidget);
+    expect(find.text('planejar'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('mobile-tools-button')));
     await tester.pump();

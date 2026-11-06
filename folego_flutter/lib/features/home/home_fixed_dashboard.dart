@@ -86,7 +86,7 @@ class HomeFixedDashboard extends StatelessWidget {
             final roomy = limits.maxWidth >= 370;
             final largeText = textScale > 1.3;
             final tight = short || largeText;
-            final space = tiny ? 7.0 : 10.0;
+            final space = tiny ? 7.0 : (minimal ? 8.0 : 10.0);
 
             return Padding(
               padding: EdgeInsets.fromLTRB(16, tiny ? 4 : 10, 16, 10),
@@ -281,7 +281,7 @@ class HomeFixedDashboard extends StatelessWidget {
                               Padding(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 18,
-                                  vertical: tiny ? 12 : (tight ? 14 : 17),
+                                  vertical: tiny ? 12 : (minimal ? 12 : (tight ? 14 : 17)),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,7 +300,7 @@ class HomeFixedDashboard extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                        if (roomy && !tiny && !largeText && !hidden) ...[
+                                        if (roomy && !tiny && !largeText && !hidden && !minimal) ...[
                                           Container(
                                             key: const ValueKey(
                                               'home-fixed-rhythm-badge',
@@ -341,11 +341,12 @@ class HomeFixedDashboard extends StatelessWidget {
                                           ),
                                           const SizedBox(width: 8),
                                         ],
-                                        Icon(
-                                          Icons.arrow_outward_rounded,
-                                          color: colors.marcaHeroSobre,
-                                          size: 18,
-                                        ),
+                                        if (!minimal)
+                                          Icon(
+                                            Icons.arrow_outward_rounded,
+                                            color: colors.marcaHeroSobre,
+                                            size: 18,
+                                          ),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
@@ -550,7 +551,7 @@ class HomeFixedDashboard extends StatelessWidget {
                   ],
                   if (insight.showCard && !short && !largeText) ...[
                     const SizedBox(height: 10),
-                    FolegoGlassSurface(
+                    _DashboardSurface(
                       radius: 18,
                       prominent: false,
                       elevated: false,
@@ -660,7 +661,7 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
-    return FolegoGlassSurface(
+    return _DashboardSurface(
       radius: 18,
       prominent: false,
       elevated: false,
@@ -719,6 +720,48 @@ class _MetricTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// Flat cards in Fluxo; the original surfaces remain available in other themes.
+class _DashboardSurface extends StatelessWidget {
+  const _DashboardSurface({
+    required this.radius,
+    required this.prominent,
+    required this.elevated,
+    required this.child,
+    this.padding = EdgeInsets.zero,
+  });
+
+  final double radius;
+  final bool prominent;
+  final bool elevated;
+  final EdgeInsetsGeometry padding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppColorSelection.selected.value != 'fluxo') {
+      return FolegoGlassSurface(
+        radius: radius,
+        prominent: prominent,
+        elevated: elevated,
+        padding: padding,
+        child: child,
+      );
+    }
+    final tokens = FolegoColorTokens.of(context);
+    return Container(
+      key: const ValueKey('flow-home-flat-card'),
+      padding: padding,
+      decoration: BoxDecoration(
+        color: tokens.superficie,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: tokens.borda),
+      ),
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }
