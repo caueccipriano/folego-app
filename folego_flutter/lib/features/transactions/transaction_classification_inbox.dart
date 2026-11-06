@@ -159,6 +159,7 @@ Map<String, String> historicalCategorySuggestions({
 
   for (final item in history) {
     if (item.status != 'confirmed' ||
+        item.needsClassification ||
         item.categoryId == null ||
         !allowed.contains(item.categoryId)) {
       continue;
@@ -224,6 +225,7 @@ List<AutopilotRuleProposal> safeAutopilotRuleProposals({
     final category = allowed[item.categoryId];
     final name = normalizeAutomationText(item.description);
     if (item.status != 'confirmed' ||
+        item.needsClassification ||
         item.source != 'sheet-sync' ||
         (item.eventType != 'income' && item.eventType != 'expense') ||
         item.accountId == null ||
@@ -334,6 +336,15 @@ class _TransactionClassificationInboxState
       widget.batchSize != null && _batchDone >= _batchTarget;
   String? _error;
 
+  /// Prevent overlapping refreshes, manual saves and reviewed batch writes.
+  bool get _classificationActionsLocked => classificationActionLocked(
+    loading: _loading,
+    refreshing: _refreshing,
+    saving: _savingEventId != null,
+    applyingSuggestions: _applyingSuggestions,
+    creatingAutomaticRule: _creatingAutomaticRule,
+  );
+
   bool get _automationEnabled =>
       FeatureEntitlementsScope.of(context).entitlements
           .allows(AppCapability.automationRules);
@@ -388,7 +399,7 @@ class _TransactionClassificationInboxState
   );
 
   Future<void> _applyReviewedSuggestions() async {
-    if (_savingEventId != null || _loading || _applyingSuggestions) return;
+    if (_classificationActionsLocked) return;
     final proposed = _readySuggestions;
     if (proposed.isEmpty) return;
 
@@ -396,9 +407,14 @@ class _TransactionClassificationInboxState
       for (final item in [..._expenseCategories, ..._incomeCategories])
         item.id: item,
     };
+    final remaining = _batchTarget - _batchDone;
     final proposedLines = _items
         .where((item) => proposed.containsKey(item.id))
+        .take(widget.batchSize == null
+            ? _items.length
+            : (remaining <= 0 ? 0 : remaining))
         .toList(growable: false);
+    if (proposedLines.isEmpty) return;
 
     final approved = await showDialog<bool>(
       context: context,
@@ -480,34 +496,36 @@ class _TransactionClassificationInboxState
         }
       }
       if (!mounted) return;
-      await _refresh();
+      await _refresh(allowDuringBatch: true);
       if (!mounted) return;
       setState(() {
         _changed = _changed || applied > 0;
         _batchDone += applied;
-        if (widget.batchSize != null) {
-          _batchTarget =
-              _batchDone +
-              (_items.length < widget.batchSize!
-                  ? _items.length
-                  : widget.batchSize!);
-        }
         if (failed) {
           _error =
               '$applied sugestões aplicadas. '
               'Uma classificação falhou; as demais ficaram pendentes.';
         }
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$applied categorias confirmadas e aplicadas')),
-      );
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => _error =
-              'Não foi possível atualizar as pendências. '
-              'Nada foi aplicado automaticamente.',
+      if (applied > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$applied categorias confirmadas e aplicadas')),
         );
+      }
+    } catch (_) {
+      if (applied > 0 && mounted) {
+        await _refresh(allowDuringBatch: true);
+      }
+      if (mounted) {
+        setState(() {
+          _changed = _changed || applied > 0;
+          _batchDone += applied;
+          _error = applied > 0
+              ? '$applied categoria(s) salva(s), mas não foi possível '
+                  'concluir a revisão. Atualize para conferir o restante.'
+              : 'Não foi possível conferir as pendências. '
+                  'Nenhuma categoria foi aplicada.';
+        });
       }
     } finally {
       if (mounted) setState(() => _applyingSuggestions = false);
@@ -515,7 +533,7 @@ class _TransactionClassificationInboxState
   }
 
   Future<void> _activateAutopilotRule(AutopilotRuleProposal proposal) async {
-    if (_creatingAutomaticRule || !_automationEnabled) {
+    if (_classificationActionsLocked || !_automationEnabled) {
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -622,8 +640,13 @@ class _TransactionClassificationInboxState
         .toList(growable: false);
   }
 
-  Future<void> _refresh() async {
-    if (_refreshing) return;
+  Future<void> _refresh({bool allowDuringBatch = false}) async {
+    if (_refreshing ||
+        _savingEventId != null ||
+        _creatingAutomaticRule ||
+        (_applyingSuggestions && !allowDuringBatch)) {
+      return;
+    }
     setState(() => _refreshing = true);
     try {
       final items = await widget.repository
@@ -672,7 +695,7 @@ class _TransactionClassificationInboxState
   }
 
   Future<void> _chooseCategory(TransactionItem item) async {
-    if (_savingEventId != null || _loading) return;
+    if (_classificationActionsLocked) return;
     final kind = transactionClassificationKind(item.eventType);
     if (kind == null) return;
 
@@ -727,7 +750,7 @@ class _TransactionClassificationInboxState
     TransactionItem item,
     SmartCategorySuggestion suggestion,
   ) async {
-    if (_savingEventId != null || _loading || _applyingSuggestions) return;
+    if (_classificationActionsLocked) return;
     // An explicit tap is required. Never run classifications while building.
     await _saveSelectedCategory(item, suggestion.category, showOffers: false);
   }
@@ -737,7 +760,8 @@ class _TransactionClassificationInboxState
     CategoryItem selected, {
     bool showOffers = true,
   }) async {
-    if (_savingEventId != null || !_items.any((row) => row.id == item.id)) {
+    if (_classificationActionsLocked ||
+        !_items.any((row) => row.id == item.id)) {
       return;
     }
     setState(() {
@@ -1071,7 +1095,7 @@ class _TransactionClassificationInboxState
                   ),
                   IconButton(
                     tooltip: 'atualizar',
-                    onPressed: _refreshing ? null : _refresh,
+                    onPressed: _classificationActionsLocked ? null : _refresh,
                     icon: _refreshing
                         ? const SizedBox(
                             width: 18,
@@ -1082,7 +1106,9 @@ class _TransactionClassificationInboxState
                   ),
                   IconButton(
                     tooltip: 'fechar',
-                    onPressed: () => Navigator.of(context).pop(_changed),
+                    onPressed: _classificationActionsLocked
+                        ? null
+                        : () => Navigator.of(context).pop(_changed),
                     icon: Icon(AppIcons.close, color: secondaryText),
                   ),
                 ],
@@ -1143,7 +1169,7 @@ class _TransactionClassificationInboxState
                           maxLines: 2,
                         ),
                         trailing: OutlinedButton(
-                          onPressed: _creatingAutomaticRule
+                          onPressed: _classificationActionsLocked
                               ? null
                               : () => _activateAutopilotRule(proposal),
                           child: const Text('ativar'),
@@ -1160,7 +1186,9 @@ class _TransactionClassificationInboxState
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: OutlinedButton.icon(
                   key: const ValueKey('classification-reviewed-suggestions'),
-                  onPressed: _applyReviewedSuggestions,
+                  onPressed: _classificationActionsLocked
+                      ? null
+                      : _applyReviewedSuggestions,
                   icon: const Icon(AppIcons.check, size: 18),
                   label: Text(
                     '${_readySuggestions.length} sugestões prontas para conferir',
@@ -1243,6 +1271,7 @@ class _TransactionClassificationInboxState
                             item: item,
                             suggestion: suggestion,
                             saving: _savingEventId == item.id,
+                            disabled: _classificationActionsLocked,
                             onTap: () => _chooseCategory(item),
                             onDetails: () async {
                               await showTransactionDetail(
@@ -1305,10 +1334,18 @@ class _TransactionClassificationInboxState
     if (text.contains('category_kind_mismatch')) {
       return 'essa categoria não corresponde ao tipo do lançamento';
     }
-    if (text.contains('category_not_selectable')) {
+    if (text.contains('category_not_selectable') ||
+        text.contains('invalid_category')) {
       return 'escolha uma categoria ativa e selecionável';
     }
-    return text.replaceFirst('Exception: ', '').replaceFirst('Bad state: ', '');
+    if (text.contains('write_access_denied') ||
+        text.contains('authentication_required')) {
+      return 'sua sessão não tem permissão. Entre novamente e tente de novo.';
+    }
+    if (text.contains('event_not_found')) {
+      return 'este lançamento mudou ou foi removido. Atualize a lista.';
+    }
+    return 'não foi possível concluir a ação. Atualize e tente novamente.';
   }
 }
 
@@ -1318,6 +1355,7 @@ class _ClassificationCard extends StatelessWidget {
     required this.suggestion,
     required this.onAcceptSuggestion,
     required this.saving,
+    required this.disabled,
     required this.onTap,
     required this.onDetails,
   });
@@ -1326,6 +1364,7 @@ class _ClassificationCard extends StatelessWidget {
   final SmartCategorySuggestion? suggestion;
   final VoidCallback? onAcceptSuggestion;
   final bool saving;
+  final bool disabled;
   final VoidCallback onTap;
   final VoidCallback onDetails;
 
@@ -1347,7 +1386,7 @@ class _ClassificationCard extends StatelessWidget {
     return Material(
       color: AppColors.transparent,
       child: InkWell(
-        onTap: saving ? null : onTap,
+        onTap: (disabled || saving) ? null : onTap,
         borderRadius: BorderRadius.circular(AppRadii.compactCard),
         child: Ink(
           padding: const EdgeInsets.all(14),
@@ -1453,14 +1492,16 @@ class _ClassificationCard extends StatelessWidget {
                           key: ValueKey(
                             'classification-accept-suggestion:${item.id}',
                           ),
-                          onPressed: saving ? null : onAcceptSuggestion,
+                          onPressed: (disabled || saving)
+                              ? null
+                              : onAcceptSuggestion,
                           icon: const Icon(AppIcons.check, size: 15),
                           label: const Text('aceitar sugestão'),
                         ),
                       ),
                     ],
                     TextButton(
-                      onPressed: saving ? null : onDetails,
+                      onPressed: (disabled || saving) ? null : onDetails,
                       child: const Text(
                         'revisar descrição, fixo/variável e comentário',
                       ),
