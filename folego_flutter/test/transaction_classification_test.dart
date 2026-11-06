@@ -1,7 +1,28 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:folego/data/models/transaction_item.dart';
 import 'package:folego/data/repositories/folego_repository_transaction_classification.dart';
 
 void main() {
+  test('transaction model retains pending review even with a category', () {
+    TransactionItem parsed(dynamic flag) => TransactionItem.fromJson({
+      'id': 'test-1',
+      'event_type': 'expense',
+      'description': 'Compra sintética',
+      'amount': 15,
+      'occurred_at': '2026-11-06T14:00:00Z',
+      'status': 'confirmed',
+      'source': 'sheet-sync',
+      'category': {'id': 'groceries', 'name': 'Mercado'},
+      'financial_impacts': [],
+      'metadata': {'needs_classification': flag},
+    });
+    expect(parsed(true).needsClassification, isTrue);
+    expect(parsed('true').needsClassification, isTrue);
+    expect(parsed(false).needsClassification, isFalse);
+    expect(parsed(null).needsClassification, isFalse);
+    expect(parsed(true).categoryId, 'groceries');
+  });
+
 
   group('unclassified economic review', () {
     Map<String, dynamic> entry({
