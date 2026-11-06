@@ -30,6 +30,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/signature_feature_hero.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
 import '../../shared/widgets/app_section_header.dart';
+import '../../shared/widgets/folego_detail_disclosure.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
@@ -897,21 +898,35 @@ class _PlanScreenState extends State<PlanScreen> {
             const LinearProgressIndicator(minHeight: 2),
           ],
           SizedBox(height: compactFlow ? 11 : 14),
-          _buildGuidance(),
-          SizedBox(height: compactFlow ? 11 : 14),
           _buildSummary(brightness),
-          SizedBox(height: compactFlow ? 15 : 19),
-          MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
-          if (_insightsFuture != null) ...[
-            const SizedBox(height: 12),
-            _buildInsights(),
-          ],
-          if (widget.onPurchaseSimulationRequested != null) ...[
-            const SizedBox(height: 12),
-            _purchaseSimulationButton(),
-          ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
           _buildCategories(brightness),
+          const SizedBox(height: 18),
+          FolegoDetailDisclosure(
+            key: const ValueKey('plan-advanced-disclosure'),
+            title: 'análises e ferramentas',
+            subtitle: 'gráficos, sugestões e simulações de compras',
+            icon: Icons.insights_outlined,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildGuidance(),
+                const SizedBox(height: 14),
+                MonthlyCategoryDonut(
+                  items: _items,
+                  onCategory: _showCategorySpending,
+                ),
+                if (_insightsFuture != null) ...[
+                  const SizedBox(height: 14),
+                  _buildInsights(),
+                ],
+                if (widget.onPurchaseSimulationRequested != null) ...[
+                  const SizedBox(height: 14),
+                  _purchaseSimulationButton(),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

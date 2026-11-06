@@ -840,7 +840,8 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                       compact: true,
                       trailing:
                           widget.onImportRequested == null &&
-                              widget.onClassificationRequested == null
+                              widget.onClassificationRequested == null &&
+                              widget.onSpendingBehaviorRequested == null
                           ? null
                           : Row(
                               mainAxisSize: MainAxisSize.min,
@@ -910,10 +911,30 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                       ),
                                     ),
                                   ),
+                                if (widget.onSpendingBehaviorRequested != null)
+                                  PopupMenuButton<String>(
+                                    key: const ValueKey('transactions-spending-behavior-entry'),
+                                    tooltip: 'mais opções do extrato',
+                                    onSelected: (action) {
+                                      if (action == 'behavior') {
+                                        widget.onSpendingBehaviorRequested?.call();
+                                      }
+                                    },
+                                    icon: const Icon(Icons.more_horiz_rounded),
+                                    itemBuilder: (context) => const [
+                                      PopupMenuItem<String>(
+                                        value: 'behavior',
+                                        child: Text('definir gastos fixos e variáveis'),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                     ),
-                    if (widget.onClassificationRequested != null) ...[
+                    if (widget.onClassificationRequested != null &&
+                        !widget.pendingClassificationLoading &&
+                        !widget.pendingClassificationUnavailable &&
+                        widget.pendingClassificationCount > 0) ...[
                       Material(
                         color: Color.alphaBlend(
                           accent.withValues(alpha: isDark ? .095 : .055),
@@ -963,18 +984,6 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                 size: 18, color: accent),
                             ]),
                           ),
-                        ),
-                      ),
-                    ],
-                    if (widget.onSpendingBehaviorRequested != null) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          key: const ValueKey('transactions-spending-behavior-entry'),
-                          onPressed: widget.onSpendingBehaviorRequested,
-                          icon: const Icon(Icons.pie_chart_outline_rounded, size: 18),
-                          label: const Text('definir gastos fixos e variáveis'),
                         ),
                       ),
                     ],

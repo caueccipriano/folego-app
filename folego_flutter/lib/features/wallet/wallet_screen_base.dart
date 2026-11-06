@@ -20,6 +20,7 @@ import '../../data/repositories/folego_repository.dart';
 import '../../data/repositories/folego_repository_wallet_details.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
+import '../../shared/widgets/folego_detail_disclosure.dart';
 import '../../shared/widgets/signature_feature_hero.dart';
 import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_state.dart';
@@ -306,6 +307,10 @@ class _WalletScreenState extends State<WalletScreen> {
                     _buildSelector(),
                     const SizedBox(height: 13),
                     _buildSelectedSection(),
+                    if (AppBreakpoints.of(context) == AppLayoutSize.compact) ...[
+                      const SizedBox(height: 18),
+                      _buildAdditionalPositions(),
+                    ],
                   ],
                 ],
               ),
@@ -517,8 +522,6 @@ class _WalletScreenState extends State<WalletScreen> {
                 metric: metrics.first,
                 emphasized: true,
               ),
-              const SizedBox(height: spacing),
-              _CompactPositionBreakdown(metrics: metrics.sublist(1)),
             ],
           );
         }
@@ -540,6 +543,33 @@ class _WalletScreenState extends State<WalletScreen> {
       },
     );
   }
+
+  Widget _buildAdditionalPositions() => FolegoDetailDisclosure(
+    key: const ValueKey('wallet-position-breakdown-toggle'),
+    title: 'outros valores',
+    subtitle: 'benefícios, faturas em aberto e dívidas',
+    icon: Icons.account_balance_outlined,
+    child: _CompactPositionBreakdown(metrics: [
+      _PositionMetric(
+        label: 'benefícios',
+        value: _overview!.summary.totalBenefit,
+        icon: AppIcons.benefit,
+        onTap: () => _selectSection(3),
+      ),
+      _PositionMetric(
+        label: 'faturas em aberto',
+        value: _overview!.summary.totalCardInvoice,
+        icon: AppIcons.creditCard,
+        onTap: () => _selectSection(1),
+      ),
+      _PositionMetric(
+        label: 'dívidas restantes',
+        value: _overview!.summary.totalDebtRemaining,
+        icon: AppIcons.debt,
+        onTap: () => _selectSection(2),
+      ),
+    ]),
+  );
 
   Widget _buildSelector() {
     final sections = [

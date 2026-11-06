@@ -21,7 +21,7 @@ import '../../shared/widgets/category_icon_badge.dart';
 import '../../shared/widgets/app_error_state.dart';
 import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
-import '../../shared/widgets/signature_feature_hero.dart';
+import '../../shared/widgets/folego_detail_disclosure.dart';
 import '../transactions/transactions_screen.dart';
 import 'reflection_form_sheet.dart';
 
@@ -196,16 +196,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
                         MediaQuery.paddingOf(context).bottom + 115,
                       ),
                       children: [
-                        const SignatureFeatureHero(
-                          title: 'Escolhas que contam.',
-                          eyebrow: 'Diário financeiro',
-                          subtitle: 'Acompanhe seus hábitos sem julgamentos',
-                          icon: Icons.auto_stories_outlined,
-                          compact: true,
-                        ),
-                        const SizedBox(height: 13),
                         _header(brightness),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 13),
                         if (_error == null) ...[
                           DiaryReviewCard(
                             reviewed: _entries
@@ -248,10 +240,16 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           )
                         else ...[
                           _pendingSection(pending, brightness),
-                          const SizedBox(height: 18),
-                          _summaryCard(summary, brightness),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 17),
                           _timelineSection(timeline, pending, brightness),
+                          const SizedBox(height: 17),
+                          FolegoDetailDisclosure(
+                            key: const ValueKey('diary-month-analysis-disclosure'),
+                            title: 'análise dos hábitos',
+                            subtitle: 'gráfico e proporção das suas reflexões',
+                            icon: Icons.pie_chart_outline_rounded,
+                            child: _summaryCard(summary, brightness),
+                          ),
                         ],
                       ],
                     ),
