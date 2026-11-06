@@ -43,6 +43,12 @@ void main() {
     expect(active, contains('Formatters.money(snapshot.spendablePool)'));
     expect(active, contains('Formatters.money(snapshot.dailyFolego)'));
     expect(active, contains('FinancialPrivacy.maskMoney()'));
+    expect(active, contains('RefreshIndicator('));
+    expect(active, contains('ListView('));
+    expect(active, contains("ValueKey('home-flow-month-heading')"));
+    expect(active, contains("ValueKey('home-flow-month-overview')"));
+    expect(active, contains('showTiles: true'));
+    expect(active, isNot(contains('const Spacer()')));
     expect(active, contains('HomeMobileSummaryStrip('));
     expect(active, contains('snapshot: snapshot'));
     expect(active, contains('onBudget: () {'));
