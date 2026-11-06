@@ -881,7 +881,7 @@ class _PlanScreenState extends State<PlanScreen> {
   );
 
   Widget _buildMobileLayout(Brightness brightness, AppLayoutSize layout) {
-    final compactFlow = AppColorSelection.selected.value == 'fluxo';
+    final compactFlow = AppColorSelection.selected.value == 'ink';
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -889,18 +889,18 @@ class _PlanScreenState extends State<PlanScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(0, compactFlow ? 7 : 10, 0, 76),
+        padding: EdgeInsets.fromLTRB(4, compactFlow ? 9 : 12, 4, 96),
         children: [
           _buildHeader(brightness, layout),
           if (_refreshing) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(minHeight: 2),
           ],
-          SizedBox(height: compactFlow ? 8 : 12),
+          SizedBox(height: compactFlow ? 11 : 14),
           _buildGuidance(),
-          SizedBox(height: compactFlow ? 8 : 12),
+          SizedBox(height: compactFlow ? 11 : 14),
           _buildSummary(brightness),
-          SizedBox(height: compactFlow ? 12 : 16),
+          SizedBox(height: compactFlow ? 15 : 19),
           MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
           if (_insightsFuture != null) ...[
             const SizedBox(height: 12),
@@ -981,14 +981,15 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _buildHeader(Brightness brightness, AppLayoutSize layout) {
-    final primaryText = AppColors.primaryText(brightness);
+    final tokens = FolegoColorTokens.of(context);
+    final primaryText = tokens.textoPrincipal;
     final compact = layout == AppLayoutSize.compact;
 
     final monthPicker = Container(
       decoration: BoxDecoration(
-        color: AppColors.surface(brightness),
-        borderRadius: BorderRadius.circular(AppRadii.control),
-        border: Border.all(color: AppColors.border(brightness)),
+        color: tokens.superficie,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tokens.borda),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1032,12 +1033,12 @@ class _PlanScreenState extends State<PlanScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           title,
-          SizedBox(height: AppColorSelection.selected.value == 'fluxo' ? 7 : 10),
+          SizedBox(height: AppColorSelection.selected.value == 'ink' ? 7 : 10),
           _PlanModeToggle(
             projection: false,
             onProjection: widget.onProjectionRequested,
           ),
-          SizedBox(height: AppColorSelection.selected.value == 'fluxo' ? 8 : 12),
+          SizedBox(height: AppColorSelection.selected.value == 'ink' ? 8 : 12),
           Align(alignment: Alignment.centerLeft, child: monthPicker),
           if (_isPastMonth) ...[
             const SizedBox(height: 10),
@@ -1082,7 +1083,7 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Widget _buildSummary(Brightness brightness) {
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     final summary = _summary;
     final diagnostics = BudgetMonthDiagnostics.fromItems(_items);
     final primaryText = AppColors.primaryText(brightness);
@@ -1107,7 +1108,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return Container(
       key: const ValueKey('plan-summary'),
       width: double.infinity,
-      padding: EdgeInsets.all(minimal ? 14 : 20),
+      padding: EdgeInsets.all(minimal ? 17 : 20),
       decoration: BoxDecoration(
         color: minimal ? AppColors.surface(brightness) : null,
         gradient: minimal ? null : LinearGradient(
@@ -1121,7 +1122,7 @@ class _PlanScreenState extends State<PlanScreen> {
             AppColors.surface(brightness),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppRadii.feature),
+        borderRadius: BorderRadius.circular(minimal ? 18 : 24),
         border: Border.all(
           color: summary.remainingAmount < 0
               ? progressColor.withValues(alpha: .52)
@@ -1493,7 +1494,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final visibleChildren = showingIdle ? children :
         children.where((child) => child.hasActivity || child.hasBudget).toList();
     final expanded = _expandedCategoryIds.contains(parent.categoryId);
-    final budgetFlow = AppColorSelection.selected.value == 'fluxo';
+    final budgetFlow = AppColorSelection.selected.value == 'ink';
     final primaryText = AppColors.primaryText(brightness);
     final secondaryText = AppColors.secondaryText(brightness);
     final border = AppColors.border(brightness);
@@ -2135,7 +2136,7 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border(brightness);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.control),

@@ -292,19 +292,19 @@ class _WalletScreenState extends State<WalletScreen> {
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
+                padding: const EdgeInsets.fromLTRB(4, 12, 4, 96),
                 children: [
                   _buildHeader(brightness),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   if (_loading)
                     const AppLoadingState(label: 'organizando sua carteira')
                   else if (_error != null)
                     _WalletError(message: _error!, onRetry: _load)
                   else if (_overview != null) ...[
                     _buildPositionSummary(),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     _buildSelector(),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 13),
                     _buildSelectedSection(),
                   ],
                 ],
@@ -974,7 +974,7 @@ class _PositionMetricCard extends StatelessWidget {
     final secondary = AppColors.secondaryText(brightness);
     final purple = AppColors.primaryPurple(brightness);
     final tokens = FolegoColorTokens.of(context);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     return Material(
       color: AppColors.transparent,
       child: InkWell(
@@ -1880,7 +1880,7 @@ class _InteractiveWalletCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final border = AppColors.border(brightness);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     return Material(
       color: AppColors.surface(brightness),
       borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
