@@ -196,7 +196,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             context: context,
             useRootNavigator: true,
             builder: (dialogContext) => Dialog(
-              backgroundColor: AppColors.transparent,
+              backgroundColor: AppColors.surface(Theme.of(context).brightness),
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: SizedBox(
                 width: AppContentWidths.form,
@@ -205,6 +205,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                   categories: _categories,
                   selectedId: _categoryId,
                   eventType: widget.initialType,
+                  drillDown: widget.initialType == 'expense',
                   dialogMode: true,
                 ),
               ),
@@ -215,13 +216,19 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
             useRootNavigator: true,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: AppColors.transparent,
+            backgroundColor: AppColors.surface(Theme.of(context).brightness),
+            barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: .80),
+            clipBehavior: Clip.antiAlias,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
             builder: (_) => FractionallySizedBox(
-              heightFactor: .86,
+              heightFactor: .94,
               child: CategorySearchPicker(
                 categories: _categories,
                 selectedId: _categoryId,
                 eventType: widget.initialType,
+                  drillDown: widget.initialType == 'expense',
               ),
             ),
           );
