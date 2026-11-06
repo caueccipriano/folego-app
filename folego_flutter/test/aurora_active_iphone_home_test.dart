@@ -13,9 +13,9 @@ void main() {
     expect(home, contains('MediaQuery.sizeOf(context).height >= 540'));
     expect(home, contains('return _buildFixedMobileHome('));
     expect(active, contains('FolegoAmbientBackdrop('));
-    expect(active, contains('tokens.marcaHero'));
-    expect(active, contains('tokens.acaoHero'));
-    expect(active, contains('highContrast ? .78 : (minimal ? .15 : .26)'));
+    expect(active, contains('color: tokens.superficie'));
+    expect(active, contains('color: tokens.marca'));
+    expect(active, contains('border: Border.all(color: tokens.borda)'));
     expect(active, contains("ValueKey('home-fixed-spendable')"));
     expect(active, contains("ValueKey('home-fixed-amount')"));
   });
@@ -23,9 +23,9 @@ void main() {
   test('banking-grade visual system is on the active Home', () {
     expect(home, contains('FÔLEGO  /  HOJE'));
     expect(active, contains('DISPONÍVEL ATÉ RECEBER'));
-    expect(active, contains('SEU LIMITE DIÁRIO'));
+    expect(active, contains('SEU FÔLEGO POR DIA'));
     expect(active, contains('PRÓXIMO SALÁRIO'));
-    expect(active, contains('tokens.acaoHero'));
+    expect(active, contains('color: tokens.marca'));
     expect(active, contains("ValueKey('home-fixed-amount')"));
     expect(active, contains("ValueKey('home-fixed-daily')"));
     final summary = File('lib/features/home/home_mobile_summary_strip.dart')

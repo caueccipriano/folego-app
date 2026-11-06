@@ -679,8 +679,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final privacy = FinancialPrivacy.hidden.value;
     final tokens = FolegoColorTokens.of(context);
     final minimal = AppColorSelection.selected.value == 'fluxo';
-    final onHero = tokens.marcaHeroSobre;
-    final highContrast = MediaQuery.highContrastOf(context);
+    final onHero = tokens.textoPrincipal;
     return FolegoAmbientBackdrop(
       child: SafeArea(
         child: AppContentContainer.dashboard(
@@ -718,44 +717,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Container(
                             key: const ValueKey('home-fixed-spendable'),
                             padding: EdgeInsets.fromLTRB(19, minimal ? 15 : 17, 19, minimal ? 13 : 15),
+                            // The real iPhone Home now uses the compact
+                            // Flow dashboard for every selected palette.
                             decoration: BoxDecoration(
-                              // The active iPhone Home uses a flat hero in Fluxo.
-                              // No financial calculation or route changes.
-                              color: tokens.marcaHero,
-                              gradient: highContrast || minimal
-                                   ? null
-                                  : LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        tokens.marcaHero,
-                                        Color.alphaBlend(
-                                          onHero.withValues(alpha: .075),
-                                          tokens.marcaHero,
-                                        ),
-                                        Color.alphaBlend(
-                                          tokens.acaoHero.withValues(alpha: .035),
-                                          tokens.marcaHero,
-                                        ),
-                                      ],
-                                      stops: const [0, .53, 1],
-                                    ),
-                              border: Border.all(
-                                color: onHero.withValues(
-                                  alpha: highContrast ? .78 : (minimal ? .15 : .26),
-                                ),
-                              ),
-                              borderRadius: BorderRadius.circular(minimal ? 20 : AppRadii.feature),
-                              boxShadow: highContrast || minimal
-                                   ? null
-                                  : [
-                                      BoxShadow(
-                                        color: tokens.marcaHero
-                                            .withValues(alpha: .27),
-                                        blurRadius: 24,
-                                        offset: const Offset(0, 9),
-                                      ),
-                                    ],
+                              color: tokens.superficie,
+                              border: Border.all(color: tokens.borda),
+                              borderRadius: BorderRadius.circular(18),
                             ),
                             child: Stack(
                               clipBehavior: Clip.hardEdge,
@@ -800,7 +767,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            'DISPONÍVEL ATÉ RECEBER',
+                                            'SEU FÔLEGO POR DIA',
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: AppTypography.label(
@@ -823,15 +790,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fit: BoxFit.scaleDown,
                                       alignment: Alignment.centerLeft,
                                       child: Text(
-                                        privacy
-                                            ? FinancialPrivacy.maskMoney()
-                                            : Formatters.money(snapshot.spendablePool),
-                                      key: const ValueKey('home-fixed-amount'),
+                                        snapshot.dailyFolego == null
+                                            ? '—'
+                                            : privacy
+                                                ? FinancialPrivacy.maskMoney()
+                                                : Formatters.money(snapshot.dailyFolego),
+                                      key: const ValueKey('home-fixed-daily'),
                                       maxLines: 1,
                                       style: AppTypography.money(
                                         context,
-                                        fontSize: 44,
-                                        color: tokens.acaoHero,
+                                        fontSize: 40,
+                                        color: tokens.marca,
                                       ),
                                     ),
                                     ),
@@ -854,7 +823,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'SEU LIMITE DIÁRIO',
+                                                'DISPONÍVEL ATÉ RECEBER',
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: AppTypography.label(
@@ -865,12 +834,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                snapshot.dailyFolego == null
-                                                    ? '—'
-                                                    : privacy
-                                                        ? FinancialPrivacy.maskMoney()
-                                                        : Formatters.money(snapshot.dailyFolego),
-                                                key: const ValueKey('home-fixed-daily'),
+                                                privacy
+                                                    ? FinancialPrivacy.maskMoney()
+                                                    : Formatters.money(snapshot.spendablePool),
+                                                key: const ValueKey('home-fixed-amount'),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: AppTypography.money(
@@ -962,7 +929,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  if (constraints.maxHeight >= (minimal ? 780 : 590)) ...[
+                  if (constraints.maxHeight >=
+                      (constraints.maxWidth < 350 ? 790 : 750)) ...[
                     const SizedBox(height: 8),
                     HomeMobileSummaryStrip(
                       snapshot: snapshot,
@@ -970,8 +938,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       upcoming: _upcomingEvents,
                       upcomingAvailable: !_upcomingUnavailable,
                       hidden: privacy,
-                      showTiles: constraints.maxHeight >= (minimal ? 805 : 695) &&
-                          (!minimal || constraints.maxWidth >= 350),
+                      showTiles: constraints.maxHeight >= 735 &&
+                          constraints.maxWidth >= 350,
                       onBudget: () {
                         final open = FlexibleBudgetNavigationScope
                             .maybeOf(context)?.open;
@@ -1037,7 +1005,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             spaceId: widget.space.id,
                             initialTab: resolverTabIndex))),
                       icon: const Icon(Icons.fact_check_outlined, size: 18),
-                      label: const Text('resolver'),
+                      label: const Text('pendências'),
                     )),
                     Expanded(child: TextButton.icon(
                       key: const ValueKey('home-fixed-details'),
@@ -1047,7 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         upcoming: upcoming, latest: latest,
                         smartCheckin: smartCheckin),
                       icon: const Icon(Icons.grid_view_rounded, size: 18),
-                      label: const Text('meu mês'),
+                      label: const Text('painel completo'),
                     )),
                   ]),
                   const Spacer(),
