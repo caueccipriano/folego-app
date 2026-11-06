@@ -4,10 +4,8 @@ import 'package:folego/core/preferences/app_preferences.dart';
 
 class _MemoryStore implements AppPreferenceStore {
   final Map<String, String> values = <String, String>{};
-
   @override
   Future<String?> getString(String key) async => values[key];
-
   @override
   Future<void> setString(String key, String value) async {
     values[key] = value;
@@ -15,29 +13,49 @@ class _MemoryStore implements AppPreferenceStore {
 }
 
 void main() {
-  test('paleta e modo persistem independentemente', () async {
-    final store = _MemoryStore();
-    final preferences = AppPreferenceRepository(store);
-    expect(await preferences.loadThemeMode(), ThemeMode.system);
-    expect(await preferences.loadPaletteId(), 'fluxo');
-
-    await preferences.saveThemeMode(ThemeMode.dark);
-    await preferences.savePaletteId('mare');
-    expect(await preferences.loadThemeMode(), ThemeMode.dark);
-    expect(await preferences.loadPaletteId(), 'mare');
-
-    await preferences.saveThemeMode(ThemeMode.light);
-    expect(await preferences.loadPaletteId(), 'mare');
-    await preferences.savePaletteId('chiclete');
-    expect(await preferences.loadThemeMode(), ThemeMode.light);
-    expect(await preferences.loadPaletteId(), 'chiclete');
+  test('Prisma Pastel e modo automático são o padrão', () async {
+    final repo = AppPreferenceRepository(_MemoryStore());
+    expect(await repo.loadThemeMode(), ThemeMode.system);
+    expect(await repo.loadPaletteId(), 'prisma_pastel');
   });
 
-  test('paleta desconhecida volta para Fluxo sem alterar o modo', () async {
-    final preferences = AppPreferenceRepository(_MemoryStore());
-    await preferences.saveThemeMode(ThemeMode.dark);
-    await preferences.savePaletteId('tema-desconhecido');
-    expect(await preferences.loadThemeMode(), ThemeMode.dark);
-    expect(await preferences.loadPaletteId(), 'fluxo');
+  test('tema e modo claro/escuro/sistema persistem independentemente', () async {
+    final store = _MemoryStore();
+    final repo = AppPreferenceRepository(store);
+    await repo.saveThemeMode(ThemeMode.dark);
+    await repo.savePaletteId('velvet_berry');
+    expect(await repo.loadThemeMode(), ThemeMode.dark);
+    expect(await repo.loadPaletteId(), 'velvet_berry');
+
+    await repo.saveThemeMode(ThemeMode.light);
+    expect(await repo.loadPaletteId(), 'velvet_berry');
+    await repo.savePaletteId('hyperblue');
+    expect(await repo.loadThemeMode(), ThemeMode.light);
+    expect(await repo.loadPaletteId(), 'hyperblue');
+
+    await repo.saveThemeMode(ThemeMode.system);
+    expect(await repo.loadThemeMode(), ThemeMode.system);
+    expect(await repo.loadPaletteId(), 'hyperblue');
+  });
+
+  test('preferências antigas migram preservando o modo', () async {
+    final store = _MemoryStore();
+    final repo = AppPreferenceRepository(store);
+    store.values[AppPreferenceRepository.paletteKey] = 'cherry';
+    store.values[AppPreferenceRepository.themeKey] = 'dark';
+    expect(await repo.loadPaletteId(), 'velvet_berry');
+    expect(await repo.loadThemeMode(), ThemeMode.dark);
+    store.values[AppPreferenceRepository.paletteKey] = 'fluxo';
+    expect(await repo.loadPaletteId(), 'ink');
+    await repo.savePaletteId('folego');
+    expect(store.values[AppPreferenceRepository.paletteKey], 'prisma_pastel');
+  });
+
+  test('tema desconhecido retorna Prisma Pastel sem mudar o modo', () async {
+    final repo = AppPreferenceRepository(_MemoryStore());
+    await repo.saveThemeMode(ThemeMode.dark);
+    await repo.savePaletteId('tema-desconhecido');
+    expect(await repo.loadThemeMode(), ThemeMode.dark);
+    expect(await repo.loadPaletteId(), 'prisma_pastel');
   });
 }
