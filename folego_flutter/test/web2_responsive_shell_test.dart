@@ -302,7 +302,11 @@ void main() {
           expect(find.text('seu fôlego por dia'), findsOneWidget);
           expect(find.text('disponível até receber'), findsOneWidget);
           expect(find.byKey(const ValueKey('home-flow-month-heading')),
+              findsNothing);
+          expect(find.byKey(const ValueKey('home-flow-month-overview')),
               findsOneWidget);
+          expect(find.byKey(const ValueKey('home-ai-shortcut')),
+              findsNothing);
           expect(tester.getRect(finder).width,
               lessThanOrEqualTo(viewport.width));
           expect(tester.takeException(), isNull);
