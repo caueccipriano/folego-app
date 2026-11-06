@@ -1042,10 +1042,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 14),
                     latest,
                   ],
-                  if (!privacy) ...[
-                    const SizedBox(height: 12),
-                    smartCheckin,
-                  ],
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: TextButton.icon(
