@@ -11,11 +11,13 @@ class HomeQuickTools extends StatelessWidget {
     required this.onSearch,
     required this.onPending,
     this.onSetup,
+    this.onAskAi,
   });
 
   final VoidCallback onSearch;
   final VoidCallback onPending;
   final VoidCallback? onSetup;
+  final VoidCallback? onAskAi;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +63,13 @@ class HomeQuickTools extends StatelessWidget {
             ],
           ),
         ),
+        if (onAskAi != null)
+          OutlinedButton.icon(
+            key: const ValueKey('home-ai-shortcut'),
+            onPressed: onAskAi,
+            icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+            label: const Text('perguntar à IA'),
+          ),
         if (onSetup != null)
           OutlinedButton.icon(
             key: const ValueKey('home-income-setup'),
