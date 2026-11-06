@@ -429,10 +429,10 @@ class _AppearanceCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        Text('paletas de cores',
+        Text('seis temas',
           style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
-        Text('Toque para aplicar. Compare as versões clara e escura.',
+        Text('Escolha sua identidade. Todos têm modo claro e escuro.',
           style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 10),
         _PaletteGrid(selected: paletteSelected, onSelected: onPaletteSelected),
@@ -451,23 +451,11 @@ class _PaletteGrid extends StatefulWidget {
 }
 
 class _PaletteGridState extends State<_PaletteGrid> {
-  // Six clear visual directions. The 28 legacy palettes remain available.
-  static const _featuredIds = <String>{
-    'fluxo', 'folego', 'pistache_frost',
-    'terracota_gallery', 'cherry', 'jet',
-  };
-  bool _showAll = false;
-
   @override
   Widget build(BuildContext context) {
     final activeColors = FolegoColorTokens.of(context);
     final scheme = Theme.of(context).colorScheme;
-    // Keep a saved non-featured selection visible even when collapsed.
-    final options = FolegoColorTokens.catalog.where(
-      (palette) => _showAll ||
-          _featuredIds.contains(palette.id) ||
-          palette.id == widget.selected,
-    ).toList(growable: false);
+    final options = FolegoColorTokens.catalog;
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 10.0;
@@ -518,10 +506,12 @@ class _PaletteGridState extends State<_PaletteGrid> {
                                 Row(
                                   children: [
                                     Expanded(child: _PaletteMiniPreview(
-                                      colors: light, label: 'claro')),
+                                      colors: light, label: 'claro',
+                                      paletteId: palette.id, brightness: Brightness.light)),
                                     const SizedBox(width: 4),
                                     Expanded(child: _PaletteMiniPreview(
-                                      colors: dark, label: 'escuro')),
+                                      colors: dark, label: 'escuro',
+                                      paletteId: palette.id, brightness: Brightness.dark)),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
@@ -562,19 +552,7 @@ class _PaletteGridState extends State<_PaletteGrid> {
               ),
           ],
             ),
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => setState(() => _showAll = !_showAll),
-                icon: Icon(_showAll
-                    ? Icons.unfold_less_rounded
-                    : Icons.palette_outlined),
-                label: Text(_showAll
-                    ? 'mostrar só os principais'
-                    : 'explorar as 28 paletas'),
-              ),
-            ),
+
           ],
         );
       },
@@ -583,9 +561,11 @@ class _PaletteGridState extends State<_PaletteGrid> {
 }
 
 class _PaletteMiniPreview extends StatelessWidget {
-  const _PaletteMiniPreview({required this.colors, required this.label});
+  const _PaletteMiniPreview({required this.colors, required this.label,
+    required this.paletteId, required this.brightness});
   final FolegoColorTokens colors;
-  final String label;
+  final String label, paletteId;
+  final Brightness brightness;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -628,6 +608,21 @@ class _PaletteMiniPreview extends StatelessWidget {
                   ),
                 ),
               )),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 5,
+          child: Row(
+            children: [
+              for (final swatch in FolegoColorTokens.previewAccents(paletteId, brightness))
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
+                  child: DecoratedBox(decoration: BoxDecoration(
+                    color: swatch, borderRadius: BorderRadius.circular(2),
+                  )),
+                )),
             ],
           ),
         ),
