@@ -20,6 +20,7 @@ CategoryItem category(String id, String name, {
 TransactionItem event(String description, String categoryId, {
   String eventType = 'expense',
   String status = 'confirmed',
+  bool needsClassification = false,
 }) => TransactionItem(
   id: '${description}_${categoryId}_$eventType',
   eventType: eventType,
@@ -27,11 +28,30 @@ TransactionItem event(String description, String categoryId, {
   amount: 100,
   occurredAt: DateTime(2026, 10, 15),
   status: status,
+  needsClassification: needsClassification,
   source: 'test',
   categoryId: categoryId,
 );
 
 void main() {
+  test('prefilled but unreviewed entries never train suggestions', () {
+    final categories = [category('ride', 'Transporte')];
+    expect(suggestSmartCategory(
+      description: 'Uber aeroporto', eventType: 'expense',
+      categories: categories,
+      history: [event('Uber aeroporto', 'ride', needsClassification: true)],
+    ), isNull);
+    expect(suggestSmartCategory(
+      description: 'Uber passeio diferente', eventType: 'expense',
+      categories: categories,
+      history: [
+        event('Uber casa trabalho', 'ride', needsClassification: true),
+        event('Uber centro', 'ride', needsClassification: true),
+        event('Uber aeroporto', 'ride', needsClassification: true),
+      ],
+    ), isNull);
+  });
+
   test('reuses exact categorized descriptions with explanation', () {
     final suggestion = suggestSmartCategory(
       description: 'MERCADO ÁGUA',
