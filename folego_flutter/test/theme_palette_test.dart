@@ -7,12 +7,12 @@ void main() {
   test('referências recentes são fáceis de encontrar na seleção de temas', () {
     final ids = FolegoColorTokens.catalog.map((item) => item.id).toList();
     expect(ids.take(3).toList(),
-      ['fluxo', 'folego', 'pistache_frost']);
-    expect(ids.toSet().length, 28);
+      ['fluxo', 'folego', 'arco_iris_pastel']);
+    expect(ids.toSet().length, 6);
   });
 
-  test('28 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 28);
+  test('6 paletas coerentes com 2 modos e tokens completos', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 6);
     for (final palette in FolegoColorTokens.catalog) {
       for (final brightness in Brightness.values) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
@@ -45,7 +45,7 @@ void main() {
     }
   });
 
-  test('cada paleta tem sua própria base clara e escura', () {
+  test('cada tema visível tem base clara e escura única', () {
     final lightBackgrounds = <Color>{};
     final darkBackgrounds = <Color>{};
     for (final palette in FolegoColorTokens.catalog) {
@@ -60,21 +60,16 @@ void main() {
       expect(darkBackgrounds.add(dark.fundo), isTrue,
         reason: 'fundo escuro repetido: ${palette.name}');
     }
-    // Preferências antigas permanecem estáveis ao ampliar o catálogo.
-    for (final id in [
-      'folego', 'mare', 'salvia', 'chiclete', 'tangerina', 'neon'
-    ]) {
-      expect(FolegoColorTokens.palette(id).id, id);
-    }
-    for (final id in [
-      'safira', 'mochi', 'cacau',
-      'matcha', 'pixel', 'cherry', 'butter', 'orbit', 'disco',
-      'terracota', 'indigopop', 'oldlace', 'discofever',
-      'bruma', 'jet', 'acidblue', 'popart', 'forestclub', 'hyperblue',
-      'pistache_frost', 'terracota_gallery',
-    ]) {
-      expect(FolegoColorTokens.palette(id).id, id);
-    }
+    expect(FolegoColorTokens.catalog.map((p) => p.id), contains('arco_iris_pastel'));
+  });
+
+  test('preferências dos temas removidos migram para o estilo mais próximo', () {
+    expect(FolegoColorTokens.palette('mare').id, 'fluxo');
+    expect(FolegoColorTokens.palette('salvia').id, 'pistache_frost');
+    expect(FolegoColorTokens.palette('chiclete').id, 'arco_iris_pastel');
+    expect(FolegoColorTokens.palette('tangerina').id, 'terracota_gallery');
+    expect(FolegoColorTokens.palette('jet').id, 'neon');
+    expect(FolegoColorTokens.palette('tema-desconhecido').id, 'fluxo');
   });
 
   test('referências Pistache Frost e Terracota Gallery preservam as cores originais', () {
@@ -134,7 +129,7 @@ void main() {
 
   test('seleção não modifica cores semânticas de estado', () {
     for (final brightness in Brightness.values) {
-      final baseline = FolegoColorTokens.fromId('mare', brightness);
+      final baseline = FolegoColorTokens.fromId('fluxo', brightness);
       for (final palette in FolegoColorTokens.catalog) {
         final t = FolegoColorTokens.fromId(palette.id, brightness);
         expect(t.folga, baseline.folga);
