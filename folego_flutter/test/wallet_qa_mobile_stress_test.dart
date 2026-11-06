@@ -207,6 +207,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Secondary balances are available on demand, not above the accounts.
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('wallet-position-breakdown-toggle')),
+      180, scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey('wallet-position-breakdown-toggle')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('wallet-summary-invoices')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('wallet-summary-benefits')), findsOneWidget);
     expect(find.byKey(const ValueKey('wallet-summary-invoices')), findsOneWidget);
     expect(find.byKey(const ValueKey('wallet-summary-debts')), findsOneWidget);
@@ -215,6 +224,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('seus cartões'), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('wallet-summary-debts')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('wallet-summary-debts')));
     await tester.pumpAndSettle();
     expect(find.text('suas dívidas'), findsOneWidget);
@@ -249,6 +260,23 @@ void main() {
       );
       final debts = find.byKey(const ValueKey('wallet-summary-debts'));
       expect(available, findsOneWidget);
+      expect(benefits, findsNothing);
+
+      expect(find.text(
+        'disponível negativo · confira as contas antes de gastar',
+      ), findsOneWidget);
+      expect(find.textContaining('Instituição Financeira Extremamente Longa'),
+          findsOneWidget);
+      expect(find.textContaining('conta corrente'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('wallet-position-breakdown-toggle')),
+        180, scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const ValueKey('wallet-position-breakdown-toggle')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(debts);
+      await tester.pumpAndSettle();
       expect(benefits, findsOneWidget);
       expect(invoices, findsOneWidget);
       expect(debts, findsOneWidget);
@@ -257,12 +285,7 @@ void main() {
           closeTo(tester.getSize(invoices).width, 2));
       expect(tester.getSize(benefits).width,
           closeTo(tester.getSize(invoices).width, 2));
-      expect(find.text(
-        'disponível negativo · confira as contas antes de gastar',
-      ), findsOneWidget);
-      expect(find.textContaining('Instituição Financeira Extremamente Longa'),
-          findsOneWidget);
-      expect(find.textContaining('conta corrente'), findsOneWidget);
+
       expect(tester.takeException(), isNull, reason: 'width $width');
 
       await tester.pumpWidget(const SizedBox.shrink());
