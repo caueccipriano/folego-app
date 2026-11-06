@@ -566,15 +566,20 @@ class _WalletScreenState extends State<WalletScreen> {
             onTap: () => _selectSection(index),
           );
         });
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (var index = 0; index < chips.length; index++) ...[
-                chips[index],
-                if (index != chips.length - 1) const SizedBox(width: 8),
+        return Semantics(
+          label: 'seções da carteira. deslize para escolher contas, cartões, dívidas, benefícios ou parcelas',
+          child: SingleChildScrollView(
+            key: const ValueKey('wallet-section-scroller'),
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: [
+                for (var index = 0; index < chips.length; index++) ...[
+                  chips[index],
+                  if (index != chips.length - 1) const SizedBox(width: 8),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },
@@ -871,8 +876,8 @@ class _CompactPositionBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final border = AppColors.border(brightness);
+    final tokens = FolegoColorTokens.of(context);
+    final border = tokens.borda;
     const keys = [
       'wallet-summary-benefits',
       'wallet-summary-invoices',
@@ -880,9 +885,9 @@ class _CompactPositionBreakdown extends StatelessWidget {
     ];
 
     return Material(
-      color: AppColors.surface(brightness),
+      color: tokens.superficie,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.card),
+        borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -896,16 +901,22 @@ class _CompactPositionBreakdown extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 13,
+                  vertical: 11,
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      metrics[i].icon,
-                      size: 17,
-                      color: AppColors.primaryPurple(brightness),
+                    Container(
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: tokens.marca.withValues(alpha: .085),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Icon(metrics[i].icon,
+                        size: 18, color: tokens.marca),
                     ),
-                    const SizedBox(width: 9),
+                    const SizedBox(width: 10),
                     Expanded(
                       flex: 5,
                       child: Text(
@@ -914,8 +925,8 @@ class _CompactPositionBreakdown extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
                           context,
-                          fontSize: 12,
-                          color: AppColors.secondaryText(brightness),
+                          fontSize: 13,
+                          color: tokens.textoSecundario,
                         ),
                       ),
                     ),
@@ -932,10 +943,10 @@ class _CompactPositionBreakdown extends StatelessWidget {
                             maxLines: 1,
                             style: AppTypography.money(
                               context,
-                              fontSize: 16,
+                              fontSize: 17,
                               color: metrics[i].value < 0
-                                  ? AppColors.expenseText(brightness)
-                                  : AppColors.primaryText(brightness),
+                                  ? tokens.estourado
+                                  : tokens.textoPrincipal,
                             ),
                           ),
                         ),
@@ -945,7 +956,7 @@ class _CompactPositionBreakdown extends StatelessWidget {
                     Icon(
                       AppIcons.chevronRight,
                       size: 14,
-                      color: AppColors.secondaryText(brightness),
+                      color: tokens.textoSecundario,
                     ),
                   ],
                 ),
