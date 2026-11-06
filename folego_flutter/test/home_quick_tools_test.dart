@@ -3,6 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:folego/features/home/home_quick_tools.dart';
 
 void main() {
+  testWidgets('assistant opens only after an explicit tap', (tester) async {
+    var assistantOpens = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: HomeQuickTools(
+          onSearch: () {},
+          onPending: () {},
+          onAskAi: () => assistantOpens++,
+        ),
+      ),
+    ));
+    expect(find.byKey(const ValueKey('home-ai-shortcut')), findsOneWidget);
+    expect(assistantOpens, 0);
+    await tester.tap(find.byKey(const ValueKey('home-ai-shortcut')));
+    expect(assistantOpens, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('search and pending review stay one tap away', (tester) async {
     var searches = 0;
     var reviews = 0;
