@@ -48,7 +48,7 @@ void main() {
        PlanReviewReason.noLimit]);
   });
 
-  test('largest unbudgeted active subcategory is next, never a parent', () {
+  test('largest unbudgeted active main category is next', () {
     final entries = [
       category('parent', actual: 800),
       category('one', parent: 'parent', actual: 80),
@@ -56,7 +56,7 @@ void main() {
       category('budgeted', parent: 'parent', planned: 500, actual: 600),
       category('pending', source: 'pending', actual: 500),
     ];
-    expect(nextPlanCategory(entries)?.categoryId, 'two');
+    expect(nextPlanCategory(entries)?.categoryId, 'parent');
     expect(nextPlanCategory([category('parent')]), isNull);
   });
 
@@ -115,11 +115,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(edited, isNull);
     expect(find.byKey(const ValueKey('plan-guided-start')), findsOneWidget);
-    expect(find.text('comece por: Restaurante'), findsOneWidget);
+    expect(find.text('rever: Alimentação'), findsOneWidget);
     expect(find.byKey(const ValueKey('plan-largest-category')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('plan-guided-edit')));
     await tester.pump();
-    expect(edited?.categoryId, 'Restaurante');
+    expect(edited?.categoryId, 'Alimentação');
     await tester.ensureVisible(find.byKey(const ValueKey('plan-focus-Alimentação')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('plan-focus-Alimentação')));
@@ -164,11 +164,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getCenter(action).dy, lessThan(780));
     await tester.tap(action);
-    expect(edited?.categoryId, 'Calçados');
+    expect(edited?.categoryId, 'Compras');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('one-tap actions classify and open child limit without saving',
+  testWidgets('one-tap actions classify and open main category limit without saving',
       (tester) async {
     final items = [
       category('A classificar', source: 'pending', actual: 50),
@@ -207,7 +207,7 @@ void main() {
     await tester.ensureVisible(review);
     await tester.pumpAndSettle();
     await tester.tap(review);
-    expect(edited?.categoryId, 'Tênis');
+    expect(edited?.categoryId, 'Compras');
 
     final comparison = find.byKey(const ValueKey('plan-compare-months'));
     await tester.ensureVisible(comparison);
