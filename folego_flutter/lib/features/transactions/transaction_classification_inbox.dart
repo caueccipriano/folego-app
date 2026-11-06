@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'classification_review_overview.dart';
+import 'transaction_pending_guard.dart';
 import 'transaction_detail_sheet_v2.dart';
 import '../../data/models/financial_space.dart';
 
@@ -340,7 +341,7 @@ class _TransactionClassificationInboxState
   @override
   void initState() {
     super.initState();
-    _items = List<TransactionItem>.from(widget.initialItems);
+    _items = mutableClassificationQueue(widget.initialItems);
     _batchTarget = widget.batchSize == null
         ? _items.length
         : (_items.length < widget.batchSize!
@@ -629,7 +630,7 @@ class _TransactionClassificationInboxState
           .listPendingTransactionClassifications(widget.spaceId);
       if (!mounted) return;
       setState(() {
-        _items = items;
+        _items = mutableClassificationQueue(items);
         _refreshing = false;
         _error = null;
       });

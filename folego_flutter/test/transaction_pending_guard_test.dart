@@ -53,4 +53,31 @@ void main() {
       activeSpaceId: null,
     ), isTrue);
   });
+  test('classification queue stays growable after fixed-length refresh', () {
+    final repositoryItems = List<String>.of(
+      ['pending-a', 'pending-b'],
+      growable: false,
+    );
+    final queue = mutableClassificationQueue(repositoryItems);
+
+    queue.removeWhere((item) => item == 'pending-a');
+
+    expect(queue, ['pending-b']);
+    expect(repositoryItems, ['pending-a', 'pending-b']);
+  });
+
+  test('classification queue copies unmodifiable results for batch review', () {
+    final repositoryItems = List<String>.unmodifiable([
+      'first',
+      'second',
+      'third',
+    ]);
+    final queue = mutableClassificationQueue(repositoryItems);
+
+    queue.removeWhere((item) => item == 'first' || item == 'second');
+
+    expect(queue, ['third']);
+    expect(repositoryItems, ['first', 'second', 'third']);
+  });
+
 }
