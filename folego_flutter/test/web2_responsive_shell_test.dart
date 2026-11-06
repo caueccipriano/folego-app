@@ -301,9 +301,27 @@ void main() {
           expect(find.byKey(const ValueKey('home-fixed-amount')), findsOneWidget);
           expect(find.text('SEU FÔLEGO POR DIA'), findsOneWidget);
           expect(find.text('DISPONÍVEL ATÉ RECEBER'), findsOneWidget);
-          expect(find.text('painel completo'), findsOneWidget);
+          expect(find.byKey(const ValueKey('home-flow-month-heading')),
+              findsOneWidget);
           expect(tester.getRect(finder).width,
-            lessThanOrEqualTo(viewport.width));
+              lessThanOrEqualTo(viewport.width));
+          expect(tester.takeException(), isNull);
+
+          // The dashboard may scroll on smaller iPhones rather than leaving
+          // empty space or clipping budget/commitment cards.
+          final homeScroll = find.descendant(
+            of: find.byKey(const ValueKey('home-fixed-mobile')),
+            matching: find.byType(Scrollable),
+          );
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('home-flow-month-overview')),
+            180,
+            scrollable: homeScroll.first,
+          );
+          expect(find.byKey(const ValueKey('home-mobile-budget')),
+              findsOneWidget);
+          expect(find.byKey(const ValueKey('home-mobile-financial-context')),
+              findsOneWidget);
           expect(tester.takeException(), isNull);
 
           if (Platform.environment['FOLEGO_VISUAL_CAPTURE'] == '1') {
