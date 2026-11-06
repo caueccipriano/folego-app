@@ -8,16 +8,17 @@ void main() {
         .readAsStringSync();
 
     expect(source, contains('sem verba planejada'));
-    expect(source, contains('sem verba para novas compras'));
-    expect(source, contains(r'R\$ 0 de verba liberada neste mês'));
-    expect(source, contains('sem teto definido · não significa dinheiro livre'));
+    expect(source, contains('gastos · incluído em'));
+    expect(source, contains('defina limites nas categorias principais'));
+    expect(source, contains('plan-edit-main-budget-'));
     expect(source, contains('não é saldo livre'));
     expect(source, contains('confira também seu caixa antes de gastar'));
 
     // Existing financial and category logic remains the primary source.
     expect(source, contains('_buildSummary(brightness)'));
     expect(source, contains('_buildCategories(brightness)'));
-    expect(source, contains('_editBudget(child)'));
+    expect(source, contains('_editBudget(parent)'));
+    expect(source, isNot(contains('_editBudget(child)')));
     expect(source, isNot(contains("'nenhum gasto neste mês · sem limite'")));
   });
 }

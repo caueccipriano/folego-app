@@ -70,7 +70,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
     final result = _items
         .where(
           (item) =>
-              item.isSubcategory &&
+              item.isParent &&
               !item.essential &&
               (item.hasActivity || item.hasBudget),
         )
@@ -445,7 +445,7 @@ class _FlexibleBudgetScreenState extends State<FlexibleBudgetScreen> {
                     const SizedBox(height: 18),
                     BudgetSpendingStory(
                       overview: _overview!,
-                      items: _flexibleItems,
+                      items: _items,
                       onCategory: (item) => showBudgetCategorySpending(
                         context: context,
                         repository: widget.repository,

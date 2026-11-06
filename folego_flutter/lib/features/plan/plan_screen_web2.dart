@@ -302,7 +302,7 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Future<void> _editBudget(BudgetOverviewItem item, {double? suggestedAmount}) async {
-    if (_saving) return;
+    if (_saving || !item.isParent || item.isPending) return;
 
     if (_isPastMonth) {
       AppSnackbars.show(
@@ -730,7 +730,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final info = switch (metric) {
       'planned' => (
         'planejado',
-        'Soma dos limites das subcategorias: '
+        'Soma dos limites das categorias principais: '
         '${Formatters.money(summary.plannedAmount)}. '
         'Limite definido não representa dinheiro disponível em conta.',
       ),
@@ -847,15 +847,24 @@ class _PlanScreenState extends State<PlanScreen> {
       onOpenMetric: _showInsightExplanation,
       allowEditing: !_isPastMonth,
       onReviewSuggestion: (suggestion) {
-        final candidates = _items.where((item) =>
-            item.categoryId == suggestion.categoryId &&
-            item.isSubcategory && !item.isPending).toList();
-        if (candidates.isEmpty) {
+        final matches = _items.where(
+          (item) => item.categoryId == suggestion.categoryId && !item.isPending,
+        ).toList();
+        if (matches.isEmpty) {
           AppSnackbars.show(context, 'categoria indisponível neste mês');
           return;
         }
-        // Suggestions never save: the existing edit modal requires approval.
-        _editBudget(candidates.single, suggestedAmount: suggestion.suggestedLimit);
+        final suggested = matches.single;
+        final parents = _parents.where(
+          (parent) => parent.categoryId ==
+              (suggested.isParent ? suggested.categoryId : suggested.parentId),
+        ).toList();
+        if (parents.isEmpty) return;
+        // A subcategory suggestion is not automatically a safe parent limit.
+        _editBudget(
+          parents.single,
+          suggestedAmount: suggested.isParent ? suggestion.suggestedLimit : null,
+        );
       },
     );
   }
@@ -1343,7 +1352,7 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ] else
             Text(
-              'defina limites nas subcategorias para acompanhar o mês',
+              'defina limites nas categorias principais para acompanhar o mês',
               style: AppTypography.body(
                 context,
                 fontSize: 11,
@@ -1665,6 +1674,18 @@ class _PlanScreenState extends State<PlanScreen> {
                           ),
                         ),
                       ],
+                      if (!parent.isPending && !_isPastMonth) ...[
+                        IconButton(
+                          key: ValueKey('plan-edit-main-budget-${parent.categoryId}'),
+                          tooltip: 'definir orçamento de ${parent.categoryName}',
+                          onPressed: _saving ? null : () => _editBudget(parent),
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 19,
+                            color: secondaryText,
+                          ),
+                        ),
+                      ],
                       if (children.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         AnimatedRotation(
@@ -1823,7 +1844,7 @@ class _PlanScreenState extends State<PlanScreen> {
         borderRadius: BorderRadius.circular(AppRadii.control),
         child: InkWell(
           key: ValueKey('plan-child-${child.categoryId}'),
-          onTap: () => _editBudget(child),
+          onTap: () => _showCategorySpending(child),
           borderRadius: BorderRadius.circular(AppRadii.control),
           child: Container(
             width: double.infinity,
@@ -1940,12 +1961,8 @@ class _PlanScreenState extends State<PlanScreen> {
                       Expanded(
                         child: Text(
                           child.hasActivity
-                              ? '${Formatters.money(child.actualAmount)} em gastos · sem verba para novas compras'
-                              : child.budgetSource == 'month' ||
-                                      child.budgetSource == 'override' ||
-                                      child.budgetSource == 'recurring'
-                                  ? 'R\$ 0 de verba liberada neste mês'
-                                  : 'sem teto definido · não significa dinheiro livre',
+                              ? '${Formatters.money(child.actualAmount)} gastos · incluído em ${parent.categoryName}'
+                              : 'sem gastos · usa o orçamento de ${parent.categoryName}',
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
@@ -1953,16 +1970,7 @@ class _PlanScreenState extends State<PlanScreen> {
                           ),
                         ),
                       ),
-                      if (!_isPastMonth)
-                        Text(
-                          'definir',
-                          style: AppTypography.label(
-                            context,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: familyColor,
-                          ),
-                        ),
+
                     ],
                   ),
               ],
