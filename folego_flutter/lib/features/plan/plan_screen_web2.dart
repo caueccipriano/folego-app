@@ -881,6 +881,7 @@ class _PlanScreenState extends State<PlanScreen> {
   );
 
   Widget _buildMobileLayout(Brightness brightness, AppLayoutSize layout) {
+    final compactFlow = AppColorSelection.selected.value == 'fluxo';
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -888,19 +889,19 @@ class _PlanScreenState extends State<PlanScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(0, 10, 0, 76),
+        padding: EdgeInsets.fromLTRB(0, compactFlow ? 7 : 10, 0, 76),
         children: [
           _buildHeader(brightness, layout),
           if (_refreshing) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(minHeight: 2),
           ],
-          const SizedBox(height: 12),
+          SizedBox(height: compactFlow ? 8 : 12),
           _buildGuidance(),
-          const SizedBox(height: 12),
+          SizedBox(height: compactFlow ? 8 : 12),
           _buildSummary(brightness),
-                      const SizedBox(height: 16),
-                      MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
+          SizedBox(height: compactFlow ? 12 : 16),
+          MonthlyCategoryDonut(items: _items, onCategory: _showCategorySpending),
           if (_insightsFuture != null) ...[
             const SizedBox(height: 12),
             _buildInsights(),
@@ -1031,12 +1032,12 @@ class _PlanScreenState extends State<PlanScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           title,
-          const SizedBox(height: 10),
+          SizedBox(height: AppColorSelection.selected.value == 'fluxo' ? 7 : 10),
           _PlanModeToggle(
             projection: false,
             onProjection: widget.onProjectionRequested,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: AppColorSelection.selected.value == 'fluxo' ? 8 : 12),
           Align(alignment: Alignment.centerLeft, child: monthPicker),
           if (_isPastMonth) ...[
             const SizedBox(height: 10),
@@ -1106,7 +1107,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return Container(
       key: const ValueKey('plan-summary'),
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(minimal ? 14 : 20),
       decoration: BoxDecoration(
         color: minimal ? AppColors.surface(brightness) : null,
         gradient: minimal ? null : LinearGradient(
@@ -1167,7 +1168,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   ],
                 ),
               ),
-              Container(
+              if (!minimal) Container(
                 height: 38,
                 width: 38,
                 alignment: Alignment.center,
@@ -1201,12 +1202,12 @@ class _PlanScreenState extends State<PlanScreen> {
               key: const ValueKey('plan-summary-featured-amount'),
               style: AppTypography.money(
                 context,
-                fontSize: 34,
+                fontSize: minimal ? 30 : 34,
                 color: remainingColor,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: minimal ? 12 : 16),
           LayoutBuilder(
             builder: (context, limits) {
               // Financial amounts must remain readable rather than be
@@ -1245,7 +1246,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     );
             },
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: minimal ? 12 : 16),
           if (summary.plannedAmount > 0) ...[
             Row(
               children: [
