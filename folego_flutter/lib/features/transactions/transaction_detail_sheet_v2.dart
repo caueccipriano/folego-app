@@ -156,7 +156,18 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: AppColors.transparent,
+        // The editor is displayed above the transaction detail modal.
+        // An opaque surface prevents detail labels from showing through
+        // the form, especially on Safari/iPhone PWA.
+        backgroundColor: AppColors.surface(Theme.of(context).brightness),
+        barrierColor:
+            Theme.of(context).colorScheme.scrim.withValues(alpha: .72),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.sheet),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
         builder: (_) => child,
       );
     }
