@@ -128,7 +128,7 @@ begin
 
   return true;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.onboarding_set_budget_item_impl(p_space_id uuid, p_period_month date, p_category_id uuid, p_planned_amount numeric, p_warning_threshold numeric DEFAULT 0.70, p_critical_threshold numeric DEFAULT 0.90)
@@ -179,7 +179,7 @@ begin
 
   return v_item_id;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_budget_overview(p_space_id uuid, p_period_month date)
@@ -340,7 +340,7 @@ select r.category_id,r.category_name,r.parent_id,r.parent_name,r.color_hex,r.ess
        r.budget_source,r.is_recurring
 from rows r
 order by coalesce(r.parent_name,r.category_name),case when r.parent_id is null then 0 else 1 end,r.category_name;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_flexible_budget_overview(p_space_id uuid, p_period_month date)
@@ -423,7 +423,7 @@ select
   round(greatest(r.used - r.effective_limit, 0), 2),
   round(r.category_total, 2)
 from resolved r;
-$function$
+$function$;
 
 
 -- In this contract, only main-category planned_amount can be nonzero. Any
