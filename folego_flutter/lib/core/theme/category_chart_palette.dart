@@ -190,10 +190,13 @@ abstract final class CategoryChartPalette {
     };
     if (explicit >= 0) return explicit % count;
 
-    // FNV-1a: unlike hashCode, results are stable across sessions and web
-    // runtimes. Use the label to preserve a category's identity if its ID
-    // changes during import; the ID distinguishes duplicated custom names.
-    final seed = n.isEmpty ? (id ?? 'categoria') : n;
+    // FNV-1a is stable across sessions and web runtimes. A custom category
+    // keeps its chart identity when renamed; imported items without IDs use
+    // the normalized name as their fallback.
+    final stableId = id?.trim();
+    final seed = stableId != null && stableId.isNotEmpty
+        ? 'id:$stableId'
+        : 'label:${n.isEmpty ? 'categoria' : n}';
     var hash = 0x811C9DC5;
     for (final unit in seed.codeUnits) {
       hash ^= unit;
