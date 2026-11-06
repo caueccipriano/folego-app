@@ -9,7 +9,7 @@ void main() {
 
     expect(source, contains('sem verba planejada'));
     expect(source, contains('sem verba para novas compras'));
-    expect(source, contains(r'R\$ 0 de verba liberada neste mês'));
+    expect(source, contains('R$ 0 de verba liberada neste mês'));
     expect(source, contains('sem teto definido · não significa dinheiro livre'));
     expect(source, contains('não é saldo livre'));
     expect(source, contains('confira também seu caixa antes de gastar'));
