@@ -45,7 +45,6 @@ void main() {
 
   test('Carteira keeps chosen instruments first and secondary totals accessible', () {
     final source = File('lib/features/wallet/wallet_screen_base.dart').readAsStringSync();
-    final list = source.split("ListView(").last;
     expect(source, contains("ValueKey('wallet-position-breakdown-toggle')"));
     expect(source, contains('_buildSelectedSection()'));
     expect(source, contains('_buildAdditionalPositions()'));
@@ -90,7 +89,7 @@ void main() {
     expect(source, contains("ValueKey('profile-data-disclosure')"));
     expect(source, contains('onTap: _openAppTheme'));
     expect(source, contains('onTap: _openNotificationSettings'));
-    expect(source, contains('onTap: _exportData'));
+    expect(source, contains('onTap: () => _exportData(exportContext)'));
     expect(source, contains('_logoutSection()'));
   });
 
