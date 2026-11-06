@@ -271,7 +271,7 @@ class _BenefitExpenseEditSheetState extends State<BenefitExpenseEditSheet> {
     final dialog = AppBreakpoints.of(context) != AppLayoutSize.compact;
     final selected = dialog
         ? await showDialog<CategoryItem>(context: context, builder: (_) => Dialog(backgroundColor: AppColors.surface(Theme.of(context).brightness), child: SizedBox(width: AppContentWidths.form, height: MediaQuery.sizeOf(context).height*.8, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense', dialogMode: true, drillDown: true))))
-        : await showModalBottomSheet<CategoryItem>(context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: AppColors.surface(Theme.of(context).brightness), builder: (_) => FractionallySizedBox(heightFactor: .94, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense')));
+        : await showModalBottomSheet<CategoryItem>(context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: AppColors.surface(Theme.of(context).brightness), builder: (_) => FractionallySizedBox(heightFactor: .94, child: CategorySearchPicker(categories: _categories, selectedId: _categoryId, eventType: 'expense', drillDown: true)));
     if (selected != null && mounted) setState(() => _categoryId = selected.id);
   }
 
