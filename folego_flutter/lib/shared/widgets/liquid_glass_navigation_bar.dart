@@ -31,7 +31,7 @@ class LiquidGlassNavigationBar extends StatelessWidget {
     ];
 
     final tokens = FolegoColorTokens.of(context);
-    final isFlow = AppColorSelection.selected.value == 'fluxo';
+    final isFlow = AppColorSelection.selected.value == 'ink';
     // Frosted appearance stays in the same layout region as the touch targets.
     final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
     final navigationHeight = (isFlow ? 58.0 : 62.0) +
@@ -185,7 +185,7 @@ class _Destination extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final activePurple = FolegoColorTokens.of(context).marca;
     final inactiveColor = FolegoColorTokens.of(context).textoSecundario;
-    final isFlow = AppColorSelection.selected.value == 'fluxo';
+    final isFlow = AppColorSelection.selected.value == 'ink';
     final activeForeground = activePurple;
     final motionDuration = FolegoMotion.duration(context, milliseconds: 160);
 
@@ -303,7 +303,7 @@ class _NavItem {
   final String label;
 }
 
-/// Fluxo keeps the dock as a calm, opaque native surface. Other palettes
+/// Ink keeps the dock as a calm, opaque native surface. Other palettes
 /// preserve their existing frosted treatment and safe iOS hit targets.
 class _NavigationSurface extends StatelessWidget {
   const _NavigationSurface({
