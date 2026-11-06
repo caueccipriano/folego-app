@@ -62,6 +62,22 @@ void main() {
     }
   });
 
+  test('nested transaction editor has an opaque sheet on iPhone', () {
+    final source =
+        File('lib/features/transactions/transaction_detail_sheet_v2.dart')
+            .readAsStringSync();
+    final start = source.indexOf('Future<bool?> _showEditor(');
+    final end = source.indexOf('Future<void> _editSpendingBehavior()', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+    final editor = source.substring(start, end);
+    expect(editor,
+        contains('backgroundColor: AppColors.surface(Theme.of(context).brightness)'));
+    expect(editor, contains('barrierColor:'));
+    expect(editor, contains('clipBehavior: Clip.antiAlias'));
+    expect(editor, isNot(contains('backgroundColor: AppColors.transparent')));
+  });
+
   test('signature details preserve their original financial safety actions', () {
     final payment = File('lib/features/wallet/card_invoice_payment_sheet.dart')
         .readAsStringSync();
