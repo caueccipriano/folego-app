@@ -284,9 +284,14 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
       apertadoSobre: dark ? way.background : const Color(0xFFFFFFFF),
       estourado: dark ? stateEstouradoDark : stateEstouradoLight,
       estouradoSobre: dark ? way.background : const Color(0xFFFFFFFF),
-      folgaHero: const Color(0xFFBAF095),
-      apertadoHero: const Color(0xFFFFD18C),
-      estouradoHero: const Color(0xFFFFB6B0),
+      // Hero accents adapt to the actual hero surface; pastel cards cannot
+      // use pale-on-pale text. Preserve green/amber/red meaning across themes.
+      folgaHero: _ensureTextContrast(
+        const Color(0xFFBAF095), way.hero, way.hero, dark),
+      apertadoHero: _ensureTextContrast(
+        const Color(0xFFFFD18C), way.hero, way.hero, dark),
+      estouradoHero: _ensureTextContrast(
+        const Color(0xFFFFB6B0), way.hero, way.hero, dark),
     );
   }
 
