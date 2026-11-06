@@ -810,24 +810,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ).copyWith(letterSpacing: 1.0),
                                           ),
                                         ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                                          decoration: BoxDecoration(
-                                            color: tokens.marca.withValues(alpha: dark ? .16 : .09),
-                                            borderRadius: BorderRadius.circular(99),
+                                        IconButton(
+                                          key: const ValueKey('home-fixed-explain'),
+                                          tooltip: 'entenda seu fôlego',
+                                          onPressed: () => Navigator.of(context).push<void>(
+                                            MaterialPageRoute<void>(builder: (_) =>
+                                              FinancialReviewScreen(
+                                                repository: widget.repository,
+                                                space: widget.space,
+                                                snapshot: snapshot,
+                                                previous: _previousSnapshot,
+                                                summary: _monthlyMoney,
+                                              ),
+                                            ),
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(Icons.bolt_rounded, size: 13, color: tokens.marca),
-                                              const SizedBox(width: 3),
-                                              Text('hoje', style: AppTypography.label(
-                                                context, fontSize: 10,
-                                                fontWeight: FontWeight.w700,
-                                                color: tokens.marca,
-                                              )),
-                                            ],
+                                          visualDensity: VisualDensity.compact,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 40, minHeight: 40),
+                                          style: IconButton.styleFrom(
+                                            backgroundColor: tokens.marca.withValues(
+                                              alpha: dark ? .16 : .085),
+                                            foregroundColor: tokens.marca,
                                           ),
+                                          icon: const Icon(Icons.info_outline_rounded, size: 19),
                                         ),
                                       ],
                                     ),
@@ -861,7 +866,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: tokens.textoSecundario,
                                       ),
                                     ),
-                                    const SizedBox(height: 13),
+                                    const SizedBox(height: 10),
                                     Container(
                                       height: 1,
                                       decoration: BoxDecoration(
@@ -947,36 +952,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 9),
-                                    TextButton.icon(
-                                      key: const ValueKey('home-fixed-explain'),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: onHero,
-                                        backgroundColor:
-                                            onHero.withValues(alpha: .13),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 7,
-                                        ),
-                                        minimumSize: const Size(44, 38),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14),
-                                          side: BorderSide(
-                                            color: onHero.withValues(alpha: .20),
-                                          ),
-                                        ),
-                                      ),
-                                  onPressed: () => Navigator.of(context).push<void>(
-                                    MaterialPageRoute<void>(builder: (_) =>
-                                      FinancialReviewScreen(
-                                        repository: widget.repository,
-                                        space: widget.space,
-                                        snapshot: snapshot,
-                                        previous: _previousSnapshot,
-                                        summary: _monthlyMoney))),
-                                  icon: const Icon(Icons.info_outline, size: 17),
-                                      label: const Text('entenda esse valor'),
-                                    ),
                                   ],
                                 ),
                               ],
@@ -986,51 +961,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   quickActions,
-                  const SizedBox(height: 19),
-                  Row(
-                    key: const ValueKey('home-flow-month-heading'),
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'seu mês',
-                              style: AppTypography.section(
-                                context,
-                                fontSize: 21,
-                                color: tokens.textoPrincipal,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Orçamento, gastos e próximos compromissos',
-                              maxLines: 2,
-                              style: AppTypography.label(
-                                context,
-                                fontSize: 11,
-                                color: tokens.textoSecundario,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        key: const ValueKey('home-flow-all-details'),
-                        onPressed: () => _openFixedMobileDetails(
-                          monthlyMoney: monthlyMoney,
-                          projectionInsight: projectionInsight,
-                          upcoming: upcoming,
-                          latest: latest,
-                          smartCheckin: smartCheckin,
-                        ),
-                        child: const Text('ver tudo'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   HomeMobileSummaryStrip(
                     key: const ValueKey('home-flow-month-overview'),
                     snapshot: snapshot,
@@ -1038,7 +971,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     upcoming: _upcomingEvents,
                     upcomingAvailable: !_upcomingUnavailable,
                     hidden: privacy,
-                    showTiles: true,
+                    showTiles: false,
+                    compactHome: true,
                     onBudget: () {
                       final open =
                           FlexibleBudgetNavigationScope.maybeOf(context)?.open;
@@ -1057,45 +991,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     onUpcoming: _openUpcomingEvents,
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      key: const ValueKey('home-ai-shortcut'),
-                      onPressed: _openFinancialAssistant,
-                      icon: Icon(Icons.auto_awesome_outlined, size: 19,
-                        color: tokens.marca),
-                      label: const Text('perguntar ao Fôlego'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 47),
-                        foregroundColor: tokens.textoPrincipal,
-                        backgroundColor: tokens.superficie,
-                        side: BorderSide(color: tokens.borda),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      ),
-                    ),
-                  ),
-                  if (pulseInsight.showCard) ...[
-                    const SizedBox(height: 6),
+                  if (pulseInsight.showCard && pulseInsight.requiresAttention) ...[
+                    const SizedBox(height: 10),
                     Material(
                       color: tokens.superficie,
                       shape: RoundedRectangleBorder(
                         side: BorderSide(color: tokens.borda),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(17),
                       ),
                       child: ListTile(
                         key: const ValueKey('home-fixed-insight'),
                         dense: true,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(pulseInsight.title, maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                        leading: Icon(
+                          Icons.error_outline_rounded,
+                          size: 20,
+                          color: tokens.apertado,
+                        ),
+                        title: Text(pulseInsight.title,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Text(
                           homePulseShortDetail(pulseInsight, hidden: privacy),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
-                        leading: Icon(Icons.bolt_outlined, color: tokens.marca),
                         trailing: pulseInsight.action == HomePulseAction.none
-                            ? null : const Icon(Icons.chevron_right, size: 18),
+                            ? null : const Icon(Icons.chevron_right_rounded, size: 18),
                         onTap: pulseInsight.action == HomePulseAction.none
                             ? null
                             : () {
@@ -1109,38 +1027,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                   } else {
                                     _openSpendingIncrease();
                                   }
-                                }
                               },
                       ),
                     ),
                   ],
-                  if (!privacy && latest != null) ...[
-                    const SizedBox(height: 14),
-                    latest,
-                  ],
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(child: TextButton.icon(
-                      key: const ValueKey('home-fixed-resolver'),
-                      onPressed: () => Navigator.of(context).push<void>(
-                        MaterialPageRoute<void>(builder: (_) =>
-                          FinancialReviewHub(repository: widget.repository,
-                            spaceId: widget.space.id,
-                            initialTab: resolverTabIndex))),
-                      icon: const Icon(Icons.fact_check_outlined, size: 18),
-                      label: const Text('pendências'),
-                    )),
-                    Expanded(child: TextButton.icon(
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
                       key: const ValueKey('home-fixed-details'),
                       onPressed: () => _openFixedMobileDetails(
                         monthlyMoney: monthlyMoney,
                         projectionInsight: projectionInsight,
-                        upcoming: upcoming, latest: latest,
-                        smartCheckin: smartCheckin),
-                      icon: const Icon(Icons.grid_view_rounded, size: 18),
-                      label: const Text('painel completo'),
-                    )),
-                  ]),
+                        upcoming: upcoming,
+                        latest: latest,
+                        smartCheckin: smartCheckin,
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+                      label: const Text('ver visão completa'),
+                    ),
+                  ),
                   const SizedBox(height: 22),
                 ],
                 ),
