@@ -29,7 +29,7 @@ class HomeFixedDashboard extends StatelessWidget {
     required this.onIncome,
     required this.onSearch,
     required this.onResolve,
-    required this.onAi,
+    this.onAi,
     required this.onAttention,
     required this.onDetails,
   });
@@ -45,7 +45,7 @@ class HomeFixedDashboard extends StatelessWidget {
   final VoidCallback onIncome;
   final VoidCallback onSearch;
   final VoidCallback onResolve;
-  final VoidCallback onAi;
+  final VoidCallback? onAi;
   final VoidCallback onAttention;
   final VoidCallback onDetails;
 
@@ -621,12 +621,13 @@ class HomeFixedDashboard extends StatelessWidget {
                             label: const Text('resolver'),
                           ),
                         ),
-                        IconButton(
-                          key: const ValueKey('home-ai-shortcut'),
-                          tooltip: 'perguntar ao Fôlego',
-                          onPressed: onAi,
-                          icon: const Icon(Icons.auto_awesome_outlined, size: 20),
-                        ),
+                        if (onAi != null)
+                          IconButton(
+                            key: const ValueKey('home-ai-shortcut'),
+                            tooltip: 'perguntar ao Fôlego',
+                            onPressed: onAi,
+                            icon: const Icon(Icons.auto_awesome_outlined, size: 20),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 6),
