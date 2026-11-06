@@ -687,10 +687,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) => Padding(
               padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
-              child: Column(
-                key: const ValueKey('home-fixed-mobile'),
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+              child: RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  key: const ValueKey('home-fixed-mobile'),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  children: [
                   _buildHeader(primaryText: primaryText, showTools: false),
                   const SizedBox(height: 4),
                   HomeDataFreshness(
@@ -929,38 +932,78 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  if (constraints.maxHeight >=
-                      (constraints.maxWidth < 350 ? 790 : 750)) ...[
-                    const SizedBox(height: 8),
-                    HomeMobileSummaryStrip(
-                      snapshot: snapshot,
-                      monthly: _monthlyMoney,
-                      upcoming: _upcomingEvents,
-                      upcomingAvailable: !_upcomingUnavailable,
-                      hidden: privacy,
-                      showTiles: constraints.maxHeight >= 735 &&
-                          constraints.maxWidth >= 350,
-                      onBudget: () {
-                        final open = FlexibleBudgetNavigationScope
-                            .maybeOf(context)?.open;
-                        if (open != null) {
-                          open();
-                        } else {
-                          _openSpendingIncrease();
-                        }
-                      },
-                      onMonthly: () => _openFixedMobileDetails(
-                        monthlyMoney: monthlyMoney,
-                        projectionInsight: projectionInsight,
-                        upcoming: upcoming,
-                        latest: latest,
-                        smartCheckin: smartCheckin),
-                      onUpcoming: _openUpcomingEvents,
-                    ),
-                  ],
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
                   quickActions,
-                  if (pulseInsight.showCard && (!minimal || constraints.maxHeight >= 760)) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    key: const ValueKey('home-flow-month-heading'),
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'seu mês',
+                              style: AppTypography.section(
+                                context,
+                                fontSize: 19,
+                                color: tokens.textoPrincipal,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Orçamento, gastos e próximos compromissos',
+                              maxLines: 2,
+                              style: AppTypography.label(
+                                context,
+                                fontSize: 11,
+                                color: tokens.textoSecundario,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        key: const ValueKey('home-flow-all-details'),
+                        onPressed: () => _openFixedMobileDetails(
+                          monthlyMoney: monthlyMoney,
+                          projectionInsight: projectionInsight,
+                          upcoming: upcoming,
+                          latest: latest,
+                          smartCheckin: smartCheckin,
+                        ),
+                        child: const Text('ver tudo'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  HomeMobileSummaryStrip(
+                    key: const ValueKey('home-flow-month-overview'),
+                    snapshot: snapshot,
+                    monthly: _monthlyMoney,
+                    upcoming: _upcomingEvents,
+                    upcomingAvailable: !_upcomingUnavailable,
+                    hidden: privacy,
+                    showTiles: true,
+                    onBudget: () {
+                      final open =
+                          FlexibleBudgetNavigationScope.maybeOf(context)?.open;
+                      if (open != null) {
+                        open();
+                      } else {
+                        _openSpendingIncrease();
+                      }
+                    },
+                    onMonthly: () => _openFixedMobileDetails(
+                      monthlyMoney: monthlyMoney,
+                      projectionInsight: projectionInsight,
+                      upcoming: upcoming,
+                      latest: latest,
+                      smartCheckin: smartCheckin,
+                    ),
+                    onUpcoming: _openUpcomingEvents,
+                  ),
+                  if (pulseInsight.showCard) ...[
                     const SizedBox(height: 6),
                     Material(
                       color: surface,
@@ -995,7 +1038,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 4),
+                  if (!privacy && latest != null) ...[
+                    const SizedBox(height: 14),
+                    latest,
+                  ],
+                  if (!privacy) ...[
+                    const SizedBox(height: 12),
+                    smartCheckin,
+                  ],
+                  const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: TextButton.icon(
                       key: const ValueKey('home-fixed-resolver'),
@@ -1018,8 +1069,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: const Text('painel completo'),
                     )),
                   ]),
-                  const Spacer(),
+                  const SizedBox(height: 22),
                 ],
+                ),
               ),
             ),
           ),
