@@ -38,7 +38,7 @@ jobs:
       - name: Analyze Flutter
         run: flutter analyze
       - name: Verify critical UX and financial privacy
-        run: flutter test test/flow_native_navigation_test.dart test/web2_responsive_shell_test.dart test/home_budget_overview_panel_test.dart test/home_overview_modules_settings_test.dart test/folego_glass_surfaces_test.dart test/folego41_quick_capture_flow_test.dart test/folego4_plan_summary_visual_test.dart -r expanded
+        run: flutter test test/flow_native_navigation_test.dart test/web2_responsive_shell_test.dart test/home_budget_overview_panel_test.dart test/home_overview_modules_settings_test.dart test/folego_glass_surfaces_test.dart test/folego41_quick_capture_flow_test.dart test/folego4_plan_summary_visual_test.dart test/transaction_editor_modal_surface_test.dart -r expanded
       - name: Generate iPhone icons
         run: |
           sudo apt-get update -qq
