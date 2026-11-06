@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/folego_motion.dart';
 
-/// Prominent, palette-aware identity for each real bottom-navigation tab.
-/// Financial values and commands remain in their existing widgets. This
-/// decoration never intercepts iOS PWA touches or performs data operations.
+/// Consistent, palette-aware header for Movimentos, Planejar, Carteira,
+/// Metas, Diário and Perfil. Pure UI; never reads or mutates financial data.
 class SignatureFeatureHero extends StatelessWidget {
   const SignatureFeatureHero({
     super.key,
@@ -27,135 +27,102 @@ class SignatureFeatureHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
-    final foreground = minimal ? colors.textoPrincipal : colors.marcaHeroSobre;
+    final minimal = AppColorSelection.selected.value == 'ink';
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final highContrast = MediaQuery.highContrastOf(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final vertical = minimal ? (compact ? 9.0 : 12.0) : (compact ? 15.0 : 20.0);
-    final titleSize = minimal ? (compact ? 21.0 : 24.0) : (compact ? 23.0 : 27.0);
 
-    return Container(
+    return AnimatedContainer(
       key: const ValueKey('signature-feature-hero'),
+      duration: FolegoMotion.duration(context, milliseconds: 240),
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: minimal ? colors.superficie : colors.marcaHero,
-        borderRadius: BorderRadius.circular(minimal ? 14 : (compact ? 23 : 28)),
-        border: Border.all(
-          color: minimal ? colors.borda : foreground.withValues(alpha: highContrast ? .70 : .18),
-          width: highContrast ? 1.5 : 1,
-        ),
-      ),
-      child: Stack(
-        children: [
-          if (!highContrast && !minimal) ...[
-            Positioned(
-              right: -62,
-              top: -93,
-              child: IgnorePointer(
-                child: Container(
-                  width: 206,
-                  height: 206,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: foreground.withValues(alpha: .13),
-                      width: 31,
-                    ),
+        color: colors.superficie,
+        gradient: minimal || highContrast
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.alphaBlend(
+                    colors.marca.withValues(alpha: dark ? .14 : .075),
+                    colors.superficie,
                   ),
-                ),
+                  Color.alphaBlend(
+                    colors.superficieAlta.withValues(alpha: dark ? .23 : .36),
+                    colors.superficie,
+                  ),
+                  colors.superficie,
+                ],
               ),
-            ),
-            Positioned(
-              right: 60,
-              bottom: -115,
-              child: IgnorePointer(
-                child: Container(
-                  width: 185,
-                  height: 185,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: foreground.withValues(alpha: .075),
-                      width: 1,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          Padding(
-            padding: EdgeInsets.fromLTRB(minimal ? 15 : 19, vertical, 16, vertical),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(icon, color: minimal ? colors.marca : foreground, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        eyebrow.toUpperCase(),
-                        maxLines: textScale > 1.5 ? 2 : 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.label(
-                          context,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: minimal ? colors.marca : foreground,
-                        ).copyWith(letterSpacing: 1.3),
-                      ),
-                    ),
-                    if (trailing != null) trailing!
-                    else if (!minimal)
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: foreground.withValues(alpha: .16),
-                          borderRadius: BorderRadius.circular(11),
-                          border: Border.all(
-                            color: foreground.withValues(alpha: .24),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.north_east_rounded,
-                          size: 17,
-                          color: foreground,
-                        ),
-                      ),
-                  ],
-                ),
-                SizedBox(height: minimal ? 5 : (compact ? 6 : 11)),
-                Semantics(
-                  header: true,
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.display(
-                      context,
-                      fontSize: titleSize,
-                      color: foreground,
-                    ),
-                  ),
-                ),
-                SizedBox(height: minimal ? 2 : 5),
-                Text(
-                  subtitle,
-                  maxLines: textScale > 1.5 ? 3 : (minimal && compact ? 1 : 2),
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body(
-                    context,
-                    fontSize: compact ? 11 : 12,
-                    color: minimal ? colors.textoSecundario : foreground.withValues(alpha: .94),
-                  ),
-                ),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(minimal ? 18 : 24),
+        border: Border.all(color: colors.borda,
+          width: highContrast ? 1.4 : 1),
+        boxShadow: highContrast || minimal ? null : [
+          BoxShadow(
+            color: colors.textoPrincipal.withValues(alpha: dark ? .13 : .05),
+            blurRadius: 22,
+            offset: const Offset(0, 7),
           ),
         ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(18, compact ? 15 : 20, 16,
+          compact ? 16 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 32, height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.marca.withValues(alpha: dark ? .16 : .09),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(icon, color: colors.marca, size: 18),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    eyebrow.toUpperCase(),
+                    maxLines: textScale > 1.5 ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(
+                      context, fontSize: 10, fontWeight: FontWeight.w800,
+                      color: colors.marca,
+                    ).copyWith(letterSpacing: 1.1),
+                  ),
+                ),
+                ?trailing,
+              ],
+            ),
+            SizedBox(height: compact ? 9 : 12),
+            Semantics(
+              header: true,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(context,
+                  fontSize: compact ? 24 : 28,
+                  color: colors.textoPrincipal),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              maxLines: textScale > 1.5 ? 3 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.body(context,
+                fontSize: compact ? 12 : 13,
+                color: colors.textoSecundario),
+            ),
+          ],
+        ),
       ),
     );
   }

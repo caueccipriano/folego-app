@@ -20,7 +20,7 @@ class _ProfileSection extends StatelessWidget {
           title: title,
           subtitle: subtitle,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 11),
         child,
       ],
     );
@@ -50,7 +50,7 @@ class _AccountHeader extends StatelessWidget {
     final purple = AppColors.primaryPurple(brightness);
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(AppRadii.feature),
@@ -227,20 +227,20 @@ class _SettingsRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 56),
+            constraints: const BoxConstraints(minHeight: 64),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
+              padding: const EdgeInsets.fromLTRB(12, 9, 11, 9),
               child: Row(
                 children: [
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: 38,
+                    height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: .10),
                       borderRadius: BorderRadius.circular(AppRadii.control),
                     ),
-                    child: Icon(icon, size: 16, color: iconColor),
+                    child: Icon(icon, size: 19, color: iconColor),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -251,7 +251,7 @@ class _SettingsRow extends StatelessWidget {
                           title,
                           style: AppTypography.body(
                             context,
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: enabled ? foreground : secondary,
                           ),
@@ -261,7 +261,7 @@ class _SettingsRow extends StatelessWidget {
                           subtitle,
                           style: AppTypography.body(
                             context,
-                            fontSize: 11,
+                            fontSize: 12,
                             color: secondary,
                           ),
                         ),

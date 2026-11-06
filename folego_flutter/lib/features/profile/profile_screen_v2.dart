@@ -956,11 +956,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         layout == AppLayoutSize.expanded || layout == AppLayoutSize.wide;
     final mobileSections = <Widget>[
       _accountSection(),
-      const SizedBox(height: 16),
+      const SizedBox(height: 19),
       _preferencesSection(),
-      const SizedBox(height: 16),
+      const SizedBox(height: 19),
       _dataSection(),
-      const SizedBox(height: 20),
+      const SizedBox(height: 22),
       _logoutSection(),
     ];
 

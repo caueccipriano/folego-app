@@ -190,10 +190,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
-                        0,
-                        24,
-                        0,
-                        MediaQuery.paddingOf(context).bottom + 140,
+                        4,
+                        12,
+                        4,
+                        MediaQuery.paddingOf(context).bottom + 115,
                       ),
                       children: [
                         const SignatureFeatureHero(
@@ -203,9 +203,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           icon: Icons.auto_stories_outlined,
                           compact: true,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 13),
                         _header(brightness),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 15),
                         if (_error == null) ...[
                           DiaryReviewCard(
                             reviewed: _entries
@@ -267,8 +267,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('revise um gasto, entenda sua escolha e acompanhe seu mês', style: AppTypography.body(context, fontSize: 13)),
-        const SizedBox(height: 16),
+        Text('escolha um mês para revisar seus hábitos', style: AppTypography.body(context, fontSize: 13)),
+        const SizedBox(height: 11),
         Align(
           alignment: Alignment.centerLeft,
           child: Container(

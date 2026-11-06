@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
@@ -136,7 +137,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 22, 0, 48),
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 80),
               children: [
                 const SignatureFeatureHero(
                   title: 'Seu próximo grande passo.',
@@ -145,9 +146,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   icon: Icons.flag_outlined,
                   compact: true,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 13),
                 _Header(onCreate: _saving ? null : _createGoal),
-                const SizedBox(height: 22),
+                const SizedBox(height: 17),
                 if (_loading && _goals.isEmpty)
                   const AppLoadingState(label: 'organizando suas metas')
                 else if (_error != null && _goals.isEmpty)
@@ -272,10 +273,19 @@ class _SummaryCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(AppRadii.feature),
+        gradient: AppColorSelection.selected.value == 'ink' ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.alphaBlend(purple.withValues(alpha: .09), surface),
+                  surface,
+                ],
+              ),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: border),
       ),
       child: Row(

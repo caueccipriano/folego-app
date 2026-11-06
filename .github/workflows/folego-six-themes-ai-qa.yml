@@ -43,6 +43,9 @@ jobs:
             test/financial_ai2_contract_test.dart \
             test/financial_ai_fallback_contract_test.dart \
             test/home_mobile_summary_strip_test.dart \
+            test/signature_feature_hero_six_themes_test.dart \
+            test/folego3_more_tools_sheet_test.dart \
+            test/folego4_plan_summary_visual_test.dart \
             test/aurora_active_iphone_home_test.dart \
             test/folego4_home_visual_test.dart \
             test/web2_responsive_shell_test.dart
