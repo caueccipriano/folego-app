@@ -60,7 +60,7 @@ List<PlanReviewTarget> spendingReviewTargets(
 /// Suggest only the next *category to review*. Never save a limit automatically.
 BudgetOverviewItem? nextPlanCategory(Iterable<BudgetOverviewItem> items) {
   final parents = items.where((item) =>
-      item.isParent && !item.isPending &&
+      item.isParent && !item.isPending && item.hasActivity &&
       (!item.hasBudget || item.isOverBudget)).toList();
   if (parents.isEmpty) return null;
   parents.sort((a, b) {
