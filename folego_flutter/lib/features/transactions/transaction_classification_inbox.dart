@@ -337,12 +337,13 @@ class _TransactionClassificationInboxState
   String? _error;
 
   /// Prevent overlapping refreshes, manual saves and reviewed batch writes.
-  bool get _classificationActionsLocked =>
-      _loading ||
-      _refreshing ||
-      _savingEventId != null ||
-      _applyingSuggestions ||
-      _creatingAutomaticRule;
+  bool get _classificationActionsLocked => classificationActionLocked(
+    loading: _loading,
+    refreshing: _refreshing,
+    saving: _savingEventId != null,
+    applyingSuggestions: _applyingSuggestions,
+    creatingAutomaticRule: _creatingAutomaticRule,
+  );
 
   bool get _automationEnabled =>
       FeatureEntitlementsScope.of(context).entitlements
@@ -413,6 +414,7 @@ class _TransactionClassificationInboxState
             ? _items.length
             : (remaining <= 0 ? 0 : remaining))
         .toList(growable: false);
+    if (proposedLines.isEmpty) return;
 
     final approved = await showDialog<bool>(
       context: context,
