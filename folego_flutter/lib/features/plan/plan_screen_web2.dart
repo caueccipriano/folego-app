@@ -1084,12 +1084,13 @@ class _PlanScreenState extends State<PlanScreen> {
 
   Widget _buildSummary(Brightness brightness) {
     final minimal = AppColorSelection.selected.value == 'ink';
+    final tokens = FolegoColorTokens.of(context);
     final summary = _summary;
     final diagnostics = BudgetMonthDiagnostics.fromItems(_items);
-    final primaryText = AppColors.primaryText(brightness);
-    final secondaryText = AppColors.secondaryText(brightness);
-    final border = AppColors.border(brightness);
-    final accent = AppColors.primaryPurple(brightness);
+    final primaryText = tokens.textoPrincipal;
+    final secondaryText = tokens.textoSecundario;
+    final border = tokens.borda;
+    final accent = tokens.marca;
     final progressColor = _progressColor(summary.progressState, brightness);
     final percentage = (summary.usageRatio * 100).round();
     final pace = currentMonthBudgetPace(
@@ -1110,16 +1111,20 @@ class _PlanScreenState extends State<PlanScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(minimal ? 17 : 20),
       decoration: BoxDecoration(
-        color: minimal ? AppColors.surface(brightness) : null,
+        color: minimal ? tokens.superficie : null,
         gradient: minimal ? null : LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             Color.alphaBlend(
-              accent.withValues(alpha: .14),
-              AppColors.surface(brightness),
+              accent.withValues(alpha: brightness == Brightness.dark ? .12 : .075),
+              tokens.superficie,
             ),
-            AppColors.surface(brightness),
+            Color.alphaBlend(
+              tokens.superficieAlta.withValues(alpha: .25),
+              tokens.superficie,
+            ),
+            tokens.superficie,
           ],
         ),
         borderRadius: BorderRadius.circular(minimal ? 18 : 24),
@@ -1185,7 +1190,7 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           Text(
             remainingLabel,
             style: AppTypography.label(
@@ -1194,7 +1199,7 @@ class _PlanScreenState extends State<PlanScreen> {
               color: secondaryText,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 7),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,

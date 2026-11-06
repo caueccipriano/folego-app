@@ -204,7 +204,7 @@ class _ToolTileState extends State<_ToolTile> {
       duration: FolegoMotion.duration(context, milliseconds: 130),
       curve: Curves.easeOutCubic,
       child: FolegoGlassSurface(
-      radius: 18,
+      radius: 20,
       elevated: false,
       child: InkWell(
         key: widget.tileKey,
@@ -215,16 +215,16 @@ class _ToolTileState extends State<_ToolTile> {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           constraints: const BoxConstraints(minHeight: 112),
-          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+          padding: const EdgeInsets.fromLTRB(15, 13, 12, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 34, height: 34,
+                width: 37, height: 37,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: tokens.marca.withValues(alpha: .11),
-                  borderRadius: BorderRadius.circular(12),
+                  color: tokens.marca.withValues(alpha: .095),
+                  borderRadius: BorderRadius.circular(13),
                   border: Border.all(
                     color: tokens.marca.withValues(alpha: .14),
                   ),
@@ -240,7 +240,7 @@ class _ToolTileState extends State<_ToolTile> {
                       color: tokens.textoPrincipal))),
                   const SizedBox(width: 3),
                   Icon(Icons.arrow_outward_rounded,
-                    size: 15, color: tokens.marca),
+                    size: 16, color: tokens.marca),
                 ],
               ),
               const SizedBox(height: 3),
