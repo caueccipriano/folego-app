@@ -299,8 +299,8 @@ void main() {
           expect(decoration.boxShadow, isNull);
           expect(find.byKey(const ValueKey('home-fixed-daily')), findsOneWidget);
           expect(find.byKey(const ValueKey('home-fixed-amount')), findsOneWidget);
-          expect(find.text('SEU FÔLEGO POR DIA'), findsOneWidget);
-          expect(find.text('DISPONÍVEL ATÉ RECEBER'), findsOneWidget);
+          expect(find.text('seu fôlego por dia'), findsOneWidget);
+          expect(find.text('disponível até receber'), findsOneWidget);
           expect(find.byKey(const ValueKey('home-flow-month-heading')),
               findsOneWidget);
           expect(tester.getRect(finder).width,

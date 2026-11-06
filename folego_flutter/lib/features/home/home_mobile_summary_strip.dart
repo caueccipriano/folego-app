@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/privacy/financial_privacy.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
@@ -47,14 +46,13 @@ class HomeMobileSummaryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final surface = AppColors.surface(brightness);
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    final border = AppColors.border(brightness);
     final tokens = FolegoColorTokens.of(context);
+    final surface = tokens.superficie;
+    final primary = tokens.textoPrincipal;
+    final secondary = tokens.textoSecundario;
+    final border = tokens.borda;
     final highContrast = MediaQuery.highContrastOf(context);
-    final flow = AppColorSelection.selected.value == 'fluxo';
+    final flow = AppColorSelection.selected.value == 'ink';
     final ratio = progress(snapshot);
 
     final pending = upcoming
@@ -267,13 +265,40 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                       child: LinearProgressIndicator(
                         key: const ValueKey('home-mobile-budget-progress'),
                         value: ratio,
-                        minHeight: 6,
+                        minHeight: 8,
                         backgroundColor: tokens.marca.withValues(alpha: .10),
                         color: budgetExceeded
                             ? Theme.of(context).colorScheme.error
                             : tokens.marca,
                       ),
                     ),
+                    if (!budgetExceeded && showTiles) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle_outline_rounded,
+                            size: 15, color: tokens.marca),
+                          const SizedBox(width: 5),
+                          Expanded(child: Text(
+                            'resta no orçamento',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.label(context,
+                              fontSize: 11, color: secondary),
+                          )),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(
+                            Formatters.money(snapshot.monthlyBudgetPlanned -
+                                snapshot.monthlyBudgetUsed),
+                            key: const ValueKey('home-budget-remaining'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.money(context,
+                              fontSize: 12, color: primary),
+                          )),
+                        ],
+                      ),
+                    ],
                     // Only roomy iPhones show the additional amount; the
                     // compact Home must never overflow or reveal hidden data.
                     if (budgetExceeded && showTiles) ...[
