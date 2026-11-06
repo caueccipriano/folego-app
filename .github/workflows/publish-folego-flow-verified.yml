@@ -7,6 +7,12 @@ on:
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/publish-folego-flow-verified.yml'
+  pull_request:
+    branches:
+      - release/folego-flow-20261106
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/publish-folego-flow-verified.yml'
   workflow_dispatch:
 
 permissions:
@@ -73,6 +79,7 @@ jobs:
         with:
           path: folego_flutter/build/web
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/release/folego-flow-20261106'
     needs: build
     runs-on: ubuntu-latest
     environment:
