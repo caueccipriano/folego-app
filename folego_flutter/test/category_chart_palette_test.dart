@@ -86,7 +86,14 @@ void main() {
     const categories = <HomeCategoryExpense>[
       HomeCategoryExpense(category: 'Alimentação', amount: 60, share: .6),
       HomeCategoryExpense(category: 'Beleza & cuidados', amount: 30, share: .3),
-      HomeCategoryExpense(category: 'Outros', amount: 10, share: .1, isOther: true),
+      HomeCategoryExpense(
+        category: 'Outros',
+        amount: 10,
+        share: .1,
+        groupedCategories: [
+          HomeCategoryExpense(category: 'Viagens', amount: 10, share: .1),
+        ],
+      ),
     ];
     final colors = HomeSpendingPalette.colorsFor(categories, Brightness.dark);
     expect(colors.toSet().length, 3);
