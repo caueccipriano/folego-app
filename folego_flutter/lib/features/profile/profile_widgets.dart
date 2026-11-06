@@ -429,10 +429,10 @@ class _AppearanceCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        Text('paletas de cores',
+        Text('seis temas',
           style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
-        Text('Toque para aplicar. Compare as versões clara e escura.',
+        Text('Escolha sua identidade. Todos têm modo claro e escuro.',
           style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 10),
         _PaletteGrid(selected: paletteSelected, onSelected: onPaletteSelected),
@@ -441,25 +441,34 @@ class _AppearanceCard extends StatelessWidget {
   }
 }
 
-class _PaletteGrid extends StatelessWidget {
+class _PaletteGrid extends StatefulWidget {
   const _PaletteGrid({required this.selected, required this.onSelected});
   final String selected;
   final ValueChanged<String> onSelected;
 
   @override
+  State<_PaletteGrid> createState() => _PaletteGridState();
+}
+
+class _PaletteGridState extends State<_PaletteGrid> {
+  @override
   Widget build(BuildContext context) {
     final activeColors = FolegoColorTokens.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final options = FolegoColorTokens.catalog;
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 10.0;
         final columns = constraints.maxWidth >= 650 ? 3 : 2;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
           spacing: gap,
           runSpacing: gap,
           children: [
-            for (final palette in FolegoColorTokens.catalog)
+            for (final palette in options)
               SizedBox(
                 width: width,
                 child: Builder(
@@ -468,7 +477,7 @@ class _PaletteGrid extends StatelessWidget {
                       palette.id, Brightness.light);
                     final dark = FolegoColorTokens.fromId(
                       palette.id, Brightness.dark);
-                    final active = selected == palette.id;
+                    final active = widget.selected == palette.id;
                     return Semantics(
                       button: true,
                       selected: active,
@@ -477,7 +486,7 @@ class _PaletteGrid extends StatelessWidget {
                         color: scheme.surface,
                         borderRadius: BorderRadius.circular(AppRadii.control),
                         child: InkWell(
-                          onTap: () => onSelected(palette.id),
+                          onTap: () => widget.onSelected(palette.id),
                           borderRadius: BorderRadius.circular(AppRadii.control),
                           child: Container(
                             key: ValueKey('theme-palette-${palette.id}'),
@@ -497,10 +506,12 @@ class _PaletteGrid extends StatelessWidget {
                                 Row(
                                   children: [
                                     Expanded(child: _PaletteMiniPreview(
-                                      colors: light, label: 'claro')),
+                                      colors: light, label: 'claro',
+                                      paletteId: palette.id, brightness: Brightness.light)),
                                     const SizedBox(width: 4),
                                     Expanded(child: _PaletteMiniPreview(
-                                      colors: dark, label: 'escuro')),
+                                      colors: dark, label: 'escuro',
+                                      paletteId: palette.id, brightness: Brightness.dark)),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
@@ -540,6 +551,9 @@ class _PaletteGrid extends StatelessWidget {
                 ),
               ),
           ],
+            ),
+
+          ],
         );
       },
     );
@@ -547,9 +561,11 @@ class _PaletteGrid extends StatelessWidget {
 }
 
 class _PaletteMiniPreview extends StatelessWidget {
-  const _PaletteMiniPreview({required this.colors, required this.label});
+  const _PaletteMiniPreview({required this.colors, required this.label,
+    required this.paletteId, required this.brightness});
   final FolegoColorTokens colors;
-  final String label;
+  final String label, paletteId;
+  final Brightness brightness;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -592,6 +608,21 @@ class _PaletteMiniPreview extends StatelessWidget {
                   ),
                 ),
               )),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 5,
+          child: Row(
+            children: [
+              for (final swatch in FolegoColorTokens.previewAccents(paletteId, brightness))
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
+                  child: DecoratedBox(decoration: BoxDecoration(
+                    color: swatch, borderRadius: BorderRadius.circular(2),
+                  )),
+                )),
             ],
           ),
         ),

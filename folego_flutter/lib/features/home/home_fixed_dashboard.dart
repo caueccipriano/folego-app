@@ -52,7 +52,7 @@ class HomeFixedDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     final timing = homeIncomeTimingLabel(snapshot);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final budgetRatio = snapshot.monthlyBudgetPlanned > 0
@@ -752,7 +752,7 @@ class _DashboardSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (AppColorSelection.selected.value != 'fluxo') {
+    if (AppColorSelection.selected.value != 'ink') {
       return FolegoGlassSurface(
         radius: radius,
         prominent: prominent,

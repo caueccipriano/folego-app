@@ -698,7 +698,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final privacy = FinancialPrivacy.hidden.value;
     final tokens = FolegoColorTokens.of(context);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     final onHero = tokens.textoPrincipal;
     return FolegoAmbientBackdrop(
       child: SafeArea(
@@ -747,7 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               // Pastel rainbow changes the surface only,
                               // not the meaning of financial status colors.
                               gradient: AppColorSelection.selected.value ==
-                                      'arco_iris_pastel'
+                                      'prisma_pastel'
                                   ? LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -1272,7 +1272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     HomeWalletNavigationScope.maybeOf(context)?.onOpenSection(0);
                   },
             ),
-            if (AppColorSelection.selected.value != 'fluxo' &&
+            if (AppColorSelection.selected.value != 'ink' &&
                 !FinancialPrivacy.hidden.value) ...[
               const SizedBox(height: 12), hero,
             ],
@@ -1436,7 +1436,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: AppTypography.display(
                   context,
                   fontSize: AppBreakpoints.of(context) == AppLayoutSize.compact
-                      ? (AppColorSelection.selected.value == 'fluxo' &&
+                      ? (AppColorSelection.selected.value == 'ink' &&
                               MediaQuery.sizeOf(context).width < 360
                           ? 19
                           : 25)

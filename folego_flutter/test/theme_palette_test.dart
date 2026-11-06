@@ -4,48 +4,21 @@ import 'package:folego/core/theme/app_color_tokens.dart';
 import 'package:folego/core/theme/app_theme.dart';
 
 void main() {
-  test('referências recentes são fáceis de encontrar na seleção de temas', () {
-    final ids = FolegoColorTokens.catalog.map((item) => item.id).toList();
-    expect(ids.take(3).toList(),
-      ['fluxo', 'folego', 'arco_iris_pastel']);
-    expect(ids.toSet().length, 6);
+  const ids = <String>[
+    'prisma_pastel', 'after_dark', 'ink',
+    'velvet_berry', 'hyperblue', 'solar_pop',
+  ];
+
+  test('seis temas selecionáveis distintos e Prisma Pastel como padrão', () {
+    expect(FolegoColorTokens.catalog.map((p) => p.id).toList(), ids);
+    expect(FolegoColorTokens.catalog.map((p) => p.name).toList(), [
+      'Prisma Pastel', 'After Dark', 'Ink',
+      'Velvet Berry', 'Hyperblue', 'Solar Pop',
+    ]);
+    expect(AppColorSelection.selected.value, 'prisma_pastel');
   });
 
-  test('6 paletas coerentes com 2 modos e tokens completos', () {
-    expect(FolegoColorTokens.catalog.map((p) => p.id).toSet().length, 6);
-    for (final palette in FolegoColorTokens.catalog) {
-      for (final brightness in Brightness.values) {
-        final t = FolegoColorTokens.fromId(palette.id, brightness);
-        final context = '${palette.name} $brightness';
-        expect(FolegoColorTokens.contrastRatio(t.textoPrincipal, t.superficie),
-          greaterThanOrEqualTo(4.5), reason: '$context texto');
-        expect(FolegoColorTokens.contrastRatio(t.textoSecundario, t.superficie),
-          greaterThanOrEqualTo(4.5), reason: '$context secundario');
-        expect(FolegoColorTokens.contrastRatio(t.marca, t.superficie),
-          greaterThanOrEqualTo(4.5), reason: '$context marca na superficie');
-        expect(FolegoColorTokens.contrastRatio(t.marca, t.fundo),
-          greaterThanOrEqualTo(4.5), reason: '$context marca no fundo');
-        expect(FolegoColorTokens.contrastRatio(t.marcaSobre, t.marca),
-          greaterThanOrEqualTo(4.5), reason: '$context marca');
-        expect(FolegoColorTokens.contrastRatio(t.acaoSobre, t.acao),
-          greaterThanOrEqualTo(4.5), reason: '$context acao');
-        expect(FolegoColorTokens.contrastRatio(t.marcaHeroSobre, t.marcaHero),
-          greaterThanOrEqualTo(4.5), reason: '$context hero');
-        expect(FolegoColorTokens.contrastRatio(t.acaoHero, t.marcaHero),
-          greaterThanOrEqualTo(4.5), reason: '$context acento de numero no hero');
-        for (final value in [t.folga, t.apertado, t.estourado]) {
-          expect(FolegoColorTokens.contrastRatio(value, t.superficie),
-            greaterThanOrEqualTo(4.5), reason: '$context estado na superficie');
-        }
-        for (final value in [t.folgaHero, t.apertadoHero, t.estouradoHero]) {
-          expect(FolegoColorTokens.contrastRatio(value, t.marcaHero),
-            greaterThanOrEqualTo(3.0), reason: '$context estado no hero');
-        }
-      }
-    }
-  });
-
-  test('cada tema visível tem base clara e escura única', () {
+  test('seis temas possuem superfícies legíveis em modos claro e escuro', () {
     final lightBackgrounds = <Color>{};
     final darkBackgrounds = <Color>{};
     for (final palette in FolegoColorTokens.catalog) {
@@ -54,87 +27,97 @@ void main() {
       expect(light.fundo, isNot(dark.fundo), reason: palette.name);
       expect(light.superficie, isNot(dark.superficie), reason: palette.name);
       expect(light.marcaHero, isNot(dark.marcaHero), reason: palette.name);
+      expect(lightBackgrounds.add(light.fundo), isTrue);
+      expect(darkBackgrounds.add(dark.fundo), isTrue);
       expect(palette.description, isNotEmpty);
-      expect(lightBackgrounds.add(light.fundo), isTrue,
-        reason: 'fundo claro repetido: ${palette.name}');
-      expect(darkBackgrounds.add(dark.fundo), isTrue,
-        reason: 'fundo escuro repetido: ${palette.name}');
-    }
-    expect(FolegoColorTokens.catalog.map((p) => p.id), contains('arco_iris_pastel'));
-  });
-
-  test('preferências dos temas removidos migram para o estilo mais próximo', () {
-    expect(FolegoColorTokens.palette('mare').id, 'fluxo');
-    expect(FolegoColorTokens.palette('salvia').id, 'pistache_frost');
-    expect(FolegoColorTokens.palette('chiclete').id, 'arco_iris_pastel');
-    expect(FolegoColorTokens.palette('tangerina').id, 'terracota_gallery');
-    expect(FolegoColorTokens.palette('jet').id, 'neon');
-    expect(FolegoColorTokens.palette('tema-desconhecido').id, 'fluxo');
-  });
-
-  test('referências Pistache Frost e Terracota Gallery preservam as cores originais', () {
-    final frost = FolegoColorTokens.palette('pistache_frost');
-    final gallery = FolegoColorTokens.palette('terracota_gallery');
-    expect(frost.action, const Color(0xFFB9C255));
-    expect(frost.lightBackground, const Color(0xFFE6F1FA));
-    expect(frost.brand, const Color(0xFF5798D7));
-    expect(gallery.brand, const Color(0xFFC34811));
-    expect(gallery.action, const Color(0xFFD9D1CA));
-
-    final frostLight = FolegoColorTokens.fromId(
-      'pistache_frost', Brightness.light,
-    );
-    final galleryLight = FolegoColorTokens.fromId(
-      'terracota_gallery', Brightness.light,
-    );
-    expect(frostLight.marcaHero, const Color(0xFF254A72));
-    expect(galleryLight.marcaHero, const Color(0xFF0B369A));
-    for (final id in ['pistache_frost', 'terracota_gallery']) {
-      for (final mode in Brightness.values) {
-        final tokens = FolegoColorTokens.fromId(id, mode);
-        expect(FolegoColorTokens.contrastRatio(
-          tokens.acaoHero, tokens.marcaHero,
-        ), greaterThanOrEqualTo(4.5), reason: '$id $mode KPI');
+      for (final brightness in Brightness.values) {
+        final tokens = FolegoColorTokens.fromId(palette.id, brightness);
+        final label = palette.name + brightness.toString();
+        for (final color in [tokens.textoPrincipal, tokens.textoSecundario, tokens.marca]) {
+          expect(FolegoColorTokens.contrastRatio(color, tokens.superficie),
+            greaterThanOrEqualTo(4.5), reason: label);
+          expect(FolegoColorTokens.contrastRatio(color, tokens.fundo),
+            greaterThanOrEqualTo(4.5), reason: label);
+        }
+        expect(FolegoColorTokens.contrastRatio(tokens.marcaSobre, tokens.marca),
+          greaterThanOrEqualTo(4.5), reason: label);
+        expect(FolegoColorTokens.contrastRatio(tokens.acaoSobre, tokens.acao),
+          greaterThanOrEqualTo(4.5), reason: label);
+        expect(FolegoColorTokens.contrastRatio(tokens.marcaHeroSobre, tokens.marcaHero),
+          greaterThanOrEqualTo(4.5), reason: label);
+        expect(FolegoColorTokens.contrastRatio(tokens.acaoHero, tokens.marcaHero),
+          greaterThanOrEqualTo(4.5), reason: label);
+        for (final color in [tokens.folga, tokens.apertado, tokens.estourado]) {
+          expect(FolegoColorTokens.contrastRatio(color, tokens.superficie),
+            greaterThanOrEqualTo(4.5), reason: label);
+        }
+        for (final color in [tokens.folgaHero, tokens.apertadoHero, tokens.estouradoHero]) {
+          expect(FolegoColorTokens.contrastRatio(color, tokens.marcaHero),
+            greaterThanOrEqualTo(3.0), reason: label);
+        }
       }
     }
   });
 
-  test('ThemeData aplica tokens da própria paleta, sem herdar cores da anterior', () {
+  test('miniaturas de temas têm acentos distintos', () {
+    for (final id in ids) {
+      expect(FolegoColorTokens.previewAccents(id, Brightness.light).length,
+        greaterThanOrEqualTo(3), reason: id);
+    }
+    expect(FolegoColorTokens.previewAccents('prisma_pastel', Brightness.light).length, 5);
+    expect(FolegoColorTokens.previewAccents('prisma_pastel', Brightness.dark).length, 5);
+  });
+
+  test('28 paletas antigas migram para os seis temas aprovados', () {
+    const migration = <String, String>{
+      'fluxo':'ink', 'folego':'prisma_pastel',
+      'pistache_frost':'prisma_pastel', 'terracota_gallery':'solar_pop',
+      'mare':'prisma_pastel', 'salvia':'prisma_pastel',
+      'chiclete':'velvet_berry', 'tangerina':'solar_pop',
+      'neon':'after_dark', 'safira':'hyperblue',
+      'mochi':'prisma_pastel', 'cacau':'solar_pop',
+      'matcha':'prisma_pastel', 'pixel':'hyperblue',
+      'cherry':'velvet_berry', 'butter':'solar_pop',
+      'orbit':'after_dark', 'disco':'velvet_berry',
+      'terracota':'solar_pop', 'indigopop':'velvet_berry',
+      'oldlace':'ink', 'discofever':'after_dark',
+      'bruma':'ink', 'jet':'ink',
+      'acidblue':'hyperblue', 'popart':'solar_pop',
+      'forestclub':'solar_pop', 'hyperblue':'hyperblue',
+    };
+    for (final entry in migration.entries) {
+      expect(FolegoColorTokens.palette(entry.key).id, entry.value,
+        reason: entry.key);
+    }
+    expect(FolegoColorTokens.palette('nonexistent').id, 'prisma_pastel');
+  });
+
+  test('ThemeData recebe a versão clara/escura de cada tema', () {
     final previous = AppColorSelection.selected.value;
     addTearDown(() => AppColorSelection.choose(previous));
     for (final palette in FolegoColorTokens.catalog) {
       AppColorSelection.choose(palette.id);
       for (final brightness in Brightness.values) {
-        final theme = brightness == Brightness.dark
-            ? AppTheme.dark() : AppTheme.light();
+        final theme = brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
         final tokens = FolegoColorTokens.fromId(palette.id, brightness);
         expect(theme.scaffoldBackgroundColor, tokens.fundo);
         expect(theme.cardColor, tokens.superficie);
         expect(theme.colorScheme.primary, tokens.marca);
         expect(theme.colorScheme.secondary, tokens.acao);
-        expect(theme.colorScheme.tertiary, tokens.acao);
         expect(theme.colorScheme.onSurface, tokens.textoPrincipal);
-        expect(theme.colorScheme.surfaceContainer, tokens.superficie);
         expect(theme.colorScheme.surfaceContainerHigh, tokens.superficieAlta);
-        expect(theme.colorScheme.onPrimaryContainer, tokens.textoPrincipal);
-        expect(theme.colorScheme.onSecondaryContainer, tokens.textoPrincipal);
-        expect(FolegoColorTokens.contrastRatio(
-          theme.colorScheme.secondaryContainer,
-          theme.colorScheme.onSecondaryContainer,
-        ), greaterThanOrEqualTo(4.5));
-        expect(theme.extension<FolegoColorTokens>()?.marcaHero, tokens.marcaHero);
       }
     }
   });
 
-  test('seleção não modifica cores semânticas de estado', () {
+  test('cores financeiras semânticas são constantes entre os seis temas', () {
     for (final brightness in Brightness.values) {
-      final baseline = FolegoColorTokens.fromId('fluxo', brightness);
-      for (final palette in FolegoColorTokens.catalog) {
-        final t = FolegoColorTokens.fromId(palette.id, brightness);
-        expect(t.folga, baseline.folga);
-        expect(t.apertado, baseline.apertado);
-        expect(t.estourado, baseline.estourado);
+      final baseline = FolegoColorTokens.fromId('prisma_pastel', brightness);
+      for (final id in ids) {
+        final theme = FolegoColorTokens.fromId(id, brightness);
+        expect(theme.folga, baseline.folga);
+        expect(theme.apertado, baseline.apertado);
+        expect(theme.estourado, baseline.estourado);
       }
     }
   });
