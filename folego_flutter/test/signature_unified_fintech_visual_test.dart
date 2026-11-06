@@ -35,7 +35,7 @@ void main() {
   test('More menu retains destinations and version while improving style', () {
     final source = File('lib/features/shell/more_tools_sheet.dart')
         .readAsStringSync();
-    expect(source, contains('SEU ESPAÇO'));
+    expect(source, contains('TUDO EM UM LUGAR'));
     expect(source, contains("ValueKey('tools-compact-grid')"));
     expect(source, contains('tools-single-column'));
     expect(source, contains('tools-two-columns'));
