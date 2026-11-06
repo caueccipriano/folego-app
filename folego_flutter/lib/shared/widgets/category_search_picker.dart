@@ -17,6 +17,7 @@ class CategorySearchPicker extends StatefulWidget {
     this.selectedId,
     this.dialogMode = false,
     this.includeAll = false,
+    this.drillDown = false,
     this.onSelected,
   });
 
@@ -25,6 +26,8 @@ class CategorySearchPicker extends StatefulWidget {
   final String? selectedId;
   final bool dialogMode;
   final bool includeAll;
+  /// Open parent categories before selecting subcategories in expense forms.
+  final bool drillDown;
   final ValueChanged<CategoryItem?>? onSelected;
 
   @override
@@ -35,6 +38,7 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
   final _search = TextEditingController();
   final _focusNode = FocusNode();
   String _query = '';
+  String? _activeParentId;
   int _highlightedIndex = 0;
 
   @override
@@ -56,6 +60,12 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
         .toList();
     roots.sort(_treeCompare);
 
+    if (widget.drillDown && !widget.includeAll) {
+      if (_activeParentId == null) return roots;
+      return (selectable.where((item) => item.parentId == _activeParentId).toList()
+        ..sort(_treeCompare));
+    }
+
     final ordered = <CategoryItem>[];
     for (final root in roots) {
       ordered.add(root);
@@ -75,6 +85,22 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
     final byOrder = a.sortOrder.compareTo(b.sortOrder);
     if (byOrder != 0) return byOrder;
     return CategorySearch.normalize(a.name).compareTo(CategorySearch.normalize(b.name));
+  }
+
+  void _selectOrOpen(CategoryItem item) {
+    final hasChildren = widget.categories.any(
+      (child) => child.isSelectable && child.parentId == item.id,
+    );
+    if (widget.drillDown && !widget.includeAll && hasChildren) {
+      _search.clear();
+      setState(() {
+        _query = '';
+        _activeParentId = item.id;
+        _highlightedIndex = 0;
+      });
+      return;
+    }
+    _select(item);
   }
 
   void _select(CategoryItem? item) {
@@ -106,7 +132,7 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
         _select(null);
       } else {
         final index = _highlightedIndex - offset;
-        if (index >= 0 && index < results.length) _select(results[index]);
+        if (index >= 0 && index < results.length) _selectOrOpen(results[index]);
       }
       return KeyEventResult.handled;
     }
@@ -165,12 +191,24 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                     ],
                     Row(
                       children: [
+                        if (widget.drillDown && _activeParentId != null && emptyQuery)
+                          IconButton(
+                            key: const ValueKey('category-back-to-parents'),
+                            tooltip: 'voltar às categorias',
+                            onPressed: () => setState(() {
+                              _activeParentId = null;
+                              _highlightedIndex = 0;
+                            }),
+                            icon: const Icon(Icons.arrow_back_rounded),
+                          ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'categoria',
+                                widget.drillDown && _activeParentId != null && emptyQuery
+                                    ? 'subcategoria'
+                                    : 'categoria',
                                 style: AppTypography.section(
                                   context,
                                   fontSize: 20,
@@ -180,7 +218,11 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                               const SizedBox(height: 3),
                               Text(
                                 emptyQuery
-                                    ? 'categorias e subcategorias'
+                                    ? widget.drillDown
+                                        ? (_activeParentId == null
+                                            ? 'abra uma categoria e escolha a subcategoria'
+                                            : 'selecione a subcategoria do gasto')
+                                        : 'categorias e subcategorias'
                                     : '${results.length} resultado${results.length == 1 ? '' : 's'}',
                                 style: AppTypography.body(
                                   context,
@@ -191,7 +233,7 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                             ],
                           ),
                         ),
-                        if (widget.dialogMode)
+                        if (widget.dialogMode || widget.drillDown)
                           IconButton(
                             tooltip: 'fechar',
                             onPressed: () => Navigator.of(context).pop(),
@@ -266,12 +308,12 @@ class _CategorySearchPickerState extends State<CategorySearchPicker> {
                               selected: results[index].id == widget.selectedId,
                               highlighted:
                                   _highlightedIndex == index + (widget.includeAll ? 1 : 0),
-                              indented: emptyQuery && results[index].parentId != null,
+                              indented: emptyQuery && !widget.drillDown && results[index].parentId != null,
                               surface: surface,
                               border: border,
                               primaryText: primaryText,
                               secondaryText: secondaryText,
-                              onTap: () => _select(results[index]),
+                              onTap: () => _selectOrOpen(results[index]),
                             ),
                             if (index != results.length - 1) const SizedBox(height: 6),
                           ],
