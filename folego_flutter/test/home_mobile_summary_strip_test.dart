@@ -27,6 +27,7 @@ FolegoSnapshot snapshot({bool configured = true, double planned = 200,
 );
 
 Widget host({bool hidden = false, bool showTiles = true,
+    bool compactHome = false,
     required VoidCallback onBudget, required VoidCallback onUpcoming}) =>
   MaterialApp(
     home: Scaffold(
@@ -43,6 +44,7 @@ Widget host({bool hidden = false, bool showTiles = true,
           upcomingAvailable: true,
           hidden: hidden,
           showTiles: showTiles,
+          compactHome: compactHome,
           onBudget: onBudget,
           onMonthly: () {},
           onUpcoming: onUpcoming,
@@ -91,6 +93,41 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('home-mobile-next-bill')));
     expect(budgetTaps, 1);
     expect(agendaTaps, 1);
+  });
+
+  testWidgets('Home compacta mostra somente orçamento e ação de abrir Plano',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(host(
+      showTiles: false,
+      compactHome: true,
+      onBudget: () => taps++,
+      onUpcoming: () {},
+    ));
+    expect(find.byKey(const ValueKey('home-mobile-budget')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-mobile-budget-progress')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-flow-used-budget')), findsNothing);
+    expect(find.byKey(const ValueKey('home-flow-planned-budget')), findsNothing);
+    expect(find.byKey(const ValueKey('home-mobile-monthly-spending')), findsNothing);
+    expect(find.byKey(const ValueKey('home-mobile-next-bill')), findsNothing);
+    expect(find.text('veja os detalhes no Planejar'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('home-mobile-budget')));
+    expect(taps, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home compacta privada oculta valores e percentual',
+      (tester) async {
+    await tester.pumpWidget(host(
+      hidden: true, showTiles: false, compactHome: true,
+      onBudget: () {}, onUpcoming: () {},
+    ));
+    expect(find.text('valores ocultos'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-mobile-budget-progress')), findsNothing);
+    expect(find.byKey(const ValueKey('home-flow-used-budget')), findsNothing);
+    expect(find.textContaining('63%'), findsNothing);
+    expect(find.text('veja os detalhes no Planejar'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('modo privado não expõe percentual nem contas', (tester) async {
