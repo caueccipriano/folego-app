@@ -1,12 +1,7 @@
 name: Publish Folego Flow PWA to GitHub Pages
 
 on:
-  push:
-    branches:
-      - release/folego-flow-20261106
-    paths:
-      - 'folego_flutter/**'
-      - '.github/workflows/deploy-web.yml'
+  # Manual fallback only: the verified Flow workflow owns automatic releases.
   workflow_dispatch:
 
 permissions:
