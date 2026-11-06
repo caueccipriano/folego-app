@@ -36,98 +36,44 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
   final Color estourado, estouradoSobre;
   final Color folgaHero, apertadoHero, estouradoHero;
 
+  // Seis estilos distintos: menos opções, mais identidade e leitura.
+  // IDs antigos são migrados abaixo, sem afetar saldos ou preferências de modo.
   static const catalog = <FolegoPalette>[
-    // Inspirada na clareza e na organização dos apps financeiros nativos.
-    // Cores e identidade próprias do Fôlego; nenhuma reprodução de assets.
     FolegoPalette('fluxo', 'Fluxo', Color(0xFF087E75),
         Color(0xFF1D9D8F), Color(0xFFF5F6F8), Color(0xFF0E171C),
-        description: 'Verde-petróleo + neutros · minimalista'),
+        description: 'Minimalista · verde-petróleo e cinza'),
     FolegoPalette('folego', 'Fôlego', Color(0xFF6C3CE9),
         Color(0xFFC6F135), Color(0xFFF5F1E8), Color(0xFF101014),
-        description: 'Roxo + lima · original'),
+        description: 'Original · roxo e lima'),
+    FolegoPalette('arco_iris_pastel', 'Arco-íris pastel', Color(0xFF73509F),
+        Color(0xFFF0B8D6), Color(0xFFFBF6FC), Color(0xFF17131F),
+        description: 'Lilás, rosa, azul e menta suaves'),
     FolegoPalette('pistache_frost', 'Pistache Frost', Color(0xFF5798D7),
         Color(0xFFB9C255), Color(0xFFE6F1FA), Color(0xFF0D1B27),
-        description: 'Pistache + azul-gelo'),
+        description: 'Azul-gelo e pistache'),
     FolegoPalette('terracota_gallery', 'Terracota Gallery', Color(0xFFC34811),
         Color(0xFFD9D1CA), Color(0xFFF6F2ED), Color(0xFF181820),
-        description: 'Terracota + azul-galeria + linho'),
-    FolegoPalette('mare', 'Maré', Color(0xFF0F8B8D),
-        Color(0xFFFF7A59), Color(0xFFEDF8F8), Color(0xFF091A1C),
-        description: 'Turquesa + coral'),
-    FolegoPalette('salvia', 'Sálvia', Color(0xFF5F8F6B),
-        Color(0xFFFFB88A), Color(0xFFF4F8F0), Color(0xFF121E16),
-        description: 'Verde + damasco'),
-    FolegoPalette('chiclete', 'Chiclete', Color(0xFFE0488F),
-        Color(0xFF7CD7FF), Color(0xFFFFF1F8), Color(0xFF1B0D18),
-        description: 'Rosa + azul-gelo'),
-    FolegoPalette('tangerina', 'Tangerina', Color(0xFFF26B1D),
-        Color(0xFFFFD23F), Color(0xFFFFF6E9), Color(0xFF21150C),
-        description: 'Laranja + mel'),
-    FolegoPalette('neon', 'Neon', Color(0xFF2B3040),
+        description: 'Galeria · terracota e linho'),
+    FolegoPalette('neon', 'Noite Ciano', Color(0xFF2B3040),
         Color(0xFF19E0F0), Color(0xFFF1F6FA), Color(0xFF080F18),
-        description: 'Grafite + ciano'),
-    FolegoPalette('safira', 'Safira', Color(0xFF234EC4),
-        Color(0xFF71EDC3), Color(0xFFF2F5FF), Color(0xFF0D1427),
-        description: 'Azul + menta'),
-    FolegoPalette('mochi', 'Mochi', Color(0xFF7649A4),
-        Color(0xFFFFB68A), Color(0xFFFBF3FF), Color(0xFF1C1225),
-        description: 'Lavanda + pêssego'),
-    FolegoPalette('cacau', 'Cacau', Color(0xFF76533B),
-        Color(0xFFC5F18C), Color(0xFFFAF5ED), Color(0xFF201A16),
-        description: 'Café + pistache'),
-    FolegoPalette('matcha', 'Matcha', Color(0xFF376A42),
-        Color(0xFFFFD97D), Color(0xFFF3F7E7), Color(0xFF111B13),
-        description: 'Verde matcha + manteiga'),
-    FolegoPalette('pixel', 'Pixel', Color(0xFF2453C8),
-        Color(0xFFFFDC42), Color(0xFFF4F7FF), Color(0xFF0B1030),
-        description: 'Azul digital + amarelo'),
-    FolegoPalette('cherry', 'Cherry Cola', Color(0xFF803046),
-        Color(0xFFFFE5B0), Color(0xFFFBF3EF), Color(0xFF1F1118),
-        description: 'Cereja escura + baunilha'),
-    FolegoPalette('butter', 'Butter', Color(0xFF785A18),
-        Color(0xFF8DBAFF), Color(0xFFFFF9E9), Color(0xFF1E190F),
-        description: 'Amarelo-manteiga + azul'),
-    FolegoPalette('orbit', 'Órbita', Color(0xFF24566E),
-        Color(0xFFE2FC83), Color(0xFFEFF3F5), Color(0xFF0A151B),
-        description: 'Petróleo + lima suave'),
-    FolegoPalette('disco', 'Disco', Color(0xFFA72F8D),
-        Color(0xFFB8FF5F), Color(0xFFFFF1FC), Color(0xFF1C0F1E),
-        description: 'Magenta + verde ácido'),
-    FolegoPalette('terracota', 'Terracota', Color(0xFFA64526),
-        Color(0xFFB6A460), Color(0xFFF9F0E4), Color(0xFF231714),
-        description: 'Terracota + oliva'),
-    FolegoPalette('indigopop', 'Índigo Pop', Color(0xFF4D166C),
-        Color(0xFFF94500), Color(0xFFFBF8E9), Color(0xFF180C23),
-        description: 'Índigo + laranja vivo'),
-    FolegoPalette('oldlace', 'Old Lace', Color(0xFF2E51A1),
-        Color(0xFFF34F37), Color(0xFFFAF7EC), Color(0xFF111924),
-        description: 'Azul retrô + tomate'),
-    FolegoPalette('discofever', 'Disco Fever', Color(0xFF6423CD),
-        Color(0xFFE9FF3D), Color(0xFFF7F2FF), Color(0xFF1A0F2E),
-        description: 'Violeta + lima neon'),
-    FolegoPalette('bruma', 'Bruma', Color(0xFF224A5E),
-        Color(0xFFE8B35E), Color(0xFFF1F4F1), Color(0xFF121E25),
-        description: 'Azul-petróleo + areia'),
-    FolegoPalette('jet', 'Jet', Color(0xFF333D44),
-        Color(0xFFF2BA36), Color(0xFFF3F2ED), Color(0xFF15181B),
-        description: 'Grafite + mostarda'),
-    FolegoPalette('acidblue', 'Acid Blue', Color(0xFF284BE0),
-        Color(0xFFCBF548), Color(0xFFF4F9EB), Color(0xFF0D1740),
-        description: 'Azul elétrico + lima'),
-    FolegoPalette('popart', 'Pop Art', Color(0xFF483183),
-        Color(0xFFF5ED69), Color(0xFFFFFDEC), Color(0xFF19142D),
-        description: 'Roxo + amarelo solar'),
-    FolegoPalette('forestclub', 'Forest Club', Color(0xFF2A6543),
-        Color(0xFFF5BB5F), Color(0xFFFBF2E1), Color(0xFF14231C),
-        description: 'Floresta + mel'),
-    FolegoPalette('hyperblue', 'Hyper Blue', Color(0xFF284BDF),
-        Color(0xFFFF8A37), Color(0xFFFAF4E8), Color(0xFF101A39),
-        description: 'Azul intenso + tangerina'),
+        description: 'Grafite profundo e ciano'),
   ];
 
   // Cada paleta tem cores próprias para claro e escuro. Não interpolar
   // superfícies com branco/preto nem misturar tons de duas paletas.
   static const _colorways = <String, List<FolegoColorWay>>{
+    'arco_iris_pastel': [
+      FolegoColorWay(
+        brand: Color(0xFF73509F), background: Color(0xFFFBF6FC),
+        surface: Color(0xFFFFFFFF), elevated: Color(0xFFF5EAF8),
+        foreground: Color(0xFF27213B), muted: Color(0xFF665D77),
+        border: Color(0xFFE8DBED), hero: Color(0xFF514074)),
+      FolegoColorWay(
+        brand: Color(0xFFC4A7F0), background: Color(0xFF17131F),
+        surface: Color(0xFF241E31), elevated: Color(0xFF322943),
+        foreground: Color(0xFFF9F3FF), muted: Color(0xFFC9BADA),
+        border: Color(0xFF4B405B), hero: Color(0xFF3C3059)),
+    ],
     'fluxo': [
       FolegoColorWay(
         brand: Color(0xFF087E75), background: Color(0xFFF5F6F8),
@@ -412,8 +358,27 @@ class FolegoColorTokens extends ThemeExtension<FolegoColorTokens> {
     ],
   };
 
-  static FolegoPalette palette(String id) =>
-      catalog.firstWhere((item) => item.id == id, orElse: () => catalog.first);
+  // Preferências salvas com os 28 temas anteriores continuam válidas.
+  // Somente a seleção visual é consolidada; nenhum dado financeiro é tocado.
+  static const _legacyThemeAliases = <String, String>{
+    'mare': 'fluxo', 'orbit': 'fluxo', 'bruma': 'fluxo',
+    'safira': 'fluxo', 'pixel': 'fluxo', 'acidblue': 'fluxo',
+    'salvia': 'pistache_frost', 'matcha': 'pistache_frost',
+    'forestclub': 'pistache_frost',
+    'chiclete': 'arco_iris_pastel', 'mochi': 'arco_iris_pastel',
+    'disco': 'arco_iris_pastel', 'popart': 'arco_iris_pastel',
+    'discofever': 'arco_iris_pastel',
+    'tangerina': 'terracota_gallery', 'cacau': 'terracota_gallery',
+    'cherry': 'terracota_gallery', 'butter': 'terracota_gallery',
+    'terracota': 'terracota_gallery', 'oldlace': 'terracota_gallery',
+    'jet': 'neon', 'hyperblue': 'neon', 'indigopop': 'neon',
+  };
+
+  static FolegoPalette palette(String id) {
+    final resolved = _legacyThemeAliases[id] ?? id;
+    return catalog.firstWhere(
+      (item) => item.id == resolved, orElse: () => catalog.first);
+  }
 
   static FolegoColorTokens fromId(String id, Brightness brightness) {
     final p = palette(id);
