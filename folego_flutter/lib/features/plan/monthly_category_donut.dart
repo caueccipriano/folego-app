@@ -9,7 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_color_tokens.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_typography.dart';
-import '../../core/theme/category_visuals.dart';
+import '../../core/theme/category_chart_palette.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/budget_overview_item.dart';
 
@@ -68,14 +68,16 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
           )
           .fold<double>(0, (sum, row) => sum - row.actualAmount);
       final visible = _expanded ? rows : rows.take(5).toList();
-      final colors = rows
-          .map(
-            (i) => CategoryVisuals.colorFor(
-              category: i.categoryName,
-              brightness: brightness,
+      final colors = CategoryChartPalette.colorsFor(
+        [
+          for (final category in rows)
+            CategoryChartEntry(
+              name: category.categoryName,
+              categoryId: category.categoryId,
             ),
-          )
-          .toList();
+        ],
+        brightness: brightness,
+      );
       return Material(
         key: const ValueKey('monthly-category-donut'),
         color: minimal ? AppColors.surface(brightness) : Color.alphaBlend(
@@ -139,16 +141,10 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                     vertical: 11,
                   ),
                   decoration: BoxDecoration(
-                    color: minimal ? AppColors.background(brightness) : CategoryVisuals.colorFor(
-                      category: rows.first.categoryName,
-                      brightness: brightness,
-                    ).withValues(alpha: .15),
+                    color: minimal ? AppColors.background(brightness) : colors.first.withValues(alpha: .15),
                     borderRadius: BorderRadius.circular(AppRadii.control),
                     border: Border.all(
-                      color: minimal ? AppColors.border(brightness) : CategoryVisuals.colorFor(
-                        category: rows.first.categoryName,
-                        brightness: brightness,
-                      ).withValues(alpha: .28),
+                      color: minimal ? AppColors.border(brightness) : colors.first.withValues(alpha: .28),
                     ),
                   ),
                   child: Row(
@@ -156,10 +152,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                       Icon(
                         Icons.auto_graph_rounded,
                         size: 19,
-                        color: CategoryVisuals.colorFor(
-                          category: rows.first.categoryName,
-                          brightness: brightness,
-                        ),
+                        color: colors.first,
                       ),
                       const SizedBox(width: 9),
                       Expanded(
@@ -271,8 +264,15 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                 ),
                 const SizedBox(height: 4),
               ],
-              for (final row in visible)
-                _categoryRow(context, row, total, hidden, brightness),
+              for (var index = 0; index < visible.length; index++)
+                _categoryRow(
+                  context,
+                  visible[index],
+                  total,
+                  hidden,
+                  brightness,
+                  colors[index],
+                ),
               if (rows.length > 5)
                 TextButton(
                   onPressed: () => setState(() => _expanded = !_expanded),
@@ -329,6 +329,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
     double total,
     bool hidden,
     Brightness brightness,
+    Color categoryColor,
   ) => InkWell(
     key: ValueKey('category-donut-${row.categoryId}'),
     borderRadius: BorderRadius.circular(AppRadii.control),
@@ -343,10 +344,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
             height: 12,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: CategoryVisuals.colorFor(
-                category: row.categoryName,
-                brightness: brightness,
-              ),
+              color: categoryColor,
             ),
           ),
           const SizedBox(width: 10),
@@ -410,10 +408,7 @@ class _MonthlyCategoryDonutState extends State<MonthlyCategoryDonut> {
                             backgroundColor: AppColors.border(brightness)
                                 .withValues(alpha: .55),
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              CategoryVisuals.colorFor(
-                                category: row.categoryName,
-                                brightness: brightness,
-                              ),
+                              categoryColor,
                             ),
                           ),
                         ),
@@ -461,8 +456,10 @@ class _CategoryDonutPainter extends CustomPainter {
     var start = -math.pi / 2;
     for (var i = 0; i < values.length; i++) {
       final sweep = values[i] / total * 2 * math.pi;
+      // Small separators distinguish adjacent colors without changing totals.
+      final gap = values.length > 1 ? math.min(.022, sweep * .20) : 0.0;
       brush.color = colors[i];
-      canvas.drawArc(rect, start, sweep, false, brush);
+      canvas.drawArc(rect, start + gap / 2, sweep - gap, false, brush);
       start += sweep;
     }
   }
