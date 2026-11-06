@@ -7,6 +7,12 @@ on:
     paths:
       - 'folego_flutter/**'
       - '.github/workflows/publish-folego-flow-verified.yml'
+  pull_request:
+    branches:
+      - release/folego-flow-20261106
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/publish-folego-flow-verified.yml'
   workflow_dispatch:
 
 permissions:
@@ -38,7 +44,7 @@ jobs:
       - name: Analyze Flutter
         run: flutter analyze
       - name: Verify critical UX and financial privacy
-        run: flutter test test/flow_native_navigation_test.dart test/web2_responsive_shell_test.dart test/home_budget_overview_panel_test.dart test/home_overview_modules_settings_test.dart test/folego_glass_surfaces_test.dart test/folego41_quick_capture_flow_test.dart test/folego4_plan_summary_visual_test.dart test/transaction_editor_modal_surface_test.dart test/category_picker_drilldown_ios_test.dart test/category_chart_palette_test.dart -r expanded
+        run: flutter test test/flow_native_navigation_test.dart test/web2_responsive_shell_test.dart test/home_budget_overview_panel_test.dart test/home_overview_modules_settings_test.dart test/folego_glass_surfaces_test.dart test/folego41_quick_capture_flow_test.dart test/folego4_plan_summary_visual_test.dart test/transaction_editor_modal_surface_test.dart test/category_picker_drilldown_ios_test.dart test/category_chart_palette_test.dart test/transaction_pending_guard_test.dart test/transaction_classification_test.dart test/classification_review_overview_test.dart test/autopilot_classification_context_test.dart test/smart_category_suggestion_test.dart test/smart_home_classification_test.dart -r expanded
       - name: Generate iPhone icons
         run: |
           sudo apt-get update -qq
@@ -73,6 +79,7 @@ jobs:
         with:
           path: folego_flutter/build/web
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/release/folego-flow-20261106'
     needs: build
     runs-on: ubuntu-latest
     environment:

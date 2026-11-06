@@ -87,6 +87,7 @@ SmartCategorySuggestion? suggestSmartCategory({
   final votes = <String, int>{};
   for (final item in history) {
     if (item.status != 'confirmed' ||
+        item.needsClassification ||
         _direction(item.eventType) != direction ||
         !catalog.containsKey(item.categoryId) ||
         _normalizeCategoryText(item.description) != query) {
@@ -131,6 +132,7 @@ SmartCategorySuggestion? suggestSmartCategory({
       final evidenceDescriptions = <String>{};
       for (final item in history) {
         if (item.status != 'confirmed' ||
+            item.needsClassification ||
             _direction(item.eventType) != direction ||
             !catalog.containsKey(item.categoryId) ||
             merchantPrefix(item.description) != prefix) {

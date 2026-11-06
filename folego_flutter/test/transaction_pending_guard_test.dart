@@ -80,4 +80,27 @@ void main() {
     expect(repositoryItems, ['first', 'second', 'third']);
   });
 
+  test('classification actions are unlocked only in idle state', () {
+    bool locked({
+      bool loading = false,
+      bool refreshing = false,
+      bool saving = false,
+      bool applyingSuggestions = false,
+      bool creatingAutomaticRule = false,
+    }) => classificationActionLocked(
+      loading: loading,
+      refreshing: refreshing,
+      saving: saving,
+      applyingSuggestions: applyingSuggestions,
+      creatingAutomaticRule: creatingAutomaticRule,
+    );
+
+    expect(locked(), isFalse);
+    expect(locked(loading: true), isTrue);
+    expect(locked(refreshing: true), isTrue);
+    expect(locked(saving: true), isTrue);
+    expect(locked(applyingSuggestions: true), isTrue);
+    expect(locked(creatingAutomaticRule: true), isTrue);
+  });
+
 }

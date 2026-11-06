@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:folego/data/models/transaction_item.dart';
+import 'package:folego/data/models/category_item.dart';
 import 'package:folego/features/transactions/transaction_classification_inbox.dart';
 
 TransactionItem item({
@@ -8,6 +9,8 @@ TransactionItem item({
   String name = 'PIX enviada - Santander',
   String type = 'expense',
   String source = 'sheet-sync',
+  String? categoryId,
+  bool needsClassification = false,
 }) => TransactionItem(
       id: id,
       eventType: type,
@@ -16,6 +19,8 @@ TransactionItem item({
       occurredAt: DateTime(2026, 9, 18, 17, 9),
       status: 'confirmed',
       source: source,
+      categoryId: categoryId,
+      needsClassification: needsClassification,
       accountId: 'bank-one',
     );
 
@@ -56,4 +61,63 @@ void main() {
     expect(original.amount, 49);
     expect(original.accountId, 'bank-one');
   });
+  test('review-pending history cannot become trusted batch evidence', () {
+    final categories = [
+      const CategoryItem(
+        id: 'groceries',
+        name: 'Mercado',
+        essential: false,
+        categoryRole: 'economic',
+        kind: 'expense',
+      ),
+    ];
+    final history = [
+      item(
+        id: 'historic-a',
+        name: 'Mercado do bairro',
+        categoryId: 'groceries',
+        needsClassification: true,
+      ),
+      item(
+        id: 'historic-b',
+        name: 'Mercado do bairro',
+        categoryId: 'groceries',
+        needsClassification: true,
+      ),
+    ];
+    final pending = [
+      item(id: 'pending', name: 'Mercado do bairro'),
+    ];
+    expect(historicalCategorySuggestions(
+      pending: pending,
+      history: history,
+      categories: categories,
+    ), isEmpty);
+    expect(safeAutopilotRuleProposals(
+      history: [...history, item(
+        id: 'historic-c',
+        name: 'Mercado do bairro',
+        categoryId: 'groceries',
+        needsClassification: true,
+      )],
+      categories: categories,
+      existingRules: const [],
+    ), isEmpty);
+
+    final approvedHistory = [
+      for (final id in ['a', 'b', 'c'])
+        item(id: id, name: 'Mercado do bairro', categoryId: 'groceries'),
+    ];
+    expect(historicalCategorySuggestions(
+      pending: pending,
+      history: approvedHistory,
+      categories: categories,
+    )['pending'], 'groceries');
+    expect(safeAutopilotRuleProposals(
+      history: approvedHistory,
+      categories: categories,
+      existingRules: const [],
+    ), hasLength(1));
+  });
+
 }
