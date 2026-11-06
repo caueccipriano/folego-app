@@ -78,7 +78,7 @@ void main() {
             .readAsStringSync();
     expect(source, contains('backgroundColor: AppColors.surface('));
     expect(source, contains('barrierColor:'));
-    expect(source, contains('height * .94'));
+    expect(source, contains('heightFactor: .94'));
     expect(source, contains('drillDown: !_isIncome'));
   });
 }
