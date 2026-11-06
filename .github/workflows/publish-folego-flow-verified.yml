@@ -1,0 +1,83 @@
+name: Publish Folego Flow verified release
+
+on:
+  push:
+    branches:
+      - release/folego-flow-20261106
+    paths:
+      - '.github/workflows/publish-folego-flow-verified.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: folego-flow-verified-release
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze Flutter
+        run: flutter analyze
+      - name: Verify critical UX and financial privacy
+        run: flutter test test/flow_native_navigation_test.dart test/web2_responsive_shell_test.dart test/home_budget_overview_panel_test.dart test/home_overview_modules_settings_test.dart test/folego_glass_surfaces_test.dart test/folego41_quick_capture_flow_test.dart test/folego4_plan_summary_visual_test.dart -r expanded
+      - name: Generate iPhone icons
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          bash scripts/generate_brand_icons.sh
+      - name: Build production PWA
+        run: flutter build web --release --base-href "/folego-app/" --dart-define=FOLEGO_RELEASE=${{ github.sha }}
+      - name: Version cache, manifest and icons
+        run: |
+          sed -i "s/__FOLEGO_CACHE_VERSION__/${GITHUB_SHA}/g" build/web/folego_push_sw.js
+          sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/index.html
+          sed -i "s/__FOLEGO_BUILD_VERSION__/${GITHUB_SHA}/g" build/web/manifest.json
+          sed -i "s#main.dart.js#main.dart.js?v=${GITHUB_SHA}#g" build/web/flutter_bootstrap.js
+          printf '{ "version": "%s" }\n' "$GITHUB_SHA" > build/web/folego_version.json
+          python3 scripts/embed_apple_touch_icon.py
+          cp build/web/index.html build/web/404.html
+      - name: Verify production assets
+        run: |
+          test -f build/web/index.html
+          test -f build/web/manifest.json
+          test -f build/web/folego_push_sw.js
+          test -f build/web/folego_update.js
+          test -f build/web/folego_version.json
+          test -f build/web/apple-touch-icon-ios-v2.png
+          test -f build/web/icons/Icon-512.png
+          grep -F "$GITHUB_SHA" build/web/folego_version.json
+          grep -F 'href="/folego-app/"' build/web/index.html
+          ! grep -F "__FOLEGO_BUILD_VERSION__" build/web/index.html
+          ! grep -F "__FOLEGO_CACHE_VERSION__" build/web/folego_push_sw.js
+          grep -F 'href="data:image/png;base64,' build/web/index.html
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: folego_flutter/build/web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - name: Deploy Folego Flow
+        id: publish
+        uses: actions/deploy-pages@v4
