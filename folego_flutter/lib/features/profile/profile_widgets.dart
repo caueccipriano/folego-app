@@ -441,25 +441,46 @@ class _AppearanceCard extends StatelessWidget {
   }
 }
 
-class _PaletteGrid extends StatelessWidget {
+class _PaletteGrid extends StatefulWidget {
   const _PaletteGrid({required this.selected, required this.onSelected});
   final String selected;
   final ValueChanged<String> onSelected;
 
   @override
+  State<_PaletteGrid> createState() => _PaletteGridState();
+}
+
+class _PaletteGridState extends State<_PaletteGrid> {
+  // Six clear visual directions. The 28 legacy palettes remain available.
+  static const _featuredIds = <String>{
+    'fluxo', 'folego', 'pistache_frost',
+    'terracota_gallery', 'cherry', 'jet',
+  };
+  bool _showAll = false;
+
+  @override
   Widget build(BuildContext context) {
     final activeColors = FolegoColorTokens.of(context);
     final scheme = Theme.of(context).colorScheme;
+    // Keep a saved non-featured selection visible even when collapsed.
+    final options = FolegoColorTokens.catalog.where(
+      (palette) => _showAll ||
+          _featuredIds.contains(palette.id) ||
+          palette.id == widget.selected,
+    ).toList(growable: false);
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 10.0;
         final columns = constraints.maxWidth >= 650 ? 3 : 2;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
           spacing: gap,
           runSpacing: gap,
           children: [
-            for (final palette in FolegoColorTokens.catalog)
+            for (final palette in options)
               SizedBox(
                 width: width,
                 child: Builder(
@@ -468,7 +489,7 @@ class _PaletteGrid extends StatelessWidget {
                       palette.id, Brightness.light);
                     final dark = FolegoColorTokens.fromId(
                       palette.id, Brightness.dark);
-                    final active = selected == palette.id;
+                    final active = widget.selected == palette.id;
                     return Semantics(
                       button: true,
                       selected: active,
@@ -477,7 +498,7 @@ class _PaletteGrid extends StatelessWidget {
                         color: scheme.surface,
                         borderRadius: BorderRadius.circular(AppRadii.control),
                         child: InkWell(
-                          onTap: () => onSelected(palette.id),
+                          onTap: () => widget.onSelected(palette.id),
                           borderRadius: BorderRadius.circular(AppRadii.control),
                           child: Container(
                             key: ValueKey('theme-palette-${palette.id}'),
@@ -539,6 +560,21 @@ class _PaletteGrid extends StatelessWidget {
                   },
                 ),
               ),
+          ],
+            ),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _showAll = !_showAll),
+                icon: Icon(_showAll
+                    ? Icons.unfold_less_rounded
+                    : Icons.palette_outlined),
+                label: Text(_showAll
+                    ? 'mostrar só os principais'
+                    : 'explorar as 28 paletas'),
+              ),
+            ),
           ],
         );
       },

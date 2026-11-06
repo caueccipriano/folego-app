@@ -258,7 +258,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                     style: AppTypography.section(context, fontSize: 25)),
                   const SizedBox(height: 10),
                   Text(
-                    'Pergunte, entenda seus números e veja uma ação para revisar.',
+                    'Resumo gratuito para se orientar. Com gemini, aprofunde seus números e descubra uma próxima ação.',
                     style: AppTypography.body(context, fontSize: 13,
                       color: colors.onSurfaceVariant),
                   ),
@@ -352,8 +352,8 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sugestões preenchem a pergunta. Só tocar em Perguntar '
-                    'envia uma consulta Premium.',
+                    'Escolher uma sugestão não envia dados. Perguntar usa a cota Premium; '
+                    'o resumo sem IA é gratuito e não consome perguntas.',
                     style: AppTypography.label(context, fontSize: 12,
                       color: colors.onSurfaceVariant),
                   ),
