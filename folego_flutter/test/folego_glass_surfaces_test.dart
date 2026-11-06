@@ -67,6 +67,8 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      AppColorSelection.choose('fluxo');
+      addTearDown(() => AppColorSelection.choose('fluxo'));
       final taps = <int>[];
       var toolsTaps = 0;
       await tester.pumpWidget(MaterialApp(
@@ -81,11 +83,11 @@ void main() {
           ]),
         ),
       ));
-      expect(find.byType(FolegoGlassSurface), findsOneWidget);
-      // The new Signature dock is deliberately understated. Navigation
-      // geometry and all hit targets must remain unchanged.
-      expect(tester.widget<FolegoGlassSurface>(
-        find.byType(FolegoGlassSurface)).prominent, isFalse);
+      // Fluxo intentionally uses an opaque surface instead of frosted glass.
+      // The geometry and all four interactive targets must still work.
+      expect(find.byKey(const ValueKey('flow-native-nav-surface')),
+          findsOneWidget);
+      expect(find.byType(FolegoGlassSurface), findsNothing);
       expect(find.byKey(const ValueKey('mobile-liquid-nav')), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-1')));
