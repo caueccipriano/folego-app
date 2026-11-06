@@ -314,7 +314,8 @@ void main() {
       );
 
       expect(first, second);
-      expect(dark, first);
+      // Chart colors now have a brighter version for dark backgrounds.
+      expect(dark, isNot(first));
       expect(homeExpenseEventTypes, isNot(contains('benefit_expense')));
       expect(
         homeExpenseEventTypes,
