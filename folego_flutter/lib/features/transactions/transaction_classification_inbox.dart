@@ -652,6 +652,7 @@ class _TransactionClassificationInboxState
     if (_refreshing ||
         _savingEventId != null ||
         _creatingAutomaticRule ||
+        (_finishingSaveFlow && !allowDuringBatch) ||
         (_applyingSuggestions && !allowDuringBatch)) {
       return;
     }
