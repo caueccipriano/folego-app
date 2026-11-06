@@ -123,9 +123,9 @@ class PlanGuidanceCard extends StatelessWidget {
                 ] else if (next == null) ...[
                   const SizedBox(height: 9),
                   Text(
-                    items.any((item) => item.isSubcategory && item.hasBudget)
+                    items.any((item) => item.isParent && item.hasBudget)
                         ? 'seus limites estão configurados. acompanhe os gastos abaixo.'
-                        : 'nenhuma subcategoria disponível para ajustar agora.',
+                        : 'nenhuma categoria principal disponível para ajustar agora.',
                     style: AppTypography.body(context, fontSize: 13, color: scheme.onSurfaceVariant)),
                 ],
               ],
@@ -283,8 +283,9 @@ class PlanGuidanceCard extends StatelessWidget {
     if (target.reason == PlanReviewReason.uncategorized) return onClassify;
     if (target.reason == PlanReviewReason.noLimit &&
         onEditReviewCategory != null) {
-      final child = editableChildForReview(target.category, items);
-      if (child != null) return () => onEditReviewCategory!(child);
+      if (target.category.isParent && !target.category.isPending) {
+        return () => onEditReviewCategory!(target.category);
+      }
     }
     return null;
   }
