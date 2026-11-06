@@ -781,7 +781,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                               border: Border.all(color: tokens.borda),
                               borderRadius: BorderRadius.circular(24),
-                              boxShadow: MediaQuery.highContrastOf(context) ? null : [
+                              boxShadow: minimal || MediaQuery.highContrastOf(context) ? null : [
                                 BoxShadow(
                                   color: tokens.textoPrincipal.withValues(alpha: dark ? .14 : .055),
                                   blurRadius: 24,

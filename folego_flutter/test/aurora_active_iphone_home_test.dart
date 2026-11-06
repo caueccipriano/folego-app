@@ -22,9 +22,9 @@ void main() {
 
   test('banking-grade visual system is on the active Home', () {
     expect(home, contains('FÔLEGO  /  HOJE'));
-    expect(active, contains('DISPONÍVEL ATÉ RECEBER'));
-    expect(active, contains('SEU FÔLEGO POR DIA'));
-    expect(active, contains('PRÓXIMO SALÁRIO'));
+    expect(active, contains('disponível até receber'));
+    expect(active, contains('seu fôlego por dia'));
+    expect(active, contains('próxima entrada'));
     expect(active, contains('color: tokens.marca'));
     expect(active, contains("ValueKey('home-fixed-amount')"));
     expect(active, contains("ValueKey('home-fixed-daily')"));
