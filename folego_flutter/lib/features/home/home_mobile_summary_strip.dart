@@ -68,7 +68,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
         snapshot.monthlyBudgetPlanned > 0 &&
         snapshot.monthlyBudgetUsed > snapshot.monthlyBudgetPlanned;
     final budgetLabel = ratio == null
-        ? 'definir orçamento no plano'
+        ? (compactHome ? 'sem limite' : 'definir orçamento no plano')
         : hidden
             ? 'valores ocultos'
             : '${(snapshot.monthlyBudgetUsed / snapshot.monthlyBudgetPlanned * 100).round()}% utilizado';
@@ -323,7 +323,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                       ),
                     ],
                   ],
-                  if (compactHome && ratio != null) ...[
+                  if (compactHome && ratio != null && !hidden) ...[
                     const SizedBox(height: 8),
                     Text(
                       budgetExceeded
