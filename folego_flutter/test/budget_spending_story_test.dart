@@ -102,12 +102,12 @@ void main() {
           expect(find.byKey(const ValueKey('budget-story-essencial')), findsNothing);
         expect(
           tester
-              .getTopLeft(find.byKey(const ValueKey('budget-story-lazer')))
+              .getTopLeft(find.byKey(const ValueKey('budget-story-sem limite')))
               .dy,
           lessThan(
             tester
                 .getTopLeft(
-                  find.byKey(const ValueKey('budget-story-sem limite')),
+                  find.byKey(const ValueKey('budget-story-lazer')),
                 )
                 .dy,
           ),
