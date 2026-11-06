@@ -1944,7 +1944,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               : child.budgetSource == 'month' ||
                                       child.budgetSource == 'override' ||
                                       child.budgetSource == 'recurring'
-                                  ? 'R$ 0 de verba liberada neste mês'
+                                  ? 'R\$ 0 de verba liberada neste mês'
                                   : 'sem teto definido · não significa dinheiro livre',
                           style: AppTypography.body(
                             context,
