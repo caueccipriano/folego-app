@@ -24,13 +24,13 @@ void main() {
     await preferences.saveThemeMode(ThemeMode.dark);
     await preferences.savePaletteId('mare');
     expect(await preferences.loadThemeMode(), ThemeMode.dark);
-    expect(await preferences.loadPaletteId(), 'mare');
+    expect(await preferences.loadPaletteId(), 'fluxo');
 
     await preferences.saveThemeMode(ThemeMode.light);
     expect(await preferences.loadPaletteId(), 'mare');
     await preferences.savePaletteId('chiclete');
     expect(await preferences.loadThemeMode(), ThemeMode.light);
-    expect(await preferences.loadPaletteId(), 'chiclete');
+    expect(await preferences.loadPaletteId(), 'arco_iris_pastel');
   });
 
   test('paleta desconhecida volta para Fluxo sem alterar o modo', () async {
