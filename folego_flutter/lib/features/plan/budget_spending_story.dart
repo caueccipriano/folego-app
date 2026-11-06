@@ -36,9 +36,6 @@ class BudgetSpendingStory extends StatelessWidget {
               .where((i) => i.isSubcategory && !i.essential && i.hasActivity)
               .toList()
             ..sort((a, b) {
-              if (a.isOverBudget != b.isOverBudget) {
-                return a.isOverBudget ? -1 : 1;
-              }
               return b.actualAmount.compareTo(a.actualAmount);
             });
       final visible = rows.take(5).toList();
@@ -90,7 +87,7 @@ class BudgetSpendingStory extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                'Até 5 subcategorias, com as que passaram do próprio limite primeiro. '
+                'Até 5 subcategorias com maior gasto, sem orçamentos individuais. '
                 'As barras comparam os gastos na mesma escala. Toque para conferir os lançamentos.',
                 style: AppTypography.body(
                   context,
@@ -167,10 +164,7 @@ class BudgetSpendingStory extends StatelessWidget {
                           ),
                         const SizedBox(height: 6),
                         Text(
-                          item.hasBudget
-                              ? 'limite: ${Formatters.money(item.plannedAmount)} · '
-                                    '${item.isOverBudget ? "passou ${Formatters.money(-item.remainingAmount)}" : "dentro do limite"}'
-                              : 'sem limite próprio · esse gasto também conta no teto global',
+                          'gasto incluído em ${item.parentName ?? "sua categoria principal"} · sem orçamento próprio',
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
