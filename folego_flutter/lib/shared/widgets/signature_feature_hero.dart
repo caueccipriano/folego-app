@@ -97,7 +97,7 @@ class SignatureFeatureHero extends StatelessWidget {
                     ).copyWith(letterSpacing: 1.1),
                   ),
                 ),
-                if (trailing != null) trailing!,
+                ?trailing,
               ],
             ),
             SizedBox(height: compact ? 9 : 12),
