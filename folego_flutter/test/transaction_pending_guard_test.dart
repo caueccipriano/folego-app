@@ -54,9 +54,10 @@ void main() {
     ), isTrue);
   });
   test('classification queue stays growable after fixed-length refresh', () {
-    final repositoryItems = List<String>.filled(2, '', growable: false)
-      ..[0] = 'pending-a'
-      ..[1] = 'pending-b';
+    final repositoryItems = List<String>.of(
+      ['pending-a', 'pending-b'],
+      growable: false,
+    );
     final queue = mutableClassificationQueue(repositoryItems);
 
     queue.removeWhere((item) => item == 'pending-a');
