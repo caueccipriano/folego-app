@@ -68,7 +68,7 @@ final class AppPreferenceRepository {
 
   Future<String> loadPaletteId() async {
     final id = await _store.getString(paletteKey);
-    return FolegoColorTokens.palette(id ?? 'fluxo').id;
+    return FolegoColorTokens.palette(id ?? 'prisma_pastel').id;
   }
 
   Future<void> savePaletteId(String id) =>
@@ -181,7 +181,7 @@ abstract final class AppPreferences {
 
   static Future<void> initialize() async {
     var themeMode = ThemeMode.system;
-    var paletteId = 'fluxo';
+    var paletteId = 'prisma_pastel';
     var language = AppLanguagePreference.system;
     var introSeen = false;
 
@@ -194,7 +194,7 @@ abstract final class AppPreferences {
     try {
       paletteId = await _repository.loadPaletteId();
     } catch (_) {
-      paletteId = 'fluxo';
+      paletteId = 'prisma_pastel';
     }
 
     try {
