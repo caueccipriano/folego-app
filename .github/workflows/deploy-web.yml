@@ -196,7 +196,7 @@ jobs:
           path: folego_flutter/build/web
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feat/transactions-recurring'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feat/transactions-recurring'
     needs: build
     runs-on: ubuntu-latest
     environment:
