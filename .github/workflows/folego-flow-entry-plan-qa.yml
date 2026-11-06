@@ -1,0 +1,46 @@
+name: Folego Flow quick entry and plan QA
+
+on:
+  push:
+    branches:
+      - design/folego-flow-quick-entry-plan-20261106
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/folego-flow-entry-plan-qa.yml'
+  pull_request:
+    branches:
+      - design/folego-flow-native-navigation-20261105
+    paths:
+      - 'folego_flutter/**'
+      - '.github/workflows/folego-flow-entry-plan-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flow-entry-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: folego_flutter
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Flutter analyze
+        run: flutter analyze
+      - name: Quick entry and planning regression
+        run: flutter test test/folego41_quick_capture_flow_test.dart test/quick_register_payment_state_test.dart test/folego4_plan_summary_visual_test.dart test/plan_experience_test.dart test/plan_interaction_state_test.dart test/web2_responsive_shell_test.dart -r expanded
+      - name: Build web PWA
+        run: flutter build web --release
