@@ -268,19 +268,17 @@ class _ExpenseDonut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slices = breakdown.categories
-        .map(
-          (item) => _DonutSlice(
-            share: item.share,
-            color: HomeSpendingPalette.colorFor(
-              category: item.category,
-              categoryId: item.categoryId,
-              isOther: item.isOther,
-              brightness: brightness,
-            ),
-          ),
-        )
-        .toList(growable: false);
+    final chartColors = HomeSpendingPalette.colorsFor(
+      breakdown.categories,
+      brightness,
+    );
+    final slices = <_DonutSlice>[
+      for (var index = 0; index < breakdown.categories.length; index++)
+        _DonutSlice(
+          share: breakdown.categories[index].share,
+          color: chartColors[index],
+        ),
+    ];
     final semantics = breakdown.categories
         .map(
           (item) =>
@@ -387,11 +385,16 @@ class _ExpenseLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chartColors = HomeSpendingPalette.colorsFor(
+      breakdown.categories,
+      brightness,
+    );
     return Column(
       children: [
         for (var index = 0; index < breakdown.categories.length; index++) ...[
           _ExpenseLegendRow(
             item: breakdown.categories[index],
+            color: chartColors[index],
             brightness: brightness,
             primaryText: primaryText,
             secondaryText: secondaryText,
@@ -410,6 +413,7 @@ class _ExpenseLegend extends StatelessWidget {
 class _ExpenseLegendRow extends StatelessWidget {
   const _ExpenseLegendRow({
     required this.item,
+    required this.color,
     required this.brightness,
     required this.primaryText,
     required this.secondaryText,
@@ -419,6 +423,7 @@ class _ExpenseLegendRow extends StatelessWidget {
   });
 
   final HomeCategoryExpense item;
+  final Color color;
   final Brightness brightness;
   final Color primaryText;
   final Color secondaryText;
@@ -428,13 +433,6 @@ class _ExpenseLegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = HomeSpendingPalette.colorFor(
-      category: item.category,
-      categoryId: item.categoryId,
-      isOther: item.isOther,
-      brightness: brightness,
-    );
-
     return Semantics(
       button: true,
       label:
