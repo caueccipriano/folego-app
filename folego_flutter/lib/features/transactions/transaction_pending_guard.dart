@@ -17,3 +17,17 @@ bool shouldApplyTransactionPendingResponse({
 /// safely dismiss classified transactions, including after a refresh.
 List<T> mutableClassificationQueue<T>(Iterable<T> items) =>
     List<T>.of(items, growable: true);
+
+/// Reject concurrent manual, bulk and refresh actions while review is busy.
+bool classificationActionLocked({
+  required bool loading,
+  required bool refreshing,
+  required bool saving,
+  required bool applyingSuggestions,
+  required bool creatingAutomaticRule,
+}) =>
+    loading ||
+    refreshing ||
+    saving ||
+    applyingSuggestions ||
+    creatingAutomaticRule;
