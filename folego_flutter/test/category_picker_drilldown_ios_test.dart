@@ -72,6 +72,26 @@ void main() {
     expect(chosen?.id, 'gas');
   });
 
+
+  test('new expenses open a category then a subcategory in all forms', () {
+    for (final path in [
+      'lib/features/home/quick_register_sheet_v3.dart',
+      'lib/features/home/quick_register_sheet_v2.dart',
+    ]) {
+      final source = File(path).readAsStringSync();
+      expect(source, contains("drillDown: widget.initialType == 'expense'"),
+          reason: path);
+      expect(source, contains('heightFactor: .94'), reason: path);
+    }
+    final actionSheets =
+        File('lib/features/transactions/transaction_action_sheets.dart')
+            .readAsStringSync();
+    expect(
+      RegExp(r'drillDown: true').allMatches(actionSheets).length,
+      greaterThanOrEqualTo(4),
+    );
+  });
+
   test('iPhone category modal covers the underlying edit form', () {
     final source =
         File('lib/features/transactions/transaction_edit_sheet.dart')
