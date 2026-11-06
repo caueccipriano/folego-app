@@ -17,7 +17,6 @@ import '../../shared/widgets/app_loading_state.dart';
 import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../../shared/widgets/folego_ambient_backdrop.dart';
-import '../../shared/widgets/signature_feature_hero.dart';
 import 'goal_detail_screen.dart';
 import 'goal_form_sheet.dart';
 import 'goals_widgets.dart';
@@ -139,16 +138,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(4, 12, 4, 80),
               children: [
-                const SignatureFeatureHero(
-                  title: 'Seu próximo grande passo.',
-                  eyebrow: 'Metas financeiras',
-                  subtitle: 'Transforme cada aporte em uma conquista real',
-                  icon: Icons.flag_outlined,
-                  compact: true,
-                ),
-                const SizedBox(height: 13),
                 _Header(onCreate: _saving ? null : _createGoal),
-                const SizedBox(height: 17),
+                const SizedBox(height: 14),
                 if (_loading && _goals.isEmpty)
                   const AppLoadingState(label: 'organizando suas metas')
                 else if (_error != null && _goals.isEmpty)
