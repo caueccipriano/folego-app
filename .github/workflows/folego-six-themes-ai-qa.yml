@@ -47,6 +47,8 @@ jobs:
             test/folego3_more_tools_sheet_test.dart \
             test/folego4_plan_summary_visual_test.dart \
             test/folego_other_tabs_design_contract_test.dart \
+            test/folego_all_sections_clarity_test.dart \
+            test/wallet_qa_mobile_stress_test.dart \
             test/signature_unified_fintech_visual_test.dart \
             test/aurora_active_iphone_home_test.dart \
             test/folego4_home_visual_test.dart \
