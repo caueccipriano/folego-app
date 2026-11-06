@@ -157,8 +157,8 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
               ),
             ),
             clipBehavior: Clip.antiAlias,
-            builder: (sheetContext) => SizedBox(
-              height: MediaQuery.sizeOf(sheetContext).height * .94,
+            builder: (_) => FractionallySizedBox(
+              heightFactor: .94,
               child: CategorySearchPicker(
                 categories: _categories,
                 selectedId: _selectedCategoryId,
