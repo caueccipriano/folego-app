@@ -294,11 +294,14 @@ void main() {
           expect(finder, findsOneWidget);
           final hero = tester.widget<Container>(finder);
           final decoration = hero.decoration! as BoxDecoration;
-          expect(decoration.color, colors.marcaHero);
+          expect(decoration.color, colors.superficie);
           expect(decoration.gradient, isNull);
           expect(decoration.boxShadow, isNull);
           expect(find.byKey(const ValueKey('home-fixed-daily')), findsOneWidget);
           expect(find.byKey(const ValueKey('home-fixed-amount')), findsOneWidget);
+          expect(find.text('SEU FÔLEGO POR DIA'), findsOneWidget);
+          expect(find.text('DISPONÍVEL ATÉ RECEBER'), findsOneWidget);
+          expect(find.text('painel completo'), findsOneWidget);
           expect(tester.getRect(finder).width,
             lessThanOrEqualTo(viewport.width));
           expect(tester.takeException(), isNull);
