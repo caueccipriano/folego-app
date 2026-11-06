@@ -66,8 +66,12 @@ void main() {
       onBudget: () => budgetTaps++,
       onUpcoming: () => agendaTaps++,
     ));
-    expect(find.text('orçamento flexível'), findsOneWidget);
+    expect(find.text('orçamento do mês'), findsOneWidget);
     expect(find.text('63% utilizado'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-flow-used-budget')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('home-flow-planned-budget')),
+        findsOneWidget);
     expect(find.text('gastos do mês'), findsOneWidget);
     expect(find.text('próxima conta'), findsOneWidget);
     expect(find.textContaining('240,00'), findsOneWidget);
@@ -76,7 +80,7 @@ void main() {
     expect(amount.style!.fontFamily, 'Manrope');
     expect(amount.style!.fontSize, greaterThanOrEqualTo(17));
     expect(amount.style!.fontFeatures, isNotEmpty);
-    final title = tester.widget<Text>(find.text('orçamento flexível'));
+    final title = tester.widget<Text>(find.text('orçamento do mês'));
     expect(title.style!.fontFamily, 'Manrope');
     expect(title.style!.fontSize, greaterThanOrEqualTo(13));
     expect(tester.takeException(), isNull);

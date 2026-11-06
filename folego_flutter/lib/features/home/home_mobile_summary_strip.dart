@@ -54,6 +54,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
     final border = AppColors.border(brightness);
     final tokens = FolegoColorTokens.of(context);
     final highContrast = MediaQuery.highContrastOf(context);
+    final flow = AppColorSelection.selected.value == 'fluxo';
     final ratio = progress(snapshot);
 
     final pending = upcoming
@@ -83,7 +84,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
     }) => Expanded(
       child: Material(
         color: surface,
-        elevation: highContrast ? 0 : 1.4,
+        elevation: highContrast || flow ? 0 : 1.4,
         shadowColor: tokens.marca.withValues(alpha: .10),
         shape: RoundedRectangleBorder(
           side: BorderSide(color: border),
@@ -148,7 +149,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
       children: [
         Material(
           color: surface,
-          elevation: highContrast ? 0 : 1.2,
+          elevation: highContrast || flow ? 0 : 1.2,
           shadowColor: tokens.marca.withValues(alpha: .09),
           shape: RoundedRectangleBorder(
             side: BorderSide(color: border),
@@ -175,7 +176,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                           color: tokens.marca),
                     ),
                     const SizedBox(width: 9),
-                    Expanded(child: Text('orçamento flexível',
+                    Expanded(child: Text('orçamento do mês',
                       style: AppTypography.cardTitle(context, fontSize: 13,
                         color: primary))),
                     Container(
@@ -201,8 +202,66 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                     const SizedBox(width: 3),
                     Icon(Icons.chevron_right_rounded, size: 16, color: secondary),
                   ]),
+                  if (ratio == null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Defina seus limites no Planejar para acompanhar seu mês.',
+                      key: const ValueKey('home-budget-setup-hint'),
+                      style: AppTypography.body(context,
+                          fontSize: 11, color: secondary),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('utilizado',
+                                style: AppTypography.label(context,
+                                    fontSize: 11, color: secondary)),
+                            const SizedBox(height: 3),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                hidden
+                                    ? FinancialPrivacy.maskMoney()
+                                    : Formatters.money(snapshot.monthlyBudgetUsed),
+                                key: const ValueKey('home-flow-used-budget'),
+                                style: AppTypography.money(context,
+                                    fontSize: 16, color: primary),
+                              ),
+                            ),
+                          ],
+                        )),
+                        const SizedBox(width: 12),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('planejado',
+                                style: AppTypography.label(context,
+                                    fontSize: 11, color: secondary)),
+                            const SizedBox(height: 3),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                hidden
+                                    ? FinancialPrivacy.maskMoney()
+                                    : Formatters.money(snapshot.monthlyBudgetPlanned),
+                                key: const ValueKey('home-flow-planned-budget'),
+                                style: AppTypography.money(context,
+                                    fontSize: 16, color: primary),
+                              ),
+                            ),
+                          ],
+                        )),
+                      ],
+                    ),
+                  ],
                   if (ratio != null && !hidden) ...[
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 10),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
