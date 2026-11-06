@@ -8,7 +8,7 @@ void main() {
         .readAsStringSync();
 
     expect(source, contains('sem verba planejada'));
-    expect(source, contains('gasto incluído no limite de'));
+    expect(source, contains('gastos · incluído em'));
     expect(source, contains('defina limites nas categorias principais'));
     expect(source, contains('plan-edit-main-budget-'));
     expect(source, contains('não é saldo livre'));
