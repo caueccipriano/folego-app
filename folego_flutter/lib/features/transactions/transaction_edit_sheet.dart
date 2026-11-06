@@ -145,13 +145,25 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
             context: context,
             useSafeArea: true,
             isScrollControlled: true,
-            backgroundColor: AppColors.transparent,
-            builder: (_) => FractionallySizedBox(
-              heightFactor: .84,
+            showDragHandle: false,
+            // Full-height, opaque category picker prevents overlapping
+            // transaction sheets from showing above or through its fields.
+            backgroundColor: AppColors.surface(Theme.of(context).brightness),
+            barrierColor:
+                Theme.of(context).colorScheme.scrim.withValues(alpha: .80),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadii.sheet),
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            builder: (sheetContext) => SizedBox(
+              height: MediaQuery.sizeOf(sheetContext).height * .94,
               child: CategorySearchPicker(
                 categories: _categories,
                 selectedId: _selectedCategoryId,
                 eventType: _isIncome ? 'income' : 'expense',
+                drillDown: !_isIncome,
               ),
             ),
           );
