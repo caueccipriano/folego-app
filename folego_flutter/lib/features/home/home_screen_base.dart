@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/layout/app_content_container.dart';
@@ -53,6 +54,7 @@ import '../transactions/resolver_queue.dart';
 import 'upcoming_events_screen.dart';
 import '../plan/projection_navigation_scope.dart';
 import '../plan/category_period_comparison.dart';
+import '../shell/financial_ai_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.space, required this.repository,
@@ -136,6 +138,23 @@ class _HomeScreenState extends State<HomeScreen> {
   // without triggering a repository reload or changing financial data.
   void _onFinancialPrivacyChanged() {
     if (mounted) setState(() {});
+  }
+
+  /// Opens the read-only assistant without sending a model request.
+  void _openFinancialAssistant() {
+    final requestedSpaceId = widget.space.id;
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => FinancialAiScreen(
+          client: Supabase.instance.client,
+          spaceId: requestedSpaceId,
+          onOpenPlan: () {
+            Navigator.of(context).pop();
+            ProjectionNavigationScope.maybeOf(context)?.open();
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -485,6 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onIncome: () => _openRegister('income'),
         onSearch: () => openDiscovery(context,
           space: widget.space, repository: widget.repository),
+        onAi: _openFinancialAssistant,
         onResolve: () => Navigator.of(context).push<void>(
           MaterialPageRoute(builder: (_) => FinancialReviewHub(
             repository: widget.repository, spaceId: widget.space.id,
@@ -724,6 +744,32 @@ class _HomeScreenState extends State<HomeScreen> {
                             // Flow dashboard for every selected palette.
                             decoration: BoxDecoration(
                               color: tokens.superficie,
+                              // Pastel rainbow changes the surface only,
+                              // not the meaning of financial status colors.
+                              gradient: AppColorSelection.selected.value ==
+                                      'arco_iris_pastel'
+                                  ? LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color.alphaBlend(
+                                          const Color(0xFFEBD3F6).withValues(
+                                            alpha: Theme.of(context).brightness ==
+                                                    Brightness.dark ? .12 : .38),
+                                          tokens.superficie),
+                                        Color.alphaBlend(
+                                          const Color(0xFFCDE8FF).withValues(
+                                            alpha: Theme.of(context).brightness ==
+                                                    Brightness.dark ? .10 : .35),
+                                          tokens.superficie),
+                                        Color.alphaBlend(
+                                          const Color(0xFFFFDCE8).withValues(
+                                            alpha: Theme.of(context).brightness ==
+                                                    Brightness.dark ? .12 : .38),
+                                          tokens.superficie),
+                                      ],
+                                    )
+                                  : null,
                               border: Border.all(color: tokens.borda),
                               borderRadius: BorderRadius.circular(18),
                             ),
@@ -1002,6 +1048,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       smartCheckin: smartCheckin,
                     ),
                     onUpcoming: _openUpcomingEvents,
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const ValueKey('home-ai-shortcut'),
+                      onPressed: _openFinancialAssistant,
+                      icon: const Icon(Icons.auto_awesome_outlined, size: 19),
+                      label: const Text('perguntar ao Fôlego'),
+                    ),
                   ),
                   if (pulseInsight.showCard) ...[
                     const SizedBox(height: 6),
@@ -1429,6 +1485,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     const SizedBox(height: 12),
     if (showTools) HomeQuickTools(
+      onAskAi: _openFinancialAssistant,
       onSearch: () => openDiscovery(
         context, space: widget.space, repository: widget.repository,
       ),
