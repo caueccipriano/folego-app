@@ -19,6 +19,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
     required this.upcomingAvailable,
     required this.hidden,
     required this.showTiles,
+    this.compactHome = false,
     required this.onBudget,
     required this.onMonthly,
     required this.onUpcoming,
@@ -30,6 +31,9 @@ class HomeMobileSummaryStrip extends StatelessWidget {
   final bool upcomingAvailable;
   final bool hidden;
   final bool showTiles;
+  /// First-glance Home: a single budget signal, never a second report.
+  /// Full used/planned amounts belong in Planejar and the details sheet.
+  final bool compactHome;
   final VoidCallback onBudget;
   final VoidCallback onMonthly;
   final VoidCallback onUpcoming;
@@ -147,7 +151,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
       children: [
         Material(
           color: surface,
-          elevation: highContrast || flow ? 0 : 1.2,
+          elevation: highContrast || flow || compactHome ? 0 : 1.2,
           shadowColor: tokens.marca.withValues(alpha: .09),
           shape: RoundedRectangleBorder(
             side: BorderSide(color: border),
@@ -158,7 +162,9 @@ class HomeMobileSummaryStrip extends StatelessWidget {
             onTap: onBudget,
             borderRadius: BorderRadius.circular(20),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
+              padding: compactHome
+                  ? const EdgeInsets.fromLTRB(15, 14, 15, 14)
+                  : const EdgeInsets.fromLTRB(13, 11, 13, 11),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -210,7 +216,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                     ),
                   ] else ...[
                     const SizedBox(height: 10),
-                    Row(
+                    if (!compactHome) Row(
                       children: [
                         Expanded(child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,7 +265,7 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                     ),
                   ],
                   if (ratio != null && !hidden) ...[
-                    const SizedBox(height: 10),
+                    SizedBox(height: compactHome ? 12 : 10),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
@@ -316,6 +322,16 @@ class HomeMobileSummaryStrip extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ],
+                  if (compactHome && ratio != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      budgetExceeded
+                          ? 'limite ultrapassado · toque para ver seu plano'
+                          : 'veja os detalhes no Planejar',
+                      style: AppTypography.label(context,
+                        fontSize: 11, color: secondary),
+                    ),
                   ],
                 ],
               ),
