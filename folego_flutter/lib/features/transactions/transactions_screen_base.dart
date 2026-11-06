@@ -814,6 +814,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
     final primary = AppColors.primaryText(brightness);
     final secondary = AppColors.secondaryText(brightness);
     final accent = AppColors.primaryPurple(brightness);
+    final colors = FolegoColorTokens.of(context);
     final subscriptions = _recurringItems
         .where((item) => _subscriptionIds.contains(item.id))
         .toList(growable: false);
@@ -915,18 +916,29 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                     ),
                     if (widget.onClassificationRequested != null) ...[
                       Material(
-                        color: accent.withValues(alpha: isDark ? .15 : .07),
-                        borderRadius: BorderRadius.circular(AppRadii.control),
+                        color: colors.superficie,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: colors.borda),
+                        ),
                         child: InkWell(
                           key: const ValueKey('transactions-smart-categories-entry'),
                           onTap: widget.onClassificationRequested,
-                          borderRadius: BorderRadius.circular(AppRadii.control),
+                          borderRadius: BorderRadius.circular(16),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
+                              horizontal: 14, vertical: 12),
                             child: Row(children: [
-                              Icon(AppIcons.categoryUnclassified,
-                                size: 20, color: accent),
+                              Container(
+                                width: 34, height: 34,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: .10),
+                                  borderRadius: BorderRadius.circular(11),
+                                ),
+                                child: Icon(AppIcons.categoryUnclassified,
+                                  size: 19, color: accent),
+                              ),
                               const SizedBox(width: 10),
                               Expanded(child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,7 +953,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                 ],
                               )),
                               Icon(AppIcons.chevronRight,
-                                size: 18, color: secondary),
+                                size: 18, color: accent),
                             ]),
                           ),
                         ),
@@ -959,14 +971,12 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                         ),
                       ),
                     ],
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 13),
                     Container(
-                      padding: const EdgeInsets.all(3),
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius: BorderRadius.circular(
-                          AppRadii.compactCard,
-                        ),
+                        borderRadius: BorderRadius.circular(17),
                         border: Border.all(color: border),
                       ),
                       child: TabBar(
@@ -974,20 +984,20 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                         dividerColor: AppColors.transparent,
                         indicatorSize: TabBarIndicatorSize.tab,
                         indicator: BoxDecoration(
-                          color: accent.withValues(alpha: isDark ? .18 : .10),
-                          borderRadius: BorderRadius.circular(AppRadii.control),
+                          color: accent.withValues(alpha: isDark ? .21 : .105),
+                          borderRadius: BorderRadius.circular(13),
                         ),
-                        labelColor: primary,
+                        labelColor: accent,
                         unselectedLabelColor: secondary,
                         labelStyle: AppTypography.label(
                           context,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: primary,
+                          color: accent,
                         ),
                         unselectedLabelStyle: AppTypography.label(
                           context,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: secondary,
                         ),

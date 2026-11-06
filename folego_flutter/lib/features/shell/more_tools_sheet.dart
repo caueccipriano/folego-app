@@ -20,9 +20,10 @@ class MoreToolsSheet extends StatelessWidget {
     final pad = space.width < 355 ? 12.0 : 18.0;
 
     return FolegoGlassSurface(
-      radius: 30,
-      prominent: true,
-      padding: EdgeInsets.fromLTRB(pad, 10, pad, 20),
+      radius: 28,
+      prominent: false,
+      elevated: false,
+      padding: EdgeInsets.fromLTRB(pad, 12, pad, 20),
       child: ConstrainedBox(
         // Large accessibility text and short iPhones can scroll the menu
         // without shrinking labels or hiding actions below the home indicator.
@@ -58,7 +59,7 @@ class MoreToolsSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SEU ESPAÇO',
+                          'TUDO EM UM LUGAR',
                           style: AppTypography.label(
                             context,
                             fontSize: 10,
@@ -68,9 +69,9 @@ class MoreToolsSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text('mais', style: AppTypography.section(context,
-                          fontSize: 22, color: scheme.onSurface)),
+                          fontSize: 24, color: tokens.textoPrincipal)),
                         const SizedBox(height: 3),
-                        Text('contas, metas e configurações',
+                        Text('suas ferramentas, sem complicação',
                           style: AppTypography.body(context, fontSize: 13,
                             color: scheme.onSurfaceVariant)),
                       ],
@@ -87,7 +88,7 @@ class MoreToolsSheet extends StatelessWidget {
                         color: tokens.marca.withValues(alpha: .13),
                       ),
                     ),
-                    child: Icon(Icons.apps_rounded,
+                    child: Icon(Icons.dashboard_customize_outlined,
                       color: tokens.marca, size: 21),
                   ),
                 ]),
@@ -132,7 +133,7 @@ class MoreToolsSheet extends StatelessWidget {
                   ],
                 );
               }),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               FilledButton.icon(
                 key: const ValueKey('tools-financial-ai'),
                 onPressed: () => onSelected(4),
@@ -205,7 +206,7 @@ class _ToolTileState extends State<_ToolTile> {
       curve: Curves.easeOutCubic,
       child: FolegoGlassSurface(
       radius: 18,
-      elevated: true,
+      elevated: false,
       child: InkWell(
         key: widget.tileKey,
         onTap: widget.onTap,
@@ -215,7 +216,7 @@ class _ToolTileState extends State<_ToolTile> {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           constraints: const BoxConstraints(minHeight: 112),
-          padding: const EdgeInsets.fromLTRB(13, 12, 9, 11),
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -232,13 +233,21 @@ class _ToolTileState extends State<_ToolTile> {
                 child: Icon(widget.icon, size: 20, color: tokens.marca),
               ),
               const SizedBox(height: 10),
-              Text(widget.label, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: AppTypography.cardTitle(context, fontSize: 15,
-                  color: scheme.onSurface)),
+              Row(
+                children: [
+                  Expanded(child: Text(widget.label, maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.cardTitle(context, fontSize: 15,
+                      color: tokens.textoPrincipal))),
+                  const SizedBox(width: 3),
+                  Icon(Icons.arrow_outward_rounded,
+                    size: 15, color: tokens.marca),
+                ],
+              ),
               const SizedBox(height: 3),
               Text(widget.caption, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: AppTypography.label(context, fontSize: 12,
-                  color: scheme.onSurfaceVariant)),
+                  color: tokens.textoSecundario)),
             ],
           ),
         ),
