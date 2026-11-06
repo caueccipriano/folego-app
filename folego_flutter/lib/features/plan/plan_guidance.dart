@@ -59,13 +59,11 @@ List<PlanReviewTarget> spendingReviewTargets(
 
 /// Suggest only the next *category to review*. Never save a limit automatically.
 BudgetOverviewItem? nextPlanCategory(Iterable<BudgetOverviewItem> items) {
-  final children = items
-      .where((item) =>
-          item.isSubcategory && !item.isPending &&
-          (!item.hasBudget || item.isOverBudget))
-      .toList();
-  if (children.isEmpty) return null;
-  children.sort((a, b) {
+  final parents = items.where((item) =>
+      item.isParent && !item.isPending &&
+      (!item.hasBudget || item.isOverBudget)).toList();
+  if (parents.isEmpty) return null;
+  parents.sort((a, b) {
     int priority(BudgetOverviewItem item) {
       if (!item.hasBudget && item.hasActivity) return 0;
       if (item.isOverBudget) return 1;
@@ -78,9 +76,8 @@ BudgetOverviewItem? nextPlanCategory(Iterable<BudgetOverviewItem> items) {
     if (byAmount != 0) return byAmount;
     return a.categoryName.compareTo(b.categoryName);
   });
-  return children.first;
+  return parents.first;
 }
-
 
 /// Parent-level spending includes its children, so only recommend a specific
 /// editable child. A technical pending bucket and direct unallocated postings
