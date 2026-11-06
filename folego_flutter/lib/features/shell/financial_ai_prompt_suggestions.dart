@@ -13,9 +13,9 @@ class FinancialAiPromptSuggestions extends StatelessWidget {
   final ValueChanged<String> onSelected;
 
   static const questions = <String>[
-    'Como está meu mês?',
-    'Qual categoria merece atenção?',
-    'Compare meus gastos com o mês anterior.',
+    'Como está meu mês e o que devo revisar?',
+    'Qual categoria do meu orçamento merece atenção?',
+    'O que mudou nos gastos em relação aos mesmos dias do mês anterior?',
   ];
 
   @override
