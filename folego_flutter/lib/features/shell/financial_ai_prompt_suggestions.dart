@@ -12,10 +12,12 @@ class FinancialAiPromptSuggestions extends StatelessWidget {
   final bool enabled;
   final ValueChanged<String> onSelected;
 
+  // Only verified aggregated totals and comparable periods are available.
   static const questions = <String>[
     'Como está meu mês?',
     'Qual categoria merece atenção?',
-    'Compare meus gastos com o mês anterior.',
+    'O que mudou em meus gastos desde o mês anterior?',
+    'Qual é a primeira coisa que devo revisar no meu orçamento?',
   ];
 
   @override

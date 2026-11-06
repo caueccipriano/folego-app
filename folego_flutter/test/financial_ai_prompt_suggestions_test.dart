@@ -20,6 +20,9 @@ void main() {
     await tester.tap(find.text('Qual categoria merece atenção?'));
     await tester.pump();
     expect(selected, ['Qual categoria merece atenção?']);
+    expect(FinancialAiPromptSuggestions.questions, hasLength(4));
+    expect(FinancialAiPromptSuggestions.questions,
+      contains('Qual é a primeira coisa que devo revisar no meu orçamento?'));
     expect(tester.takeException(), isNull);
   });
 

@@ -244,7 +244,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('perguntar ao Fôlego')),
+      appBar: AppBar(title: const Text('assistente Fôlego')),
       body: ValueListenableBuilder<bool>(
         valueListenable: FinancialPrivacy.hidden,
         builder: (context, hidden, _) => SafeArea(
@@ -254,11 +254,12 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  Text('entenda seu mês',
+                  Text('entenda seu dinheiro',
                     style: AppTypography.section(context, fontSize: 25)),
                   const SizedBox(height: 10),
                   Text(
-                    'Pergunte, entenda seus números e veja uma ação para revisar.',
+                    'Pergunte sobre seu orçamento e receba uma resposta curta, '
+                    'baseada nos dados confirmados, com uma ação para revisar.',
                     style: AppTypography.body(context, fontSize: 13,
                       color: colors.onSurfaceVariant),
                   ),
@@ -352,7 +353,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sugestões preenchem a pergunta. Só tocar em Perguntar '
+                    'Escolha uma pergunta ou escreva a sua. Só tocar em Perguntar '
                     'envia uma consulta Premium.',
                     style: AppTypography.label(context, fontSize: 12,
                       color: colors.onSurfaceVariant),

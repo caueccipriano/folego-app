@@ -29,6 +29,7 @@ class HomeFixedDashboard extends StatelessWidget {
     required this.onIncome,
     required this.onSearch,
     required this.onResolve,
+    this.onAi,
     required this.onAttention,
     required this.onDetails,
   });
@@ -44,13 +45,14 @@ class HomeFixedDashboard extends StatelessWidget {
   final VoidCallback onIncome;
   final VoidCallback onSearch;
   final VoidCallback onResolve;
+  final VoidCallback? onAi;
   final VoidCallback onAttention;
   final VoidCallback onDetails;
 
   @override
   Widget build(BuildContext context) {
     final colors = FolegoColorTokens.of(context);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final minimal = AppColorSelection.selected.value == 'ink';
     final timing = homeIncomeTimingLabel(snapshot);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final budgetRatio = snapshot.monthlyBudgetPlanned > 0
@@ -619,6 +621,13 @@ class HomeFixedDashboard extends StatelessWidget {
                             label: const Text('resolver'),
                           ),
                         ),
+                        if (onAi != null)
+                          IconButton(
+                            key: const ValueKey('home-ai-shortcut'),
+                            tooltip: 'perguntar ao Fôlego',
+                            onPressed: onAi,
+                            icon: const Icon(Icons.auto_awesome_outlined, size: 20),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -743,7 +752,7 @@ class _DashboardSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (AppColorSelection.selected.value != 'fluxo') {
+    if (AppColorSelection.selected.value != 'ink') {
       return FolegoGlassSurface(
         radius: radius,
         prominent: prominent,
