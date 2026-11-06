@@ -809,11 +809,11 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
-    final surface = AppColors.surface(brightness);
-    final border = AppColors.border(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    final accent = AppColors.primaryPurple(brightness);
     final colors = FolegoColorTokens.of(context);
+    final surface = colors.superficie;
+    final border = colors.borda;
+    final secondary = colors.textoSecundario;
+    final accent = colors.marca;
     final subscriptions = _recurringItems
         .where((item) => _subscriptionIds.contains(item.id))
         .toList(growable: false);
@@ -822,7 +822,7 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
         .toList(growable: false);
 
     return Scaffold(
-      backgroundColor: AppColors.background(brightness),
+      backgroundColor: colors.fundo,
       body: SafeArea(
         child: Column(
           children: [
@@ -915,9 +915,12 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                     ),
                     if (widget.onClassificationRequested != null) ...[
                       Material(
-                        color: colors.superficie,
+                        color: Color.alphaBlend(
+                          accent.withValues(alpha: isDark ? .095 : .055),
+                          colors.superficie,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(17),
                           side: BorderSide(color: colors.borda),
                         ),
                         child: InkWell(
@@ -946,7 +949,12 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                                     style: AppTypography.cardTitle(context,
                                       fontSize: 13)),
                                   const SizedBox(height: 2),
-                                  Text('revisar sugestões',
+                                  Text(
+                                    !widget.pendingClassificationLoading &&
+                                            !widget.pendingClassificationUnavailable &&
+                                            widget.pendingClassificationCount > 0
+                                        ? '${widget.pendingClassificationCount} pendência(s) para revisar'
+                                        : 'revisar sugestões',
                                     style: AppTypography.label(context,
                                       fontSize: 11, color: secondary)),
                                 ],
@@ -972,10 +980,11 @@ class _TransactionsScreenV3State extends State<TransactionsScreenV3>
                     ],
                     const SizedBox(height: 13),
                     Container(
+                      key: const ValueKey('transactions-section-tabs-surface'),
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius: BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: border),
                       ),
                       child: TabBar(
@@ -1249,11 +1258,9 @@ class _TransactionsTabV3 extends StatelessWidget {
                           textInputAction: TextInputAction.search,
                           onChanged: onSearchChanged,
                           decoration: InputDecoration(
-                            hintText: 'buscar lançamento',
+                            hintText: 'buscar por nome, categoria ou conta',
                             filled: true,
-                            fillColor: AppColors.surface(
-                              Theme.of(context).brightness,
-                            ),
+                            fillColor: FolegoColorTokens.of(context).superficie,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 15,
                               vertical: 15,
@@ -1277,13 +1284,12 @@ class _TransactionsTabV3 extends StatelessWidget {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
                               borderSide: BorderSide(
-                                color: AppColors.primaryPurple(
-                                  Theme.of(context).brightness,
-                                ),
+                                color: FolegoColorTokens.of(context).marca,
                                 width: 1.5,
                               ),
                             ),
-                            prefixIcon: const Icon(AppIcons.search, size: 19),
+                            prefixIcon: Icon(AppIcons.search, size: 19,
+                              color: FolegoColorTokens.of(context).marca),
                             suffixIcon: value.text.isEmpty
                                 ? null
                                 : IconButton(
@@ -1550,7 +1556,7 @@ class _TransactionsTabV3 extends StatelessWidget {
                   onEdit: item.canEditAsSimple ? () => onEdit(item) : null,
                   onDelete: item.canEditAsSimple ? () => onDelete(item) : null,
                 ),
-                if (AppColorSelection.selected.value == 'fluxo' &&
+                if (AppColorSelection.selected.value == 'ink' &&
                     groupEnds && groupIsComplete &&
                     (outflow > 0 || income > 0))
                   ValueListenableBuilder<bool>(
@@ -1785,12 +1791,13 @@ class _TransactionCardV3 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final surface = AppColors.surface(brightness);
-    final border = AppColors.border(brightness);
-    final primary = AppColors.primaryText(brightness);
-    final secondary = AppColors.secondaryText(brightness);
-    final accent = AppColors.primaryPurple(brightness);
-    final minimal = AppColorSelection.selected.value == 'fluxo';
+    final tokens = FolegoColorTokens.of(context);
+    final surface = tokens.superficie;
+    final border = tokens.borda;
+    final primary = tokens.textoPrincipal;
+    final secondary = tokens.textoSecundario;
+    final accent = tokens.marca;
+    final minimal = AppColorSelection.selected.value == 'ink';
     final amountColor = item.isIncome
         ? AppColors.positiveText(brightness)
         : item.isExpense
@@ -1809,17 +1816,14 @@ class _TransactionCardV3 extends StatelessWidget {
           ? 'abrir detalhe e ações do lançamento'
           : 'abrir detalhe do lançamento',
       child: Material(
-        color: minimal ? surface : Color.alphaBlend(
-          visual.color.withValues(alpha: brightness == Brightness.dark ? .065 : .038),
-          surface,
-        ),
-        elevation: MediaQuery.highContrastOf(context) ? 0 : 1.25,
-        shadowColor: (minimal ? primary : accent).withValues(alpha: minimal ? .055 : .14),
+        color: surface,
+        elevation: 0,
+        shadowColor: tokens.fundo,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(minimal ? 17 : AppRadii.card),
           side: BorderSide(
             color: minimal ? border : Color.alphaBlend(
-              visual.color.withValues(alpha: .26),
+              visual.color.withValues(alpha: .13),
               border,
             ),
           ),
@@ -1832,7 +1836,7 @@ class _TransactionCardV3 extends StatelessWidget {
           splashColor: accent.withValues(alpha: .08),
           highlightColor: accent.withValues(alpha: .045),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: minimal ? 13 : 16),
+            padding: EdgeInsets.symmetric(horizontal: 15, vertical: minimal ? 13 : 15),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final textScale =
