@@ -285,7 +285,7 @@ class _FinancialAiScreenState extends State<FinancialAiScreen> {
                             _checkingProvider
                                 ? 'verificando a IA...'
                                 : _providerConfigured == true
-                                    ? '${_providerName ?? 'gemini'} configurado · consultas podem usar cota Premium'
+                                    ? '${_providerName ?? 'gemini'} configurado · limite disponível não verificado'
                                     : _providerConfigured == false
                                         ? 'gemini indisponível · resumo sem IA disponível'
                                         : 'não foi possível conferir a IA · resumo sem IA disponível',
