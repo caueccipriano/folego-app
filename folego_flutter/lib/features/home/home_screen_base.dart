@@ -699,6 +699,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final privacy = FinancialPrivacy.hidden.value;
     final tokens = FolegoColorTokens.of(context);
     final minimal = AppColorSelection.selected.value == 'ink';
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final onHero = tokens.textoPrincipal;
     return FolegoAmbientBackdrop(
       child: SafeArea(
@@ -706,7 +707,7 @@ class _HomeScreenState extends State<HomeScreen> {
           fillHeight: true,
           child: LayoutBuilder(
             builder: (context, constraints) => Padding(
-              padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
               child: RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
@@ -739,7 +740,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? constraints.maxWidth - 20 : constraints.maxWidth,
                           child: Container(
                             key: const ValueKey('home-fixed-spendable'),
-                            padding: EdgeInsets.fromLTRB(19, minimal ? 15 : 17, 19, minimal ? 13 : 15),
+                            padding: EdgeInsets.fromLTRB(19, minimal ? 16 : 20, 19, minimal ? 15 : 18),
                             // The real iPhone Home now uses the compact
                             // Flow dashboard for every selected palette.
                             decoration: BoxDecoration(
@@ -753,62 +754,44 @@ class _HomeScreenState extends State<HomeScreen> {
                                       end: Alignment.bottomRight,
                                       colors: [
                                         Color.alphaBlend(
-                                          const Color(0xFFEBD3F6).withValues(
-                                            alpha: Theme.of(context).brightness ==
-                                                    Brightness.dark ? .12 : .38),
+                                          const Color(0xFFEBD3F6).withValues(alpha: dark ? .12 : .40),
                                           tokens.superficie),
                                         Color.alphaBlend(
-                                          const Color(0xFFCDE8FF).withValues(
-                                            alpha: Theme.of(context).brightness ==
-                                                    Brightness.dark ? .10 : .35),
+                                          const Color(0xFFCDE8FF).withValues(alpha: dark ? .10 : .36),
                                           tokens.superficie),
                                         Color.alphaBlend(
-                                          const Color(0xFFFFDCE8).withValues(
-                                            alpha: Theme.of(context).brightness ==
-                                                    Brightness.dark ? .12 : .38),
+                                          const Color(0xFFFFDCE8).withValues(alpha: dark ? .12 : .39),
                                           tokens.superficie),
                                       ],
                                     )
-                                  : null,
+                                  : minimal
+                                      ? null
+                                      : LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color.alphaBlend(
+                                              tokens.marca.withValues(alpha: dark ? .17 : .085),
+                                              tokens.superficie),
+                                            Color.alphaBlend(
+                                              tokens.superficieAlta.withValues(alpha: dark ? .22 : .35),
+                                              tokens.superficie),
+                                            tokens.superficie,
+                                          ],
+                                        ),
                               border: Border.all(color: tokens.borda),
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: MediaQuery.highContrastOf(context) ? null : [
+                                BoxShadow(
+                                  color: tokens.textoPrincipal.withValues(alpha: dark ? .14 : .055),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                             ),
                             child: Stack(
                               clipBehavior: Clip.hardEdge,
                               children: [
-                                if (!minimal) Positioned(
-                                   right: -94,
-                                  top: -102,
-                                  child: IgnorePointer(
-                                    child: Container(
-                                      width: 215,
-                                      height: 215,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          width: 1.5,
-                                          color: onHero.withValues(alpha: .19),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                if (!minimal) Positioned(
-                                   right: -57,
-                                  top: -62,
-                                  child: IgnorePointer(
-                                    child: Container(
-                                      width: 145,
-                                      height: 145,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: onHero.withValues(alpha: .12),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -816,7 +799,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            'SEU FÔLEGO POR DIA',
+                                            'seu fôlego por dia',
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: AppTypography.label(
@@ -827,10 +810,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ).copyWith(letterSpacing: 1.0),
                                           ),
                                         ),
-                                        Icon(
-                                          Icons.north_east_rounded,
-                                          size: 18,
-                                          color: onHero,
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: tokens.marca.withValues(alpha: dark ? .16 : .09),
+                                            borderRadius: BorderRadius.circular(99),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.bolt_rounded, size: 13, color: tokens.marca),
+                                              const SizedBox(width: 3),
+                                              Text('hoje', style: AppTypography.label(
+                                                context, fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: tokens.marca,
+                                              )),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -853,7 +850,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     ),
-                                    const SizedBox(height: 11),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      snapshot.dailyFolego == null
+                                          ? 'defina seu próximo recebimento no Planejar'
+                                          : 'referência diária, não o saldo bancário',
+                                      maxLines: 2,
+                                      style: AppTypography.label(
+                                        context, fontSize: 11,
+                                        color: tokens.textoSecundario,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 13),
                                     Container(
                                       height: 1,
                                       decoration: BoxDecoration(
@@ -872,7 +880,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'DISPONÍVEL ATÉ RECEBER',
+                                                'disponível até receber',
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: AppTypography.label(
@@ -913,7 +921,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 fit: BoxFit.scaleDown,
                                                 alignment: Alignment.centerLeft,
                                                 child: Text(
-                                                  'PRÓXIMO SALÁRIO',
+                                                  'próxima entrada',
                                                   maxLines: 1,
                                                 style: AppTypography.label(
                                                   context,
@@ -980,7 +988,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 14),
                   quickActions,
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 19),
                   Row(
                     key: const ValueKey('home-flow-month-heading'),
                     children: [
@@ -992,7 +1000,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               'seu mês',
                               style: AppTypography.section(
                                 context,
-                                fontSize: 19,
+                                fontSize: 21,
                                 color: tokens.textoPrincipal,
                               ),
                             ),
@@ -1049,21 +1057,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     onUpcoming: _openUpcomingEvents,
                   ),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
                       key: const ValueKey('home-ai-shortcut'),
                       onPressed: _openFinancialAssistant,
-                      icon: const Icon(Icons.auto_awesome_outlined, size: 19),
+                      icon: Icon(Icons.auto_awesome_outlined, size: 19,
+                        color: tokens.marca),
                       label: const Text('perguntar ao Fôlego'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 47),
+                        foregroundColor: tokens.textoPrincipal,
+                        backgroundColor: tokens.superficie,
+                        side: BorderSide(color: tokens.borda),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      ),
                     ),
                   ),
                   if (pulseInsight.showCard) ...[
                     const SizedBox(height: 6),
                     Material(
-                      color: surface,
-                      borderRadius: BorderRadius.circular(14),
+                      color: tokens.superficie,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: tokens.borda),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: ListTile(
                         key: const ValueKey('home-fixed-insight'),
                         dense: true,
@@ -1073,7 +1093,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle: Text(
                           homePulseShortDetail(pulseInsight, hidden: privacy),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
-                        leading: const Icon(Icons.bolt_outlined),
+                        leading: Icon(Icons.bolt_outlined, color: tokens.marca),
                         trailing: pulseInsight.action == HomePulseAction.none
                             ? null : const Icon(Icons.chevron_right, size: 18),
                         onTap: pulseInsight.action == HomePulseAction.none
@@ -1402,10 +1422,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader({required Color primaryText, bool showTools = true}) {
-    final brightness = Theme.of(context).brightness;
-    final secondary = AppColors.secondaryText(brightness);
-    final surface = AppColors.surface(brightness);
-    final border = AppColors.border(brightness);
+    final colors = FolegoColorTokens.of(context);
+    final secondary = colors.textoSecundario;
+    final surface = colors.superficie;
+    final border = colors.borda;
     final hidden = FinancialPrivacy.hidden.value;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1528,8 +1548,8 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color border,
     required Brightness brightness,
   }) {
-    // Only the two everyday actions belong on Home; goals and journal remain
-    // available from secondary tools without competing with fast capture.
+    // Only everyday capture belongs here; both actions follow the active palette.
+    final tokens = FolegoColorTokens.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1538,8 +1558,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'gasto',
             semanticLabel: 'registrar gasto',
             icon: AppIcons.expense,
-            background: AppColors.action(brightness),
-            foreground: AppColors.onAction(brightness),
+            background: tokens.acao,
+            foreground: tokens.acaoSobre,
             onTap: () => _openRegister('expense'),
           ),
         ),
@@ -1550,8 +1570,8 @@ class _HomeScreenState extends State<HomeScreen> {
             semanticLabel: 'registrar receita',
             icon: AppIcons.income,
             background: surface,
-            foreground: AppColors.positiveText(brightness),
-            borderColor: border,
+            foreground: tokens.textoPrincipal,
+            borderColor: tokens.borda,
             onTap: () => _openRegister('income'),
           ),
         ),
@@ -2081,13 +2101,22 @@ class _QuickAction extends StatelessWidget {
         return null;
       }),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 54),
+        constraints: const BoxConstraints(minHeight: 56),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: foreground, size: 20),
-            const SizedBox(width: 9),
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: foreground.withValues(alpha: .11),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: foreground, size: 19),
+            ),
+            const SizedBox(width: 8),
             Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
@@ -2096,7 +2125,7 @@ class _QuickAction extends StatelessWidget {
                   maxLines: 1,
                   style: AppTypography.button(
                     context,
-                    fontSize: 13,
+                    fontSize: 14,
                     color: foreground,
                   ),
                 ),

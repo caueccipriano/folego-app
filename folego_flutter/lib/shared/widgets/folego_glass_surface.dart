@@ -49,7 +49,7 @@ class FolegoGlassSurface extends StatelessWidget {
     // sombra funcional, sem reflexos coloridos por baixo dos números.
     // Usa um gradiente constante para preservar os contratos existentes
     // que inspecionam a decoração e a acessibilidade.
-    if (AppColorSelection.selected.value == 'fluxo') {
+    if (AppColorSelection.selected.value == 'ink') {
       return BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
         gradient: LinearGradient(

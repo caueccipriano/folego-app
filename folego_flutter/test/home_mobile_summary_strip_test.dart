@@ -68,6 +68,9 @@ void main() {
     ));
     expect(find.text('orçamento do mês'), findsOneWidget);
     expect(find.text('63% utilizado'), findsOneWidget);
+    expect(find.text('resta no orçamento'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-budget-remaining')),
+        findsOneWidget);
     expect(find.byKey(const ValueKey('home-flow-used-budget')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('home-flow-planned-budget')),
@@ -94,6 +97,7 @@ void main() {
     await tester.pumpWidget(host(
       hidden: true, onBudget: () {}, onUpcoming: () {}));
     expect(find.text('valores ocultos'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-budget-remaining')), findsNothing);
     expect(find.byKey(const ValueKey('home-mobile-budget-progress')), findsNothing);
     expect(find.textContaining('63%'), findsNothing);
     expect(find.textContaining('240,00'), findsNothing);
