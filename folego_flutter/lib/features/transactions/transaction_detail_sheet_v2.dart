@@ -152,12 +152,26 @@ class _TransactionDetailPanelState extends State<TransactionDetailPanel> {
 
   Future<bool?> _showEditor(Widget child) {
     if (_compact) {
+      final brightness = Theme.of(context).brightness;
       return showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: AppColors.transparent,
-        builder: (_) => child,
+        showDragHandle: false,
+        // The editor must cover the detail sheet underneath it on iOS.
+        barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: .72),
+        backgroundColor: AppColors.surface(brightness),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.sheet),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        // Keep all fields scrollable and the save action reachable on phones.
+        builder: (_) => FractionallySizedBox(
+          heightFactor: .92,
+          child: child,
+        ),
       );
     }
     return showDialog<bool>(
