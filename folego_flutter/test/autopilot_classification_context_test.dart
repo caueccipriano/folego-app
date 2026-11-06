@@ -120,4 +120,38 @@ void main() {
     ), hasLength(1));
   });
 
+  test('generic bank PIX cannot become a remembered category rule', () {
+    expect(canRememberClassificationRule(item()), isFalse);
+    expect(canRememberClassificationRule(item(
+      name: 'PIX recebido - Santander',
+      type: 'income',
+    )), isFalse);
+    expect(canRememberClassificationRule(item(
+      name: 'PIX enviado',
+    )), isFalse);
+  });
+
+  test('only meaningful account entries may offer remembered categories', () {
+    expect(canRememberClassificationRule(item(
+      name: 'MERCADO DO BAIRRO',
+    )), isTrue);
+    expect(canRememberClassificationRule(item(
+      name: 'SALARIO MENSAL',
+      type: 'income',
+    )), isTrue);
+    expect(canRememberClassificationRule(item(
+      name: 'MERCADO DO BAIRRO',
+      type: 'card_purchase',
+    )), isFalse);
+    expect(canRememberClassificationRule(TransactionItem(
+      id: 'unknown-source',
+      eventType: 'expense',
+      description: 'MERCADO DO BAIRRO',
+      amount: 35,
+      occurredAt: DateTime(2026, 11, 6),
+      status: 'confirmed',
+      source: 'sheet-sync',
+    )), isFalse);
+  });
+
 }

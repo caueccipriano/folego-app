@@ -124,6 +124,13 @@ bool isSpecificAutomationDescription(String normalized) {
   return value.length >= 10 && !isGenericAutomationDescription(value);
 }
 
+/// A single reviewed payment must not teach a reusable rule for generic
+/// bank notifications. The counterparty and purpose are unknown in these.
+bool canRememberClassificationRule(TransactionItem item) =>
+    (item.eventType == 'expense' || item.eventType == 'income') &&
+    item.accountId != null &&
+    isSpecificAutomationDescription(item.description);
+
 /// Very conservative, read-only suggestions learned from *two or more*
 /// already categorized events with the same account, source, event type and
 /// exact normalized description. Conflicting historical categories reject
@@ -325,6 +332,7 @@ class _TransactionClassificationInboxState
   List<TransactionItem> _knownHistory = const [];
   bool _applyingSuggestions = false;
   bool _creatingAutomaticRule = false;
+  bool _finishingSaveFlow = false;
   String? _savingEventId;
   bool _loading = true;
   bool _refreshing = false;
@@ -340,7 +348,7 @@ class _TransactionClassificationInboxState
   bool get _classificationActionsLocked => classificationActionLocked(
     loading: _loading,
     refreshing: _refreshing,
-    saving: _savingEventId != null,
+    saving: _savingEventId != null || _finishingSaveFlow,
     applyingSuggestions: _applyingSuggestions,
     creatingAutomaticRule: _creatingAutomaticRule,
   );
@@ -766,15 +774,18 @@ class _TransactionClassificationInboxState
     }
     setState(() {
       _savingEventId = item.id;
+      _finishingSaveFlow = true;
       _error = null;
     });
 
+    var categorySaved = false;
     try {
       await widget.repository.classifyFinancialEvent(
         spaceId: widget.spaceId,
         eventId: item.id,
         categoryId: selected.id,
       );
+      categorySaved = true;
       if (!mounted) return;
       setState(() {
         _items.removeWhere((candidate) => candidate.id == item.id);
@@ -810,9 +821,18 @@ class _TransactionClassificationInboxState
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _savingEventId = null;
-        _error = _friendly(error);
+        _error = categorySaved
+            ? 'Categoria salva. Não foi possível concluir as ações adicionais; '
+                'confira as pendências atualizadas.'
+            : _friendly(error);
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _savingEventId = null;
+          _finishingSaveFlow = false;
+        });
+      }
     }
   }
 
@@ -885,10 +905,7 @@ class _TransactionClassificationInboxState
   ) async {
     if (!_automationEnabled) return false;
     final description = item.description.trim();
-    final simpleAccountEvent =
-        (item.eventType == 'expense' || item.eventType == 'income') &&
-        item.accountId != null;
-    if (description.length < 4 || !simpleAccountEvent) return false;
+    if (!canRememberClassificationRule(item)) return false;
     final direction = transactionClassificationKind(item.eventType) == 'income'
         ? AutomationDirection.credit
         : AutomationDirection.debit;
