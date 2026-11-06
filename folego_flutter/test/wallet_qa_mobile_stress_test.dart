@@ -224,6 +224,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('seus cartões'), findsOneWidget);
 
+    // Section selection can rebuild the scrollable content and collapse the
+    // secondary summary. Reveal it again if necessary before tapping.
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('wallet-position-breakdown-toggle')),
+      180, scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    if (find.byKey(const ValueKey('wallet-summary-debts')).evaluate().isEmpty) {
+      await tester.tap(find.byKey(const ValueKey('wallet-position-breakdown-toggle')));
+      await tester.pumpAndSettle();
+    }
     await tester.ensureVisible(find.byKey(const ValueKey('wallet-summary-debts')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('wallet-summary-debts')));
