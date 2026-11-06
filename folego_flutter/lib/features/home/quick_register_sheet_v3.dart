@@ -753,6 +753,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final media = MediaQuery.of(context);
     final maxHeight = media.size.height * .92;
     final compact = AppBreakpoints.of(context) == AppLayoutSize.compact;
+    final flow = AppColorSelection.selected.value == 'fluxo';
 
     return Align(
       alignment: compact ? Alignment.bottomCenter : Alignment.center,
@@ -779,26 +780,28 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: EdgeInsets.fromLTRB(
-                      20,
-                      14,
-                      20,
-                      media.viewInsets.bottom + 24,
+                      flow ? 16 : 20,
+                      flow ? 10 : 14,
+                      flow ? 16 : 20,
+                      media.viewInsets.bottom + (flow ? 16 : 24),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (compact) const AppSheetHandle(),
-                        const SizedBox(height: 12),
-                        const SignatureSheetEyebrow(
-                          label: 'Novo movimento',
-                          icon: Icons.add_circle_outline_rounded,
-                        ),
-                        const SizedBox(height: 12),
+                        if (!flow) ...[
+                          const SizedBox(height: 12),
+                          const SignatureSheetEyebrow(
+                            label: 'Novo movimento',
+                            icon: Icons.add_circle_outline_rounded,
+                          ),
+                        ],
+                        SizedBox(height: flow ? 7 : 12),
                         _header(brightness),
-                        const SizedBox(height: 12),
+                        SizedBox(height: flow ? 8 : 12),
                         _moneyField(),
-                        const SizedBox(height: 15),
+                        SizedBox(height: flow ? 10 : 15),
                         _detailsSection(),
 
                         if (_capturedShorthand) ...[
@@ -835,11 +838,11 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                           const SizedBox(height: 8),
                           _smartCategoryHint(brightness),
                         ],
-                        const SizedBox(height: 12),
+                        SizedBox(height: flow ? 8 : 12),
                         _categoryField(brightness),
-                        const SizedBox(height: 14),
+                        SizedBox(height: flow ? 10 : 14),
                         _paymentSection(brightness),
-                        const SizedBox(height: 10),
+                        SizedBox(height: flow ? 7 : 10),
                         _moreDetailsToggle(brightness),
                         if (_showMore) ...[
                           const SizedBox(height: 10),
@@ -862,7 +865,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.action(Theme.of(context).brightness),
                             foregroundColor: AppColors.onAction(Theme.of(context).brightness),
-                            minimumSize: const Size.fromHeight(50),
+                            minimumSize: Size.fromHeight(flow ? 48 : 50),
                           ),
                           child: _saving
                               ? const SizedBox(
@@ -900,7 +903,7 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
                 _isExpense ? 'novo gasto' : 'nova receita',
                 style: AppTypography.section(
                   context,
-                  fontSize: 20,
+                  fontSize: AppColorSelection.selected.value == 'fluxo' ? 18 : 20,
                   color: AppColors.primaryText(brightness),
                 ),
               ),
@@ -932,11 +935,14 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
     final tokens = FolegoColorTokens.of(context);
     return Container(
       key: const ValueKey('budget-flow-amount-surface'),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
+      padding: AppColorSelection.selected.value == 'fluxo'
+          ? const EdgeInsets.fromLTRB(13, 9, 13, 11)
+          : const EdgeInsets.fromLTRB(16, 12, 16, 15),
       decoration: BoxDecoration(
         color: tokens.fundo,
         border: Border.all(color: tokens.borda),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(
+          AppColorSelection.selected.value == 'fluxo' ? 14 : 18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -988,7 +994,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
               if (_capturedShorthand) setState(() => _capturedShorthand = false);
             },
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: AppTypography.money(context, fontSize: 35),
+            style: AppTypography.money(context,
+              fontSize: AppColorSelection.selected.value == 'fluxo' ? 32 : 35),
             decoration: const InputDecoration(
               labelText: 'valor',
               prefixText: 'R\$ ',
@@ -1021,7 +1028,8 @@ class _QuickRegisterSheetState extends State<QuickRegisterSheet> {
       onTap: _pickCategory,
       borderRadius: BorderRadius.circular(AppRadii.compactCard),
       child: Container(
-        padding: const EdgeInsets.all(13),
+        padding: EdgeInsets.all(
+          AppColorSelection.selected.value == 'fluxo' ? 11 : 13),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadii.compactCard),
           border: Border.all(color: AppColors.border(brightness)),
