@@ -476,9 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
         surface: surface,
         primaryText: primaryText,
         quickActions: quickActions,
-        pulseInsight: selectHomePulse(
-          snapshot: snapshot, upcoming: _upcomingEvents,
-          upcomingAvailable: !_upcomingUnavailable),
+        pulseInsight: pulseInsight,
         monthlyMoney: monthlyMoney,
         projectionInsight: projectionInsight,
         upcoming: showUpcoming ? upcoming : null,
