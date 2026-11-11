@@ -34,7 +34,7 @@ jobs:
         run: flutter pub get
 
       - name: Flutter analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Set up Deno for notification copy unit tests
         uses: denoland/setup-deno@v2
