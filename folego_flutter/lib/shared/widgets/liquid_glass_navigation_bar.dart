@@ -17,19 +17,9 @@ class LiquidGlassNavigationBar extends StatelessWidget {
   static const _items = <_GlassNavItem>[
     _GlassNavItem(Icons.home_outlined, Icons.home_rounded, 'Início'),
     _GlassNavItem(
-      Icons.receipt_long_outlined,
-      Icons.receipt_long_rounded,
-      'Lançamentos',
-    ),
-    _GlassNavItem(
       Icons.calendar_month_outlined,
       Icons.calendar_month_rounded,
       'Plano',
-    ),
-    _GlassNavItem(
-      Icons.account_balance_wallet_outlined,
-      Icons.account_balance_wallet_rounded,
-      'Carteira',
     ),
     _GlassNavItem(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil'),
   ];
