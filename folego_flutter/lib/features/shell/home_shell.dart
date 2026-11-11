@@ -286,6 +286,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           child: FlexibleBudgetNavigationScope(
             onOpen: () => unawaited(_openFlexibleBudget()),
             child: ResponsiveNavigationShell(
+              // Heavy financial sections fetch data only when first opened.
+              // Visited sections remain mounted to preserve their state.
+              lazyMount: true,
               selectedIndex: _index,
               onDestinationSelected: (value) {
                 if (_index == value) return;
