@@ -18,12 +18,17 @@ class ResponsiveNavigationShell extends StatelessWidget {
     required this.onDestinationSelected,
     required this.pages,
     this.onOpenTools,
+    this.lazyMount = false,
   }) : assert(pages.length == 5);
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final List<Widget> pages;
   final VoidCallback? onOpenTools;
+
+  /// When enabled, unvisited destinations are not mounted until first opened.
+  /// A visited page stays mounted, keeping form and scroll state.
+  final bool lazyMount;
 
   @override
   Widget build(BuildContext context) {
@@ -51,21 +56,11 @@ class ResponsiveNavigationShell extends StatelessWidget {
             ),
           Expanded(
             key: const ValueKey('shell-content'),
-            // Keep every destination mounted: navigation must preserve
-            // scroll positions, form state and cached financial data.
-            child: IndexedStack(
-              index: selectedIndex,
-              children: [
-                for (var index = 0; index < pages.length; index++)
-                  AnimatedOpacity(
-                    key: ValueKey('shell-page-transition-$index'),
-                    opacity: index == selectedIndex ? 1 : 0,
-                    duration: FolegoMotion.duration(
-                      context, milliseconds: 150),
-                    curve: Curves.easeOutCubic,
-                    child: pages[index],
-                  ),
-              ],
+            // First visit mounts the section; later visits reuse its state.
+            child: _VisitedPageStack(
+              selectedIndex: selectedIndex,
+              pages: pages,
+              lazyMount: lazyMount,
             ),
           ),
         ],
@@ -82,6 +77,64 @@ class ResponsiveNavigationShell extends StatelessWidget {
             ),
     );
   }
+}
+
+
+class _VisitedPageStack extends StatefulWidget {
+  const _VisitedPageStack({
+    required this.selectedIndex,
+    required this.pages,
+    required this.lazyMount,
+  });
+
+  final int selectedIndex;
+  final List<Widget> pages;
+  final bool lazyMount;
+
+  @override
+  State<_VisitedPageStack> createState() => _VisitedPageStackState();
+}
+
+class _VisitedPageStackState extends State<_VisitedPageStack> {
+  final Set<int> _visited = <int>{};
+
+  void _recordMountedDestinations() {
+    if (widget.lazyMount) {
+      _visited.add(widget.selectedIndex);
+    } else {
+      _visited.addAll(Iterable<int>.generate(widget.pages.length));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _recordMountedDestinations();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VisitedPageStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _recordMountedDestinations();
+  }
+
+  @override
+  Widget build(BuildContext context) => IndexedStack(
+    index: widget.selectedIndex,
+    children: [
+      for (var index = 0; index < widget.pages.length; index++)
+        if (_visited.contains(index))
+          AnimatedOpacity(
+            key: ValueKey('shell-page-transition-$index'),
+            opacity: index == widget.selectedIndex ? 1 : 0,
+            duration: FolegoMotion.duration(context, milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: widget.pages[index],
+          )
+        else
+          const SizedBox.shrink(),
+    ],
+  );
 }
 
 class DesktopNavigationSidebar extends StatelessWidget {
@@ -238,17 +291,7 @@ class DesktopNavigationSidebar extends StatelessWidget {
                     label: const Text('contas e ajustes'),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: Text(
-                  'seu dinheiro, com respiro',
-                  style: AppTypography.label(
-                    context,
-                    fontSize: 11,
-                    color: secondaryText,
-                  ),
-                ),
-              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   qa:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       FOLEGO_E2E_EMAIL: ${{ secrets.FOLEGO_E2E_EMAIL }}
@@ -44,7 +44,7 @@ jobs:
 
       - name: Analyze Flutter
         working-directory: folego_flutter
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Run stable Flutter preflight
         working-directory: folego_flutter

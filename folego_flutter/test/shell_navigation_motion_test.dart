@@ -4,8 +4,12 @@ import 'package:folego/core/theme/folego_motion.dart';
 import 'package:folego/shared/widgets/responsive_navigation_shell.dart';
 
 class _ShellForTest extends StatefulWidget {
-  const _ShellForTest({required this.mountCounts});
+  const _ShellForTest({
+    required this.mountCounts,
+    this.lazyMount = false,
+  });
   final List<int> mountCounts;
+  final bool lazyMount;
   @override
   State<_ShellForTest> createState() => _ShellForTestState();
 }
@@ -14,6 +18,7 @@ class _ShellForTestState extends State<_ShellForTest> {
   var selected = 0;
   @override
   Widget build(BuildContext context) => ResponsiveNavigationShell(
+    lazyMount: widget.lazyMount,
     selectedIndex: selected,
     onDestinationSelected: (value) => setState(() => selected = value),
     pages: List.generate(5, (i) => _PageForTest(
@@ -87,6 +92,35 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('lazy shell mounts each destination once, on first visit',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final counts = List<int>.filled(5, 0);
+    await tester.pumpWidget(MaterialApp(
+      home: _ShellForTest(mountCounts: counts, lazyMount: true),
+    ));
+    expect(counts, [1, 0, 0, 0, 0]);
+    expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 0);
+
+    await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-1')));
+    await tester.pumpAndSettle();
+    expect(counts, [1, 1, 0, 0, 0]);
+
+    await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-2')));
+    await tester.pumpAndSettle();
+    expect(counts, [1, 1, 1, 0, 0]);
+
+    await tester.tap(find.byKey(const ValueKey('mobile-nav-destination-0')));
+    await tester.pumpAndSettle();
+    expect(counts, [1, 1, 1, 0, 0]);
+    expect(find.text('test page 0'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('iPhone keyboard hides dock and restores selected tab and pages',
       (tester) async {

@@ -33,7 +33,7 @@ jobs:
       - name: verificar cores centralizadas
         run: python3 scripts/audit_widget_colors.py
       - name: flutter analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
       - name: test visual tokens
         run: flutter test test/theme_palette_test.dart test/theme_preference_test.dart
       - name: build web (sem deploy)

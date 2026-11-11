@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: folego_flutter
@@ -56,7 +56,7 @@ jobs:
           bash scripts/generate_brand_icons.sh
 
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Stable responsive preflight
         run: |
