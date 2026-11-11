@@ -7,8 +7,6 @@ import '../../shared/widgets/liquid_glass_navigation_bar.dart';
 import '../home/home_screen.dart';
 import '../plan/plan_screen.dart';
 import '../profile/profile_screen.dart';
-import '../transactions/transactions_screen.dart';
-import '../wallet/wallet_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({
@@ -31,9 +29,7 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(space: widget.space, repository: widget.repository),
-      const TransactionsScreen(),
       PlanScreen(space: widget.space, repository: widget.repository),
-      const WalletScreen(),
       ProfileScreen(
         client: Supabase.instance.client,
         repository: widget.repository,
