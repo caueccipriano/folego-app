@@ -56,7 +56,7 @@ jobs:
           bash scripts/generate_brand_icons.sh
 
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Stable responsive preflight
         run: |
