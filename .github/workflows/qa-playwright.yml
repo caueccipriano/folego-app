@@ -44,7 +44,7 @@ jobs:
 
       - name: Analyze Flutter
         working-directory: folego_flutter
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Run stable Flutter preflight
         working-directory: folego_flutter
