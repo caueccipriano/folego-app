@@ -35,12 +35,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     try {
-      final name = await widget.repository.getProfileName();
       final now = DateTime.now();
-      final items = await widget.repository.listBudgetItems(
-        spaceId: widget.space.id,
-        periodMonth: DateTime(now.year, now.month),
-      );
+      final results = await Future.wait<dynamic>([
+        widget.repository.getProfileName(),
+        widget.repository.listBudgetItems(
+          spaceId: widget.space.id,
+          periodMonth: DateTime(now.year, now.month),
+        ),
+      ]);
+      final name = results[0] as String;
+      final items = results[1] as List;
+
       if (!mounted) return;
       setState(() {
         _name = name;
@@ -159,13 +164,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SectionCard(
               child: Column(
                 children: [
-                  const ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.notifications_none_rounded),
-                    title: Text('Notificações'),
-                    subtitle: Text('Entrará na próxima versão'),
-                  ),
-                  const Divider(),
                   const ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(Icons.lock_outline_rounded),
