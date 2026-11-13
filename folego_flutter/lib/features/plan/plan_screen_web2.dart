@@ -797,7 +797,7 @@ class _PlanScreenState extends State<PlanScreen> {
       final pending = await widget.repository
           .listPendingTransactionClassifications(widget.spaceId);
       if (!mounted) return;
-      final changed = await Navigator.of(context).push<bool>(
+      await Navigator.of(context).push<bool>(
         MaterialPageRoute<bool>(
           builder: (_) => TransactionClassificationInbox(
             repository: widget.repository,
@@ -806,7 +806,8 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
         ),
       );
-      if (changed == true && mounted) await _load();
+      // O gesto nativo de voltar devolve null: recarregue mesmo assim.
+      if (mounted) await _load();
     } catch (_) {
       if (mounted) {
         AppSnackbars.show(context, 'não consegui abrir as pendências. tente novamente.');
