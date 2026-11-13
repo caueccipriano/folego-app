@@ -35,13 +35,19 @@ extension FolegoRepositoryIncomeConfirmations on FolegoRepository {
     if (amount <= 0 || !amount.isFinite || amount > 999999999999.99) {
       throw ArgumentError.value(amount, 'amount', 'Valor inválido');
     }
-    await Supabase.instance.client
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) {
+      throw StateError('É necessário entrar para confirmar um valor');
+    }
+    await client
         .from('income_amount_confirmations')
         .upsert({
           'space_id': spaceId,
           'recurring_item_id': recurringItemId,
           'due_date': _receiptDate(dueDate),
           'confirmed_amount': amount,
+          'confirmed_by': user.id,
           'confirmed_at': DateTime.now().toUtc().toIso8601String(),
         }, onConflict: 'space_id,recurring_item_id,due_date');
   }
