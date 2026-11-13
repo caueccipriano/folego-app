@@ -71,21 +71,23 @@ class _HomeUpcomingReceiptsCardState extends State<HomeUpcomingReceiptsCard> {
     }
     try {
       final results = await Future.wait<dynamic>([
-        widget.repository.getFinancialAgenda(
+        // Future.sync turns a synchronous test-double/repository failure
+        // into a handled Future, so optional Home cards cannot crash Home.
+        Future<dynamic>.sync(() => widget.repository.getFinancialAgenda(
           spaceId,
           startDate: start,
           endDate: until,
           limit: 200,
-        ),
-        widget.repository.listIncomeAmountConfirmations(
+        )),
+        Future<dynamic>.sync(() => widget.repository.listIncomeAmountConfirmations(
           spaceId: spaceId,
           from: start,
           until: until,
-        ),
-        widget.repository.getRegisteredIncomeForMonth(
+        )),
+        Future<dynamic>.sync(() => widget.repository.getRegisteredIncomeForMonth(
           spaceId: spaceId,
           periodMonth: start,
-        ),
+        )),
       ]);
       if (!mounted || generation != _generation || spaceId != widget.spaceId) {
         return;
