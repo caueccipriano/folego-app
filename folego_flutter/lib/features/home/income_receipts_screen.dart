@@ -218,12 +218,10 @@ class _IncomeReceiptsScreenState extends State<IncomeReceiptsScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final known = _incomeEvents
-        .map(_confirmedFor)
-        .whereType<double>()
-        .toList(growable: false);
-    final knownTotal = known.fold<double>(0, (sum, value) => sum + value);
-    final unknownCount = _incomeEvents.length - known.length;
+    final totals = IncomeReceiptTotals.fromEvents(
+      _incomeEvents,
+      _confirmedAmounts,
+    );
     final border = AppColors.border(brightness);
     final surface = AppColors.surface(brightness);
     final muted = AppColors.secondaryText(brightness);
@@ -253,14 +251,14 @@ class _IncomeReceiptsScreenState extends State<IncomeReceiptsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    Formatters.money(knownTotal),
+                    Formatters.money(totals.confirmedTotal),
                     key: const ValueKey('income-receipts-known-total'),
                     style: Theme.of(context).textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '$unknownCount recebimento${unknownCount == 1 ? '' : 's'} sem valor informado',
+                    '${totals.unknownCount} recebimento${totals.unknownCount == 1 ? '' : 's'} sem valor informado',
                     key: const ValueKey('income-receipts-unknown-count'),
                   ),
                   if (_receivedThisMonth != null) ...[
