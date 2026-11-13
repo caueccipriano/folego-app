@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/upcoming_financial_event.dart';
-import 'package:folego_flutter/data/repositories/folego_repository_income_receipts.dart';
+import 'package:folego/data/models/upcoming_financial_event.dart';
+import 'package:folego/data/repositories/folego_repository_income_receipts.dart';
 
 UpcomingFinancialEvent scheduledIncome({
   required String id,
