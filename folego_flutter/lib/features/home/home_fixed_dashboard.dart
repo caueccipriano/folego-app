@@ -25,6 +25,7 @@ class HomeFixedDashboard extends StatelessWidget {
     required this.hidden,
     required this.onPrivacy,
     required this.onAgenda,
+    required this.onIncomeReceipts,
     required this.onExpense,
     required this.onIncome,
     required this.onSearch,
@@ -40,6 +41,7 @@ class HomeFixedDashboard extends StatelessWidget {
   final bool hidden;
   final VoidCallback onPrivacy;
   final VoidCallback onAgenda;
+  final VoidCallback onIncomeReceipts;
   final VoidCallback onExpense;
   final VoidCallback onIncome;
   final VoidCallback onSearch;
@@ -141,6 +143,13 @@ class HomeFixedDashboard extends StatelessWidget {
                           tooltip: 'agenda',
                           icon: const Icon(AppIcons.calendar, size: 20),
                         ),
+                        if (roomy)
+                          IconButton(
+                            key: const ValueKey('home-income-receipts-shortcut'),
+                            tooltip: 'próximos recebimentos',
+                            onPressed: onIncomeReceipts,
+                            icon: const Icon(Icons.payments_outlined, size: 20),
+                          ),
                         IconButton(
                           key: const ValueKey('home-privacy-toggle'),
                           style: IconButton.styleFrom(
