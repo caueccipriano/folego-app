@@ -24,6 +24,7 @@ import '../../shared/widgets/app_page_header.dart';
 import '../../shared/widgets/app_section_header.dart';
 import '../transactions/recurring_form_sheet.dart';
 import 'agenda_calendar_month.dart';
+import 'income_receipts_screen.dart';
 import 'agenda_calendar_grid.dart';
 import '../wallet/wallet_detail_screen.dart';
 
@@ -442,6 +443,20 @@ class _FinancialAgendaBodyState extends State<_FinancialAgendaBody> {
             ListTile(title:const Text('compromisso selecionado'),subtitle:const Text('Você abriu este item pela busca ou central de pendências.'),
               trailing:TextButton(onPressed:(){setState(()=>_focused=false);_load();},child:const Text('ver todos'))),
           _AgendaHero(summary: summary),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const ValueKey('agenda-known-income-shortcut'),
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (_) => IncomeReceiptsScreen(
+                  spaceId: widget.spaceId,
+                  repository: widget.repository,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.payments_outlined),
+            label: const Text('próximos recebimentos · sem estimativas'),
+          ),
           const SizedBox(height: 22),
           const AppSectionHeader(
             title: 'o que vem pela frente',
