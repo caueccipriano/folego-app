@@ -147,3 +147,15 @@ No Supabase hospedado, confirmação de e-mail costuma estar habilitada. Nesta v
 
 
 <!-- deploy-recovery 2026-09-24: republish canonical PWA branch after main overwrote GitHub Pages -->
+
+## Recebimentos sem valor informado
+
+Na Home móvel, abra **meu mês** → **Próximos recebimentos** → **Adicionar data sem valor**.
+Cadastre uma descrição (por exemplo, salário ou adiantamento) e o dia mensal,
+sem informar salário ou estimar depósito. A data pode ser editada por remoção e
+novo cadastro; um valor pode ser informado ou retirado por ocorrência.
+
+O calendário salva datas em `income_date_schedules` e confirmações opcionais
+em `income_date_amounts`. Essas informações não constituem lançamentos,
+não alteram contas ou saldos e não entram no cálculo do dinheiro disponível.
+Uma conta cadastrada é suficiente para abrir a Home, sem exigir receita prevista.
