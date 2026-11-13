@@ -19,6 +19,7 @@ import 'quick_register_sheet.dart';
 import '../wallet/wallet_instrument_management.dart';
 import 'home_expense_navigation_scope.dart';
 import 'home_screen_base.dart' as base;
+import 'home_setup_gate.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.space, required this.repository});
@@ -203,7 +204,7 @@ class _HomeContentState extends State<_HomeContent> {
 
     // Conta cadastrada é suficiente para abrir a Home. Uma receita futura
     // sem valor informado não pode bloquear os saldos e movimentações.
-    if (!_loadingSetup && setup != null && !setup.hasAccount) {
+    if (!_loadingSetup && shouldShowFirstUseHome(setup)) {
       return _FirstUseHome(
         setup: setup,
         creatingAccount: _creatingAccount,
