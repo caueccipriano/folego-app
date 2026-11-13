@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/realtime/realtime_session.dart';
+
 import 'folego_repository.dart';
 
 extension FolegoRepositoryTransactionActions on FolegoRepository {
@@ -36,6 +38,7 @@ extension FolegoRepositoryTransactionActions on FolegoRepository {
         'p_purchase_at': purchaseAt.toIso8601String(),
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
   }
 
   /// Metadata-only update; allowed for paid invoices without changing amounts,
@@ -57,6 +60,7 @@ extension FolegoRepositoryTransactionActions on FolegoRepository {
         'p_merchant': merchant,
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
   }
 
   Future<void> cancelCardPurchase({required String spaceId, required String eventId}) async {
@@ -87,6 +91,7 @@ extension FolegoRepositoryTransactionActions on FolegoRepository {
         'p_occurred_at': occurredAt.toIso8601String(),
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
   }
 
   Future<void> cancelBenefitExpense({required String spaceId, required String eventId}) async {
