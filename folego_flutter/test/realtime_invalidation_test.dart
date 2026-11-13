@@ -23,6 +23,41 @@ void main() {
     );
   });
 
+  testWidgets(
+    'local classification refreshes home, transactions and plan without Realtime',
+    (tester) async {
+      final coordinator = RealtimeInvalidationCoordinator();
+      AppRealtimeRegistry.attach(coordinator);
+      addTearDown(() {
+        AppRealtimeRegistry.detach(coordinator);
+        coordinator.dispose();
+      });
+
+      final refreshed = <AppRealtimeDomain>[];
+      for (final domain in [
+        AppRealtimeDomain.home,
+        AppRealtimeDomain.transactions,
+        AppRealtimeDomain.plan,
+      ]) {
+        coordinator.bind(
+          domain: domain,
+          onRefresh: () async { refreshed.add(domain); },
+        );
+      }
+
+      AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump();
+
+      expect(refreshed, containsAll([
+        AppRealtimeDomain.home,
+        AppRealtimeDomain.transactions,
+        AppRealtimeDomain.plan,
+      ]));
+      expect(refreshed, hasLength(3));
+    },
+  );
+
   testWidgets('multiple realtime changes collapse into one domain refresh', (
     tester,
   ) async {
