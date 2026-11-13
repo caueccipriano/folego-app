@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/realtime/realtime_session.dart';
+
 import '../models/category_item.dart';
 import '../models/category_tag.dart';
 import '../models/financial_annotation_target.dart';
@@ -198,6 +200,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
           .eq('category_role', 'economic');
     }
 
+    AppRealtimeRegistry.notifyLocalTableChanged('categories');
     return categoryId;
   }
 
@@ -214,6 +217,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
         'p_name': name.trim(),
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('categories');
   }
 
   Future<void> updateCustomCategoryPresentation({
@@ -249,6 +253,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
     if (rows.isEmpty) {
       throw StateError('custom_category_not_found');
     }
+    AppRealtimeRegistry.notifyLocalTableChanged('categories');
   }
 
   Future<void> setCategoryVisibility({
@@ -264,6 +269,7 @@ extension FolegoRepositoryCategories on FolegoRepository {
         'p_active': active,
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('categories');
   }
 
   Future<List<FinancialAnnotationTarget>> listAnnotationTargets(
