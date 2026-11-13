@@ -132,6 +132,12 @@ abstract final class AppRealtimeRegistry {
 
   static RealtimeInvalidationCoordinator? get coordinator => _coordinator;
 
+  /// Recarrega as telas após uma alteração confirmada pelo próprio app.
+  /// Não depende de receber o evento remoto da mesma escrita.
+  static void notifyLocalTableChanged(String table) {
+    _coordinator?.invalidateDomains(domainsForRealtimeTable(table));
+  }
+
   static void attach(RealtimeInvalidationCoordinator coordinator) {
     _coordinator = coordinator;
   }
