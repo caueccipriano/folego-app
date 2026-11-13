@@ -115,74 +115,15 @@ class _IncomeReceiptsScreenState extends State<IncomeReceiptsScreen> {
   Future<void> _edit(UpcomingFinancialEvent event) async {
     if (_saving) return;
     final oldAmount = _confirmedFor(event);
-    final controller = TextEditingController(
-      text: oldAmount == null
-          ? ''
-          : oldAmount.toStringAsFixed(2).replaceAll('.', ','),
-    );
-    String? validation;
     // null = cancelar, -1 = retirar a confirmação, >0 = valor conhecido.
     final result = await showDialog<num?>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text('Informar valor conhecido'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${event.title} · ${Formatters.fullDate.format(event.dueDate)}'),
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey('income-receipt-amount-input'),
-                controller: controller,
-                autofocus: true,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Valor confirmado (R\$)',
-                  hintText: 'Deixe em branco enquanto não souber',
-                  errorText: validation,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Informe apenas o valor que você já sabe. '
-                'Isso não registra recebimento, não altera o saldo '
-                'e não substitui a movimentação bancária.',
-              ),
-            ],
-          ),
-          actions: [
-            if (oldAmount != null)
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, -1),
-                child: const Text('Remover valor'),
-              ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              key: const ValueKey('income-receipt-save'),
-              onPressed: () {
-                final amount = Formatters.parseMoney(controller.text);
-                if (!amount.isFinite || amount <= 0) {
-                  setDialogState(() {
-                    validation = 'Digite um valor positivo já confirmado';
-                  });
-                  return;
-                }
-                Navigator.pop(dialogContext, amount);
-              },
-              child: const Text('Salvar valor'),
-            ),
-          ],
-        ),
+      builder: (_) => _IncomeAmountDialog(
+        title: event.title,
+        dueDate: event.dueDate,
+        previousAmount: oldAmount,
       ),
     );
-    // Evita descartar o controller antes de o diálogo terminar a transição.
-    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     if (result == null || !mounted) return;
 
     setState(() => _saving = true);
@@ -350,6 +291,97 @@ class _IncomeReceiptsScreenState extends State<IncomeReceiptsScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _IncomeAmountDialog extends StatefulWidget {
+  const _IncomeAmountDialog({
+    required this.title,
+    required this.dueDate,
+    required this.previousAmount,
+  });
+
+  final String title;
+  final DateTime dueDate;
+  final double? previousAmount;
+
+  @override
+  State<_IncomeAmountDialog> createState() => _IncomeAmountDialogState();
+}
+
+class _IncomeAmountDialogState extends State<_IncomeAmountDialog> {
+  late final TextEditingController _controller;
+  String? _validation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.previousAmount?.toStringAsFixed(2).replaceAll('.', ',') ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final amount = Formatters.parseMoney(_controller.text);
+    if (!amount.isFinite || amount <= 0) {
+      setState(() => _validation = 'Digite um valor positivo já confirmado');
+      return;
+    }
+    Navigator.of(context).pop(amount);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Informar valor conhecido'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${widget.title} · ${Formatters.fullDate.format(widget.dueDate)}'),
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('income-receipt-amount-input'),
+            controller: _controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Valor confirmado (R\$)',
+              hintText: 'Deixe em branco enquanto não souber',
+              errorText: _validation,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Informe apenas o valor que você já sabe. '
+            'Isso não registra recebimento, não altera o saldo '
+            'e não substitui a movimentação bancária.',
+          ),
+        ],
+      ),
+      actions: [
+        if (widget.previousAmount != null)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(-1),
+            child: const Text('Remover valor'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const ValueKey('income-receipt-save'),
+          onPressed: _save,
+          child: const Text('Salvar valor'),
+        ),
+      ],
     );
   }
 }
