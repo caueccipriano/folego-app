@@ -702,7 +702,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) => Padding(
               padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
-              child: Column(
+              child: SingleChildScrollView(
+                key: const ValueKey('home-fixed-mobile-scroll'),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
                 key: const ValueKey('home-fixed-mobile'),
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -976,37 +979,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  if (constraints.maxHeight >= (minimal ? 780 : 590)) ...[
-                    const SizedBox(height: 8),
-                    HomeMobileSummaryStrip(
-                      snapshot: snapshot,
-                      monthly: _monthlyMoney,
-                      upcoming: _upcomingEvents,
-                      upcomingAvailable: !_upcomingUnavailable,
-                      hidden: privacy,
-                      showTiles: constraints.maxHeight >= (minimal ? 805 : 695) &&
-                          (!minimal || constraints.maxWidth >= 350),
-                      onBudget: () {
-                        final open = FlexibleBudgetNavigationScope
-                            .maybeOf(context)?.open;
-                        if (open != null) {
-                          open();
-                        } else {
-                          _openSpendingIncrease();
-                        }
-                      },
-                      onMonthly: () => _openFixedMobileDetails(
-                        monthlyMoney: monthlyMoney,
-                        projectionInsight: projectionInsight,
-                        upcoming: upcoming,
-                        latest: latest,
-                        smartCheckin: smartCheckin),
-                      onUpcoming: _openUpcomingEvents,
-                    ),
-                  ],
                   const SizedBox(height: 8),
                   quickActions,
-                  if (pulseInsight.showCard && (!minimal || constraints.maxHeight >= 760)) ...[
+                  if (pulseInsight.showCard) ...[
                     const SizedBox(height: 6),
                     Material(
                       color: surface,
@@ -1064,8 +1039,65 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: const Text('meu mês'),
                     )),
                   ]),
-                  const Spacer(),
+                  const SizedBox(height: 18),
+                  Text(
+                    'resumo do mês',
+                    style: AppTypography.section(
+                      context, fontSize: 18, color: primaryText,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  HomeMobileSummaryStrip(
+                    snapshot: snapshot,
+                    monthly: _monthlyMoney,
+                    upcoming: _upcomingEvents,
+                    upcomingAvailable: !_upcomingUnavailable,
+                    hidden: privacy,
+                    // This is scrollable: useful tiles must not disappear
+                    // solely because the iPhone viewport is short.
+                    showTiles: constraints.maxWidth >= 310,
+                    onBudget: () {
+                      final open =
+                          FlexibleBudgetNavigationScope.maybeOf(context)?.open;
+                      if (open != null) {
+                        open();
+                      } else {
+                        _openSpendingIncrease();
+                      }
+                    },
+                    onMonthly: () => _openFixedMobileDetails(
+                      monthlyMoney: monthlyMoney,
+                      projectionInsight: projectionInsight,
+                      upcoming: upcoming,
+                      latest: latest,
+                      smartCheckin: smartCheckin,
+                    ),
+                    onUpcoming: _openUpcomingEvents,
+                  ),
+                  if (!privacy) ...[
+                    const SizedBox(height: 14),
+                    monthlyMoney,
+                    const SizedBox(height: 12),
+                    projectionInsight,
+                    if (upcoming != null) ...[
+                      const SizedBox(height: 12),
+                      upcoming,
+                    ],
+                    if (latest != null) ...[
+                      const SizedBox(height: 12),
+                      latest,
+                    ],
+                    const SizedBox(height: 12),
+                    smartCheckin,
+                  ] else ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      'detalhes ocultos · use o olho para mostrar',
+                    ),
+                  ],
+                  const SizedBox(height: 30),
                 ],
+              ),
               ),
             ),
           ),
