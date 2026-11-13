@@ -204,7 +204,7 @@ class _HomeContentState extends State<_HomeContent> {
 
     // Conta cadastrada é suficiente para abrir a Home. Uma receita futura
     // sem valor informado não pode bloquear os saldos e movimentações.
-    if (!_loadingSetup && shouldShowFirstUseHome(setup)) {
+    if (!_loadingSetup && setup != null && shouldShowFirstUseHome(setup)) {
       return _FirstUseHome(
         setup: setup,
         creatingAccount: _creatingAccount,
