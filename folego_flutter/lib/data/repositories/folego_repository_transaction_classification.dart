@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/realtime/realtime_session.dart';
+
 import '../models/transaction_item.dart';
 import 'folego_repository.dart';
 
@@ -80,6 +82,7 @@ extension FolegoRepositoryTransactionClassification on FolegoRepository {
     if (result != true) {
       throw StateError('classification_failed');
     }
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
   }
 }
 

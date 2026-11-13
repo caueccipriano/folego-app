@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/realtime/realtime_session.dart';
+
 import '../models/account_item.dart';
 import '../models/budget_overview_item.dart';
 import '../models/category_item.dart';
@@ -158,6 +160,7 @@ class FolegoRepository {
         'p_expected_behavior_class': expected,
         'p_behavior_class': next,
       });
+      AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
     } on PostgrestException catch (error) {
       if (error.message.contains('annotation_conflict')) {
         throw StateError('classificação alterada em outra sessão; recarregue');
@@ -434,6 +437,7 @@ class FolegoRepository {
         'p_competence_date': _date(occurredAt),
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
   }
 
   // ---------------------------------------------------------------------------
@@ -1150,6 +1154,7 @@ class FolegoRepository {
         'p_external_id': null,
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
 
     return data as String;
   }
@@ -1178,6 +1183,7 @@ class FolegoRepository {
         'p_external_id': null,
       },
     );
+    AppRealtimeRegistry.notifyLocalTableChanged('financial_events');
 
     return data as String;
   }

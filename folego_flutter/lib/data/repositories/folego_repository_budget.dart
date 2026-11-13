@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/realtime/realtime_session.dart';
+
 import '../models/budget_overview_item.dart';
 import 'folego_repository.dart';
 
@@ -75,6 +77,7 @@ extension FolegoRepositoryBudget on FolegoRepository {
     if (result != true) {
       throw StateError('Não foi possível atualizar o orçamento flexível.');
     }
+    AppRealtimeRegistry.notifyLocalTableChanged('budgets');
   }
 
   /// Read-only drilldown. The RPC checks membership of the selected space.
@@ -127,6 +130,8 @@ extension FolegoRepositoryBudget on FolegoRepository {
     if (result != true) {
       throw StateError('Não foi possível atualizar o limite mensal.');
     }
+    AppRealtimeRegistry.notifyLocalTableChanged('budget_items');
+    AppRealtimeRegistry.notifyLocalTableChanged('budget_recurring_rules');
   }
 
   String _date(DateTime date) {

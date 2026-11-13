@@ -48,6 +48,28 @@ List<TransactionItem> matchingClassificationCandidates(
       .toList(growable: false);
 }
 
+/// Resolve a categoria já gravada no lançamento, sem confundir preenchimento
+/// automático com confirmação manual. O ID precisa existir no catálogo ativo.
+CategoryItem? reviewableCurrentCategory({
+  required TransactionItem item,
+  required Iterable<CategoryItem> categories,
+}) {
+  final id = item.categoryId;
+  final kind = transactionClassificationKind(item.eventType);
+  if (id == null || kind == null) return null;
+  for (final category in categories) {
+    if (category.id == id &&
+        category.active &&
+        category.isSelectable &&
+        (category.categoryRole == null ||
+            category.categoryRole == 'economic') &&
+        (category.kind == null || category.kind == kind)) {
+      return category;
+    }
+  }
+  return null;
+}
+
 /// Suggest only reviewed exact-description rules. Never classify silently.
 CategoryItem? reviewedCategorySuggestion({
   required TransactionItem item,
@@ -671,6 +693,24 @@ class _TransactionClassificationInboxState
     );
   }
 
+  CategoryItem? _currentCategoryForItem(TransactionItem item) {
+    final kind = transactionClassificationKind(item.eventType);
+    if (kind == null) return null;
+    return reviewableCurrentCategory(
+      item: item,
+      categories: kind == 'income' ? _incomeCategories : _expenseCategories,
+    );
+  }
+
+  Future<void> _confirmCurrentCategory(TransactionItem item) async {
+    if (_savingEventId != null || _loading || _applyingSuggestions) return;
+    final current = _currentCategoryForItem(item);
+    if (current == null) return;
+    // O usuário confirmou a classificação existente: a RPC também limpa
+    // needs_classification, mesmo quando category_id permanece igual.
+    await _saveSelectedCategory(item, current, showOffers: false);
+  }
+
   Future<void> _chooseCategory(TransactionItem item) async {
     if (_savingEventId != null || _loading) return;
     final kind = transactionClassificationKind(item.eventType);
@@ -1239,9 +1279,14 @@ class _TransactionClassificationInboxState
                         itemBuilder: (context, index) {
                           final item = displayedItems[index];
                           final suggestion = _suggestionForItem(item);
+                          final currentCategory = _currentCategoryForItem(item);
                           return _ClassificationCard(
                             item: item,
                             suggestion: suggestion,
+                            currentCategory: currentCategory,
+                            onConfirmCurrentCategory: currentCategory == null
+                                ? null
+                                : () => _confirmCurrentCategory(item),
                             saving: _savingEventId == item.id,
                             onTap: () => _chooseCategory(item),
                             onDetails: () async {
@@ -1316,6 +1361,8 @@ class _ClassificationCard extends StatelessWidget {
   const _ClassificationCard({
     required this.item,
     required this.suggestion,
+    required this.currentCategory,
+    required this.onConfirmCurrentCategory,
     required this.onAcceptSuggestion,
     required this.saving,
     required this.onTap,
@@ -1324,6 +1371,8 @@ class _ClassificationCard extends StatelessWidget {
 
   final TransactionItem item;
   final SmartCategorySuggestion? suggestion;
+  final CategoryItem? currentCategory;
+  final VoidCallback? onConfirmCurrentCategory;
   final VoidCallback? onAcceptSuggestion;
   final bool saving;
   final VoidCallback onTap;
@@ -1429,7 +1478,40 @@ class _ClassificationCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (suggestion != null) ...[
+                    if (currentCategory != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'categoria atual: ${currentCategory!.breadcrumb}',
+                        key: ValueKey('classification-current-category:${item.id}'),
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 11,
+                          color: primaryText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'já aparece nos movimentos; falta confirmar a revisão',
+                        style: AppTypography.body(
+                          context,
+                          fontSize: 10,
+                          color: secondaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          key: ValueKey('classification-confirm-current:${item.id}'),
+                          onPressed: saving ? null : onConfirmCurrentCategory,
+                          icon: const Icon(AppIcons.check, size: 16),
+                          label: const Text('confirmar categoria atual'),
+                        ),
+                      ),
+                    ],
+                    if (suggestion != null &&
+                        suggestion!.category.id != currentCategory?.id) ...[
                       const SizedBox(height: 8),
                       Text(
                         'sugestão: ${suggestion!.category.breadcrumb} · '
@@ -1469,7 +1551,9 @@ class _ClassificationCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'escolher categoria',
+                          currentCategory != null
+                              ? 'escolher outra categoria'
+                              : 'escolher categoria',
                           style: AppTypography.body(
                             context,
                             fontSize: 11,
