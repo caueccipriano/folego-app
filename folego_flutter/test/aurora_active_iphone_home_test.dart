@@ -39,6 +39,17 @@ void main() {
     expect(nav, contains("ValueKey('mobile-liquid-nav')"));
   });
 
+  test('short iPhones keep month context visible by scrolling', () {
+    expect(active, contains("ValueKey('home-fixed-mobile-scroll')"));
+    expect(active, contains('SingleChildScrollView('));
+    expect(active, contains('HomeMobileSummaryStrip('));
+    expect(active, contains('showTiles: constraints.maxWidth >= 310'));
+    expect(active, isNot(contains('constraints.maxHeight >= (minimal ? 780 : 590)')));
+    expect(active, isNot(contains('const Spacer()')));
+    expect(active, contains('monthlyMoney,'));
+    expect(active, contains('projectionInsight,'));
+  });
+
   test('financial facts and navigation stay intact on the active Home', () {
     expect(active, contains('Formatters.money(snapshot.spendablePool)'));
     expect(active, contains('Formatters.money(snapshot.dailyFolego)'));
