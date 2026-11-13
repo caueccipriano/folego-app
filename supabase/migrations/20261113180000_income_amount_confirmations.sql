@@ -38,8 +38,8 @@ create policy income_amount_confirmations_insert_writer
     and confirmed_by = (select auth.uid())
     and exists (
       select 1 from public.recurring_items r
-      where r.id = recurring_item_id
-        and r.space_id = space_id
+      where r.id = income_amount_confirmations.recurring_item_id
+        and r.space_id = income_amount_confirmations.space_id
         and r.item_type = 'income'
         and r.active
     )
@@ -55,8 +55,8 @@ create policy income_amount_confirmations_update_writer
     and confirmed_by = (select auth.uid())
     and exists (
       select 1 from public.recurring_items r
-      where r.id = recurring_item_id
-        and r.space_id = space_id
+      where r.id = income_amount_confirmations.recurring_item_id
+        and r.space_id = income_amount_confirmations.space_id
         and r.item_type = 'income'
         and r.active
     )
