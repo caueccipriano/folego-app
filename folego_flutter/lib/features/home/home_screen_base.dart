@@ -52,6 +52,7 @@ import 'quick_register_sheet.dart';
 import '../transactions/financial_review_hub.dart';
 import '../transactions/resolver_queue.dart';
 import 'upcoming_events_screen.dart';
+import 'income_receipts_screen.dart';
 import '../plan/projection_navigation_scope.dart';
 import '../plan/category_period_comparison.dart';
 
@@ -348,6 +349,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openIncomeReceipts() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => IncomeReceiptsScreen(
+          spaceId: widget.space.id,
+          repository: widget.repository,
+        ),
+      ),
+    );
+  }
+
   Future<void> _openUpcomingEvents() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -495,6 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPrivacy: FinancialPrivacy.toggle,
         hidden: FinancialPrivacy.hidden.value,
         onAgenda: _openUpcomingEvents,
+        onIncomeReceipts: _openIncomeReceipts,
         onExpense: () => _openRegister('expense'),
         onIncome: () => _openRegister('income'),
         onSearch: () => openDiscovery(context,
@@ -910,14 +923,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                               FittedBox(
                                                 fit: BoxFit.scaleDown,
                                                 alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  'PRÓXIMO SALÁRIO',
-                                                  maxLines: 1,
-                                                style: AppTypography.label(
-                                                  context,
-                                                  fontSize: 10,
-                                                  color: onHero.withValues(alpha: .87),
-                                                ).copyWith(letterSpacing: .6),
+                                                child: InkWell(
+                                                  onTap: _openIncomeReceipts,
+                                                  child: Text(
+                                                    'PRÓXIMO SALÁRIO',
+                                                    maxLines: 1,
+                                                    style: AppTypography.label(
+                                                      context,
+                                                      fontSize: 10,
+                                                      color: onHero.withValues(alpha: .87),
+                                                    ).copyWith(letterSpacing: .6),
+                                                  ),
                                                 ),
                                               ),
                                               const SizedBox(height: 2),
