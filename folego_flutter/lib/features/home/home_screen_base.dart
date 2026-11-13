@@ -41,6 +41,7 @@ import 'home_wallet_navigation_scope.dart';
 import 'monthly_closing_review.dart';
 import 'closed_month_evolution.dart';
 import 'home_projection_insight_card.dart';
+import 'home_upcoming_receipts_card.dart';
 import 'home_financial_hero.dart';
 import 'home_fixed_dashboard.dart';
 import '../../shared/widgets/folego_glass_surface.dart';
@@ -580,6 +581,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         monthlyMoney,
                         const SizedBox(height: 10),
+                        _buildReceiptsCard(),
+                        const SizedBox(height: 10),
                         projectionInsight,
                         if (_monthlyMoney != null) ...[
                           const SizedBox(height: 8),
@@ -624,6 +627,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 22),
                   monthlyMoney,
                   const SizedBox(height: 14),
+                  _buildReceiptsCard(),
+                  const SizedBox(height: 14),
                   projectionInsight,
 
                 ] else ...[
@@ -643,6 +648,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             if(showLatest) ...[const SizedBox(height:16),latestSection],
                             const SizedBox(height: 16),
                             monthlyMoney,
+                            const SizedBox(height: 16),
+                            _buildReceiptsCard(),
                             const SizedBox(height: 16),
                             projectionInsight,
                           ],
@@ -1129,6 +1136,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       HomeWalletNavigationScope.maybeOf(context)?.onOpenSection(0);
                     },
               ),
+              const SizedBox(height: 14),
+              _buildReceiptsCard(),
               const SizedBox(height: 22),
               Text('entradas e saídas',
                 style: AppTypography.section(sheetContext, fontSize: 18)),
@@ -1228,6 +1237,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 !FinancialPrivacy.hidden.value) ...[
               const SizedBox(height: 12), hero,
             ],
+            const SizedBox(height: 14),
+            _buildReceiptsCard(),
             const SizedBox(height: 22),
             Text('entradas e saídas',
                 style: AppTypography.section(sheetContext, fontSize: 18)),
@@ -1263,6 +1274,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  Widget _buildReceiptsCard() => HomeUpcomingReceiptsCard(
+    repository: widget.repository,
+    spaceId: widget.space.id,
+    onOpenAgenda: _openUpcomingEvents,
+  );
 
   Widget _buildHomeSkeleton() {
     final brightness = Theme.of(context).brightness;
