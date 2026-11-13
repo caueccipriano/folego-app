@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'folego_repository.dart';
+import '../models/upcoming_financial_event.dart';
 
 /// Valor conhecido de uma ocorrência futura. Não representa dinheiro recebido.
 class IncomeReceiptConfirmation {
@@ -35,6 +36,46 @@ String incomeReceiptDate(DateTime date) =>
 
 String incomeReceiptKey(String recurringItemId, DateTime date) =>
     '$recurringItemId|${incomeReceiptDate(date)}';
+
+/// Nunca soma o amount projetado de uma recorrência.
+class IncomeReceiptTotals {
+  const IncomeReceiptTotals({
+    required this.confirmedTotal,
+    required this.confirmedCount,
+    required this.unknownCount,
+  });
+
+  final double confirmedTotal;
+  final int confirmedCount;
+  final int unknownCount;
+
+  factory IncomeReceiptTotals.fromEvents(
+    Iterable<UpcomingFinancialEvent> events,
+    Map<String, double> enteredAmounts,
+  ) {
+    var confirmedTotal = 0.0;
+    var confirmedCount = 0;
+    var unknownCount = 0;
+    for (final event in events) {
+      if (!event.isIncome || !event.isRecurring || event.realized) continue;
+      final amount = enteredAmounts[incomeReceiptKey(
+        event.sourceId,
+        event.dueDate,
+      )];
+      if (amount == null || !amount.isFinite || amount <= 0) {
+        unknownCount++;
+      } else {
+        confirmedCount++;
+        confirmedTotal += amount;
+      }
+    }
+    return IncomeReceiptTotals(
+      confirmedTotal: confirmedTotal,
+      confirmedCount: confirmedCount,
+      unknownCount: unknownCount,
+    );
+  }
+}
 
 extension FolegoRepositoryIncomeReceipts on FolegoRepository {
   Future<List<IncomeReceiptConfirmation>> listIncomeReceiptConfirmations({
