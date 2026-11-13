@@ -32,7 +32,7 @@ class IncomeDateSchedule {
       final lastDay = DateTime(month.year, month.month + 1, 0).day;
       final day = lastDayOfMonth
           ? lastDay
-          : (dayOfMonth ?? lastDay).clamp(1, lastDay);
+          : (dayOfMonth ?? lastDay).clamp(1, lastDay).toInt();
       final date = DateTime(month.year, month.month, day);
       if (!date.isBefore(from) &&
           !date.isAfter(until) &&
