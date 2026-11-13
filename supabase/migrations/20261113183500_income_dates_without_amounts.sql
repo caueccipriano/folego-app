@@ -46,29 +46,36 @@ grant select, insert, update, delete on public.income_date_amounts to authentica
 grant all on public.income_date_schedules to service_role;
 grant all on public.income_date_amounts to service_role;
 
+drop policy if exists income_date_schedules_read on public.income_date_schedules;
 create policy income_date_schedules_read
   on public.income_date_schedules for select to authenticated
   using ((select private.is_space_member(space_id)));
+drop policy if exists income_date_schedules_write on public.income_date_schedules;
 create policy income_date_schedules_write
   on public.income_date_schedules for insert to authenticated
   with check ((select private.can_write_space(space_id)));
+drop policy if exists income_date_schedules_edit on public.income_date_schedules;
 create policy income_date_schedules_edit
   on public.income_date_schedules for update to authenticated
   using ((select private.can_write_space(space_id)))
   with check ((select private.can_write_space(space_id)));
+drop policy if exists income_date_schedules_remove on public.income_date_schedules;
 create policy income_date_schedules_remove
   on public.income_date_schedules for delete to authenticated
   using ((select private.can_write_space(space_id)));
 
+drop policy if exists income_date_amounts_read on public.income_date_amounts;
 create policy income_date_amounts_read
   on public.income_date_amounts for select to authenticated
   using ((select private.is_space_member(space_id)));
+drop policy if exists income_date_amounts_write on public.income_date_amounts;
 create policy income_date_amounts_write
   on public.income_date_amounts for insert to authenticated
   with check (
     (select private.can_write_space(space_id))
     and confirmed_by = (select auth.uid())
   );
+drop policy if exists income_date_amounts_edit on public.income_date_amounts;
 create policy income_date_amounts_edit
   on public.income_date_amounts for update to authenticated
   using ((select private.can_write_space(space_id)))
@@ -76,6 +83,7 @@ create policy income_date_amounts_edit
     (select private.can_write_space(space_id))
     and confirmed_by = (select auth.uid())
   );
+drop policy if exists income_date_amounts_remove on public.income_date_amounts;
 create policy income_date_amounts_remove
   on public.income_date_amounts for delete to authenticated
   using ((select private.can_write_space(space_id)));
