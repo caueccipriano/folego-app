@@ -924,17 +924,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 fit: BoxFit.scaleDown,
                                                 alignment: Alignment.centerLeft,
                                                 child: InkWell(
-   onTap: _openIncomeReceipts,
-   child: Text(
-                                                  'PRÓXIMO SALÁRIO',
-                                                  maxLines: 1,
-                                                style: AppTypography.label(
-                                                  context,
-                                                  fontSize: 10,
-                                                  color: onHero.withValues(alpha: .87),
-                                                ).copyWith(letterSpacing: .6),
-                                                ),,
- ),
+                                                  onTap: _openIncomeReceipts,
+                                                  child: Text(
+                                                    'PRÓXIMO SALÁRIO',
+                                                    maxLines: 1,
+                                                    style: AppTypography.label(
+                                                      context,
+                                                      fontSize: 10,
+                                                      color: onHero.withValues(alpha: .87),
+                                                    ).copyWith(letterSpacing: .6),
+                                                  ),
+                                                ),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
