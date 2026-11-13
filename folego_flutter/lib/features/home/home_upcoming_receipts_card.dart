@@ -10,7 +10,7 @@ import '../../data/repositories/folego_repository_income_confirmations.dart';
 import '../../shared/widgets/section_card.dart';
 
 /// Calendário de entradas sem fazer previsão de salários.
-//// Os valores da recorrência/agenda jamais são usados como valores confirmados.
+/// Os valores da recorrência/agenda jamais são usados como valores confirmados.
 class HomeUpcomingReceiptsCard extends StatefulWidget {
   const HomeUpcomingReceiptsCard({
     super.key,
@@ -174,7 +174,7 @@ class _HomeUpcomingReceiptsCardState extends State<HomeUpcomingReceiptsCard> {
           actions: [
             if (existing != null)
               TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(-1),
+                onPressed: () => Navigator.of(dialogContext).pop(-1.0),
                 child: const Text('Retirar valor'),
               ),
             TextButton(
