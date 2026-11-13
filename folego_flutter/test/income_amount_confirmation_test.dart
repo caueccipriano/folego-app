@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:folego_flutter/data/models/income_amount_confirmation.dart';
+import 'package:folego/data/models/income_amount_confirmation.dart';
 
 void main() {
   group('Confirmações de recebimentos', () {
