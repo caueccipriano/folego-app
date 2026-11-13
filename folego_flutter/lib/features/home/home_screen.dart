@@ -201,7 +201,9 @@ class _HomeContentState extends State<_HomeContent> {
   Widget build(BuildContext context) {
     final setup = _setup;
 
-    if (!_loadingSetup && setup != null && !setup.folegoReady) {
+    // Conta cadastrada é suficiente para abrir a Home. Uma receita futura
+    // sem valor informado não pode bloquear os saldos e movimentações.
+    if (!_loadingSetup && setup != null && !setup.hasAccount) {
       return _FirstUseHome(
         setup: setup,
         creatingAccount: _creatingAccount,
